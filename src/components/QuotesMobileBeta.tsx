@@ -70,6 +70,8 @@ import {InitialOpenDetails} from './InitialOpenDetails';
 import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
 import {RecordPreviewDrawer} from './RecordPreviewDrawer';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
 import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import '../sales-documents-table.css';
@@ -505,6 +507,8 @@ export function QuotesMobileBeta() {
   const undoDepth=useQuoteStore(s=>activeQuoteId?s.undoStacks[activeQuoteId]?.length??0:0);
   const redoDepth=useQuoteStore(s=>activeQuoteId?s.redoStacks[activeQuoteId]?.length??0:0);
   const hydrateCrm=useCrmStore(s=>s.hydrate);
+  const crmActivities=useCrmStore(s=>s.activities);
+  const crmDeals=useCrmStore(s=>s.projects);
   const authMode=useAuthStore(s=>s.mode);
   const teamRole=useAuthStore(s=>s.teamRole);
   const department=useAuthStore(s=>s.teamDepartment);
@@ -587,6 +591,7 @@ export function QuotesMobileBeta() {
     setSavingLayoutAreaId(null);setAreaPresetsOpen(false);
   },[layoutScope]);
   const [documentPreviewId,setDocumentPreviewId]=useState<string|null>(null);
+  const [externalQuotePreviewId,setExternalQuotePreviewId]=useState<string|null>(null);
   const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
   const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
   // Keep the new-document library first; follow-ups are a secondary destination.
@@ -705,6 +710,9 @@ export function QuotesMobileBeta() {
   const myQuotes=useMemo(()=>authMode==='cloud'?quotes.filter(q=>q.ownerUserId===userId):quotes,
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
+  const externalQuoteRecords=useMemo(()=>mySalesQuoteRegistry(
+    buildSalesQuoteRegistry([],crmActivities,crmDeals),authMode,userId,crmDeals),
+    [crmActivities,crmDeals,authMode,userId]);
   const generalTakeoff=quote?.sections.find(isGeneralTakeoffSection);
   const [showDeleteGeneralTakeoff,setShowDeleteGeneralTakeoff]=useState(false);
   const deleteGeneralTakeoff=useQuoteStore(s=>s.deleteSection);
@@ -763,9 +771,22 @@ export function QuotesMobileBeta() {
   const list=filterSalesDocuments(myQuotes,{
     query:search,template:documentFilter,status:statusFilter,sort:documentSort,
   });
-  const documentTableRows:ConnectionTableRow[]=list.map(q=>({
+  const externalList=useMemo(()=>{
+    if(documentFilter!=='all'||(statusFilter!=='active'&&statusFilter!=='issued'))return [];
+    const needle=search.toLocaleLowerCase().trim();
+    const matching=externalQuoteRecords.filter(record=>!needle||
+      [record.name,record.companyName,record.dealName,record.platform,
+       record.status,String(record.value??'')].join(' ').toLocaleLowerCase().includes(needle));
+    return [...matching].sort((a,b)=>
+      documentSort==='name'?a.name.localeCompare(b.name):
+      documentSort==='company'?(a.companyName??'').localeCompare(b.companyName??''):
+      documentSort==='oldest'?a.updatedAt.localeCompare(b.updatedAt):
+      b.updatedAt.localeCompare(a.updatedAt));
+  },[externalQuoteRecords,documentFilter,statusFilter,search,documentSort]);
+  const documentTableRows:ConnectionTableRow[]=[
+   ...list.map(q=>({
     id:q.id,name:q.title||'Untitled document',archived:!!q.archivedAt,
-    association:{type:'quote',id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
+    association:{type:'quote' as const,id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
     values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
       company:q.companyName||q.contactName||'',
       type:salesTemplateLabel(salesDocumentTemplate(q)),
@@ -777,7 +798,20 @@ export function QuotesMobileBeta() {
         readPersonalDateTimePreferences(userId??null)),
     },
     sortValues:{amount:quoteTotal(q),updated:q.updatedAt},
-  }));
+   })),
+   ...externalList.map(x=>({
+    id:x.id,name:x.name,readOnly:true,
+    association:x.projectId?{type:'project' as const,id:x.projectId,
+      label:'External bid · '+x.name}:undefined,
+    values:{name:x.name,number:'—',
+      company:x.companyName||x.dealName||'',
+      type:'External'+(x.platform?' · '+x.platform:''),
+      status:'Sent',
+      amount:x.value===undefined?'—':money.format(x.value),
+      updated:x.sentDate||x.updatedAt.slice(0,10)},
+    sortValues:{amount:x.value??0,updated:x.updatedAt},
+   })),
+  ];
   const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active';
   const resetLibraryFilters=()=>{
     setSearch('');setDocumentFilter('all');setStatusFilter('active');setDocumentSort('recent');
@@ -1181,16 +1215,16 @@ export function QuotesMobileBeta() {
            :<>
          <div className="qmb-library-directory-controls" aria-label="Document directory controls">
            <p className="qmb-library-results-head qmb-library-directory-caption">
-             {statusFilter==='archived'?'Archived documents':'My documents'} · {list.length} {list.length===1?'document':'documents'} · click a name to preview its record
+             {statusFilter==='archived'?'Archived documents':'My documents'} · {documentTableRows.length} {documentTableRows.length===1?'record':'records'} · click a name to preview its record
            </p>
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
            <div className="qmb-library-mobile-filters">
              <div className="qmb-library-tools">
              <label><span>Show</span>
                <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
-                 <option value="active">Active ({counts.active})</option>
+                 <option value="active">Active ({counts.active+externalQuoteRecords.length})</option>
                  <option value="drafts">Drafts ({counts.drafts})</option>
-                 <option value="issued">Issued ({counts.issued})</option>
+                 <option value="issued">Issued ({counts.issued+externalQuoteRecords.length})</option>
                  <option value="archived">Archived ({counts.archived})</option>
                </select>
              </label>
@@ -1210,9 +1244,9 @@ export function QuotesMobileBeta() {
              toolbarControls={<div className="qmb-library-tools">
              <label><span>Show</span>
                <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
-                 <option value="active">Active ({counts.active})</option>
+                 <option value="active">Active ({counts.active+externalQuoteRecords.length})</option>
                  <option value="drafts">Drafts ({counts.drafts})</option>
-                 <option value="issued">Issued ({counts.issued})</option>
+                 <option value="issued">Issued ({counts.issued+externalQuoteRecords.length})</option>
                  <option value="archived">Archived ({counts.archived})</option>
                </select>
              </label>
@@ -1224,7 +1258,9 @@ export function QuotesMobileBeta() {
                <option value="oldest">Oldest edited</option>
              </select></label>
            </div>}
-             onOpen={id=>setDocumentPreviewId(id)}
+             onOpen={id=>id.startsWith('external:')
+                ?setExternalQuotePreviewId(id.slice('external:'.length))
+                :setDocumentPreviewId(id)}
              onDocumentArchive={canManageLibrary?id=>setLibraryAction({id,kind:'archive'}):undefined}
              onDocumentRestore={canManageLibrary?id=>restoreQuote(id):undefined}
              onBulkTask={items=>beginTaskPromotion({
@@ -1257,8 +1293,24 @@ export function QuotesMobileBeta() {
               </>}
           </div>}
         </div>)}
+        {externalList.map(x=><div className="qmb-library-entry" key={x.id}>
+          <button type="button" className="qmb-card qmb-listcard"
+            onClick={()=>setExternalQuotePreviewId(x.sourceId)}
+            aria-label={'Open external quote details for '+x.name}>
+            <div className="qmb-split">
+              <small>External · {x.platform||'Builder platform'}</small>
+              <span className="qmb-chip">Sent</span>
+            </div>
+            <strong>{x.name}</strong>
+            <div className="qmb-library-updated">Sent {x.sentDate||'Date not recorded'}</div>
+            <div className="qmb-split">
+              <small>{x.companyName||x.dealName||'Linked Deal'} · External quote</small>
+              <b>{x.value===undefined?'Value not recorded':money.format(x.value)}</b>
+            </div>
+          </button>
+        </div>)}
         </div>
-        {!list.length&&<div className="qmb-empty">
+        {!documentTableRows.length&&<div className="qmb-empty">
           {statusFilter==='archived'&&!search.trim()&&documentFilter==='all'?
             'No archived documents yet. Archiving keeps agreements available for later.':
             hasLibraryFilters?'No documents match these filters. Try clearing the search or selecting a different status.':
@@ -1472,6 +1524,16 @@ export function QuotesMobileBeta() {
       onGoToQuotePage={id=>{
         setDocumentPreviewId(null);
         requestQuoteMetadataPage(id,()=>setView('dashboard'));
+      }}/>}
+    {externalQuotePreviewId&&<CalendarActivityPreview activityId={externalQuotePreviewId}
+      onClose={()=>setExternalQuotePreviewId(null)}
+      onSelect={(kind,id)=>{
+        setExternalQuotePreviewId(null);
+        const nav=useNavigationStore.getState();
+        if(kind==='deal')nav.openProject(id);
+        else if(kind==='company')nav.openCompany(id);
+        else if(kind==='person')nav.openPerson(id);
+        else if(kind==='quote')openQuote(id);
       }}/>}
     {quote&&page!=='library'&&editable&&areaPresetsOpen&&<QuoteAreaPresetPicker
       savedLayouts={savedLayouts} onSelectSaved={addPersonalAreaLayout}

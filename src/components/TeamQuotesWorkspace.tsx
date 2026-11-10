@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { useQuoteStore } from '../store/quoteStore';
 import {useCrmStore} from '../store/crmStore';
+import {buildSalesQuoteRegistry} from '../services/salesQuoteRegistry';
+import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {useNavigationStore} from '../store/navigationStore';
 import { displayQuoteNumber, quoteLineTotal, quoteTotal, QUOTE_STATUSES, type Quote } from '../types/quote';
 import {
   filterTeamQuotes, summarizeTeamQuotes, validQuoteTeamAssignment,
@@ -15,6 +18,7 @@ type MembershipRow = { user_id: string; role: string; job_function: string };
 export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Quote[]; onShowMine: () => void }) {
   const organizationId = useAuthStore(s=>s.organizationId);
   const activities=useCrmStore(s=>s.activities);
+  const deals=useCrmStore(s=>s.projects);
   const currentRole = useAuthStore(s=>s.teamRole);
   const [divisions,setDivisions] = useState<SalesDivision[]>([]);
   const [teams,setTeams] = useState<SalesTeam[]>([]);
@@ -27,6 +31,7 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
   const [grantTo,setGrantTo] = useState('');
   const currentUserId=useAuthStore(state=>state.user?.id);
   const [selectedId,setSelectedId] = useState<string|null>(null);
+  const [externalPreviewId,setExternalPreviewId]=useState<string|null>(null);
   const [assignment,setAssignment] = useState({ owner:'',division:'',team:'' });
   const [filters,setFilters] = useState<TeamQuoteFilters>({
     query:'',owner:'all',division:'all',team:'all',status:'all',showArchived:false,
@@ -87,6 +92,17 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
 
   const filtered=useMemo(()=>filterTeamQuotes(quotes,filters),[quotes,filters]);
   const metrics=useMemo(()=>summarizeTeamQuotes(filtered,activities),[filtered,activities]);
+  const externalFiltered=useMemo(()=>buildSalesQuoteRegistry([],activities,deals).filter(q=>{
+    if(q.source!=='external')return false;
+    if(filters.owner!=='all'&&(q.ownerUserId??'unassigned')!==filters.owner)return false;
+    if(filters.division!=='all'&&filters.division!=='unassigned')return false;
+    if(filters.team!=='all'&&filters.team!=='unassigned')return false;
+    if(filters.status!=='all'&&filters.status!=='Sent')return false;
+    const needle=filters.query.trim().toLocaleLowerCase();
+    return !needle||[q.name,q.companyName,q.dealName,q.platform,q.status]
+      .join(' ').toLocaleLowerCase().includes(needle);
+  }),[activities,deals,filters]);
+  const externalValue=externalFiltered.reduce((sum,q)=>sum+(q.value??0),0);
   const selected=quotes.find(q=>q.id===selectedId);
   const availableTeams=teams.filter(team=>filters.division==='all'||filters.division==='unassigned'||team.division_id===filters.division);
   const teamName=(id?:string)=>teams.find(t=>t.id===id)?.name??'Unassigned team';
@@ -174,12 +190,12 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
       <button type="button" onClick={onShowMine}>← My Quotes</button>
     </header>
     <section className="team-quotes-summary" aria-label="Filtered quote totals">
-      <div><span>Quotes</span><strong>{metrics.total}</strong></div>
+      <div><span>Quotes</span><strong>{metrics.total+externalFiltered.length}</strong></div>
       <div><span>Draft / ready</span><strong>{metrics.active}</strong></div>
-      <div><span>Issued</span><strong>{metrics.issued}</strong></div>
-      <div><span>Delivery confirmed</span><strong>{metrics.delivered}</strong></div>
+      <div><span>Issued</span><strong>{metrics.issued+externalFiltered.length}</strong></div>
+      <div><span>Delivery confirmed</span><strong>{metrics.delivered+externalFiltered.length}</strong></div>
       <div><span>Signed</span><strong>{metrics.signed}</strong></div>
-      <div><span>Quoted value</span><strong>{money.format(metrics.value)}</strong></div>
+      <div><span>Quoted value</span><strong>{money.format(metrics.value+externalValue)}</strong></div>
     </section>
     <div className="team-quotes-filters" aria-label="Team quote filters">
       <label className="team-quotes-filter-search"><span>Search quotes</span><input type="search" aria-label="Search team quotes"
@@ -258,7 +274,33 @@ export function TeamQuotesWorkspace({ quotes, onShowMine }: { quotes: readonly Q
           </section>}
         </div>}
       </article>)}
-      {!filtered.length && <div className="team-quotes-empty">No quotes match these filters. Try another person, division, or status.</div>}
+      {externalFiltered.map(q=><article className="team-quote-card" key={q.id}>
+        <div className="team-quote-card-heading">
+          <div><small>External · Sent</small><h2>{q.name}</h2>
+            <p>{q.companyName||q.dealName||'Linked builder'} · {ownerName(q.ownerUserId)}</p>
+            <small>{q.platform||'Builder bidding platform'} · Sent {q.sentDate||'Date unknown'}</small></div>
+          <div className="team-quote-card-total">
+            <strong>{q.value===undefined?'Value not recorded':money.format(q.value)}</strong>
+            <span>{q.sentDate||'—'}</span>
+          </div>
+        </div>
+        <button type="button" className="team-quote-details-button"
+          onClick={()=>setExternalPreviewId(q.sourceId)}>
+          View external quote details <span aria-hidden="true">⌄</span>
+        </button>
+      </article>)}
+      {!filtered.length&&!externalFiltered.length&&
+        <div className="team-quotes-empty">No quotes match these filters. Try another person, division, or status.</div>}
     </div>
+    {externalPreviewId&&<CalendarActivityPreview activityId={externalPreviewId}
+      onClose={()=>setExternalPreviewId(null)}
+      onSelect={(kind,id)=>{
+        setExternalPreviewId(null);
+        const nav=useNavigationStore.getState();
+        if(kind==='deal')nav.openProject(id);
+        else if(kind==='company')nav.openCompany(id);
+        else if(kind==='person')nav.openPerson(id);
+        else if(kind==='quote')nav.openQuote(id);
+      }}/>}
   </main>;
 }
