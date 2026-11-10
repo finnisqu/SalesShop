@@ -11,8 +11,9 @@ export function personLastContactIndex(activities:readonly Activity[]):Map<strin
   const timestamp=Date.parse(activity.occurredAt);
   if(!Number.isFinite(timestamp)||timestamp>Date.now()+60_000)continue;
   const related=Array.isArray(activity.metadata?.relatedRecords)?
-    activity.metadata.relatedRecords.filter(link=>link?.type==='contact').map(link=>link.id):[];
-  const personIds=new Set([activity.contactId,...related].filter((id):id is string=>Boolean(id&&id.trim())));
+    activity.metadata.relatedRecords.filter(link=>link?.type==='contact'&&typeof link.id==='string').map(link=>link.id):[];
+  const personIds=new Set([activity.contactId,...related]
+   .filter((id):id is string=>typeof id==='string'&&Boolean(id.trim())));
   for(const id of personIds){
    const previous=latest.get(id);
    if(previous&&Date.parse(previous.occurredAt)>=timestamp)continue;
