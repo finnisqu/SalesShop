@@ -22,6 +22,8 @@ import {localCalendarDay} from '../services/personFollowUpIntelligence';
 import {personQuickFollowUp} from '../services/personQuickFollowUp';
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 import {companyRelationshipLabel,visibleCompanyAliases} from '../services/companyRelationship';
+import {companyRelationshipHistory} from '../services/companyRelationshipHistory';
+import {CompanyRelationshipTimeline} from './CompanyRelationshipTimeline';
 import '../record-preview.css';
 import '../tasks-workspace.css';
 
@@ -115,6 +117,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const logPersonActivity=useCrmStore(s=>s.recordActivity);
  const createPersonFollowUpTask=usePersonalTaskStore(s=>s.createTask);
  const currentPersonalTaskScope=usePersonalTaskStore(s=>s.scope);
+ const privateTasks=usePersonalTaskStore(s=>s.tasks);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities),allQuotes=useQuoteStore(s=>s.quotes);
  const {members:assignees}=useDealAssigneeDirectory();
  const authMode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),
@@ -137,6 +140,14 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const relatedQuotes=deal?quotesForProject(deal,quotes)
    :company?quotesForCompany(company,deals,quotes)
    :quote?.projectId?quotes.filter(q=>q.projectId===quote.projectId&&q.id!==quote.id):[];
+ const personalScope=taskScope(authMode,organizationId,userId);
+ const companyHistory=company?companyRelationshipHistory({
+  company,contacts:people,projects:deals,activities,quotes,
+  tasks:!perspective&&personalScope&&currentPersonalTaskScope===personalScope
+   ?privateTasks:[],
+  personalTaskScope:!perspective&&personalScope&&currentPersonalTaskScope===personalScope
+   ?personalScope:null,
+ }):[];
  const heading=company?.name||person?.name||deal?.name||quote?.title||'Record unavailable';
  const label=record.kind==='person'?'Person':record.kind==='deal'?'Deal':
    record.kind==='quote'?'Quote metadata':'Company';
@@ -286,6 +297,15 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
          <section><h3>Deals <span>{relatedDeals.length}</span></h3>
            {relatedDeals.slice(0,12).map(d=>related('deal',d.id,d.name,d.stage))}
            {!relatedDeals.length&&<p className="record-preview-empty">No deals linked.</p>}
+         </section>
+         <section><h3>Recent relationship history <span>{companyHistory.length}</span></h3>
+           <CompanyRelationshipTimeline items={companyHistory} compact
+             onOpenTarget={target=>{
+               if(target.kind==='task'){
+                 onClose();requestTaskModal({mode:'preview',id:target.id});return;
+               }
+               open(target.kind,target.id);
+             }}/>
          </section>
        </>}
        {person&&<>
