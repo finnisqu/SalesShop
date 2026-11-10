@@ -53,14 +53,15 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
     <p>Record the submitted contract value and actual send date. No SalesShop quote will be created.
       {historical?' This is a historical entry: your Deal stage, final amount, deadline, and tasks remain unchanged.':''}</p>
     <div className="external-quote-fields">
+      <label>Date sent <span>(defaults to today)</span>
+        <input type="date" required max={localToday()} aria-label="Date quote was sent"
+          value={bidSentDate}
+          onChange={event=>{setBidSentDate(event.target.value);setError('');}}/>
+      </label>
       <label>Total contract value ($)
         <input type="number" inputMode="decimal" min="0" step="0.01" required
           value={amount} onChange={event=>{setAmount(event.target.value);setError('');}}
           placeholder="0.00"/>
-      </label>
-      <label>Date sent
-        <input type="date" required max={localToday()} value={bidSentDate}
-          onChange={event=>{setBidSentDate(event.target.value);setError('');}}/>
       </label>
     </div>
     <label>Tool or format <span>(optional)</span>
