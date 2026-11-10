@@ -58,7 +58,8 @@ interface CrmState {
   assignProject: (projectId:string,assignedUserId?:string)=>Promise<void>;
   updateProject: (projectId: string, patch: ProjectPatch, context?: StageChangeContext) => void;
   /** Record an externally delivered bid without creating a native SalesShop quote. */
-  recordExternalQuoteSent: (projectId:string, amount:number, bidSentDate:string, format?:string)=>boolean;
+  recordExternalQuoteSent: (projectId:string, amount:number, bidSentDate:string, format?:string,
+    submissionId?:string,recordedAt?:string)=>Promise<boolean>;
   moveProject: (projectId: string, stage: ProjectStage, context?: StageChangeContext) => void;
   deleteProject: (projectId: string) => void;
   deleteContact: (contactId:string)=>Promise<void>;
@@ -550,23 +551,23 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     set({ companies, projects, activities });
   },
 
-  recordExternalQuoteSent:(projectId,amount,bidSentDate,format)=>{
+  recordExternalQuoteSent:async(projectId,amount,bidSentDate,format,submissionId,recordedAt)=>{
     const current=get().projects.find(project=>project.id===projectId);
+    const sentAt=new Date(bidSentDate+'T12:00:00');
     if(!current||!Number.isFinite(amount)||amount<0||
-       !/^\d{4}-\d{2}-\d{2}$/.test(bidSentDate)||
-       Number.isNaN(new Date(bidSentDate+'T12:00:00').getTime())||
+       !/^\\d{4}-\\d{2}-\\d{2}$/.test(bidSentDate)||
+       !Number.isFinite(sentAt.getTime())||
+       [sentAt.getFullYear(),String(sentAt.getMonth()+1).padStart(2,'0'),
+        String(sentAt.getDate()).padStart(2,'0')].join('-')!==bidSentDate||
        new Date(bidSentDate+'T00:00:00').getTime()>Date.now())return false;
     const historical=['Closed Won','Completed','Closed Lost','Discarded'].includes(current.stage);
-    // Preserve more advanced stages if a previous bid was already recorded.
     const requestedStage:ProjectStage=
       ['Discovery','Intent to Bid','Bid Development'].includes(current.stage)?'Bid Sent':current.stage;
-    const occurredAt=new Date(bidSentDate+'T12:00:00').toISOString();
+    const occurredAt=sentAt.toISOString();
     const transition=historical?{project:current,changed:false}:
       applyProjectStageTransition(current,requestedStage,get().activities,occurredAt);
     if('blockedReason' in transition&&transition.blockedReason)return false;
     const timestamp=now();
-    // Historical backfill must not regress a completed/lost Deal, replace its
-    // final amount, or clear its original bid deadline.
     const projects=historical?get().projects:get().projects.map(project=>project.id===projectId
       ?{...project,stage:transition.project.stage,
         stageChangedAt:transition.changed?occurredAt:project.stageChangedAt,
@@ -576,21 +577,60 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         updatedAt:timestamp}:project);
     const actor=useAuthStore.getState();
     const activity:Activity={
-      id:id('activity'),type:'quote-sent',projectId,
+      id:submissionId??id('activity'),type:'quote-sent',projectId,
       companyId:current.companyId,occurredAt,
       summary:'External quote sent · '+new Intl.NumberFormat('en-US',{
         style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2,
-      }).format(amount),
+      }).format(amount)+' · '+current.name,
       metadata:{
         source:'manual',documentType:'quote',amount,
         externalQuoteSent:true,externalQuoteFormat:format?.trim().slice(0,120)||undefined,
         bidSentDate,bidDueDate:current.dueDate,
         fromStage:current.stage,toStage:transition.project.stage,
+        recordedAt:recordedAt??timestamp,
         recordedByUserId:actor.mode==='cloud'?actor.user?.id:undefined,
       },
     };
+    if(actor.mode==='cloud'){
+      if(!supabase||!actor.organizationId||!actor.user?.id||
+         !canEditTeamArea(actor.teamRole,actor.teamDepartment,'crm'))
+        throw new Error('You cannot record external quotes in this workspace.');
+      // The previous flow closed the form after a local cache write, even if
+      // the asynchronous CRM cloud sync subsequently failed. A successful
+      // submission now requires a confirmed remote Activity row. The same
+      // client-generated ID is reused on retry to avoid double logging.
+      const organizationId=actor.organizationId,actorId=actor.user.id;
+      const {error}=await supabase.from('activities').insert({
+        organization_id:organizationId,id:activity.id,type:activity.type,
+        summary:activity.summary,project_id:activity.projectId,
+        company_id:activity.companyId??null,contact_id:null,quote_id:null,
+        occurred_at:activity.occurredAt,metadata:activity.metadata,
+        sort_order:get().activities.length,
+      });
+      if(error&&error.code!=='23505')throw new Error('External quote was not saved to cloud: '+error.message);
+      // A network retry can reach an already-inserted record. Verify its
+      // immutable submission identity instead of creating a second event or
+      // accidentally accepting another submission under the same ID.
+      const {data:confirmed,error:lookupError}=await supabase.from('activities')
+        .select('id,type,project_id,metadata')
+        .eq('organization_id',organizationId).eq('id',activity.id).maybeSingle();
+      if(lookupError||!confirmed)
+        throw new Error('Could not confirm the external quote was saved. Please retry.');
+      const meta=confirmed.metadata as Activity['metadata'];
+      if(confirmed.type!=='quote-sent'||confirmed.project_id!==projectId||
+         meta?.externalQuoteSent!==true||meta.bidSentDate!==bidSentDate||
+         Number(meta.amount)!==amount||
+         (meta.externalQuoteFormat??'')!==(activity.metadata?.externalQuoteFormat??''))
+        throw new Error('This submission ID was already used for different details. Reopen the form.');
+      const nextAuth=useAuthStore.getState();
+      if(nextAuth.mode!=='cloud'||nextAuth.organizationId!==organizationId||
+         nextAuth.user?.id!==actorId)
+        throw new Error('Workspace changed while saving. Reopen the quote record.');
+    }
+    // Record appears immediately after the cloud acknowledgement. Standard
+    // CRM sync subsequently persists Deal stage, value and due date changes.
+    if(get().activities.some(item=>item.id===activity.id))return true;
     const activities=[...get().activities,activity];
-    // One CRM persistence update keeps deal value, submission date and history together.
     persist(get().companies,get().contacts,projects,activities);
     set({projects,activities});
     return true;
