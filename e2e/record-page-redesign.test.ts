@@ -5,12 +5,12 @@ import {join} from 'node:path';
 const source=(path:string)=>readFileSync(join(process.cwd(),path),'utf8');
 
 describe('Board quick Deal creation and CRM record layout',()=>{
- it('keeps the desktop sections in the requested order',()=>{
+ it('keeps six desktop sections in the requested order',()=>{
   const app=source('src/App.tsx');
   const start=app.indexOf('<nav className="app-tabs"');
   const end=app.indexOf('</nav>',start);
   const tabMarkup=app.slice(start,end);
-  const names=['Home','Board','Tasks','Connections','Quotes','Catalog','Notebook'];
+  const names=['Home','Tasks','Connections','Quotes','Catalog','Notebook'];
   const indexes=names.map(name=>tabMarkup.indexOf('>'+name+'</button>'));
   expect(indexes.every(index=>index>=0)).toBe(true);
   expect(indexes).toEqual(indexes.slice().sort((a,b)=>a-b));

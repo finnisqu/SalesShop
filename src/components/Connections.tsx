@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {createPortal} from 'react-dom';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import { CompanyRecordPage } from './CompanyRecordPage';
+import {Board} from './Board';
+import {scopedStorageKey} from '../lib/developerPlayground';
+import './connections-board-toggle.css';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
@@ -47,9 +50,11 @@ import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
 
 type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'suppliers' | 'quotes' | 'activity';
 type CompanyFilter = CompanyRelationship | 'self' | 'all';
+type DirectoryLayout='board'|'table';
+type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
-  { id: 'companies', label: 'Companies', description: 'Accounts & partners' },
+  { id: 'companies', label: 'Companies', description: 'Companies & partners' },
   { id: 'people', label: 'People', description: 'Contacts' },
   { id: 'deals', label: 'Deals', description: 'Opportunities & jobs' },
   { id: 'organization', label: 'Our Organization', description: 'Employees & subcontractors' },
@@ -57,6 +62,14 @@ export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; descri
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
+const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
+function initialLayouts():DirectoryLayouts{
+  try{
+    const raw=JSON.parse(localStorage.getItem(LAYOUT_KEY)??'{}') as Partial<DirectoryLayouts>;
+    return {companies:raw.companies==='board'?'board':'table',
+      deals:raw.deals==='table'?'table':'board'};
+  }catch{return {companies:'table',deals:'board'};}
+}
 const companyColumns:ConnectionColumn[]=[
  {key:'name',label:'Company name'},{key:'type',label:'Relationship'},
  {key:'people',label:'People'},{key:'deals',label:'Deals'},{key:'quotes',label:'Quotes'},
@@ -126,6 +139,15 @@ function ContactOnFileIcon({kind}:{kind:'phone'|'email'}){
 }
 export function Connections() {
   const [tab, setTab] = useState<ConnectionsTab>(initialTab);
+  const [layouts,setLayouts]=useState<DirectoryLayouts>(initialLayouts);
+  const activeLayoutKind:'companies'|'deals'=tab==='companies'?'companies':'deals';
+  const chooseLayout=(kind:'companies'|'deals',value:DirectoryLayout)=>{
+    setLayouts(previous=>{
+      const next={...previous,[kind]:value};
+      try{localStorage.setItem(LAYOUT_KEY,JSON.stringify(next));}catch{}
+      return next;
+    });
+  };
   const [dealsView,setDealsView]=useState<'list'|'timeline'>(()=>{
     try{return window.sessionStorage.getItem('salesshop-connections-deals-timeline-beta-v1')==='timeline'?'timeline':'list';}
     catch{return 'list';}
@@ -459,7 +481,7 @@ export function Connections() {
           {label:'Suppliers',active:tab==='suppliers',onClick:()=>chooseTab('suppliers')},
           {label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
           {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
-          ...(tab==='deals'&&timelineBetaEnabled?[
+          ...(tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled?[
             {label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
           ]:[]),
@@ -471,8 +493,20 @@ export function Connections() {
             tab==='suppliers'?'Search suppliers and brands…':
             tab==='quotes'?'Search quotes…':'Search activities…'}/>}
         primary={<>
-          {tab==='companies'&&<Button variant="primary" className="connections-add"
+          {(tab==='companies'||tab==='deals')&&
+           <div className="connections-layout-toggle is-desktop" role="group" aria-label={tab==='deals'?'Deals layout':'Companies layout'}>
+            <button type="button" aria-label="Table layout" aria-pressed={layouts[activeLayoutKind]==='table'}
+              onClick={()=>chooseLayout(activeLayoutKind,'table')}>Table</button>
+            <button type="button" aria-label="Board layout" aria-pressed={layouts[activeLayoutKind]==='board'}
+              onClick={()=>chooseLayout(activeLayoutKind,'board')}>Board</button>
+           </div>}
+          {tab==='companies'&&layouts.companies==='table'&&<Button variant="primary" className="connections-add"
             onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
+          {(tab==='deals'||tab==='companies')&&layouts[activeLayoutKind]==='board'&&
+           <button type="button" className="connections-board-header-create" disabled={!recordsReady}
+            onClick={()=>document.querySelector<HTMLButtonElement>('.connections-board-host .board-add-button')?.click()}>
+            {tab==='deals'?'+ Deal':'+ Company'}
+           </button>}
           {tab==='people'&&<Button variant="primary" className="connections-add"
             onClick={()=>setPersonCreating(value=>!value)}>+ Person</Button>}
           {tab==='organization'&&<Button variant="primary" className="connections-add"
@@ -480,11 +514,11 @@ export function Connections() {
           {tab==='suppliers'&&<Button variant="primary" className="connections-add"
             disabled={!canManageSuppliers}
             onClick={()=>window.dispatchEvent(new Event('sales-shop:catalog-create'))}>+ Supplier</Button>}
-          {tab==='deals'&&timelineBetaEnabled&&<div className="ss-timeline-beta-actions ss-timeline-beta-view-toggle" role="group" aria-label="Deals display">
+          {tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled&&<div className="ss-timeline-beta-actions ss-timeline-beta-view-toggle" role="group" aria-label="Deals display">
             <button type="button" aria-pressed={dealsView==='list'} onClick={()=>chooseDealsView('list')}>List</button>
             <button type="button" aria-pressed={dealsView==='timeline'} onClick={()=>chooseDealsView('timeline')}>Timeline <small>Beta</small></button>
           </div>}
-          {tab==='deals'&&<Button variant="primary" className="connections-add"
+          {tab==='deals'&&layouts.deals==='table'&&<Button variant="primary" className="connections-add"
             onClick={()=>setDealCreating(value=>!value)}>+ Deal</Button>}
           {tab==='activity'&&<Button variant="primary" className="connections-add"
             onClick={()=>openActivityComposer({})}>+ Activity</Button>}
@@ -496,8 +530,16 @@ export function Connections() {
             }}>+ Quote</Button>}
         </>}
       />
+      {(tab==='companies'||tab==='deals')&&
+       <div className="connections-mobile-layout-bar">
+        <span>{tab==='deals'?'Deals display':'Companies display'}</span>
+        <div className="connections-layout-toggle is-mobile" role="group" aria-label={tab==='deals'?'Deals layout':'Companies layout'}>
+         <button type="button" aria-pressed={layouts[activeLayoutKind]==='table'} onClick={()=>chooseLayout(activeLayoutKind,'table')}>Table</button>
+         <button type="button" aria-pressed={layouts[activeLayoutKind]==='board'} onClick={()=>chooseLayout(activeLayoutKind,'board')}>Board</button>
+        </div>
+       </div>}
       {!recordsReady&&<WorkspaceLoadingState title="Loading Connections"
-        detail="Opening accounts, contacts, deals and quote links…" />}
+        detail="Opening companies, people, deals and quote links…" />}
       <div className="connections-directory-content"
         style={!recordsReady?{display:'none'}:undefined}>
       {(tab === 'activity'||tab==='quotes') && <div className="connections-history-heading">
@@ -513,7 +555,11 @@ export function Connections() {
 
 
           {notice && <p className="connections-notice" role="status">{notice}</p>}
-          {tab === 'companies' && (
+          {tab==='companies'&&layouts.companies==='board'&&
+            <div className="connections-board-host" aria-label="Company board layout">
+              <Board embeddedMode="accounts" searchQuery={query}/>
+            </div>}
+          {tab === 'companies' && layouts.companies==='table' && (
             <section className="connections-directory" aria-label="Company directory">
               
               <p className="connections-count">{companyRows.length} companies · preview or open full details</p>
@@ -607,9 +653,13 @@ export function Connections() {
 
             </section>
           )}
-          {tab==='deals'&&timelineBetaEnabled&&dealsView==='timeline'&&
+          {tab==='deals'&&layouts.deals==='board'&&
+            <div className="connections-board-host" aria-label="Deal board layout">
+              <Board embeddedMode="projects" searchQuery={query}/>
+            </div>}
+          {tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled&&dealsView==='timeline'&&
             <DealTimelineBetaOverview projects={projectRows} onOpen={openProject}/>}
-          {tab === 'deals' && (!timelineBetaEnabled||dealsView==='list') && <section className="connections-directory" aria-label="Deals directory">
+          {tab === 'deals' && layouts.deals==='table' && (!timelineBetaEnabled||dealsView==='list') && <section className="connections-directory" aria-label="Deals directory">
             
             <div className="connections-deals-capture-bar">
               <span>{projectRows.length} Deals · stages, bid dates and linked quotes</span>

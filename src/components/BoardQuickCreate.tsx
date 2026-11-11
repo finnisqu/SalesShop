@@ -14,7 +14,7 @@ export interface BoardDealCreateDetails{
 }
 /** Name-first Board creation with optional detail section; no navigation. */
 export function BoardQuickCreate({kind,onCreate}:{
-  kind:'Deal'|'Account';
+  kind:'Deal'|'Company'|'Account';
   onCreate:(name:string,details?:BoardDealCreateDetails)=>string|null|undefined|Promise<string|null|undefined>;
 }) {
   const companies=useCrmStore(state=>state.companies);

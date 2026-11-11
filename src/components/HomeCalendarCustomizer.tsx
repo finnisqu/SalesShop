@@ -2,11 +2,10 @@ import {useEffect,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {useAuthStore} from '../store/authStore';
-import {CALENDAR_BADGE_OPTIONS,CALENDAR_BADGE_COLORS,DEFAULT_HOME_CALENDAR_SETTINGS,HOME_SECTION_IDS,
+import {CALENDAR_BADGE_OPTIONS,CALENDAR_BADGE_COLORS,DEFAULT_HOME_CALENDAR_SETTINGS,
  badgeLabel,badgeColor,homeCalendarScope,readHomeCalendarSettings,
  saveHomeCalendarSettingsWithSync,useHomeCalendarSettings,
- type CalendarBadgeMetric,type CalendarBadgeColor,type HomeCalendarSettings,
- type HomeSectionId} from '../store/homeCalendarSettings';
+ type CalendarBadgeMetric,type CalendarBadgeColor,type HomeCalendarSettings} from '../store/homeCalendarSettings';
 import './home-calendar-customizer.css';
 
 const eventName='salesshop:open-home-calendar-settings';
@@ -16,7 +15,7 @@ export function openHomeCalendarCustomizer(){
 export function HomeCalendarGearButton({className=''}:{className?:string}){
  return <button type="button" className={'home-calendar-gear '+className}
   onClick={openHomeCalendarCustomizer} aria-label="Customize Home calendar" title="Customize Home calendar">
-  <svg className="home-calendar-gear-icon" width="20" height="20"
+  <svg className="home-calendar-gear-icon" width="17" height="17"
    viewBox="0 0 24 24" fill="none" stroke="currentColor"
    strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
    aria-hidden="true" focusable="false">
@@ -100,18 +99,6 @@ export function HomeCalendarCustomizer(){
    setOpen(false);
   }finally{setSaving(false);}
  };
- const changeSection=(id:HomeSectionId,visible:boolean)=>{
-  setDraft(previous=>({...previous,visibleSections:{...previous.visibleSections,[id]:visible}}));
- };
- const moveSection=(id:HomeSectionId,direction:-1|1)=>{
-  setDraft(previous=>{
-   const next=[...previous.sectionOrder],index=next.indexOf(id);
-   const target=index+direction;
-   if(index<0||target<0||target>=next.length)return previous;
-   [next[index],next[target]]=[next[target],next[index]];
-   return {...previous,sectionOrder:next};
-  });
- };
  if(!open)return null;
  return createPortal(<div className="home-calendar-customize-backdrop"
   onPointerDown={event=>{if(event.target===event.currentTarget)setOpen(false);}}>
@@ -172,27 +159,6 @@ export function HomeCalendarCustomizer(){
       </select>
      </div>
     </div>
-    <section className="home-calendar-customize-layout" aria-label="Home layout options">
-     <h3>Home layout</h3>
-     <p>Choose which sections appear and move them up or down. On this day records are expandable below the calendar agenda; Recent work remains a separate section.</p>
-     {draft.sectionOrder.map((id,index)=>{
-      const labels:Record<HomeSectionId,string>={
-       quickActions:'Quick actions',calendar:'Calendar & agenda',recent:'Recent work / notes'};
-      return <div className="home-calendar-section-row" key={id}>
-       <label><input type="checkbox" checked={draft.visibleSections[id]}
-         disabled={draft.visibleSections[id]&&HOME_SECTION_IDS.filter(section=>draft.visibleSections[section]).length===1}
-         onChange={event=>changeSection(id,event.target.checked)}/>
-        <span>{labels[id]}</span></label>
-       <div className="home-calendar-section-move" role="group" aria-label={'Reorder '+labels[id]}>
-        <button type="button" aria-label={'Move '+labels[id]+' up'} disabled={index===0}
-         onClick={()=>moveSection(id,-1)}>↑</button>
-        <button type="button" aria-label={'Move '+labels[id]+' down'}
-         disabled={index===draft.sectionOrder.length-1}
-         onClick={()=>moveSection(id,1)}>↓</button>
-       </div>
-      </div>;
-     })}
-    </section>
     <div className="home-calendar-customize-preview"><strong>Legend preview</strong>
      <CalendarBadgeLegend settings={draft} showEmpty/></div>
     <p className="home-calendar-customize-note">Calls, emails, texts and meetings use logged interactions. Company and person creation badges show workspace records. Quotes sent include external bids recorded in SalesShop. Settings sync to your signed-in account when online.</p>
