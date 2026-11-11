@@ -1,0 +1,142 @@
+/* Seven-day focus is a navigator, not a compressed monthly grid.
+   Month selectors are untouched. */
+.sales-calendar-popover.is-week .sales-calendar-week-day-label{
+ display:block;font-size:10px;font-weight:750;letter-spacing:.02em;
+ color:var(--ss-theme-muted);white-space:nowrap;
+}
+@media (min-width:760px){
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week{
+  display:flex!important;flex-direction:column!important;
+  height:430px!important;min-height:430px!important;max-height:430px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-heading{
+  flex:0 0 52px!important;min-height:52px!important;width:100%!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-main{
+  box-sizing:border-box;display:grid!important;flex:1 1 auto!important;
+  flex-direction:unset!important;grid-template-columns:minmax(155px,.78fr) minmax(0,1.55fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;min-height:0!important;height:auto!important;
+  overflow:hidden!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-month{
+  box-sizing:border-box;display:block!important;grid-column:1!important;grid-row:1!important;
+  flex:unset!important;width:100%!important;height:100%!important;min-height:0!important;
+  max-height:none!important;overflow:hidden!important;
+  border-right:1px solid var(--ss-theme-border);
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-weekdays{display:none!important}
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-grid{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:repeat(7,minmax(0,1fr))!important;grid-auto-rows:minmax(0,1fr)!important;
+  height:100%!important;min-height:0!important;max-height:none!important;
+  gap:3px!important;padding:8px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day{
+  box-sizing:border-box;display:flex!important;align-items:center!important;justify-content:space-between!important;
+  height:auto!important;min-height:0!important;max-height:none!important;
+  padding:3px 7px!important;overflow:hidden;
+  border:1px solid transparent!important;border-radius:8px!important;
+  background:transparent;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day.is-selected{
+  border-color:var(--ss-theme-accent)!important;background:var(--ss-theme-tint)!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select{
+  display:flex!important;flex:1 1 auto;flex-direction:row!important;
+  align-items:center!important;justify-content:flex-start!important;
+  gap:9px!important;min-width:0;height:100%!important;padding:3px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select>span:first-of-type{
+  font-size:14px!important;line-height:1!important;order:1;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-week-day-label{
+  order:0;min-width:28px;font-size:11px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots{
+  position:static!important;display:flex!important;flex:0 1 auto;
+  width:auto!important;max-width:60%!important;min-width:0;
+  align-items:center;justify-content:flex-end;gap:3px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day-preview{
+  box-sizing:border-box;display:flex!important;grid-column:2!important;grid-row:1!important;
+  flex-direction:column!important;flex:unset!important;
+  width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;
+  overflow:hidden!important;border-top:0!important;border-left:0!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-agenda{
+  flex:1 1 0!important;min-height:0!important;max-height:none!important;overflow:auto!important;
+ }
+}
+@media(max-width:759px){
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week{height:auto!important;min-height:0!important;max-height:none!important}
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-main{
+  display:flex!important;flex-direction:column!important;height:auto!important;min-height:0!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-month{
+  display:block!important;flex:0 0 auto!important;
+  width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-weekdays{display:none!important}
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-grid{
+  display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  grid-template-rows:66px!important;grid-auto-rows:66px!important;
+  height:72px!important;min-height:72px!important;max-height:72px!important;
+  gap:3px!important;padding:4px 6px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day{
+  box-sizing:border-box;display:flex!important;flex-direction:column;
+  height:64px!important;min-height:64px!important;max-height:64px!important;
+  padding:4px 2px!important;border-radius:8px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:flex-start!important;width:100%;gap:4px;padding:3px 0!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-week-day-label{font-size:9px!important}
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select>span:first-of-type{
+  align-self:center!important;font-size:14px;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots{
+  left:2px!important;right:2px!important;bottom:2px!important;
+  width:calc(100% - 4px)!important;max-width:none!important;
+  flex-wrap:nowrap!important;justify-content:center!important;overflow:hidden!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots :is(i,button){
+  min-width:10px!important;min-height:12px!important;height:12px!important;
+  font-size:8px!important;padding:0 1px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day-preview{
+  flex:0 0 auto!important;min-height:210px!important;height:auto!important;max-height:none!important;
+  border-left:0!important;border-top:1px solid var(--ss-theme-border)!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-agenda{
+  max-height:320px!important;min-height:150px!important;overflow-y:auto!important;
+ }
+}
