@@ -198,11 +198,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Relationship">{companyRelationshipLabel(company)}</RecordProperty>
-          <CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId}/>
+          <CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId} showChange={false}/>
           {isOurCompany(company)&&<span className="connections-company-self-inline">SELF · Linked to Our Organization</span>}
           <RecordProperty label="Created">{dateLabel(company.createdAt)}</RecordProperty>
           <RecordProperty label="Last updated">{dateLabel(company.updatedAt)}</RecordProperty>
         </div>}
+        {editing&&<CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId}/>}
       </RecordCard>
       {company.kind === 'customer' && <RecordCard title="Account forecast">
         <div className="connections-record-properties-list">

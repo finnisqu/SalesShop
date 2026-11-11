@@ -55,7 +55,7 @@ export function CompanyRelationshipTimeline({items,compact=false,onOpenTarget}:{
     aria-pressed={filter===choice.key} onClick={()=>{setFilter(choice.key);setVisibleCount(9);}}>
     {choice.label}</button>)}
   </div>}
-  <ol className="company-history-list">
+  <ol className="company-history-list" tabIndex={compact?undefined:0} aria-label="Relationship history entries">
    {shown.map(item=><li key={item.id}>
     <button type="button" className="company-history-row"
      disabled={!item.target||!onOpenTarget}
