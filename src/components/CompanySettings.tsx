@@ -18,6 +18,9 @@ import type { TeamRole } from '../services/teamAccess';
 import { useAuthStore } from '../store/authStore';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
+import {useCrmStore} from '../store/crmStore';
+import {isOurCompany,ourCompanyPatch,companyRelationshipPatch} from '../services/companyRelationship';
+import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 
 type SettingsTab = 'company' | 'account' | 'team' | 'appearance' | 'beta' | 'data' | 'advanced';
 type RecordKind = 'quote' | 'person' | 'company' | 'deal' | 'activity';
@@ -36,6 +39,11 @@ const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
 const localMessage = 'Sign in to a cloud workspace to manage your salesperson profile and team.';
 
 export function CompanySettings() {
+  const companies=useCrmStore(state=>state.companies);
+  const updateCrmCompany=useCrmStore(state=>state.updateCompany);
+  const resolveCrmCompany=useCrmStore(state=>state.resolveCompany);
+  const selfCompany=companies.find(isOurCompany);
+  const [selfCompanyNotice,setSelfCompanyNotice]=useState('');
   const settings = useCompanySettingsStore((state) => state.settings);
   const update = useCompanySettingsStore((state) => state.update);
   const saving = useCompanySettingsStore((state) => state.saving);
@@ -65,9 +73,32 @@ export function CompanySettings() {
   const [switchingWorkspace, setSwitchingWorkspace] = useState(false);
   const cloudReady = mode === 'cloud' && Boolean(user && organizationId && supabase);
   const [companyRole, setCompanyRole] = useState<TeamRole | null>(null);
-  const canEditCompany = mode === 'local' || companyRole === 'owner' || companyRole === 'admin';
+  const canEditCompany = !perspective&&(mode === 'local' || companyRole === 'owner' || companyRole === 'admin');
   // Shared-record deletion is deliberate maintenance, not ordinary CRM editing.
   const canManageRecords = !perspective && (mode === 'local' || actualRole === 'owner' || actualRole === 'admin');
+  const selectSelfCompany=(id:string)=>{
+    if(!canEditCompany)throw new Error('Only an owner or admin may designate the company.');
+    const current=useCrmStore.getState().companies;
+    const selected=current.find(item=>item.id===id);
+    if(!selected)throw new Error('Company no longer exists in this workspace.');
+    for(const old of current.filter(item=>isOurCompany(item)&&item.id!==id))
+      updateCrmCompany(old.id,ourCompanyPatch(old,false));
+    const updated=useCrmStore.getState().companies.find(item=>item.id===id)??selected;
+    updateCrmCompany(id,{...companyRelationshipPatch(updated,'partner'),
+      ...ourCompanyPatch(updated,true),kind:'non-customer'});
+    setSelfCompanyNotice('Our company selected: '+updated.name);
+  };
+  const createSelfCompany=(name:string)=>{
+    if(!canEditCompany)throw new Error('Only an owner or admin may designate the company.');
+    const clean=name.trim();
+    if(!clean)throw new Error('Enter a company name.');
+    const current=useCrmStore.getState().companies;
+    if(current.some(item=>item.name.trim().toLowerCase()===clean.toLowerCase()))
+      throw new Error('That Company already exists. Choose it above.');
+    const id=resolveCrmCompany(clean,'customer');
+    if(!id)throw new Error('Could not create Company.');
+    selectSelfCompany(id);
+  };
   const canQuickCreate=!perspective&&(mode==='local'||actualRole==='owner'||actualRole==='admin'||
     (actualRole==='member'&&actualDepartment==='general'));
   const visibleTabs = TABS.filter((item) => item.id === 'data' ? canManageRecords :
@@ -208,6 +239,25 @@ export function CompanySettings() {
               <SettingsIdentityFields settings={settings} update={update} />
             </fieldset>
           </Panel>
+          <article className="company-settings-card settings-self-company-card" aria-label="Our company CRM identity">
+            <header><div><strong>This is our company</strong>
+              <small>Choose the existing Company record used for Our Organization, or create one.</small>
+            </div></header>
+            <div className="settings-self-company-content">
+              <div className="ss-record-association-current">
+                <span>{selfCompany?selfCompany.name+' · SELF':'No Company record designated SELF'}</span>
+              </div>
+              {canEditCompany&&<UnifiedRecordPicker kind="Company"
+                triggerLabel={selfCompany?'Change our Company':'Select or create our Company'}
+                items={companies.slice().sort((a,b)=>a.name.localeCompare(b.name))
+                  .map(item=>({id:item.id,name:item.name,
+                    detail:isOurCompany(item)?'Current SELF Company':undefined}))}
+                onLink={selectSelfCompany} onCreate={createSelfCompany}
+                helper="This designation is shared across the organization and links its People roster. No duplicate Company is created when you select an existing one."/>}
+              {!canEditCompany&&<small className="settings-help">Only owners and admins can change this designation.</small>}
+              {selfCompanyNotice&&<small role="status" className="settings-help">{selfCompanyNotice}</small>}
+            </div>
+          </article>
           <article className="company-settings-card">
             <header><div><strong>Document branding</strong><small>Preview of the contact block customers will see.</small></div></header>
             <div className="company-branding-preview">

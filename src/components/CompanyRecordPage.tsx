@@ -9,7 +9,7 @@ import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_A
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork,type CompanyPatch } from '../types/crm';
 import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
- isOurCompany,ourCompanyPatch,visibleCompanyAliases,type EditableCompanyRelationship}
+ isOurCompany,visibleCompanyAliases,type EditableCompanyRelationship}
  from '../services/companyRelationship';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
@@ -54,7 +54,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const company = companies.find((candidate) => candidate.id === companyId);
   const [draft, setDraft] = useState({
     name: company?.name ?? '', relationship: company?companyRelationship(company):'unclassified' as const,
-    isSelf:company?isOurCompany(company):false,
     annualUnits: company?.annualUnits?.toString() ?? '',
     averageUnitValue: company?.averageUnitValue?.toString() ?? '',
     expectedSharePct: company?.expectedSharePct?.toString() ?? '',
@@ -69,7 +68,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   }, [companyId]);
   useEffect(() => {
     if (!editing && company) setDraft({
-      name: company.name, relationship: companyRelationship(company),isSelf:isOurCompany(company),
+      name: company.name, relationship: companyRelationship(company),
       annualUnits: company.annualUnits?.toString() ?? '',
       averageUnitValue: company.averageUnitValue?.toString() ?? '',
       expectedSharePct: company.expectedSharePct?.toString() ?? '',
@@ -127,17 +126,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     if(message){setEditError(message);return;}
     setEditError('');
     try{
-      // "Our Company" is a designation on this same CRM record, never a new
-      // customer/prospect or a separate duplicate internal company.
-      const relationshipPatch:CompanyPatch=draft.isSelf
-        ?companyRelationshipPatch(company,'partner')
-        :draft.relationship==='unclassified'?{}
-          :companyRelationshipPatch(company,draft.relationship as EditableCompanyRelationship);
+      // SELF designation is now managed only under Settings > Company.
+      const relationshipPatch:CompanyPatch=isOurCompany(company)||draft.relationship==='unclassified'?{}
+        :companyRelationshipPatch(company,draft.relationship as EditableCompanyRelationship);
       updateCompany(company.id, {
         name: draft.name.trim(),
         ...relationshipPatch,
-        ...ourCompanyPatch({aliases:relationshipPatch.aliases??company.aliases},draft.isSelf),
-        ...(draft.isSelf?{kind:'non-customer' as const}:{}),
         annualUnits: optionalNumber(draft.annualUnits),
         averageUnitValue: optionalNumber(draft.averageUnitValue),
         expectedSharePct: optionalNumber(draft.expectedSharePct),
@@ -179,15 +173,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <RecordEditField label="Company name" required error={editError==='Enter a company name.'?editError:undefined}>
             {control=><input {...control} autoFocus value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
           </RecordEditField>
-          <details className="connections-company-advanced-identity">
-            <summary>Company identity <span>{draft.isSelf?'· SELF':''}</span></summary>
-            <label className="connections-company-self-compact">
-              <input type="checkbox" checked={draft.isSelf}
-                onChange={event=>setDraft({...draft,isSelf:event.target.checked})}/>
-              This is our company
-            </label>
-          </details>
-          {!draft.isSelf&&<label>Relationship<select value={draft.relationship}
+          {!isOurCompany(company)&&<label>Relationship<select value={draft.relationship}
             onChange={event=>setDraft({...draft,relationship:event.target.value as EditableCompanyRelationship})}>
             <option value="unclassified" disabled>Not classified</option>
             <option value="prospect">Prospect</option>
