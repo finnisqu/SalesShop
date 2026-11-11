@@ -1,0 +1,180 @@
+/* Connections owns the view switch; the established Kanban board owns its columns. */
+.sales-app.view-dashboard .connections-layout-toggle{
+ display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;
+ padding:3px;border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-base);
+}
+.sales-app.view-dashboard .connections-layout-toggle button{
+ box-sizing:border-box;min-height:32px;min-width:56px;padding:6px 10px;
+ border:0;border-radius:7px;background:transparent;color:var(--ss-theme-muted);
+ font:700 11px/1.2 var(--ss-font-body);cursor:pointer;
+}
+.sales-app.view-dashboard .connections-layout-toggle button[aria-pressed=true]{
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ box-shadow:0 1px 4px #0002;
+}
+.sales-app.view-dashboard .connections-layout-toggle button:focus-visible{
+ outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px;
+}
+.sales-app.view-dashboard .connections-directory-content:has(.connections-board-host){
+ box-sizing:border-box;display:flex;flex-direction:column;
+ min-height:0;flex:1 1 auto;overflow:hidden;
+}
+.sales-app.view-dashboard .connections-board-host{
+ box-sizing:border-box;display:flex;flex:1 1 auto;flex-direction:column;
+ min-height:350px;height:min(66dvh,720px);width:100%;min-width:0;
+ overflow:hidden;border:1px solid var(--ss-theme-border);
+ border-radius:11px;background:var(--ss-theme-canvas);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-view{
+ box-sizing:border-box;flex:1 1 auto;min-height:0;width:100%;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);overflow:hidden;
+}
+.sales-app.view-dashboard .connections-board-tools{
+ box-sizing:border-box;display:flex;align-items:center;flex:0 0 auto;gap:9px;
+ flex-wrap:wrap;min-width:0;padding:9px 12px;
+ border-bottom:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-card);
+}
+.sales-app.view-dashboard .connections-board-tools label{
+ display:flex;align-items:center;gap:7px;min-width:0;
+ font:700 11px/1.3 var(--ss-font-body);color:var(--ss-theme-muted);
+}
+.sales-app.view-dashboard .connections-board-tools select,
+.sales-app.view-dashboard .connections-board-compact{
+ min-height:34px;box-sizing:border-box;padding:6px 9px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:650 11px/1.2 var(--ss-font-body);
+}
+.sales-app.view-dashboard .connections-board-compact{cursor:pointer}
+.sales-app.view-dashboard .connections-board-compact[aria-pressed=true]{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint);
+}
+.sales-app.view-dashboard .connections-board-tools .board-add-button{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:35px;margin-left:auto;padding:7px 12px;
+ border:1px solid var(--ss-theme-accent);border-radius:8px;
+ background:var(--ss-theme-accent);color:var(--ss-theme-contrast);
+ font:750 11px/1.2 var(--ss-font-body);cursor:pointer;
+}
+.sales-app.view-dashboard .connections-board-subtitle{
+ color:var(--ss-theme-muted);font:650 11px/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .project-board{
+ flex:1 1 0;min-height:0;height:0;display:flex;
+ align-items:stretch;overflow-x:auto;overflow-y:hidden;gap:10px;
+ padding:12px 12px 14px;overscroll-behavior:contain;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column{
+ box-sizing:border-box;flex:0 0 274px;width:274px;min-width:274px;
+ height:100%;min-height:0;max-height:100%;overflow:hidden;
+ padding:0 9px;border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-base);box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-header{
+ box-sizing:border-box;display:block;min-height:62px;flex:0 0 auto;padding:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-toggle{
+ box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+ width:calc(100% + 18px);min-height:62px;min-width:0;gap:6px;
+ margin:0 -9px;padding:10px 11px;border:0;border-radius:9px 9px 0 0;
+ background:transparent;color:var(--ss-theme-ink);cursor:pointer;text-align:left;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-toggle:hover{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-title{
+ display:block;min-width:0;margin:0;flex:1;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-stage-name{
+ display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+ color:var(--ss-theme-ink);font:750 11px/1.2 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-count{
+ display:block;margin:5px 0 0;color:var(--ss-theme-muted);font:600 10px/1.2 var(--ss-font-body);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-count-suffix{
+ display:inline;margin:0;font:inherit;color:inherit;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-trailing{
+ display:flex;align-items:center;gap:5px;margin:0;color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-carousel-position{display:none}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-card-stack{
+ box-sizing:border-box;display:flex;flex:1 1 0;flex-direction:column;
+ height:0;min-height:0;overflow-x:hidden;overflow-y:auto;
+ padding:0 3px 10px 0;gap:8px;overscroll-behavior:contain;
+ scrollbar-width:thin;scrollbar-gutter:stable;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host :is(.project-card,.account-card){
+ flex:0 0 auto;transform:none;border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host :is(.project-card,.account-card) :is(h3,.project-card-title-value,.account-card-title-value,.project-card-facts strong){
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host
+ :is(.project-card-company,.project-last-touch,.project-card-facts,.account-card-reason,.account-card-stats,.project-next-action){
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-empty-card{
+ color:var(--ss-theme-muted);background:var(--ss-theme-card);border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-view.is-compact :is(.project-card,.account-card){
+ min-height:0;height:auto;padding:10px 11px;box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-view.is-compact .project-card :is(
+ .project-card-pin,.project-card-company,.project-card-title-value,.project-card-facts,
+ .project-next-action,.project-attention-flags,.project-last-touch,.project-card-open,
+ .account-card-title-value,.account-card-stats,.account-card-annual-value,.account-card-reason){display:none}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-view.is-compact
+ :is(.project-card-title-row,.account-card-title-row){display:block;margin:0}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-view.is-compact
+ :is(.project-card-title-row h3,.account-card-title-row h3){margin:0;font:750 12px/1.3 var(--ss-font-body)}
+@media(min-width:701px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column.is-collapsed{
+  flex:0 0 45px;width:45px;min-width:45px;padding-inline:4px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column.is-collapsed .board-column-header{
+  flex:1 1 auto;min-height:0;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column.is-collapsed .board-column-toggle{
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  width:calc(100% + 8px);height:100%;min-height:0;gap:0;padding:11px 1px;
+  margin-inline:-4px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column.is-collapsed .board-column-title{
+  display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-end;
+  height:100%;gap:12px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column.is-collapsed .board-column-stage-name{
+  writing-mode:vertical-rl;transform:rotate(180deg);max-height:calc(100% - 38px);font-size:11px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column.is-collapsed .board-column-count{
+  display:grid;place-items:center;flex:0 0 24px;width:24px;height:24px;margin:0;
+  border:1px solid var(--ss-theme-border);border-radius:50%;background:var(--ss-theme-card);
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column.is-collapsed
+ :is(.board-column-count-suffix,.board-column-trailing,.board-column-rule,.board-card-stack){display:none}
+}
+@media(max-width:700px){
+ .sales-app.view-dashboard .connections-layout-toggle button{min-width:49px;min-height:34px;padding:7px}
+ .sales-app.view-dashboard .connections-board-host{height:calc(100dvh - 220px);min-height:330px}
+ .sales-app.view-dashboard .connections-board-tools{padding:8px;gap:6px}
+ .sales-app.view-dashboard .connections-board-tools label{flex:1 1 auto}
+ .sales-app.view-dashboard .connections-board-tools select{max-width:155px}
+ .sales-app.view-dashboard .connections-board-compact{min-height:38px}
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .project-board{
+  scroll-snap-type:x mandatory;scroll-padding-inline:10px;
+  padding:10px 10px 14px;gap:9px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column{
+  flex:0 0 calc(100vw - 50px);width:calc(100vw - 50px);min-width:calc(100vw - 50px);
+  height:100%;min-height:0;max-height:100%;scroll-snap-align:start;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-toggle:disabled{
+  cursor:default;opacity:1;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-header .board-carousel-position{display:inline-flex}
+}
