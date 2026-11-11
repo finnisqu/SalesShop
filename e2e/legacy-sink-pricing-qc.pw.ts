@@ -31,11 +31,11 @@ const quoteFixture=(status:'Draft'|'Sent'='Draft')=>({
       customerVisible:true,includeInTotal:true},
   ],
 });
-async function seedLocalOnly(page:Page,status:'Draft'|'Sent'='Draft'){
+async function seedLocalOnly(page:Page,status:'Draft'|'Sent'='Draft',betaEnabled=true){
   await page.goto('/');
-  await page.evaluate(({quote,status})=>{
+  await page.evaluate(({quote,status,betaEnabled})=>{
     localStorage.setItem('salesshop-active-view-v1','quotes');
-    localStorage.setItem('salesshop:quotes-mobile-beta-v1','1');
+    localStorage.setItem('salesshop:quotes-mobile-beta-v1',betaEnabled?'1':'0');
     localStorage.setItem('salesshop-react-quotes-v1',
       JSON.stringify({schemaVersion:2,quotes:[quote],activeQuoteId:quote.id}));
     sessionStorage.setItem('salesshop:quotes-mobile-beta-location-v1',JSON.stringify({
@@ -43,7 +43,7 @@ async function seedLocalOnly(page:Page,status:'Draft'|'Sent'='Draft'){
     }));
     // Never set a credential, real organization, or cloud source.
     void status;
-  },{quote:quoteFixture(status),status});
+  },{quote:quoteFixture(status),status,betaEnabled});
   await page.reload();
 }
 async function savedQuote(page:Page){
@@ -116,6 +116,12 @@ test('legacy sink: no auto charge; explicit cancel/approve; safe opt-out and ref
   expect(created[0].includeInTotal).toBe(true);
   const managedId=created[0].id;
 
+  const dismissedRemoval=await clickWithConfirmation(page,inclusion,false);
+  expect(dismissedRemoval).toContain('Proposed total: $630.00');
+  await expect(inclusion).toBeChecked();
+  await expect(total).toHaveText('$855.00');
+  expect((await savedQuote(page)).amount).toBe(855);
+
   const removal=await clickWithConfirmation(page,inclusion,true);
   expect(removal).toContain('Proposed total: $630.00');
   await expect(inclusion).not.toBeChecked();
@@ -153,5 +159,41 @@ test('issued legacy quote remains read-only in the phone and desktop Materials U
   const before=await savedQuote(page);
   expect(before.amount).toBe(630);
   await page.reload();
+  expect(await savedQuote(page)).toEqual(before);
+});
+
+test('switching a saved historical quote from Detailed Editor to Quick Quote and back never changes prices',async({page},info)=>{
+  test.skip(!['phone-390','desktop-1280'].includes(info.project.name),'Focused phone and desktop QA');
+  await seedLocalOnly(page,'Draft',false);
+  const detailed=page.locator('.quotes-workbench');
+  await expect(detailed).toBeVisible();
+  const before=await savedQuote(page);
+  expect(before.amount).toBe(630);
+  if(info.project.name==='phone-390'){
+    await detailed.locator('.quote-mobile-view-button').click();
+    await page.getByRole('dialog',{name:'Quote view'})
+      .getByRole('button',{name:'Open Quick Quote'}).click();
+  }else{
+    await page.getByRole('group',{name:'Quote editor'})
+      .getByRole('button',{name:'Quick Quote'}).click();
+  }
+  const beta=page.getByRole('main',{name:'Quotes mobile beta'});
+  await expect(beta).toBeVisible();
+  expect(await savedQuote(page)).toEqual(before);
+  await page.reload();
+  await expect(beta).toBeVisible();
+  expect(await savedQuote(page)).toEqual(before);
+
+  if(info.project.name==='phone-390'){
+    await beta.getByLabel('Open SalesShop navigation').click();
+    await beta.getByRole('button',{name:/Settings & Profile/}).click();
+  }else{
+    await page.getByRole('button',{name:'Account and settings'}).click();
+    await page.getByRole('button',{name:/Settings & Profile/}).click();
+  }
+  await page.getByRole('navigation',{name:'Settings sections'})
+    .getByRole('button',{name:/Beta Features/}).click();
+  await page.getByRole('button',{name:'Open classic Quotes'}).click();
+  await expect(detailed).toBeVisible();
   expect(await savedQuote(page)).toEqual(before);
 });
