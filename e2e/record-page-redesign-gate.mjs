@@ -7,11 +7,14 @@ const contains = (text, pieces) => pieces.every(piece=>text.includes(piece));
 const app=source('src/App.tsx');
 const start=app.indexOf('<nav className="app-tabs"');
 const tabs=app.slice(start,app.indexOf('</nav>',start));
-const names=['Home','Board','Tasks','Connections','Quotes','Catalog','Notebook'];
+const names=['Home','Tasks','Connections','Quotes','Catalog','Notebook'];
 const positions=names.map(name=>tabs.indexOf('>'+name+'</button>'));
 assert(positions.every(position=>position>=0),'Missing desktop navigation item');
 assert.deepEqual(positions,[...positions].sort((a,b)=>a-b),'Incorrect desktop navigation order');
 
+assert(app.includes('PRIMARY_NAV_DESTINATIONS'),'Nav shortcuts must remain defined');
+assert(app.includes('event.code'),'Keyboard shortcuts must use physical digit keys');
+assert(app.includes("closest('input,textarea,select,[contenteditable]"),'Shortcuts must ignore editing controls');
 const quick=source('src/components/BoardQuickCreate.tsx');
 assert(contains(quick,[
   'className="board-create-name-input"','More details',
