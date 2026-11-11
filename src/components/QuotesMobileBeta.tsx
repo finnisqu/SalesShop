@@ -223,7 +223,7 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
               if(window.confirm(quoteTakeoffSinkChargeConfirmation(quote,line.sectionId!,line.takeoffSinkId!,include)))
                 setTakeoffCharge(quote.id,line.sectionId!,line.takeoffSinkId!,include);
             }}/> {line.includeInTotal?'Included in quote':'Specification only · not charged'}</label>
-          :<label className="qmb-check"><input type="checkbox" checked={line.includeInTotal} onChange={e=>update(quote.id,line.id,{includeInTotal:e.target.checked})}/> Include in quote total</label>
+          :<label className="qmb-check"><input type="checkbox" checked={line.includeInTotal} onChange={e=>update(quote.id,line.id,{includeInTotal:e.target.checked})}/> Include in quote total</label>}
 
         <div className="qmb-line-structure" aria-label="Line arrangement">
           <div className="qmb-line-order">
