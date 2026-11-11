@@ -31,3 +31,14 @@
  .ss-unified-picker-panel input[type=search]{min-height:44px;font-size:16px}
  .ss-unified-picker-results>button,.ss-unified-picker-create{min-height:44px}
 }
+
+/* Reuse the searchable existing-or-create record picker in editable CRM fields. */
+.ss-record-association-field{display:grid;gap:7px;min-width:0}
+.ss-record-association-label{font-size:12px;font-weight:650;color:var(--ss-theme-ink)}
+.ss-record-association-current{display:flex;align-items:center;justify-content:space-between;
+ gap:8px;min-width:0;border:1px solid var(--ss-theme-border);border-radius:8px;
+ padding:8px 10px;background:var(--ss-theme-base);color:var(--ss-theme-ink)}
+.ss-record-association-current>span{overflow-wrap:anywhere;min-width:0;font-size:12px}
+.ss-record-association-current>button{flex:none;border:0;background:transparent;
+ color:var(--ss-theme-accent);cursor:pointer;font-size:12px;font-weight:650}
+.ss-record-association-field>.ss-unified-record-picker{margin:0}

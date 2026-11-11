@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
+import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {DealPeopleRelationships} from './DealPersonRelationships';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
@@ -24,6 +25,8 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
+import {isOurCompany,companyRelationshipPatch} from '../services/companyRelationship';
 import '../deal-people.css';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -54,7 +57,9 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const updateDeal = useCrmStore(state => state.updateProject);
   const assignDeal = useCrmStore(state => state.assignProject);
   const {members:assignees}=useDealAssigneeDirectory();
-  const relinkCompany = useCrmStore(state => state.relinkProjectCompany);
+  const setProjectCompany = useCrmStore(state => state.setProjectCompany);
+  const resolveCompany = useCrmStore(state => state.resolveCompany);
+  const updateCompany = useCrmStore(state => state.updateCompany);
   const quotes = useQuoteStore(state => state.quotes);
   const hydrateQuotes = useQuoteStore(state => state.hydrate);
   const createQuote = useQuoteStore(state => state.createQuote);
@@ -64,6 +69,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const [editing, setEditing] = useState(false);
   const [saving,setSaving]=useState(false);
   const [saveError,setSaveError]=useState('');
+  const [newCompanyName,setNewCompanyName]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
@@ -85,16 +91,20 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setActivityPreviewId(null);
-    setExternalQuoteOpen(false);setExternalQuoteDialogOpen(false);setSaveError('');setNotice(null); }, [dealId]);
+    setExternalQuoteOpen(false);setExternalQuoteDialogOpen(false);setNewCompanyName('');
+    setSaveError('');setNotice(null); }, [dealId]);
   useEffect(()=>{if(!timelineBetaEnabled)setTimelineOpen(false);},[timelineBetaEnabled]);
   useEffect(() => {
-    if (!editing && deal) setDraft({
+    if (!editing && deal) {
+      setNewCompanyName('');
+      setDraft({
       name: deal.name, stage: deal.stage,
       pipeline: (deal.pipeline ?? '') as DealPipeline | '', companyId: deal.companyId ?? '',
       assignedUserId: deal.assignedUserId ?? '',
       amount: deal.amount?.toString() ?? '', dueDate: deal.dueDate ?? '',
       nextAction: deal.nextAction ?? '', lastTouchpoint: deal.lastTouchpoint ?? '',
-    });
+      });
+    }
   }, [deal, editing]);
   const related = useMemo(
     () => deal ? dealRecordView(deal, companies, contacts, quotes, activities) : null,
@@ -120,16 +130,39 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     const amount=draft.amount.trim()?Number(draft.amount):undefined;
     setSaving(true);setSaveError('');
     try{
-    if((deal.assignedUserId??'')!==draft.assignedUserId)
-      await assignDeal(deal.id,draft.assignedUserId||undefined);
+    // Validate the selected Company before changing the Deal. A newly typed
+    // name is only staged here; Cancel never creates an orphan CRM record.
+    let companyId=draft.companyId||undefined;
+    if(newCompanyName.trim()){
+      const clean=newCompanyName.trim();
+      const before=new Set(useCrmStore.getState().companies.map(c=>c.id));
+      if(useCrmStore.getState().companies.some(c=>c.name.trim().toLowerCase()===clean.toLowerCase()))
+        throw new Error('That Company already exists. Select it from search instead.');
+      // First complete any server-confirmed assignment operation. This avoids
+      // creating a Company if assignment fails before the Deal can be saved.
+      if((deal.assignedUserId??'')!==draft.assignedUserId)
+        await assignDeal(deal.id,draft.assignedUserId||undefined);
+      const createdId=resolveCompany(clean,'customer');
+      if(!createdId||before.has(createdId))
+        throw new Error('That Company may already exist. Select it from search instead.');
+      const created=useCrmStore.getState().companies.find(c=>c.id===createdId);
+      if(created)updateCompany(createdId,companyRelationshipPatch(created,'prospect'));
+      companyId=createdId;
+    }else{
+      if(companyId&&!useCrmStore.getState().companies.some(c=>c.id===companyId))
+        throw new Error('Selected Company is no longer available. Choose another Company.');
+      if((deal.assignedUserId??'')!==draft.assignedUserId)
+        await assignDeal(deal.id,draft.assignedUserId||undefined);
+    }
     updateDeal(deal.id, {
       name: draft.name.trim(), stage: draft.stage, pipeline: draft.pipeline || undefined, amount,
       dueDate: draft.dueDate || undefined,
       nextAction: draft.nextAction.trim() || undefined,
       lastTouchpoint: draft.lastTouchpoint || undefined,
-      ...(!draft.companyId && deal.companyId ? { companyName: '' } : {}),
     });
-    if (draft.companyId && draft.companyId !== deal.companyId) relinkCompany(deal.id, draft.companyId);
+    if((deal.companyId??'')!==(companyId??''))
+      setProjectCompany(deal.id,companyId);
+    setNewCompanyName('');
     setEditing(false);
     setNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
     }catch(reason){setSaveError(reason instanceof Error?reason.message:'Unable to save Deal assignment.');}
@@ -159,7 +192,11 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length+outsideQuotes.length} linked quotes</span></>}
     actions={<>
       {timelineBetaEnabled&&<button type="button" onClick={()=>setTimelineOpen(true)}>Project timeline <small>Beta</small></button>}
-      <button type="button" onClick={() => {setNotice(null);setSaveError('');setEditing(value=>!value);}}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
+      <button type="button" onClick={() => {
+        setNotice(null);setSaveError('');
+        if(editing)setNewCompanyName('');
+        setEditing(value=>!value);
+      }}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
       {canEditCrm&&
         <button type="button" onClick={()=>{
            if(window.matchMedia('(max-width:760px)').matches){setExternalQuoteDialogOpen(true);setExternalQuoteOpen(false);}
@@ -192,17 +229,39 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           <label>Bid due date<input type="date" value={draft.dueDate} onChange={event => setDraft({...draft,dueDate:event.target.value})} /></label>
           <label>Assigned salesperson<DealAssigneeSelect value={draft.assignedUserId}
             onChange={value=>setDraft({...draft,assignedUserId:value})} disabled={saving}/></label>
-          <label>Company<select value={draft.companyId} onChange={event => setDraft({...draft,companyId:event.target.value})}>
-            <option value="">No company selected</option>
-            {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map(company =>
-              <option key={company.id} value={company.id}>{company.name}</option>)}
-          </select></label>
+          <div className="ss-record-association-field" role="group" aria-label="Deal Company">
+            <strong className="ss-record-association-label">Company</strong>
+            <div className="ss-record-association-current">
+              <span>{newCompanyName
+                ?'New Company · '+newCompanyName+' (created when Deal is saved)'
+                :companies.find(company=>company.id===draft.companyId)?.name||
+                  (draft.companyId?'Company unavailable':'No company selected')}</span>
+              {(draft.companyId||newCompanyName)&&<button type="button" disabled={saving}
+                aria-label="Clear Deal Company" onClick={()=>{
+                  setNewCompanyName('');setDraft(previous=>({...previous,companyId:''}));
+                }}>Clear</button>}
+            </div>
+            <UnifiedRecordPicker kind="Company" disabled={saving}
+              triggerLabel={draft.companyId||newCompanyName?'Change Company':'Search or add Company'}
+              items={companies.filter(company=>
+                (!isOurOrgCompany(company)&&!isOurCompany(company))||
+                company.id===draft.companyId)
+                .slice().sort((a,b)=>a.name.localeCompare(b.name))
+                .map(company=>({id:company.id,name:company.name,
+                  detail:company.aliases?.join(', ')||undefined}))}
+              onLink={id=>{setNewCompanyName('');
+                setDraft(previous=>({...previous,companyId:id}));}}
+              onCreate={name=>{setNewCompanyName(name.trim());
+                setDraft(previous=>({...previous,companyId:''}));}}
+              helper="Choose an existing Company or create one on Save changes. Canceling Deal edits creates nothing."/>
+          </div>
           <label>Next action<textarea rows={3} value={draft.nextAction} onChange={event => setDraft({...draft,nextAction:event.target.value})} /></label>
           <label>Last touchpoint<input type="date" value={draft.lastTouchpoint} onChange={event => setDraft({...draft,lastTouchpoint:event.target.value})} /></label>
           <RecordFormFeedback notice={saveError&&!['Enter a deal name.'].includes(saveError)&&!saveError.startsWith('Deal amount')
             ?{kind:'error',message:saveError}:saving?{kind:'saving',message:'Applying deal changes…'}:null}/>
           <div className="connections-record-form-actions ss-record-editor-actions">
-            <button type="button" onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+            <button type="button" onClick={() => {setNewCompanyName('');setEditing(false);}}
+              disabled={saving}>Cancel</button>
             <button className="connections-record-primary" type="submit" disabled={saving}>{saving?'Saving…':'Save changes'}</button>
           </div>
         </form> : <div className="connections-record-properties-list">
