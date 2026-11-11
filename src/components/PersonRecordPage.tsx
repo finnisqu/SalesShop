@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
+import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {PersonDealRelationships} from './DealPersonRelationships';
@@ -9,8 +10,8 @@ import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useNavigationStore } from '../store/navigationStore';
-import {isOurOrgCompany,ourOrgGroup,isOurOrgContact,rosterGroupForContact} from '../services/ourOrganizationDirectory';
-import {isOurCompany} from '../services/companyRelationship';
+import {isOurOrgCompany,isOurOrgContact,rosterGroupForContact} from '../services/ourOrganizationDirectory';
+import {isOurCompany,companyRelationshipPatch} from '../services/companyRelationship';
 import {CrmOwnerControl} from './CrmOwnerControl';
 
 const dateLabel = (value: string) => {
@@ -29,6 +30,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const quotes = useQuoteStore((state) => state.quotes);
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
   const updateContact = useCrmStore((state) => state.updateContact);
+  const resolveCompany = useCrmStore((state) => state.resolveCompany);
+  const updateCompany = useCrmStore((state) => state.updateCompany);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
@@ -39,6 +42,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editError,setEditError]=useState('');
+  const [newCompanyName,setNewCompanyName]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   const [draft, setDraft] = useState({
     name: person?.name ?? '', email: person?.email ?? '', phone: person?.phone ?? '',
@@ -53,13 +57,17 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   useEffect(() => {
     setEditing(false);
     setHistoryOpen(false);setActivityPreviewId(null);
+    setNewCompanyName('');
     setEditError('');setNotice(null);
   }, [contactId]);
   useEffect(() => {
-    if (!editing && person) setDraft({
-      name: person.name, email: person.email ?? '', phone: person.phone ?? '',
-      title: person.title ?? '', companyId: person.companyId ?? '',
-    });
+    if (!editing && person) {
+      setNewCompanyName('');
+      setDraft({
+        name: person.name, email: person.email ?? '', phone: person.phone ?? '',
+        title: person.title ?? '', companyId: person.companyId ?? '',
+      });
+    }
   }, [person, editing]);
 
   if (!hydrated) return <section className="connections-record-missing" role="status">Loading person record…</section>;
@@ -77,10 +85,28 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
     if(emailError){setEditError(emailError);return;}
     setEditError('');
     try{
+      let companyId=draft.companyId||undefined;
+      if(newCompanyName.trim()){
+        // New names are staged until Save so Cancel never leaves an orphan Company.
+        const clean=newCompanyName.trim();
+        const currentCompanies=useCrmStore.getState().companies;
+        const knownIds=new Set(currentCompanies.map(item=>item.id));
+        if(currentCompanies.some(item=>item.name.trim().toLowerCase()===clean.toLowerCase()))
+          throw new Error('That Company already exists. Select it from search instead.');
+        const createdId=resolveCompany(clean,'customer');
+        if(!createdId||knownIds.has(createdId))
+          throw new Error('A matching Company already exists. Choose it from search.');
+        const created=useCrmStore.getState().companies.find(item=>item.id===createdId);
+        if(created)updateCompany(createdId,companyRelationshipPatch(created,'prospect'));
+        companyId=createdId;
+      }else if(companyId&&!useCrmStore.getState().companies.some(item=>item.id===companyId)){
+        throw new Error('Selected Company is no longer available. Choose another one.');
+      }
       updateContact(person.id, {
         name,email:draft.email.trim(),phone:draft.phone.trim(),
-        title:draft.title.trim(),companyId:draft.companyId||undefined,
+        title:draft.title.trim(),companyId,
       });
+      setNewCompanyName('');
       setEditing(false);
       setNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
     }catch(reason){setEditError(reason instanceof Error?reason.message:'Unable to apply person changes.');}
@@ -93,7 +119,11 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   return <><RecordPageLayout entityType="person" title={displayName} onBack={onBack}
     subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
-    actions={<button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(value=>!value);}}>
+    actions={<button type="button" onClick={() => {
+      setNotice(null);setEditError('');
+      if(editing)setNewCompanyName('');
+      setEditing(value=>!value);
+    }}>
       {editing ? 'Cancel editing' : 'Edit person'}
     </button>}
     left={<>
@@ -109,17 +139,32 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           </RecordEditField>
           <label>Phone<input type="tel" value={draft.phone} onChange={(event) => setDraft({ ...draft, phone: event.target.value })} /></label>
           <label>Job title<input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
-          <label>Company<select value={draft.companyId} onChange={(event) => setDraft({ ...draft, companyId: event.target.value })}>
-            <option value="">Unassigned company</option>
-            {companies.filter(item=>!isOurOrgCompany(item)||item.id===person.companyId)
-             .slice().sort((a,b) => a.name.localeCompare(b.name)).map(item=>
-              <option key={item.id} value={item.id}>
-               {isOurOrgCompany(item)?'Our Organization · '+(ourOrgGroup(item)==='employees'?'Employees':'Subcontractors'):item.name}
-              </option>)}
-          </select></label>
+          <div className="ss-record-association-field" role="group" aria-label="Person Company">
+            <strong className="ss-record-association-label">Company</strong>
+            <div className="ss-record-association-current">
+              <span>{newCompanyName
+                ?'New Company · '+newCompanyName+' (created when Person is saved)'
+                :companies.find(item=>item.id===draft.companyId)?.name||
+                  (draft.companyId?'Company unavailable':'Unassigned company')}</span>
+              {(draft.companyId||newCompanyName)&&<button type="button"
+                aria-label="Clear Person Company" onClick={()=>{
+                  setNewCompanyName('');setDraft(previous=>({...previous,companyId:''}));
+                }}>Clear</button>}
+            </div>
+            <UnifiedRecordPicker kind="Company"
+              triggerLabel={draft.companyId||newCompanyName?'Change Company':'Search or add Company'}
+              items={companies.filter(item=>!isOurOrgCompany(item)||item.id===draft.companyId)
+                .slice().sort((a,b)=>a.name.localeCompare(b.name))
+                .map(item=>({id:item.id,name:item.name,detail:item.aliases?.join(', ')||undefined}))}
+              onLink={id=>{setNewCompanyName('');
+                setDraft(previous=>({...previous,companyId:id}));}}
+              onCreate={name=>{setNewCompanyName(name.trim());
+                setDraft(previous=>({...previous,companyId:''}));}}
+              helper="Search existing Companies or create one on Save changes. Canceling creates nothing."/>
+          </div>
           <RecordFormFeedback notice={editError&&!['Enter a name or email.','Enter a valid email address.'].includes(editError)?{kind:'error',message:editError}:null}/>
           <div className="connections-record-form-actions ss-record-editor-actions">
-            <button type="button" onClick={() => setEditing(false)}>Cancel</button>
+            <button type="button" onClick={() => {setNewCompanyName('');setEditing(false);}}>Cancel</button>
             <button type="submit" className="connections-record-primary">Save changes</button>
           </div>
         </form> : <div className="connections-record-properties-list">

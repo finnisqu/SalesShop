@@ -1,4 +1,4 @@
-import {useMemo,useState,type FormEvent} from 'react';
+import {useState} from 'react';
 import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
 import {useAuthStore} from '../store/authStore';
@@ -7,6 +7,7 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
+import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {PreviewPanelClose} from './PreviewPanelChrome';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import '../external-quote.css';
@@ -23,30 +24,22 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,in
   department=useAuthStore(s=>s.teamDepartment);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const editable=!perspective&&(mode==='local'||Boolean(orgId&&userId&&canEditTeamArea(role,department,'crm')));
- const [query,setQuery]=useState('');
  const [selectedId,setSelectedId]=useState(initialDealId??'');
- const [newDealOpen,setNewDealOpen]=useState(false);
- const [newDealName,setNewDealName]=useState('');
  const [newCompanyId,setNewCompanyId]=useState('');
- const [error,setError]=useState('');
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
  useModalScrollLock(true);
- const filtered=useMemo(()=>deals.filter(d=>
-  [d.name,d.companyName,d.stage].join(' ').toLowerCase().includes(query.trim().toLowerCase()))
-  .slice().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[deals,query]);
  const selected=deals.find(d=>d.id===selectedId);
- const create=(event:FormEvent)=>{
-  event.preventDefault();if(!editable)return;
-  if(!newDealName.trim()){setError('Enter a Deal name.');return;}
-  const name=newDealName.trim();
-  if(deals.some(d=>d.name.toLowerCase()===name.toLowerCase()&&
-   (d.companyId??'')===newCompanyId)){
-    setError('A Deal with this name already exists. Search for it first.');return;
-  }
-  const id=createDeal(name,'Discovery');
-  if(!id){setError('Could not create the Deal.');return;}
+ const createFromPicker=(name:string)=>{
+  if(!editable)throw new Error('Your role cannot create Deals.');
+  const clean=name.trim();
+  if(!clean)throw new Error('Enter a Deal name.');
+  if(deals.some(d=>d.name.trim().toLowerCase()===clean.toLowerCase()))
+    throw new Error('A Deal with that name already exists. Select it from search.');
+  const id=createDeal(clean,'Discovery');
+  if(!id)throw new Error('Could not create the Deal.');
   if(newCompanyId)assignCompany(id,newCompanyId);
-  setSelectedId(id);setNewDealOpen(false);setNewDealName('');setError('');
+  setSelectedId(id);
+  setNewCompanyId('');
  };
  return createPortal(<div className="external-quote-picker-backdrop"
   onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
@@ -56,36 +49,31 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,in
      <PreviewPanelClose onClose={onClose} label="Close external quote" initialFocus={false}/></header>
     <div className="external-quote-picker-body">
      <p className="external-quote-picker-intro">Record a quote sent outside SalesShop, including one you sent today. Choose the Deal and the actual date sent; no SalesShop quote document is created.</p>
-     <label>Search Deals
-      <input type="search" autoFocus data-dialog-initial-focus value={query}
-       onChange={e=>setQuery(e.target.value)} placeholder="Project, builder, or company name…"/>
-     </label>
-     <label>Deal
-      <select value={selectedId} onChange={e=>{setSelectedId(e.target.value);setError('');}}>
-       <option value="">Choose an existing Deal</option>
-       {selected&&!filtered.some(d=>d.id===selected.id)&&
-         <option value={selected.id}>{selected.name} · {selected.stage}</option>}
-       {filtered.map(d=><option key={d.id} value={d.id}>
-        {d.name} · {d.stage}{d.companyName?' · '+d.companyName:''}
-       </option>)}
-      </select>
-     </label>
-     {editable&&<button type="button" className="external-quote-newdeal-toggle"
-      onClick={()=>{setNewDealOpen(v=>!v);setError('');}}>
-      {newDealOpen?'Cancel new Deal':'+ Create Deal for external quote'}
-     </button>}
-     {newDealOpen&&editable&&<form className="external-quote-newdeal-form" onSubmit={create}>
-      <label>Deal name<input required value={newDealName} maxLength={180}
-        onChange={e=>setNewDealName(e.target.value)} placeholder="Project name"/></label>
-      <label>Company (optional)<select value={newCompanyId}
-        onChange={e=>setNewCompanyId(e.target.value)}>
-        <option value="">No company</option>
-        {companies.filter(c=>!isOurOrgCompany(c)).map(c=>
-          <option key={c.id} value={c.id}>{c.name}</option>)}
-       </select></label>
-      <button type="submit">Create Deal & continue</button>
-     </form>}
-     {error&&<p className="external-quote-error" role="alert">{error}</p>}
+     <div className="external-quote-deal-association" role="group" aria-label="External quote Deal">
+      <strong>Deal</strong>
+      <div className="ss-record-association-current">
+       <span>{selected
+         ?selected.name+' · '+selected.stage+(selected.companyName?' · '+selected.companyName:'')
+         :'No Deal selected'}</span>
+       {selected&&editable&&<button type="button" onClick={()=>setSelectedId('')}
+         aria-label="Clear selected Deal">Clear</button>}
+      </div>
+      <UnifiedRecordPicker kind="Deal" disabled={!editable}
+       triggerLabel={selected?'Change Deal':'Search or create Deal'}
+       items={deals.slice().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))
+         .map(d=>({id:d.id,name:d.name,detail:[d.companyName,d.stage].filter(Boolean).join(' · ')}))}
+       onLink={id=>{setSelectedId(id);setNewCompanyId('');}}
+       onCreate={createFromPicker}
+       extra={<label>Company for a new Deal (optional)
+         <select value={newCompanyId} onChange={event=>setNewCompanyId(event.target.value)}>
+          <option value="">No company</option>
+          {companies.filter(c=>!isOurOrgCompany(c))
+            .slice().sort((a,b)=>a.name.localeCompare(b.name))
+            .map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+         </select>
+       </label>}
+       helper="Choose a Deal or create one here, then record the external bid. Creating a new Deal adds it to Connections."/>
+     </div>
      {selected&&editable&&<ExternalQuoteSentForm key={selected.id} deal={selected}
        initialSentDate={initialSentDate} onCancel={onClose} onRecorded={date=>onRecorded?.(selected.name,date)}/>}
      {!editable&&<p className="external-quote-error">Your current role cannot record shared CRM quotes.</p>}

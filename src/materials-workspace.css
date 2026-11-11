@@ -1055,3 +1055,7 @@
     padding:0;
   }
 }
+
+/* Match the crisp shared pushpin used by worktable rows. */
+.materials-pin-button{display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.materials-pin-button .ss-chrome-icon-pin{flex:none;width:13px;height:13px}
