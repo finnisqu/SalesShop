@@ -27,8 +27,11 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      # Hosted Ubuntu normally has Chromium runtime libraries already installed.
+      # Do not run Playwright's apt-get --with-deps here: Nov 11's runner DNS
+      # could not resolve Ubuntu mirrors, preventing browser tests from starting.
+      - name: Install Chromium browser only
+        run: npx playwright install chromium
       - name: Legacy sink pricing browser acceptance (synthetic quote, phone and desktop)
         run: npm run test:sink-parity:browser
       - name: HOME and Deal record navigation (phone and desktop)
