@@ -1,0 +1,71 @@
+name: Legacy Sink Pricing Release QC
+
+# Manual release gate for PR #95. It always checks out the verified
+# release-candidate branch, independent of the workflow's UI branch selector.
+# No automatic push/PR trigger, no connected customer Supabase workspace.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: legacy-sink-pricing-release-qc
+  cancel-in-progress: true
+
+jobs:
+  pricing-acceptance:
+    name: Legacy pricing - phone and desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SALES_SHOP_LOCAL_QC: '1'
+      VITE_SUPABASE_URL: ''
+      VITE_SUPABASE_ANON_KEY: ''
+      VITE_BASE_PATH: '/'
+    steps:
+      - name: Check out PR #95 pricing branch, never the old parity branch
+        uses: actions/checkout@v4
+        with:
+          ref: batch/legacy-sink-guard-qa-20261110
+
+      - name: Confirm test target and source
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Selected release-candidate SHA:"
+          git rev-parse HEAD
+          echo "Pricing test file and command must exist:"
+          test -f e2e/legacy-sink-pricing-qc.pw.ts
+          grep -q '"test:sink-parity:browser"' package.json
+          if grep -q "batch/legacy-sink-parity-guard-20261110" .github/workflows/navigation-smoke.yml; then
+            echo "::error::Found superseded parity branch reference"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Compile source and run Quick Quote + sink pricing regressions
+        run: npm run build
+
+      - name: Install Chromium (no Ubuntu apt mirror dependency)
+        run: npx playwright install chromium
+
+      - name: Browser pricing acceptance (phone-390 and desktop-1280)
+        run: npm run test:sink-parity:browser
+
+      - name: Upload Playwright traces if browser QC fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: salesshop-legacy-sink-pricing-qc
+          path: |
+            artifacts/playwright-results/
+            artifacts/playwright-report/
+          retention-days: 10
+          if-no-files-found: ignore
