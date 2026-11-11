@@ -16,9 +16,20 @@ describe('bounded in-app navigation history',()=>{
     expect(store.getState()).toMatchObject({view:'catalog',catalogSection:'rates'});
     expect(store.getState().history).toHaveLength(2);
     store.getState().goBack();
-    expect(store.getState()).toMatchObject({view:'board',history:[expect.any(Object)]});
+    expect(store.getState()).toMatchObject({view:'dashboard',history:[expect.any(Object)]});
     store.getState().goBack();
     expect(store.getState()).toMatchObject({view:'quotes',catalogSection:'materials',history:[]});
+  });
+  it('restores a Company record when reselecting Connections after visiting Notebook',()=>{
+    const store=useNavigationStore;
+    store.getState().openCompany('company-return');
+    store.getState().setView('notebook');
+    expect(store.getState().focusedCompanyId).toBeNull();
+    store.getState().setView('dashboard');
+    expect(store.getState()).toMatchObject({view:'dashboard',focusedCompanyId:'company-return'});
+    // A deliberate directory exit should still be possible.
+    store.getState().setView('dashboard');
+    expect(store.getState().focusedCompanyId).toBeNull();
   });
   it('preserves a focused Connections company record when returning from another tab',()=>{
     const store=useNavigationStore;
