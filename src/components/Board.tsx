@@ -529,7 +529,7 @@ export function Board() {
         ]}/>}
         search={<input type="search" aria-label="Search Board deals" placeholder="Search deals…"
           value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/>}
-        primary={<BoardQuickCreate kind="Deal" onCreate={createDealWithDetails}/>} }
+        primary={<BoardQuickCreate kind="Deal" onCreate={createDealWithDetails}/>}
       />
 
       <MobileBoardStagePicker
