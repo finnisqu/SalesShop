@@ -24,6 +24,7 @@ import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {externalQuoteActivities} from '../services/salesQuoteRegistry';
 import {requestTaskModal} from '../services/taskModalEvents';
 import { useQuoteStore } from '../store/quoteStore';
+import {useNotebookStore} from '../store/notebookStore';
 import { useNavigationStore } from '../store/navigationStore';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -47,6 +48,8 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const openProject = useNavigationStore((state) => state.openProject);
   const openPerson = useNavigationStore((state) => state.openPerson);
   const openCompany = useNavigationStore((state) => state.openCompany);
+  const openNotebookPage=useNavigationStore(state=>state.openNotebookPage);
+  const notebookEntries=useNotebookStore(state=>state.entries);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editing, setEditing] = useState(false);
   const [newAlias, setNewAlias] = useState('');
@@ -255,7 +258,16 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
         </div>
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="quote"/>
       </RecordCard>
-
+      <RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.companyId===company.id).length} linked</span>}>
+        <div className="connections-record-entity-list">
+          {notebookEntries.filter(entry=>entry.context?.companyId===company.id).map(entry=>
+            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
+              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
+            </button>)}
+          {!notebookEntries.some(entry=>entry.context?.companyId===company.id)&&
+            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
+        </div>
+      </RecordCard>
     </>}
     right={<>
       <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>

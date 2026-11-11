@@ -12,6 +12,7 @@ import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,recordE
 import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
+import {useNotebookStore} from '../store/notebookStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {isOurOrgCompany,isOurOrgContact,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 import {isOurCompany,companyRelationshipPatch} from '../services/companyRelationship';
@@ -38,6 +39,8 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const openCompany = useNavigationStore((state) => state.openCompany);
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
+  const openNotebookPage=useNavigationStore(state=>state.openNotebookPage);
+  const notebookEntries=useNotebookStore(state=>state.entries);
   const openPerson=useNavigationStore((state)=>state.openPerson);
 
   const person = people.find((candidate) => candidate.id === contactId);
@@ -240,6 +243,16 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
          <p className="connections-record-empty">No Quotes have this Person as their primary contact.</p>}
        </div>
        <RecordRelationshipPicker source={{kind:'person',id:person.id,name:displayName}} target="quote"/>
+      </RecordCard>
+      <RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.contactId===person.id).length} linked</span>}>
+        <div className="connections-record-entity-list">
+          {notebookEntries.filter(entry=>entry.context?.contactId===person.id).map(entry=>
+            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
+              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
+            </button>)}
+          {!notebookEntries.some(entry=>entry.context?.contactId===person.id)&&
+            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
+        </div>
       </RecordCard>
     </>}
     right={<>

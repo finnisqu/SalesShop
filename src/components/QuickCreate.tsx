@@ -11,6 +11,7 @@ import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import {useDealPeopleStore} from '../store/dealPeopleStore';
+import {setNotebookRelatedRecord} from '../services/notebookProjectContext';
 
 export type RecordCreateContext={kind:'company'|'person'|'deal';id:string;name:string};
 type NamedCreateMode = 'project' | 'account' | null;
@@ -73,6 +74,8 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
 
   const makeNotebookPage = () => {
     createEntry();
+    const pageId=useNotebookStore.getState().activeEntryId;
+    if(context&&pageId)setNotebookRelatedRecord(pageId,context);
     close();
     setView('notebook');
   };

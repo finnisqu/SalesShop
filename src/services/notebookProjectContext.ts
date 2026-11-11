@@ -9,6 +9,24 @@ function persist(entries: NotebookEntry[], activeEntryId: string | null) {
   localNotebookRepository.save({ schemaVersion: 3, entries, activeEntryId });
 }
 
+export function setNotebookRelatedRecord(entryId:string, context:{
+ kind:'company'|'person'|'deal';id:string;name:string;
+}){
+ const state=useNotebookStore.getState();
+ const timestamp=now();
+ const entry=state.entries.find(e=>e.id===entryId);
+ if(!entry||entry.isPostItInbox)return;
+ const contextPatch=context.kind==='deal'?{projectId:context.id}:
+   context.kind==='person'?{contactId:context.id}:{companyId:context.id};
+ const entries=state.entries.map(e=>e.id===entryId?{
+   ...e,title:context.name+' notes',
+   context:{...(e.context??{}),...contextPatch},
+   updatedAt:timestamp,
+ }:e);
+ persist(entries,state.activeEntryId);
+ useNotebookStore.setState({entries});
+}
+
 export function setNotebookProject(entryId: string, projectId?: string) {
   const state = useNotebookStore.getState();
   const timestamp = now();
