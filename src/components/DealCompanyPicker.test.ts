@@ -13,7 +13,8 @@ describe('Deal Company search/create edit field',()=>{
   expect(deal).toContain('setNewCompanyName(name.trim())');
   expect(deal).toContain("const createdId=resolveCompany(clean,'customer')");
   expect(deal).toContain('setProjectCompany(deal.id,companyId)');
-  expect(deal).toContain('setNewCompanyName(\'\');setEditing(false);');
+  expect(deal).toContain("setNewCompanyName('');");
+  expect(deal).toContain('setEditing(false);');
   expect(deal).not.toContain('<label>Company<select');
   expect(picker).toContain("triggerLabel??'+ Add '+kind");
  });
