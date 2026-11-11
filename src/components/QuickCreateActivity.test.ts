@@ -13,7 +13,8 @@ describe('Global header Quick Create Activity action',()=>{
   expect(menu).toContain('<strong>Log Activity</strong>');
   expect(menu).toContain('onClick={startActivity}');
   expect(menu).toContain('close();\n    // Reuse the one account-scoped CRM Activity editor');
-  expect(menu).toContain('openActivityComposer();');
+  expect(menu).toContain('openActivityComposer(context?{associations:[contextTaskAssociation(context)]}:{});');
+  expect(menu).toContain('contextTaskAssociation(context)');
   expect(menu).toContain('<CreateGlyph kind="activity"/>');
   expect(app).toContain('<QuickCreate />');
   expect(app).toContain('<QuickActivityLauncher headless/>');
