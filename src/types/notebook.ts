@@ -23,7 +23,7 @@ export type NotebookObject = PaperCardObject | PostItObject | ImageObject | Spre
 export type NotebookObjectFrame = Pick<NotebookObjectBase, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'zIndex'>;
 export type BusinessCardField = 'name' | 'company' | 'title' | 'email' | 'phone';
 
-export interface NotebookContext { projectId?: string; }
+export interface NotebookContext { projectId?: string; companyId?:string; contactId?:string; }
 /** Linked Agenda is page metadata, never a movable page object or rich-text
  * fragment. It can describe a calendar date or reference a created Task. */
 export interface NotebookAgendaItem {

@@ -16,3 +16,15 @@
 .ss-record-link-inline :is(button,input,select):focus-visible{outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px}
 @media(max-width:760px){.ss-record-link-inline :is(button,input,select){min-height:44px}
  .ss-record-link-inline :is(input,select){font-size:16px}}
+
+/* Editing a record surfaces unobtrusive per-relationship unlink actions. */
+.ss-record-associated-row{display:flex;gap:8px;align-items:center;min-width:0}
+.ss-record-associated-row>button:first-child{flex:1 1 auto;min-width:0;text-align:left}
+.ss-record-unlink-control{display:inline-flex;align-items:center;flex:0 0 auto}
+.ss-record-unlink-button{flex:0 0 auto;border:1px solid var(--ss-theme-border,#ccc);
+ background:var(--ss-theme-base,#fff);color:var(--ss-theme-muted,#666);
+ border-radius:7px;min-height:30px;padding:5px 8px;font-size:11px;cursor:pointer}
+.ss-record-unlink-button:hover{color:var(--ss-danger,#aa4545);border-color:currentColor}
+.ss-record-unlink-button:focus-visible{outline:2px solid var(--ss-focus,#a48a3d);outline-offset:2px}
+.ss-record-unlink-error{color:var(--ss-danger,#b64040);font-size:11px}
+@media(max-width:760px){.ss-record-unlink-button{min-height:40px;min-width:60px}}

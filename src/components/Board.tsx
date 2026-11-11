@@ -30,6 +30,9 @@ import {useBoardShiftWheelScroll} from '../lib/useBoardShiftWheelScroll';
 import {DEAL_PIPELINES,PROJECT_STAGES,dealPipelineLabel,matchesDealPipeline,
   type DealPipeline,type DealPipelineFilter,type Project,type ProjectPatch,type ProjectStage} from '../types/crm';
 import {DealAssigneeSelect} from '../services/dealAssignees';
+import {UnifiedRecordPicker} from './UnifiedRecordPicker';
+import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
+import {isOurCompany,companyRelationshipPatch} from '../services/companyRelationship';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const PROJECT_BOARD_POSITION_KEY = 'salesshop-mobile-board-projects-v1';
@@ -114,6 +117,10 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
 
 function ProjectEditor({ project, onClose }: { project: Project; onClose: () => void }) {
   const updateProject = useCrmStore((state) => state.updateProject);
+  const setProjectCompany = useCrmStore((state) => state.setProjectCompany);
+  const resolveCompany = useCrmStore((state) => state.resolveCompany);
+  const updateCompany = useCrmStore((state) => state.updateCompany);
+  const companies = useCrmStore((state) => state.companies);
   const assignProject = useCrmStore((state) => state.assignProject);
   const deleteProject = useCrmStore((state) => state.deleteProject);
   const activities = useCrmStore((state) => state.activities);
@@ -127,9 +134,10 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   const [saving,setSaving]=useState(false);
   const dialogRef=useDismissibleLayer<HTMLElement>(true,()=>{if(!saving)onClose();});
   const [saveError,setSaveError]=useState('');
+  const [newCompanyName,setNewCompanyName]=useState('');
   const [draft, setDraft] = useState({
     name: project.name,
-    companyName: project.companyName ?? '',
+    companyId: project.companyId ?? '',
     assignedUserId: project.assignedUserId ?? '',
     stage: project.stage,
     pipeline: (project.pipeline ?? '') as DealPipeline | '',
@@ -140,9 +148,10 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   });
 
   useEffect(() => {
+    setNewCompanyName('');
     setDraft({
       name: project.name,
-      companyName: project.companyName ?? '',
+      companyId: project.companyId ?? '',
       assignedUserId: project.assignedUserId ?? '',
       stage: project.stage,
       pipeline: (project.pipeline ?? '') as DealPipeline | '',
@@ -166,11 +175,24 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
     if(amountError){setSaveError(amountError);return;}
     setSaving(true);setSaveError('');
     try{
+    let companyId=draft.companyId||undefined;
+    if(companyId&&!useCrmStore.getState().companies.some(item=>item.id===companyId))
+      throw new Error('Selected Company is unavailable. Search and choose another.');
+    if(newCompanyName.trim()&&useCrmStore.getState().companies.some(item=>
+      item.name.trim().toLowerCase()===newCompanyName.trim().toLowerCase()))
+      throw new Error('That Company exists. Select it from search.');
     if((project.assignedUserId??'')!==draft.assignedUserId)
       await assignProject(project.id,draft.assignedUserId||undefined);
+    if(newCompanyName.trim()){
+      const existingIds=new Set(useCrmStore.getState().companies.map(item=>item.id));
+      const nextId=resolveCompany(newCompanyName.trim(),'customer');
+      if(!nextId||existingIds.has(nextId))throw new Error('Choose the matching existing Company instead.');
+      const nextCompany=useCrmStore.getState().companies.find(item=>item.id===nextId);
+      if(nextCompany)updateCompany(nextId,companyRelationshipPatch(nextCompany,'prospect'));
+      companyId=nextId;
+    }
     const patch: ProjectPatch = {
       name: draft.name.trim(),
-      companyName: draft.companyName,
       stage: draft.stage,
       pipeline: draft.pipeline || undefined,
       amount: draft.amount.trim() ? Number(draft.amount) : undefined,
@@ -179,6 +201,7 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
       lastTouchpoint: draft.lastTouchpoint || undefined,
     };
     updateProject(project.id, patch);
+    if((project.companyId??'')!==(companyId??''))setProjectCompany(project.id,companyId);
     onClose();
     }catch(reason){setSaveError(reason instanceof Error?reason.message:'Unable to save Deal assignment.');}
     finally{setSaving(false);}
@@ -200,7 +223,27 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
           <RecordEditField label="Deal name" required error={saveError==='Enter a deal name.'?saveError:undefined}>
             {control=><input {...control} value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
           </RecordEditField>
-          <label><span>Company</span><input value={draft.companyName} onChange={(event) => setDraft({ ...draft, companyName: event.target.value })} placeholder="Optional" /></label>
+          <div className="ss-record-association-field" role="group" aria-label="Board Deal Company">
+            <strong className="ss-record-association-label">Company</strong>
+            <div className="ss-record-association-current">
+              <span>{newCompanyName?'New Company · '+newCompanyName+' (created when Deal is saved)':
+                companies.find(item=>item.id===draft.companyId)?.name||
+                (draft.companyId?'Company unavailable':'No company selected')}</span>
+              {(draft.companyId||newCompanyName)&&<button type="button" disabled={saving}
+                aria-label="Clear Board Deal Company" onClick={()=>{
+                  setNewCompanyName('');setDraft(previous=>({...previous,companyId:''}));
+                }}>Clear</button>}
+            </div>
+            <UnifiedRecordPicker kind="Company" disabled={saving}
+              triggerLabel={draft.companyId||newCompanyName?'Change Company':'Search or add Company'}
+              items={companies.filter(item=>!isOurOrgCompany(item)&&!isOurCompany(item))
+                .slice().sort((a,b)=>a.name.localeCompare(b.name))
+                .map(item=>({id:item.id,name:item.name,detail:item.aliases?.join(', ')||undefined}))}
+              onLink={id=>{setNewCompanyName('');setDraft(previous=>({...previous,companyId:id}));}}
+              onCreate={name=>{setNewCompanyName(name.trim());
+                setDraft(previous=>({...previous,companyId:''}));}}
+              helper="Search existing Companies or stage a new Company. Canceling creates nothing."/>
+          </div>
           <div className="editor-two-up">
             <label><span>Stage</span><select value={draft.stage} onChange={(event) => setDraft({ ...draft, stage: event.target.value as ProjectStage })}>{PROJECT_STAGES.map((stage) => <option key={stage}>{stage}</option>)}</select></label>
             <RecordEditField label="Amount" error={saveError.startsWith('Deal amount')?saveError:undefined}>

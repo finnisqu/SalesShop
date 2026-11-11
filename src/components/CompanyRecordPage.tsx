@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {QuickCreate} from './QuickCreate';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
+import {RecordUnlinkAction} from './RecordUnlinkAction';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {ourOrgPeople,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
 import { companyAnnualPotential, companyEstimatedAnnualWork,type CompanyPatch } from '../types/crm';
 import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
- isOurCompany,ourCompanyPatch,visibleCompanyAliases,type EditableCompanyRelationship}
+ isOurCompany,visibleCompanyAliases,type EditableCompanyRelationship}
  from '../services/companyRelationship';
 import { displayQuoteNumber, quoteTotal } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
@@ -21,6 +24,7 @@ import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {externalQuoteActivities} from '../services/salesQuoteRegistry';
 import {requestTaskModal} from '../services/taskModalEvents';
 import { useQuoteStore } from '../store/quoteStore';
+import {useNotebookStore} from '../store/notebookStore';
 import { useNavigationStore } from '../store/navigationStore';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -44,6 +48,8 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const openProject = useNavigationStore((state) => state.openProject);
   const openPerson = useNavigationStore((state) => state.openPerson);
   const openCompany = useNavigationStore((state) => state.openCompany);
+  const openNotebookPage=useNavigationStore(state=>state.openNotebookPage);
+  const notebookEntries=useNotebookStore(state=>state.entries);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editing, setEditing] = useState(false);
   const [newAlias, setNewAlias] = useState('');
@@ -52,7 +58,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   const company = companies.find((candidate) => candidate.id === companyId);
   const [draft, setDraft] = useState({
     name: company?.name ?? '', relationship: company?companyRelationship(company):'unclassified' as const,
-    isSelf:company?isOurCompany(company):false,
     annualUnits: company?.annualUnits?.toString() ?? '',
     averageUnitValue: company?.averageUnitValue?.toString() ?? '',
     expectedSharePct: company?.expectedSharePct?.toString() ?? '',
@@ -67,7 +72,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
   }, [companyId]);
   useEffect(() => {
     if (!editing && company) setDraft({
-      name: company.name, relationship: companyRelationship(company),isSelf:isOurCompany(company),
+      name: company.name, relationship: companyRelationship(company),
       annualUnits: company.annualUnits?.toString() ?? '',
       averageUnitValue: company.averageUnitValue?.toString() ?? '',
       expectedSharePct: company.expectedSharePct?.toString() ?? '',
@@ -125,17 +130,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     if(message){setEditError(message);return;}
     setEditError('');
     try{
-      // "Our Company" is a designation on this same CRM record, never a new
-      // customer/prospect or a separate duplicate internal company.
-      const relationshipPatch:CompanyPatch=draft.isSelf
-        ?companyRelationshipPatch(company,'partner')
-        :draft.relationship==='unclassified'?{}
-          :companyRelationshipPatch(company,draft.relationship as EditableCompanyRelationship);
+      // SELF designation is now managed only under Settings > Company.
+      const relationshipPatch:CompanyPatch=isOurCompany(company)||draft.relationship==='unclassified'?{}
+        :companyRelationshipPatch(company,draft.relationship as EditableCompanyRelationship);
       updateCompany(company.id, {
         name: draft.name.trim(),
         ...relationshipPatch,
-        ...ourCompanyPatch({aliases:relationshipPatch.aliases??company.aliases},draft.isSelf),
-        ...(draft.isSelf?{kind:'non-customer' as const}:{}),
         annualUnits: optionalNumber(draft.annualUnits),
         averageUnitValue: optionalNumber(draft.averageUnitValue),
         expectedSharePct: optionalNumber(draft.expectedSharePct),
@@ -163,8 +163,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       </span><span>{related.relatedProjects.length} deals</span>
       <span>{related.relatedQuotes.length+externalQuotes.length} linked quotes</span></>}
     actions={<>
-      <button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(current=>!current);}}>{editing ? 'Cancel editing' : 'Edit company'}</button>
-      {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New Quote</button>}
+      <button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(current=>!current);}}>
+        {editing?'Cancel Edit Page':'Edit Page'}</button>
+      <button type="button" onClick={()=>openActivityComposer({associations:[{
+        type:'company',id:company.id,label:'Company · '+company.name,
+      }]})}>Log Activity</button>
+      <QuickCreate context={{kind:'company',id:company.id,name:company.name}} launcherLabel="+ New"/>
     </>}
     left={<>
       <RecordCard title="About this company">
@@ -173,15 +177,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           <RecordEditField label="Company name" required error={editError==='Enter a company name.'?editError:undefined}>
             {control=><input {...control} autoFocus value={draft.name} onChange={event=>setDraft({...draft,name:event.target.value})}/>}
           </RecordEditField>
-          <details className="connections-company-advanced-identity">
-            <summary>Company identity <span>{draft.isSelf?'· SELF':''}</span></summary>
-            <label className="connections-company-self-compact">
-              <input type="checkbox" checked={draft.isSelf}
-                onChange={event=>setDraft({...draft,isSelf:event.target.checked})}/>
-              This is our company
-            </label>
-          </details>
-          {!draft.isSelf&&<label>Relationship<select value={draft.relationship}
+          {!isOurCompany(company)&&<label>Relationship<select value={draft.relationship}
             onChange={event=>setDraft({...draft,relationship:event.target.value as EditableCompanyRelationship})}>
             <option value="unclassified" disabled>Not classified</option>
             <option value="prospect">Prospect</option>
@@ -198,11 +194,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </div>
         </form> : <div className="connections-record-properties-list">
           <RecordProperty label="Relationship">{companyRelationshipLabel(company)}</RecordProperty>
-          <CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId}/>
+          <CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId} showChange={false}/>
           {isOurCompany(company)&&<span className="connections-company-self-inline">SELF · Linked to Our Organization</span>}
           <RecordProperty label="Created">{dateLabel(company.createdAt)}</RecordProperty>
           <RecordProperty label="Last updated">{dateLabel(company.updatedAt)}</RecordProperty>
         </div>}
+        {editing&&<CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId}/>}
       </RecordCard>
       {company.kind === 'customer' && <RecordCard title="Account forecast">
         <div className="connections-record-properties-list">
@@ -227,21 +224,33 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       </RecordCard>
     </>}
     center={<>
+      {editing&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
+        Unlink removes a direct association immediately after confirmation. It does not delete
+        the related record or its history. Cancel Edit Page does not restore an unlinked association.
+      </p>}
       <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
         <div className="connections-record-entity-list">
-          {related.relatedProjects.map((project) => <button type="button" key={project.id} onClick={() => openProject(project.id)}>
-            <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
-          </button>)}
+          {related.relatedProjects.map((project) => <div className="ss-record-associated-row" key={project.id}>
+            <button type="button" onClick={() => openProject(project.id)}>
+              <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
+            </button>
+            {editing&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'deal',id:project.id,name:project.name}}/>}
+          </div>)}
           {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
         </div>
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
       </RecordCard>
       <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length+externalQuotes.length}</span>}>
         <div className="connections-record-entity-list">
-          {related.relatedQuotes.map((quote) => <button type="button" key={quote.id} onClick={() => openQuote(quote.id)}>
-            <strong>{quote.title || displayQuoteNumber(quote)}</strong>
-            <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
-          </button>)}
+          {related.relatedQuotes.map((quote) => <div className="ss-record-associated-row" key={quote.id}>
+            <button type="button" onClick={() => openQuote(quote.id)}>
+              <strong>{quote.title || displayQuoteNumber(quote)}</strong>
+              <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
+            </button>
+            {editing&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'quote',id:quote.id,name:quote.title||displayQuoteNumber(quote)}}/>}
+          </div>)}
           {externalQuotes.map(activity=><button type="button" key={activity.id}
             onClick={()=>setActivityPreviewId(activity.id)}
             aria-label={'View external quote details '+activity.summary}>
@@ -253,7 +262,16 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
         </div>
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="quote"/>
       </RecordCard>
-
+      <RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.companyId===company.id).length} linked</span>}>
+        <div className="connections-record-entity-list">
+          {notebookEntries.filter(entry=>entry.context?.companyId===company.id).map(entry=>
+            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
+              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
+            </button>)}
+          {!notebookEntries.some(entry=>entry.context?.companyId===company.id)&&
+            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
+        </div>
+      </RecordCard>
     </>}
     right={<>
       <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
@@ -268,12 +286,14 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
             {person.title && <small>{person.title}</small>}
             {person.email && <a href={'mailto:' + person.email}>{person.email}</a>}
             {person.phone && <a href={'tel:' + person.phone}>{person.phone}</a>}
+            {editing&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'person',id:person.id,name:person.name||person.email||'Unnamed person'}}/>}
           </article>)}
           {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
         </div>
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="person"/>
       </RecordCard>
-      <RecordTasksPanel kind="company" id={company.id} name={company.name}/>
+      <RecordTasksPanel kind="company" id={company.id} name={company.name} editing={editing}/>
 
       <RecordCard title="Relationship history" extra={<span>{timeline.length} events</span>}>
         <CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{

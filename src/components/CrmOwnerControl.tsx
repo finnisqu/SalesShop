@@ -58,8 +58,8 @@ function useCrmOwnerDirectory(){
 /** Compact owner row for full Company and Person record pages.
  * Owner updates are confirmed by Supabase before updating the CRM cache.
  */
-export function CrmOwnerControl({kind,recordId,ownerUserId}:{
- kind:OwnerTarget;recordId:string;ownerUserId?:string;
+export function CrmOwnerControl({kind,recordId,ownerUserId,showChange=true}:{
+ kind:OwnerTarget;recordId:string;ownerUserId?:string;showChange?:boolean;
 }){
  const mode=useAuthStore(state=>state.mode);
  const role=useAuthStore(state=>state.teamRole);
@@ -96,7 +96,7 @@ export function CrmOwnerControl({kind,recordId,ownerUserId}:{
   <span>Assigned to</span>
   <div className="crm-owner-current">
    <strong>{ownerName}</strong>
-   {canManage&&!editing&&<button type="button" onClick={()=>{
+   {canManage&&showChange&&!editing&&<button type="button" onClick={()=>{
      setSelected(ownerUserId??'');setError('');setNotice('');setEditing(true);
    }}>Change</button>}
   </div>

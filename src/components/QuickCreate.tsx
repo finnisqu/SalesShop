@@ -9,8 +9,16 @@ import { useNotebookStore } from '../store/notebookStore';
 import {requestTaskModal} from './TaskModalHost';
 import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
+import type {TaskAssociation} from '../store/personalTaskStore';
+import {useDealPeopleStore} from '../store/dealPeopleStore';
+import {setNotebookRelatedRecord} from '../services/notebookProjectContext';
 
+export type RecordCreateContext={kind:'company'|'person'|'deal';id:string;name:string};
 type NamedCreateMode = 'project' | 'account' | null;
+export function contextTaskAssociation(context:RecordCreateContext):TaskAssociation{
+  const type=context.kind==='deal'?'project':context.kind==='person'?'contact':'company';
+  return {type,id:context.id,label:(context.kind==='deal'?'Deal':context.kind==='person'?'Person':'Company')+' · '+context.name};
+}
 type QuickCreateGlyph = 'quote'|'task'|'activity'|'deal'|'account'|'notebook';
 function CreateGlyph({kind}:{kind:QuickCreateGlyph}){
  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -25,12 +33,14 @@ function CreateGlyph({kind}:{kind:QuickCreateGlyph}){
  </svg>;
 }
 
-export function QuickCreate() {
+export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContext;launcherLabel?:string}={}) {
   const [open, setOpen] = useState(false);
   const [namedMode, setNamedMode] = useState<NamedCreateMode>(null);
   const [name, setName] = useState('');
 
   const createProject = useCrmStore((state) => state.createProject);
+  const setProjectCompany = useCrmStore((state)=>state.setProjectCompany);
+  const updateContact = useCrmStore((state)=>state.updateContact);
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createEntry = useNotebookStore((state) => state.createEntry);
   const openProject = useNavigationStore((state) => state.openProject);
@@ -47,23 +57,25 @@ export function QuickCreate() {
 
   const openDocumentPicker = () => {
     close();
-    openGuidedQuoteCreation();
+    openGuidedQuoteCreation(context);
   };
 
   const startTask = () => {
     close();
-    requestTaskModal({mode:'create'});
+    requestTaskModal({mode:'create',...(context?{associations:[contextTaskAssociation(context)]}:{})});
   };
 
   const startActivity = () => {
     close();
     // Reuse the one account-scoped CRM Activity editor mounted by App.
     // Don't navigate away or create a second draft-bearing form.
-    openActivityComposer();
+    openActivityComposer(context?{associations:[contextTaskAssociation(context)]}:{});
   };
 
   const makeNotebookPage = () => {
     createEntry();
+    const pageId=useNotebookStore.getState().activeEntryId;
+    if(context&&pageId)setNotebookRelatedRecord(pageId,context);
     close();
     setView('notebook');
   };
@@ -75,12 +87,25 @@ export function QuickCreate() {
 
     if (namedMode === 'project') {
       const projectId = createProject(clean);
+      if(projectId&&context?.kind==='company')setProjectCompany(projectId,context.id);
+      if(projectId&&context?.kind==='person'){
+        const person=useCrmStore.getState().contacts.find(item=>item.id===context.id);
+        if(person?.companyId)setProjectCompany(projectId,person.companyId);
+        const links=useDealPeopleStore.getState();
+        if(links.loaded&&links.scope)void links.add(projectId,context.id).catch(()=>{/* Also available under Deal People */});
+      }
+      if(projectId&&context?.kind==='deal'){
+        const parent=useCrmStore.getState().projects.find(item=>item.id===context.id);
+        if(parent?.companyId)setProjectCompany(projectId,parent.companyId);
+      }
       close();
       if (projectId) openProject(projectId);
       return;
     }
 
     const companyId = resolveCompany(clean, 'customer');
+    if(companyId&&context?.kind==='person')updateContact(context.id,{companyId});
+    if(companyId&&context?.kind==='deal')setProjectCompany(context.id,companyId);
     close();
     if (companyId) openCompany(companyId);
   };
@@ -134,7 +159,11 @@ export function QuickCreate() {
 
   return (
     <>
-      <button type="button" className="quick-create-launcher" onClick={() => setOpen(true)} aria-label="Quick create" title="Quick create">+</button>
+      <button type="button" className={context?'connections-record-primary ss-record-new-launcher':'quick-create-launcher'}
+        onClick={() => setOpen(true)} aria-label={context?'New related record':'Quick create'}
+        title={context?'Create a record linked to '+context.name:'Quick create'}>
+        {launcherLabel??'+'}
+      </button>
       {sheet}
     </>
   );

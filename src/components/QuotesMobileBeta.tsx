@@ -44,6 +44,7 @@ import { QuoteTakeoffsLite } from './QuoteTakeoffsLite';
 import { QuoteBetaMeasureGrid } from './QuoteBetaMeasureGrid';
 import { QuoteBetaMaterials } from './QuoteBetaMaterials';
 import {QuoteBetaCompactSinks} from './QuoteBetaCompactSinks';
+import {readQuoteCreateAssociation,clearQuoteCreateAssociation} from '../services/quoteCreationNavigation';
 import { QuoteBetaDesktopCommerce } from './QuoteBetaDesktopCommerce';
 import { QuoteBetaAdditionalScope } from './QuoteBetaAdditionalScope';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
@@ -926,6 +927,22 @@ export function QuotesMobileBeta() {
       return;
     }
     const documentType=template==='quick-quote'?'quote':'pricing-schedule';
+    const association=readQuoteCreateAssociation();
+    const currentCrm=useCrmStore.getState();
+    const linkedCompany=association?.kind==='company'?
+      currentCrm.companies.find(item=>item.id===association.id):undefined;
+    const linkedPerson=association?.kind==='person'?
+      currentCrm.contacts.find(item=>item.id===association.id):undefined;
+    const linkedDeal=association?.kind==='deal'?
+      currentCrm.projects.find(item=>item.id===association.id):undefined;
+    const associatedCompany=linkedCompany??
+      currentCrm.companies.find(item=>item.id===(linkedPerson?.companyId??linkedDeal?.companyId));
+    const linkedPatch={
+      ...(association?{companyId:associatedCompany?.id,companyName:associatedCompany?.name}:{}),
+      ...(linkedPerson?{contactId:linkedPerson.id,contactName:linkedPerson.name,
+        contactEmail:linkedPerson.email}:{}),
+      ...(linkedDeal?{projectId:linkedDeal.id}:{}),
+    };
     const title=requestedTitle.trim();
     if(!title){setError('Enter a document name before creating it.');return;}
     if(template==='quick-quote'&&start==='previous'&&source){
@@ -934,6 +951,8 @@ export function QuotesMobileBeta() {
       if(source.documentType!=='quote'||source.archivedAt)return;
       const newId=duplicateDocument(source.id,title);
       if(!newId){setError('Could not create a fresh quote from this document.');return;}
+      if(association)useQuoteStore.getState().updateQuote(newId,linkedPatch);
+      clearQuoteCreateAssociation();
       setShowNewDocument(false);
       openQuote(newId,'details');
       return;
@@ -941,7 +960,8 @@ export function QuotesMobileBeta() {
     const id=create({documentType,title,
       ...(source?{companyId:source.companyId,companyName:source.companyName,
         contactId:source.contactId,contactName:source.contactName,
-        contactEmail:source.contactEmail,projectId:source.projectId}:{})});
+        contactEmail:source.contactEmail,projectId:source.projectId}:{}),
+      ...linkedPatch});
     useQuoteStore.getState().updateQuote(id,{
       templateId:template,
       ...(source?{templateOrigin:{sourceQuoteId:source.id,sourceRevision:source.revision,sourceTitle:source.title}}:{}),
@@ -952,6 +972,7 @@ export function QuotesMobileBeta() {
           template==='builder-rates'?levelGuide:undefined),
       }:{}),
     });
+    clearQuoteCreateAssociation();
     setShowNewDocument(false);
     // After naming a new Quick Quote, begin with customer/job details.
     // Customer/Deal is optional; the explicit next action goes straight to Area.
@@ -1562,7 +1583,7 @@ export function QuotesMobileBeta() {
       stockMaterialCount={stockLevelPreview.summary.stockCount}
       stockLevelCount={stockLevelPreview.summary.levelCount}
       unassignedStockCount={stockLevelPreview.summary.unassigned.length}
-      onClose={()=>setShowNewDocument(false)} onCreate={createFromTemplate}/>}
+      onClose={()=>{clearQuoteCreateAssociation();setShowNewDocument(false);}} onCreate={createFromTemplate}/>}
     {copyRequest&&createPortal(<div className="qmb qmb-area-manager-backdrop"
       onPointerDown={e=>{if(e.currentTarget===e.target)setCopyRequest(null);}}>
       <section className="qmb-area-manager qmb-document-confirm-dialog" role="dialog"

@@ -75,3 +75,13 @@
 @media(max-width:560px){
  .company-history-list .company-history-row{gap:7px}
 }
+
+/* The Company relationship feed stays contained even after Show more.
+   Preserve scroll access for keyboard, wheel and touch. */
+.company-history:not(.is-compact) .company-history-list{
+ max-height:360px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
+ scrollbar-color:var(--ss-theme-border,#bbb) transparent;
+}
+.company-history:not(.is-compact) .company-history-list:focus-visible{
+ outline:2px solid var(--ss-focus,var(--ss-theme-accent,#a18c4c));outline-offset:-2px;
+}
