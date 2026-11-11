@@ -147,7 +147,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
       <RecordActionsMenu editing={editing} unlinking={unlinking} disabled={!canEditRecord}
         onEdit={()=>{setUnlinking(false);setEditing(v=>!v);}}
         onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
-        onDelete={canEditRecord&&!isOurOrgContact(person)?async()=>{
+        onDelete={canEditRecord&&!isOurOrgContact(person,companies)?async()=>{
           await useCrmStore.getState().deleteContact(person.id);onBack();
         }:undefined}/>
       <button type="button" onClick={()=>openActivityComposer({associations:[{
