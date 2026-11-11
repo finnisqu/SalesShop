@@ -202,8 +202,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         if(editing)setNewCompanyName('');
         setEditing(value=>!value);
       }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>
-      <RecordActionsMenu editing={editing} unlinking={unlinking} disabled={!canEditCrm}
-        onEdit={()=>{setUnlinking(false);setEditing(v=>!v);}}
+      <RecordActionsMenu unlinking={unlinking} disabled={!canEditCrm}
         onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
         onDelete={canEditCrm&&!related.linkedQuotes.length&&!outsideQuotes.length&&!directIds.size
           ?async()=>{await useCrmStore.getState().deleteCleanProject(deal.id);onBack();}

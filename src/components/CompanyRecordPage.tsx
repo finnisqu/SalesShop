@@ -175,8 +175,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       {canEditRecord&&<button type="button" onClick={() => {
         setNotice(null);setEditError('');setUnlinking(false);setEditing(current=>!current);
       }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
-      <RecordActionsMenu editing={editing} unlinking={unlinking} disabled={!canEditRecord}
-        onEdit={()=>{setUnlinking(false);setEditing(value=>!value);}}
+      <RecordActionsMenu unlinking={unlinking} disabled={!canEditRecord}
         onUnlink={()=>{setEditing(false);setUnlinking(value=>!value);}}
         onDelete={canEditRecord&&!isOurCompany(company)?async()=>{
           await useCrmStore.getState().deleteCompany(company.id);onBack();

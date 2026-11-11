@@ -2,8 +2,8 @@ import {useRef,useState} from 'react';
 import {useDismissibleDetails} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 
-export function RecordActionsMenu({editing,unlinking,onEdit,onUnlink,onDelete,disabled=false}:{
- editing:boolean;unlinking:boolean;onEdit:()=>void;onUnlink:()=>void;
+export function RecordActionsMenu({unlinking,onUnlink,onDelete,disabled=false}:{
+ unlinking:boolean;onUnlink:()=>void;
  onDelete?:()=>Promise<void>;disabled?:boolean;
 }){
  const ref=useRef<HTMLDetailsElement>(null);
@@ -22,9 +22,6 @@ export function RecordActionsMenu({editing,unlinking,onEdit,onUnlink,onDelete,di
    <WorkspaceChromeIcon name="more"/>
   </summary>
   <div className="ss-record-actions-popover" role="group" aria-label="Record actions">
-   <button type="button" disabled={disabled||busy} onClick={()=>{
-     ref.current?.removeAttribute('open');onEdit();
-   }}>{editing?'Cancel edit all':'Edit all details'}</button>
    <button type="button" disabled={disabled||busy} onClick={()=>{
      ref.current?.removeAttribute('open');onUnlink();
    }}>{unlinking?'Done unlinking':'Unlink connections'}</button>

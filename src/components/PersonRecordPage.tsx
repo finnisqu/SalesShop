@@ -144,8 +144,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
         if(editing)setNewCompanyName('');
         setEditing(value=>!value);
       }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
-      <RecordActionsMenu editing={editing} unlinking={unlinking} disabled={!canEditRecord}
-        onEdit={()=>{setUnlinking(false);setEditing(v=>!v);}}
+      <RecordActionsMenu unlinking={unlinking} disabled={!canEditRecord}
         onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
         onDelete={canEditRecord&&!isOurOrgContact(person,companies)?async()=>{
           await useCrmStore.getState().deleteContact(person.id);onBack();
