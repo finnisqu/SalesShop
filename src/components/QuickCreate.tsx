@@ -8,15 +8,17 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
 import {requestTaskModal} from './TaskModalHost';
 import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
 
 type NamedCreateMode = 'project' | 'account' | null;
-type QuickCreateGlyph = 'quote'|'task'|'deal'|'account'|'notebook';
+type QuickCreateGlyph = 'quote'|'task'|'activity'|'deal'|'account'|'notebook';
 function CreateGlyph({kind}:{kind:QuickCreateGlyph}){
  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
   stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
   strokeLinejoin="round" aria-hidden="true">
   {kind==='quote'?<><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></>:
    kind==='task'?<><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></>:
+   kind==='activity'?<><path d="M5 3h3l2.1 5.2-2.3 2.1a16 16 0 0 0 6 6l2.1-2.3L21 16v3.1a2 2 0 0 1-2.2 2C10.6 20.4 3.6 13.4 3 5.2A2 2 0 0 1 5 3Z"/></>:
    kind==='deal'?<><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></>:
    kind==='account'?<><path d="M4 21V5l8-3 8 3v16M2 21h20M9 21v-5h6v5M8 8h1M15 8h1M8 12h1M15 12h1"/></>:
    <><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 3v18M12 8h5M12 12h5M12 16h3"/></>}
@@ -51,6 +53,13 @@ export function QuickCreate() {
   const startTask = () => {
     close();
     requestTaskModal({mode:'create'});
+  };
+
+  const startActivity = () => {
+    close();
+    // Reuse the one account-scoped CRM Activity editor mounted by App.
+    // Don't navigate away or create a second draft-bearing form.
+    openActivityComposer();
   };
 
   const makeNotebookPage = () => {
@@ -107,6 +116,10 @@ export function QuickCreate() {
             <button type="button" className="quick-create-option compact" onClick={startTask}>
               <span className="quick-create-icon"><CreateGlyph kind="task"/></span>
               <span><strong>New Task</strong><small>Open the task editor immediately.</small></span><b>›</b>
+            </button>
+            <button type="button" className="quick-create-option compact" onClick={startActivity}>
+              <span className="quick-create-icon"><CreateGlyph kind="activity"/></span>
+              <span><strong>Log Activity</strong><small>Record a call, email, text, video call, or meeting.</small></span><b>›</b>
             </button>
             <div className="quick-create-divider" />
             <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('project')}><span className="quick-create-icon"><CreateGlyph kind="deal"/></span><span><strong>New Deal</strong><small>Add an opportunity or job.</small></span><b>›</b></button>
