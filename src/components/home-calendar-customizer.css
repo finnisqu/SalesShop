@@ -1,12 +1,12 @@
 /* Home calendar customizer and reusable legend; palette follows the workspace. */
 .home-calendar-gear{
  display:inline-flex;align-items:center;justify-content:center;
- width:36px;height:36px;flex:0 0 36px;
- border:1px solid var(--ss-theme-border,#cfc5b4);
- border-radius:10px;background:var(--ss-theme-card,#fffaf0);
+ width:28px;height:28px;flex:0 0 28px;padding:4px;
+ border:0;border-radius:7px;background:transparent;
  color:var(--ss-theme-muted,#665d4c);cursor:pointer;
 }
-.home-calendar-gear:hover{background:var(--ss-theme-tint,#ebe2ce);color:var(--ss-theme-ink,#302d27)}
+.home-calendar-gear-icon{width:17px;height:17px}
+.home-calendar-gear:hover{background:transparent;color:var(--ss-theme-ink,#302d27)}
 .home-calendar-gear:focus-visible{outline:2px solid var(--ss-theme-accent,#8d6e30);outline-offset:2px}
 .home-calendar-badge-legend{display:flex;align-items:center;flex-wrap:wrap;gap:7px 13px}
 .home-calendar-badge-legend-item{display:inline-flex;align-items:center;gap:5px;
