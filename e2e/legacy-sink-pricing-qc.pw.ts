@@ -184,16 +184,28 @@ test('switching a saved historical quote from Detailed Editor to Quick Quote and
   await expect(beta).toBeVisible();
   expect(await savedQuote(page)).toEqual(before);
 
+  // Editor switching now lives in Settings > Beta Features.
+  // The phone profile launcher is part of the global MobileAppChrome,
+  // *outside* the Quotes mobile beta <main>. There is no "classic" button.
   if(info.project.name==='phone-390'){
-    await beta.getByLabel('Open SalesShop navigation').click();
-    await beta.getByRole('button',{name:/Settings & Profile/}).click();
+    await page.getByRole('button',{name:'Open profile and tools'}).click();
+    await page.getByRole('button',{name:/Settings & Profile/}).click();
+    await page.locator('.ss-settings-mobile-header .ss-mobile-tab-picker summary').click();
+    await page.getByRole('group',{name:'Settings sections'})
+      .getByRole('button',{name:'Beta Features'}).click();
   }else{
     await page.getByRole('button',{name:'Account and settings'}).click();
     await page.getByRole('button',{name:/Settings & Profile/}).click();
+    await page.getByRole('navigation',{name:'Settings sections'})
+      .getByRole('button',{name:/Beta Features/}).click();
   }
-  await page.getByRole('navigation',{name:'Settings sections'})
-    .getByRole('button',{name:/Beta Features/}).click();
-  await page.getByRole('button',{name:'Open classic Quotes'}).click();
+  await expect(page.getByRole('button',{name:'Open Detailed Editor'})).toBeVisible();
+  await page.getByRole('button',{name:'Open Detailed Editor'}).click();
+  await expect(detailed).toBeVisible();
+  expect(await savedQuote(page)).toEqual(before);
+  await expect.poll(()=>page.evaluate(()=>
+    localStorage.getItem('salesshop:quotes-mobile-beta-v1'))).toBe('0');
+  await page.reload();
   await expect(detailed).toBeVisible();
   expect(await savedQuote(page)).toEqual(before);
 });
