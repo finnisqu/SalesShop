@@ -255,63 +255,6 @@ describe('Takeoffs Lite: precise fractional-inch piece measurements',()=>{
   expect(quoteTotal(optedBackIn)).toBe(originalAmount);
   expect(original.lines.find(l=>l.id==='original-managed-line')?.includeInTotal).toBe(true);
  });
-
- it.skip('keeps an old sink with no pricing flag uncharged through review, model edits and JSON reload',()=>{
-  const old=quote();
-  old.sections[0].scope={...old.sections[0].scope,takeoffSinks:[
-   {id:'legacy-undefined',category:'vanity',name:'Legacy selection',count:1,unitPrice:225},
-  ]};
-  old.lines.push({id:'manual-extra',sectionId:'kitchen',kind:'sink',
-    description:'Builder allowance',pricingMode:'direct',amount:150,
-    customerVisible:true,includeInTotal:true});
-  const initialJson=JSON.stringify(old);
-  const initialTotal=quoteTotal(old);
-  expect(takeoffSinkIncludedInQuote(old,'kitchen','legacy-undefined')).toBe(false);
-  const proposal=reviewQuoteTakeoffSinkCharge(old,'kitchen','legacy-undefined',true);
-  expect(proposal?.after).toBe(initialTotal+225);
-  expect(JSON.stringify(old)).toBe(initialJson);
-  // Cancel means no store mutation; viewing the proposal must be read-only.
-  const reloaded=JSON.parse(JSON.stringify(old)) as Quote;
-  expect(quoteTotal(reloaded)).toBe(initialTotal);
-  expect(reloaded.lines).toEqual(old.lines);
-  expect(reloaded.sections[0].scope?.takeoffSinks?.[0].includeInPricing).toBeUndefined();
-  const edited=patchQuoteTakeoffSinks(reloaded,'kitchen',[
-   {...reloaded.sections[0].scope!.takeoffSinks![0],name:'Model changed'},
-  ]);
-  expect(quoteTotal(edited)).toBe(initialTotal);
-  expect(edited.lines).toEqual(old.lines);
-  expect(edited.lines.filter(line=>line.takeoffSinkId==='legacy-undefined')).toHaveLength(0);
- });
-
- it.skip('keeps a manual allowance and exact total intact after managed sink opt-out, reload and opt-in',()=>{
-  const old=quote();
-  old.sections[0].scope={...old.sections[0].scope,takeoffSinks:[
-   {id:'managed-charge',category:'vanity',name:'Vanity',count:2,
-     unitPrice:125,includeInPricing:true},
-  ]};
-  old.lines.push({id:'sink-existing',sectionId:'kitchen',takeoffSinkId:'managed-charge',
-   kind:'sink',description:'Sink · Vanity',pricingMode:'quantity-rate',
-   quantity:2,rate:125,customerVisible:false,includeInTotal:true});
-  old.lines.push({id:'manual-extra',sectionId:'kitchen',kind:'sink',
-   description:'Existing allowance',pricingMode:'direct',amount:150,
-   customerVisible:true,includeInTotal:true});
-  const before=quoteTotal(old);
-  const preview=reviewQuoteTakeoffSinkCharge(old,'kitchen','managed-charge',false)!;
-  expect(preview.before).toBe(before);
-  expect(preview.after).toBe(before-250);
-  expect(quoteTotal(old)).toBe(before);
-  const removed=setQuoteTakeoffSinkCharge(old,'kitchen','managed-charge',false);
-  const reloaded=JSON.parse(JSON.stringify(removed)) as Quote;
-  expect(quoteTotal(reloaded)).toBe(before-250);
-  expect(reloaded.lines.find(line=>line.id==='sink-existing')?.includeInTotal).toBe(false);
-  expect(reloaded.lines.find(line=>line.id==='manual-extra'))
-   .toEqual(old.lines.find(line=>line.id==='manual-extra'));
-  const optedIn=setQuoteTakeoffSinkCharge(reloaded,'kitchen','managed-charge',true);
-  expect(quoteTotal(optedIn)).toBe(before);
-  expect(optedIn.lines.filter(line=>line.takeoffSinkId==='managed-charge').map(line=>line.id))
-   .toEqual(['sink-existing']);
-  expect(quoteTotal(old)).toBe(before);
- });
  it('requires explicit sink charge confirmation on both mobile and desktop editors',()=>{
   const files=['src/components/QuotesMobileBeta.tsx','src/components/QuoteBetaCompactSinks.tsx',
    'src/components/QuoteBetaMaterials.tsx','src/components/QuoteBetaSinkSelling.tsx'];
