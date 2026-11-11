@@ -223,6 +223,55 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
         Unlink removes a direct association immediately after confirmation. It does not delete
         the related record or its history. Cancel Edit Page does not restore an unlinked association.
       </p>}
+      <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
+        <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
+        <div className="connections-record-entity-list">
+          {related.linkedDeals.map(({ project, quoteCount }) =>
+            <button type="button" key={project.id} onClick={() => openProject(project.id)}>
+              <strong>{project.name}</strong>
+              <small>Quote contact · {quoteCount} {quoteCount === 1 ? 'linked quote' : 'linked quotes'} →</small>
+            </button>)}
+          {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
+        </div>
+        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing||unlinking}/>
+      </RecordCard>
+      <RecordRecentsPanel
+        quoteCount={quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}
+        activityCount={related.directActivities.length} quotes={<>
+       <div className="connections-record-entity-list">
+        {quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).map(q=><div
+          className="ss-record-associated-row" key={q.id}>
+          <button type="button" onClick={()=>openQuote(q.id)}>
+            <strong>{q.title||displayName+' quote'}</strong>
+            <small>{q.status} · Open quote →</small>
+          </button>
+          {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
+            target={{kind:'quote',id:q.id,name:q.title||displayName+' quote'}}/>}
+         </div>)}
+        {!quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&
+         <p className="connections-record-empty">No Quotes have this Person as their primary contact.</p>}
+       </div>
+       <RecordRelationshipPicker source={{kind:'person',id:person.id,name:displayName}} target="quote"/>
+      </>} activities={<div className="ss-record-recent-activity-list">
+        {related.directActivities.slice(0,12).map(activity=>
+          <button type="button" key={activity.id} onClick={()=>setActivityPreviewId(activity.id)}>
+            <strong>{activity.summary}</strong><small>{dateLabel(activity.occurredAt)}</small>
+          </button>)}
+        {!related.directActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
+      </div>}/>
+      <RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.contactId===person.id).length} linked</span>}>
+        <div className="connections-record-entity-list">
+          {notebookEntries.filter(entry=>entry.context?.contactId===person.id).map(entry=>
+            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
+              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
+            </button>)}
+          {!notebookEntries.some(entry=>entry.context?.contactId===person.id)&&
+            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
+        </div>
+      </RecordCard>
+      <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
+    </>}
+    right={<>
       <RecordCard title="Company">
         {(related.company||associatedOwnCompany) ? <div className="connections-record-entity-list">
           {associatedOwnCompany&&<button type="button" onClick={()=>openCompany(associatedOwnCompany.id)}>
@@ -248,47 +297,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
         {isInternal&&<p className="connections-record-helper">
           Change an internal Person's Company from Our Organization to preserve their roster membership.</p>}
       </RecordCard>
-      <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
-        <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
-        <div className="connections-record-entity-list">
-          {related.linkedDeals.map(({ project, quoteCount }) =>
-            <button type="button" key={project.id} onClick={() => openProject(project.id)}>
-              <strong>{project.name}</strong>
-              <small>Quote contact · {quoteCount} {quoteCount === 1 ? 'linked quote' : 'linked quotes'} →</small>
-            </button>)}
-          {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
-        </div>
-        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing||unlinking}/>
-      </RecordCard>
-      <RecordCard title="Quotes" extra={<span>{quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}</span>}>
-       <div className="connections-record-entity-list">
-        {quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).map(q=><div
-          className="ss-record-associated-row" key={q.id}>
-          <button type="button" onClick={()=>openQuote(q.id)}>
-            <strong>{q.title||displayName+' quote'}</strong>
-            <small>{q.status} · Open quote →</small>
-          </button>
-          {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
-            target={{kind:'quote',id:q.id,name:q.title||displayName+' quote'}}/>}
-         </div>)}
-        {!quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&
-         <p className="connections-record-empty">No Quotes have this Person as their primary contact.</p>}
-       </div>
-       <RecordRelationshipPicker source={{kind:'person',id:person.id,name:displayName}} target="quote"/>
-      </RecordCard>
-      <RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.contactId===person.id).length} linked</span>}>
-        <div className="connections-record-entity-list">
-          {notebookEntries.filter(entry=>entry.context?.contactId===person.id).map(entry=>
-            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
-              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
-            </button>)}
-          {!notebookEntries.some(entry=>entry.context?.contactId===person.id)&&
-            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
-        </div>
-      </RecordCard>
-    </>}
-    right={<>
-      <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
+
       <RecordCard title="Contact details">
         <div className="connections-person-contact-actions">
           {person.email ? <a href={'mailto:' + person.email}>✉ Email</a> : <span>Email not provided</span>}
