@@ -37,7 +37,13 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
      placeholder={'Search '+kind.toLowerCase()+' or enter a new name…'}
      aria-label={'Search or create '+kind} disabled={saving}
      onChange={e=>{setQuery(e.target.value);setError('');}}
-     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}/>
+     onKeyDown={e=>{
+       if(e.key==='Enter'){
+         // Selecting a Company is separate from submitting an enclosing Deal form.
+         e.preventDefault();return;
+       }
+       if(e.key==='Escape'){e.stopPropagation();setOpen(false);}
+     }}/>
    {extra}
    <div className="ss-unified-picker-results">
     <small>{needle?'Matching existing records':'Existing records'}</small>
