@@ -55,13 +55,13 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
    {direct.map(link=>{
     const person=people.find(p=>p.id===link.personId);
     if(!person)return null;
-    const editing=editingRole===person.id;
+    const editingThisRole=editingRole===person.id;
     return <div key={person.id} className="ss-deal-relations-row">
      <button type="button" className="ss-deal-relations-name"
       onClick={()=>onOpenPerson(person.id)}><strong>{person.name||person.email||'Unnamed person'}</strong>
       <small>{link.role||person.title||'Direct contact'} · Open Person →</small></button>
      {manager.editable&&<div className="ss-deal-relations-row-actions">
-      {editing?<><input value={editedRole} aria-label={'Role for '+person.name}
+      {editingThisRole?<><input value={editedRole} aria-label={'Role for '+person.name}
        maxLength={120} onChange={e=>setEditedRole(e.target.value)}/>
        <button type="button" disabled={busy} onClick={()=>void update(async()=>{
         await manager.setRole(dealId,person.id,editedRole);setEditingRole(null);

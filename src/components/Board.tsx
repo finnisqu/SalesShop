@@ -376,18 +376,20 @@ export function Board() {
       if(useDealPeopleStore.getState().scope!==scope||!useDealPeopleStore.getState().loaded)
         throw new Error('Deal People links are not available yet. Please try again.');
     }
-    let companyId=details?.companyId;
-    if(details?.newCompanyName){
-      const next=resolveCompany(details.newCompanyName,'customer');
-      if(!next)throw new Error('Could not create new Company.');
-      const createdCompany=useCrmStore.getState().companies.find(c=>c.id===next);
-      if(createdCompany)updateCompany(next,companyRelationshipPatch(createdCompany,'prospect'));
-      companyId=next;
-    }
+    // Create the Deal first; don't leave a newly-created orphan Company if
+    // the Deal itself cannot be saved. Related names were already validated.
     const id=createProject(name,'Discovery',{
       pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
     });
     if(!id)return null;
+    let companyId=details?.companyId;
+    if(details?.newCompanyName){
+      const next=resolveCompany(details.newCompanyName,'customer');
+      if(!next)throw new Error('Deal created; Company could not be created. Open the Deal to add it.');
+      const createdCompany=useCrmStore.getState().companies.find(c=>c.id===next);
+      if(createdCompany)updateCompany(next,companyRelationshipPatch(createdCompany,'prospect'));
+      companyId=next;
+    }
     if(companyId)setProjectCompany(id,companyId);
     if(details?.dueDate)updateProject(id,{dueDate:details.dueDate});
     const personIds=[...(details?.personIds??[])];

@@ -28,11 +28,12 @@ export function BoardQuickCreate({kind,onCreate}:{
   const [error,setError]=useState('');
   const trigger=useRef<HTMLButtonElement>(null);
   const inputId=useId();
-  const close=()=>{
+  const reset=()=>{
     setOpen(false);setName('');setError('');setMore(false);
     setCompanyId('');setNewCompanyName('');setPersonIds([]);setNewPeopleNames([]);setDueDate('');
     trigger.current?.focus();
   };
+  const close=()=>{if(!saving)reset();};
   useModalScrollLock(open);
   const sheetRef=useDismissibleLayer<HTMLFormElement>(open,()=>{if(!saving)close();});
   const submit=async(event:FormEvent<HTMLFormElement>)=>{
@@ -46,7 +47,7 @@ export function BoardQuickCreate({kind,onCreate}:{
       };
       const id=await onCreate(clean,kind==='Deal'&&more?details:undefined);
       if(!id){setError('This name could not be saved. Check for duplicates and try again.');return;}
-      close();
+      reset();
     }catch(reason){setError(reason instanceof Error?reason.message:'Unable to create the record.');}
     finally{setSaving(false);}
   };
@@ -63,7 +64,7 @@ export function BoardQuickCreate({kind,onCreate}:{
           <MobileSheetHandle onClose={close}/>
           <header>
             <div><small>BOARD · QUICK CREATE</small><h2>New {kind.toLowerCase()}</h2></div>
-            <button type="button" onClick={close} aria-label="Close quick create"
+            <button type="button" onClick={close} disabled={saving} aria-label="Close quick create"
               autoFocus={typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches}>×</button>
           </header>
           <div className="board-create-fields ss-mobile-sheet-body">
