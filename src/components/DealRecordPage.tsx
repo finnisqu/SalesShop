@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {RecordInlineProperty} from './RecordInlineProperty';
+import {RecordActionsMenu} from './RecordActionsMenu';
+import {RecordRecentsPanel} from './RecordRecentsPanel';
 import {QuickCreate} from './QuickCreate';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordUnlinkAction} from './RecordUnlinkAction';
@@ -69,6 +72,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
   const openCompany = useNavigationStore(state => state.openCompany);
   const openPerson = useNavigationStore(state => state.openPerson);
   const [editing, setEditing] = useState(false);
+  const [unlinking,setUnlinking]=useState(false);
   const [saving,setSaving]=useState(false);
   const [saveError,setSaveError]=useState('');
   const [newCompanyName,setNewCompanyName]=useState('');
@@ -93,7 +97,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setActivityPreviewId(null);
-    setExternalQuoteOpen(false);setExternalQuoteDialogOpen(false);setNewCompanyName('');
+    setExternalQuoteOpen(false);setExternalQuoteDialogOpen(false);setNewCompanyName('');setUnlinking(false);
     setSaveError('');setNotice(null); }, [dealId]);
   useEffect(()=>{if(!timelineBetaEnabled)setTimelineOpen(false);},[timelineBetaEnabled]);
   useEffect(() => {
@@ -198,6 +202,11 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         if(editing)setNewCompanyName('');
         setEditing(value=>!value);
       }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>
+      <RecordActionsMenu unlinking={unlinking} disabled={!canEditCrm}
+        onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
+        onDelete={canEditCrm&&!related.linkedQuotes.length&&!outsideQuotes.length&&!directIds.size
+          ?async()=>{await useCrmStore.getState().deleteCleanProject(deal.id);onBack();}
+          :undefined}/>
       {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
       <QuickCreate context={{kind:'deal',id:deal.id,name:deal.name}} launcherLabel="+ New"/>
     </>}
@@ -259,28 +268,46 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             <button className="connections-record-primary" type="submit" disabled={saving}>{saving?'Saving…':'Save changes'}</button>
           </div>
         </form> : <div className="connections-record-properties-list">
-          <RecordProperty label="Stage">{deal.stage}</RecordProperty>
-          <RecordProperty label="Pipeline">{dealPipelineLabel(deal.pipeline)}</RecordProperty>
-          <RecordProperty label="Amount">{deal.amount === undefined ? 'Not set' : money.format(deal.amount)}</RecordProperty>
-          <RecordProperty label="Bid due date">{displayDate(deal.dueDate)}</RecordProperty>
+          <RecordInlineProperty label="Deal name" value={deal.name} disabled={!canEditCrm}
+            onSave={value=>{
+              if(!value.trim())throw new Error('Enter a Deal name.');
+              updateDeal(deal.id,{name:value.trim()});
+            }}/>
+          <RecordInlineProperty label="Stage" value={deal.stage} type="select" disabled={!canEditCrm}
+            options={PROJECT_STAGES.map(stage=>({value:stage,label:stage}))}
+            onSave={value=>updateDeal(deal.id,{stage:value as ProjectStage})}/>
+          <RecordInlineProperty label="Pipeline" value={deal.pipeline??''} type="select"
+            disabled={!canEditCrm} display={dealPipelineLabel(deal.pipeline)}
+            options={[{value:'',label:'Unassigned'},...DEAL_PIPELINES.map(item=>({value:item.id,label:item.label}))]}
+            onSave={value=>updateDeal(deal.id,{pipeline:(value||undefined) as DealPipeline|undefined})}/>
+          <RecordInlineProperty label="Amount" value={deal.amount?.toString()??''}
+            display={deal.amount===undefined?'Not set':money.format(deal.amount)} type="number"
+            disabled={!canEditCrm}
+            onSave={value=>{
+              const e=nonnegativeFieldError(value,'Deal amount');if(e)throw new Error(e);
+              updateDeal(deal.id,{amount:value.trim()?Number(value):undefined});
+            }}/>
+          <RecordInlineProperty label="Bid due date" type="date" value={deal.dueDate??''}
+            display={displayDate(deal.dueDate)} disabled={!canEditCrm}
+            onSave={value=>updateDeal(deal.id,{dueDate:value||undefined})}/>
           {outsideQuotes.length>0&&<RecordProperty label="External bid sent">{displayDate(outsideQuotes[0].metadata?.bidSentDate||outsideQuotes[0].occurredAt)}</RecordProperty>}
           <RecordProperty label="Assigned salesperson">{dealAssigneeLabel(deal.assignedUserId,assignees)}</RecordProperty>
-          <RecordProperty label="Next action">{deal.nextAction || 'Not set'}</RecordProperty>
-          <RecordProperty label="Last touchpoint">{displayDate(deal.lastTouchpoint)}</RecordProperty>
+          <RecordInlineProperty label="Next action" value={deal.nextAction??''}
+            disabled={!canEditCrm} onSave={value=>updateDeal(deal.id,{nextAction:value.trim()||undefined})}/>
+          <RecordInlineProperty label="Last touchpoint" value={deal.lastTouchpoint??''} type="date"
+            display={displayDate(deal.lastTouchpoint)} disabled={!canEditCrm}
+            onSave={value=>updateDeal(deal.id,{lastTouchpoint:value||undefined})}/>
           <RecordProperty label="Created">{displayDate(deal.createdAt)}</RecordProperty>
         </div>}
       </RecordCard>
     </>}
     center={<>
-      {editing&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
+      {unlinking&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
         Unlink removes a direct association immediately after confirmation. It does not delete
         the related record or its history. Cancel Edit Page does not restore an unlinked association.
       </p>}
-      {timelineBetaEnabled&&<RecordCard title="Project timeline · Beta">
-        <p className="connections-record-helper">Track deposit, shop drawings, import batches, installations by building, invoices and retainage.</p>
-        <button type="button" onClick={()=>setTimelineOpen(true)}>Open milestone timeline</button>
-      </RecordCard>}
-      <RecordCard title="Quotes" extra={<span>{related.linkedQuotes.length+outsideQuotes.length} total</span>}>
+      <RecordRecentsPanel quoteCount={related.linkedQuotes.length+outsideQuotes.length}
+        activityCount={related.directHistory.length} quotes={<>
         {canEditCrm&&<button type="button" className="connections-record-add"
           onClick={()=>{
             if(window.matchMedia('(max-width:760px)').matches){
@@ -296,7 +323,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
               <strong>{quote.title || displayQuoteNumber(quote)}</strong>
               <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
             </button>
-            {editing&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
+            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
               target={{kind:'quote',id:quote.id,name:quote.title||displayQuoteNumber(quote)}}/>}
           </div>)}
           {outsideQuotes.map(activity=><button type="button" key={activity.id}
@@ -309,11 +336,21 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             <p className="connections-record-empty">No quotes linked to this Deal yet. Create one in SalesShop or record an external submission.</p>}
         </div>
         <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="quote"/>
-      </RecordCard>
+      </>} activities={<div className="ss-record-recent-activity-list">
+        {related.directHistory.slice(0,12).map(activity=>
+          <button type="button" key={activity.id} onClick={()=>setActivityPreviewId(activity.id)}>
+            <strong>{activity.summary}</strong><small>{displayDate(activity.occurredAt)}</small>
+          </button>)}
+        {!related.directHistory.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
+      </div>}/>
+      <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing||unlinking}/>
+      {timelineBetaEnabled&&<RecordCard title="Project timeline · Beta">
+        <p className="connections-record-helper">Track deposit, shop drawings, import batches, installations by building, invoices and retainage.</p>
+        <button type="button" onClick={()=>setTimelineOpen(true)}>Open milestone timeline</button>
+      </RecordCard>}
       <RecordCard title="Notebook">
         <ProjectNotebookLinks project={deal} />
       </RecordCard>
-      <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing}/>
     </>}
     right={<>
       <RecordCard title="Company">
@@ -322,7 +359,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             <button type="button" onClick={() => openCompany(related.company!.id)}>
               <strong>{related.company.name}</strong><small>Open company →</small>
             </button>
-            {editing&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
+            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
               target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
           </div>
         </div> : <p className="connections-record-empty">No associated company. Edit the deal to select one.</p>}
@@ -341,7 +378,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </div>)}
           {!related.dealPeople.length&&<p className="connections-record-empty">No contacts linked through Quotes or Activities. Add a direct Deal Person below.</p>}
         </div>
-        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={editing}/>
+        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={editing||unlinking}/>
         {related.companyPeople.some(person=>!directIds.has(person.id))&&<details className="ss-deal-company-people">
           <summary>Other people at this company ({related.companyPeople.filter(person=>!directIds.has(person.id)).length})</summary>
           <div className="connections-record-entity-list">

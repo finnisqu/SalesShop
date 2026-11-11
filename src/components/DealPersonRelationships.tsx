@@ -55,13 +55,13 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
    {direct.map(link=>{
     const person=people.find(p=>p.id===link.personId);
     if(!person)return null;
-    const editing=editingRole===person.id;
+    const editingThisRole=editingRole===person.id;
     return <div key={person.id} className="ss-deal-relations-row">
      <button type="button" className="ss-deal-relations-name"
       onClick={()=>onOpenPerson(person.id)}><strong>{person.name||person.email||'Unnamed person'}</strong>
       <small>{link.role||person.title||'Direct contact'} · Open Person →</small></button>
      {manager.editable&&<div className="ss-deal-relations-row-actions">
-      {editing?<><input value={editedRole} aria-label={'Role for '+person.name}
+      {editingThisRole?<><input value={editedRole} aria-label={'Role for '+person.name}
        maxLength={120} onChange={e=>setEditedRole(e.target.value)}/>
        <button type="button" disabled={busy} onClick={()=>void update(async()=>{
         await manager.setRole(dealId,person.id,editedRole);setEditingRole(null);
@@ -70,7 +70,7 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
       {editing&&<button type="button" disabled={busy} onClick={()=>{
        if(!window.confirm('Remove '+person.name+' from this Deal? Their Person record and Activities stay intact.'))return;
        void update(()=>manager.remove(dealId,person.id));
-      }}>Unlink</button>}
+      }} className="ss-record-unlink-button">Unlink</button>}
      </div>}
     </div>;
    })}
@@ -129,7 +129,7 @@ export function PersonDealRelationships({personId,deals,onOpenDeal,editing=false
       {editing&&manager.editable&&<button type="button" disabled={busy} onClick={()=>{
        if(!window.confirm('Unlink this Deal? Existing Quotes and Activities are preserved.'))return;
        void apply(()=>manager.remove(deal.id,personId));
-      }}>Unlink</button>}
+      }} className="ss-record-unlink-button">Unlink</button>}
      </div>:null;
    })}
    {!direct.length&&<p className="connections-record-empty">Not assigned directly to any Deals.</p>}

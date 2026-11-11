@@ -8,6 +8,7 @@ import './board.css';
 import './board-groups.css';
 import './accounts.css';
 import './connections-record-pages.css';
+import './record-page-refinement.css';
 import './notebook-project-links.css';
 import './quotes.css';
 import './customer-document-brand.css';
@@ -296,12 +297,12 @@ function App() {
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
         <nav className="app-tabs" aria-label="SalesShop sections">
           <button className={`app-tab ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>Home</button>
-          <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
-          <button className={`app-tab ${view === 'tasks' ? 'active' : ''}`} onClick={() => setView('tasks')}>Tasks</button>
           <button className={`app-tab ${view === 'board' ? 'active' : ''}`} onClick={() => setView('board')}>Board</button>
+          <button className={`app-tab ${view === 'tasks' ? 'active' : ''}`} onClick={() => setView('tasks')}>Tasks</button>
           <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>Connections</button>
-          <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
+          <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')}>Quotes</button>
           <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')}>Catalog</button>
+          <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')}>Notebook</button>
         </nav>
         <div className="app-primary-actions" role="group" aria-label="Calendar, search, create and notebook tools">
           <WorkspaceHelp page={view==='dashboard'?'connections':view}
