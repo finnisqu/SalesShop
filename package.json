@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && npm run test:quick-quote && npm run test:record-redesign && vite build",
+    "build": "tsc --noEmit && npm run test:quick-quote && npm run test:record-gate && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:materials": "vitest run src/types/settings.test.ts src/services/salesShopMaterialTemplateImport.test.ts src/services/supplierImportCatalog.test.ts",
@@ -19,7 +19,8 @@
     "test:crm-ownership": "vitest run src/services/crmOwnerReassignment.test.ts src/services/recordOwnershipAndRecovery.test.ts",
     "test:crm-ownership:browser": "playwright test e2e/crm-owner-reliability.pw.ts --project=phone-390 --project=desktop-1280",
     "test:crm-workflows": "vitest run src/services/dealRecordView.test.ts src/services/ourOrganizationDirectory.test.ts src/services/activityRelations.test.ts src/services/companyRelationship.test.ts src/store/externalQuoteBackfill.test.ts src/components/ConnectionsBulkEditDialog.test.tsx src/services/activityLogFilters.test.ts src/components/SuppliersConnectionsLayout.test.ts src/store/personalTaskSubtasks.test.ts src/services/homeBadgeAgendaFocus.test.ts src/components/RecordRelatedActions.test.ts src/store/dealPeopleStore.test.ts src/components/TaskAndDealPeoplePolish.test.ts src/services/bidSubmissionTaskGuard.test.ts src/services/confirmedBidSubmissions.test.ts",
-    "test:record-redesign": "vitest run e2e/record-page-redesign.test.ts"
+    "test:record-redesign": "vitest run e2e/record-page-redesign.test.ts",
+    "test:record-gate": "node e2e/record-page-redesign-gate.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
