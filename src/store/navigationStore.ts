@@ -62,8 +62,7 @@ function readInitialNavigation(): Pick<NavigationState, 'view' | 'catalogSection
     if (storedView === 'rate-book') return { view: 'catalog', catalogSection: 'rates' };
 
     return {
-      view: route?.view ?? (storedView==='board'?'dashboard':
-        storedView && APP_VIEWS.includes(storedView as AppView)?storedView as AppView:'home'),
+      view: route?.view ?? (storedView && APP_VIEWS.includes(storedView as AppView) ? storedView as AppView : 'home'),
       catalogSection:route?.catalogSection ?? catalogSection,
     };
   } catch {
@@ -87,27 +86,13 @@ export const useNavigationStore = create<NavigationState>((set,get) => {
     focusedProjectId:state.focusedProjectId,focusedCompanyId:state.focusedCompanyId,
     focusedContactId:state.focusedContactId,focusedQuoteId:state.focusedQuoteId,
   });
-  // Remember the last open Connections record while the user visits other tabs.
-  // This is intentionally session-only; a stale CRM identity is not persisted.
-  let lastConnectionsRecord:Pick<NavigationLocation,
-    'focusedProjectId'|'focusedCompanyId'|'focusedContactId'>|null=null;
-  const navigate=(requestedView:AppView,patch:Partial<NavigationLocation>={})=>{
-    // Old Board destinations now live under Connections.
-    const view=requestedView==='board'?'dashboard':requestedView;
+  const navigate=(view:AppView,patch:Partial<NavigationLocation>={})=>{
     let target:string|undefined;
     let origin:string|undefined;
     set(state=>{
+      const next:NavigationLocation={...snapshot(state),view,
+        ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,focusedContactId:null,focusedQuoteId:null,...patch};
       const current=snapshot(state);
-      if(current.view==='dashboard'){
-        lastConnectionsRecord=current.focusedProjectId||current.focusedCompanyId||current.focusedContactId
-          ?{focusedProjectId:current.focusedProjectId,focusedCompanyId:current.focusedCompanyId,
-             focusedContactId:current.focusedContactId}:null;
-      }
-      const restore=view==='dashboard'&&current.view!=='dashboard'&&!patch.focusedProjectId&&
-        !patch.focusedCompanyId&&!patch.focusedContactId?lastConnectionsRecord:null;
-      const next:NavigationLocation={...current,view,
-        ratesFocus:undefined,focusedProjectId:null,focusedCompanyId:null,focusedContactId:null,focusedQuoteId:null,
-        ...(restore??{}),...patch};
       const changed=Object.keys(current).some(key=>
         current[key as keyof NavigationLocation]!==next[key as keyof NavigationLocation]);
       if(!changed)return state;

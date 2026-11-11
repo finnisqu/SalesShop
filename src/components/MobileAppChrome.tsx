@@ -21,11 +21,12 @@ import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'home', label: 'Home', short: 'Home' },
-  { view: 'tasks', label: 'Tasks', short: 'Tasks' },
-  { view: 'dashboard', label: 'Connections', short: 'Connections' },
   { view: 'quotes', label: 'Quotes', short: 'Quotes' },
-  { view: 'catalog', label: 'Catalog', short: 'Catalog' },
+  { view: 'tasks', label: 'Tasks', short: 'Tasks' },
+  { view: 'board', label: 'Board', short: 'Board' },
+  { view: 'dashboard', label: 'Connections', short: 'Connections' },
   { view: 'notebook', label: 'Notebook', short: 'Notebook' },
+  { view: 'catalog', label: 'Catalog', short: 'Catalog' },
 ];
 
 const CATALOG_LABELS:Partial<Record<CatalogSection,string>>={
@@ -160,6 +161,21 @@ export function MobileAppChrome() {
     document.addEventListener('pointerdown',outside);
     return ()=>document.removeEventListener('pointerdown',outside);
   },[open,drawerRef]);
+  const [boardMode, setBoardMode] = useState<'projects' | 'accounts'>(() => {
+    if (typeof window === 'undefined') return 'projects';
+    return window.sessionStorage.getItem('salesshop-board-mode-v1') === 'accounts' ? 'accounts' : 'projects';
+  });
+
+  useEffect(() => {
+    const syncBoardMode = (event: Event) => {
+      const detail = (event as CustomEvent<{ mode?: 'projects' | 'accounts' }>).detail;
+      if (detail?.mode) setBoardMode(detail.mode);
+    };
+    window.addEventListener('sales-shop:board-mode-changed', syncBoardMode);
+    return () => window.removeEventListener('sales-shop:board-mode-changed', syncBoardMode);
+  }, []);
+
+
   const activeEntry = entries.find((entry) => entry.id === activeEntryId) ?? null;
 
   if (view === 'quotes' && !betaQuotesEnabled && !quoteReadOnly && !preview && !(quoteLibraryMode === 'team' && mode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin'))) return null;
@@ -176,7 +192,9 @@ export function MobileAppChrome() {
     ? activeEntry?.title || 'Notebook'
     : view === 'catalog'
       ? `Catalog · ${catalogLabel(catalogSection)}`
-      : viewLabel(view);
+      : view === 'board'
+        ? `Board · ${boardMode === 'accounts' ? 'Accounts' : 'Deals'}`
+        : viewLabel(view);
 
   const chooseView = (next: AppView) => {
     const choice = resolveMobileDrawerChoice(next);
@@ -216,7 +234,7 @@ export function MobileAppChrome() {
         </>}
         {!isEditingQuote&&<div className="mobile-app-help">
           <WorkspaceHelp page={view==='dashboard'?'connections':view}
-            section={view==='catalog'?catalogSection:undefined}/>
+            section={view==='catalog'?catalogSection:view==='board'?(boardMode==='accounts'?'accounts':'deals'):undefined}/>
         </div>}
         <div className="mobile-quote-actions-slot" id="mobile-quote-actions-slot" aria-label="Document options"/>
         <button ref={navigationButtonRef} type="button" className="mobile-app-menu-button" onClick={openNavigation}
