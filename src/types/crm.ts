@@ -53,6 +53,8 @@ export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 export interface Company {
   id: string;
+  /** Creator-assigned salesperson; missing means legacy unassigned, not shared. */
+  ownerUserId?: string;
   name: string;
   aliases?: string[];
   identityExclusions?: string[];
@@ -66,6 +68,8 @@ export interface Company {
 
 export interface Contact {
   id: string;
+  /** Creator-assigned salesperson; missing means legacy unassigned, not shared. */
+  ownerUserId?: string;
   companyId?: string;
   name: string;
   identityExclusions?: string[];
@@ -78,6 +82,8 @@ export interface Contact {
 
 export interface Project {
   id: string;
+  /** Creator-assigned salesperson; missing means legacy unassigned, not shared. */
+  ownerUserId?: string;
   name: string;
   companyId?: string;
   companyName?: string;
@@ -111,6 +117,8 @@ export interface ActivityMetadata {
 
 export interface Activity {
   id: string;
+  /** Creator-assigned salesperson; missing means legacy unassigned, not shared. */
+  ownerUserId?: string;
   type: ActivityType;
   summary: string;
   projectId?: string;
