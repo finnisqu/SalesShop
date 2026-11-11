@@ -7,10 +7,9 @@ import {QuickCreate} from './QuickCreate';
 import {HomeCalendarGearButton,HomeCalendarCustomizer} from './HomeCalendarCustomizer';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
-import {homeCalendarScope,syncHomeCalendarSettings} from '../store/homeCalendarSettings';
+import {homeCalendarScope,syncHomeCalendarSettings,useHomeCalendarSettings} from '../store/homeCalendarSettings';
 import '../home-workspace.css';
 import './home-layout-custom.css';
-import './home-week-focus.css';
 
 const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'short',day:'numeric'});
 const compactDateLabel=new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric'});
@@ -22,6 +21,7 @@ export function HomeWorkspace(){
  const role=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
  const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
  const scope=homeCalendarScope(mode,orgId,userId);
+ const settings=useHomeCalendarSettings(scope);
  const [recentHost,setRecentHost]=useState<HTMLDivElement|null>(null);
  useEffect(()=>hydrate(),[hydrate]);
  useEffect(()=>{
@@ -39,10 +39,8 @@ export function HomeWorkspace(){
  },[scope]);
  const canCreate=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'quotes')));
  const canLog=!rolePreview&&(mode==='local'||!!(userId&&canEditTeamArea(role,department,'crm')));
- // Keep Home's three sections visible in their familiar order for now.
- // Existing stored layout preferences are preserved for a future editor.
- const shown={quickActions:true,calendar:true,recent:true};
- const order=['quickActions','calendar','recent'] as const;
+ const shown=settings.visibleSections;
+ const order=settings.sectionOrder;
  // In the default arrangement, Quick Actions belongs in the heading row
  // as before. If reordered, it remains a movable standalone section.
  const quickInHeader=shown.quickActions&&order[0]==='quickActions';

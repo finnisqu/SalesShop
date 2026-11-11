@@ -505,9 +505,6 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           (badgeSettings.showUrgentBadge&&counts.urgent?', urgent task':'')+
           (hasNotebookDate?', has calendar date':'')}
          onClick={selectDate}>
-         {weekMode&&<small className="sales-calendar-week-day-label" aria-hidden="true">
-           {new Date(key+'T12:00:00').toLocaleDateString(undefined,{weekday:'short'})}
-          </small>}
          <span>{Number(key.slice(-2))}</span>
          {badgeSettings.showUrgentBadge&&counts.urgent>0&&
           <span className="sales-calendar-urgent" aria-hidden="true"
@@ -534,6 +531,18 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        </div>;
      })}
     </div>
+    {embedded&&weekMode&&!isPhone&&<div className="sales-calendar-week-glimpse">
+     <strong>This week</strong>
+     {visibleDays.map(key=>{
+      const counts=calendarDayCounts(events,key);
+      return <button key={key} type="button" className={key===selected?'is-selected':''}
+       onClick={()=>{setSelected(key);setBadgeFocus(null);}}>
+       <span>{new Date(key+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}</span>
+       <small>{counts.total} {counts.total===1?'item':'items'}{counts.urgent?' · Urgent':''}</small>
+       {counts.urgent>0&&<b aria-label="Urgent">!</b>}
+      </button>;
+     })}
+    </div>}
      </div>
     <section ref={agendaRef} className="sales-calendar-day-preview"
      aria-label={'Items for '+dateLabel(selected)}
