@@ -24,7 +24,7 @@ export function RecordInlineProperty({label,value,display,type='text',options,on
  return <div className={'connections-record-property ss-record-inline-property'+(editing?' is-editing':'')}>
   <span>{label}</span>
   {!editing?<div className="ss-record-inline-value">
-   <strong>{display??value||placeholder}</strong>
+   <strong>{display??(value||placeholder)}</strong>
    {!disabled&&<button type="button" className="ss-record-pencil" aria-label={'Edit '+label}
      title={'Edit '+label} onClick={()=>{setDraft(value);setError('');setEditing(true);}}>
      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
