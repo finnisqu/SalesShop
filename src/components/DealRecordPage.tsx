@@ -311,7 +311,8 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         <p className="connections-record-helper">Track deposit, shop drawings, import batches, installations by building, invoices and retainage.</p>
         <button type="button" onClick={()=>setTimelineOpen(true)}>Open milestone timeline</button>
       </RecordCard>}
-      <RecordCard title="Quotes" extra={<span>{related.linkedQuotes.length+outsideQuotes.length} total</span>}>
+      <RecordRecentsPanel quoteCount={related.linkedQuotes.length+outsideQuotes.length}
+        activityCount={related.directHistory.length} quotes={<>
         {canEditCrm&&<button type="button" className="connections-record-add"
           onClick={()=>{
             if(window.matchMedia('(max-width:760px)').matches){
@@ -340,7 +341,13 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
             <p className="connections-record-empty">No quotes linked to this Deal yet. Create one in SalesShop or record an external submission.</p>}
         </div>
         <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="quote"/>
-      </RecordCard>
+      </>} activities={<div className="ss-record-recent-activity-list">
+        {related.directHistory.slice(0,12).map(activity=>
+          <button type="button" key={activity.id} onClick={()=>setActivityPreviewId(activity.id)}>
+            <strong>{activity.summary}</strong><small>{displayDate(activity.occurredAt)}</small>
+          </button>)}
+        {!related.directHistory.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
+      </div>}/>
       <RecordCard title="Notebook">
         <ProjectNotebookLinks project={deal} />
       </RecordCard>
