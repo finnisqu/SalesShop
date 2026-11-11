@@ -493,7 +493,7 @@ export function Connections() {
             tab==='quotes'?'Search quotes…':'Search activities…'}/>}
         primary={<>
           {(tab==='companies'||tab==='deals')&&
-           <div className="connections-layout-toggle" role="group" aria-label={tab==='deals'?'Deals layout':'Companies layout'}>
+           <div className="connections-layout-toggle is-desktop" role="group" aria-label={tab==='deals'?'Deals layout':'Companies layout'}>
             <button type="button" aria-label="Table layout" aria-pressed={layouts[tab]==='table'}
               onClick={()=>chooseLayout(tab,'table')}>Table</button>
             <button type="button" aria-label="Board layout" aria-pressed={layouts[tab]==='board'}
@@ -501,6 +501,11 @@ export function Connections() {
            </div>}
           {tab==='companies'&&layouts.companies==='table'&&<Button variant="primary" className="connections-add"
             onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
+          {(tab==='deals'||tab==='companies')&&layouts[tab]==='board'&&
+           <button type="button" className="connections-board-header-create" disabled={!recordsReady}
+            onClick={()=>document.querySelector<HTMLButtonElement>('.connections-board-host .board-add-button')?.click()}>
+            {tab==='deals'?'+ Deal':'+ Company'}
+           </button>}
           {tab==='people'&&<Button variant="primary" className="connections-add"
             onClick={()=>setPersonCreating(value=>!value)}>+ Person</Button>}
           {tab==='organization'&&<Button variant="primary" className="connections-add"
@@ -524,6 +529,14 @@ export function Connections() {
             }}>+ Quote</Button>}
         </>}
       />
+      {(tab==='companies'||tab==='deals')&&
+       <div className="connections-mobile-layout-bar">
+        <span>{tab==='deals'?'Deals display':'Companies display'}</span>
+        <div className="connections-layout-toggle is-mobile" role="group" aria-label={tab==='deals'?'Deals layout':'Companies layout'}>
+         <button type="button" aria-pressed={layouts[tab]==='table'} onClick={()=>chooseLayout(tab,'table')}>Table</button>
+         <button type="button" aria-pressed={layouts[tab]==='board'} onClick={()=>chooseLayout(tab,'board')}>Board</button>
+        </div>
+       </div>}
       {!recordsReady&&<WorkspaceLoadingState title="Loading Connections"
         detail="Opening companies, people, deals and quote links…" />}
       <div className="connections-directory-content"
