@@ -11,7 +11,9 @@ import { Button } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
-import {BoardQuickCreate} from './BoardQuickCreate';
+import {BoardQuickCreate,type BoardDealCreateDetails} from './BoardQuickCreate';
+import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
+import {useAuthStore} from '../store/authStore';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError} from './RecordFormFeedback';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
@@ -348,7 +350,60 @@ export function Board() {
   const hydrated = useCrmStore((state) => state.hydrated);
   const projects = useCrmStore((state) => state.projects);
   const createProject = useCrmStore((state) => state.createProject);
+  const setProjectCompany = useCrmStore((state) => state.setProjectCompany);
+  const updateProject = useCrmStore((state) => state.updateProject);
+  const resolveCompany = useCrmStore((state) => state.resolveCompany);
+  const updateCompany = useCrmStore((state) => state.updateCompany);
+  const createContact = useCrmStore((state) => state.createContact);
   const moveProject = useCrmStore((state) => state.moveProject);
+  const createDealWithDetails=async(name:string,details?:BoardDealCreateDetails)=>{
+    const crm=useCrmStore.getState(),existing=crm.companies;
+    if(details?.companyId&&!existing.some(c=>c.id===details.companyId))
+      throw new Error('The chosen Company is no longer available.');
+    if(details?.newCompanyName&&existing.some(c=>
+      c.name.trim().toLowerCase()===details.newCompanyName!.trim().toLowerCase()))
+      throw new Error('This Company already exists. Choose it from search.');
+    for(const id of details?.personIds??[])
+      if(!crm.contacts.some(p=>p.id===id))throw new Error('A chosen Person is no longer available.');
+    for(const personName of details?.newPeopleNames??[])
+      if(crm.contacts.some(p=>p.name.trim().toLowerCase()===personName.toLowerCase()))
+        throw new Error('Person '+personName+' already exists. Choose them from search.');
+    const auth=useAuthStore.getState();
+    if((details?.personIds.length??0)||(details?.newPeopleNames.length??0)){
+      const scope=dealPeopleScope(auth.mode,auth.organizationId);
+      const links=useDealPeopleStore.getState();
+      if(links.scope!==scope||!links.loaded)await links.load(scope);
+      if(useDealPeopleStore.getState().scope!==scope||!useDealPeopleStore.getState().loaded)
+        throw new Error('Deal People links are not available yet. Please try again.');
+    }
+    let companyId=details?.companyId;
+    if(details?.newCompanyName){
+      const next=resolveCompany(details.newCompanyName,'customer');
+      if(!next)throw new Error('Could not create new Company.');
+      const createdCompany=useCrmStore.getState().companies.find(c=>c.id===next);
+      if(createdCompany)updateCompany(next,companyRelationshipPatch(createdCompany,'prospect'));
+      companyId=next;
+    }
+    const id=createProject(name,'Discovery',{
+      pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
+    });
+    if(!id)return null;
+    if(companyId)setProjectCompany(id,companyId);
+    if(details?.dueDate)updateProject(id,{dueDate:details.dueDate});
+    const personIds=[...(details?.personIds??[])];
+    for(const newName of details?.newPeopleNames??[]){
+      const personId=createContact({name:newName,companyId});
+      if(personId)personIds.push(personId);
+    }
+    const failed:string[]=[];
+    for(const personId of personIds){
+      try{await useDealPeopleStore.getState().add(id,personId);}
+      catch{failed.push(useCrmStore.getState().contacts.find(p=>p.id===personId)?.name||personId);}
+    }
+    if(failed.length)window.alert('Deal created, but these People could not be linked: '+
+      failed.join(', ')+'. Link them from the Deal People panel.');
+    return id;
+  };
   const focusedProjectId = useNavigationStore((state) => state.focusedProjectId);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
@@ -474,9 +529,7 @@ export function Board() {
         ]}/>}
         search={<input type="search" aria-label="Search Board deals" placeholder="Search deals…"
           value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/>}
-        primary={<BoardQuickCreate kind="Deal" onCreate={name=>createProject(name,'Discovery',{
-          pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
-        })}/>}
+        primary={<BoardQuickCreate kind="Deal" onCreate={createDealWithDetails}/>} }
       />
 
       <MobileBoardStagePicker
