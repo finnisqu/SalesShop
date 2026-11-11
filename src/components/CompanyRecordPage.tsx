@@ -3,6 +3,7 @@ import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout
 import {QuickCreate} from './QuickCreate';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
+import {RecordUnlinkAction} from './RecordUnlinkAction';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {ourOrgPeople,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
@@ -222,19 +223,27 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     center={<>
       <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
         <div className="connections-record-entity-list">
-          {related.relatedProjects.map((project) => <button type="button" key={project.id} onClick={() => openProject(project.id)}>
-            <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
-          </button>)}
+          {related.relatedProjects.map((project) => <div className="ss-record-associated-row" key={project.id}>
+            <button type="button" onClick={() => openProject(project.id)}>
+              <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
+            </button>
+            {editing&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'deal',id:project.id,name:project.name}}/>}
+          </div>)}
           {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
         </div>
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
       </RecordCard>
       <RecordCard title="Quotes" extra={<span>{related.relatedQuotes.length+externalQuotes.length}</span>}>
         <div className="connections-record-entity-list">
-          {related.relatedQuotes.map((quote) => <button type="button" key={quote.id} onClick={() => openQuote(quote.id)}>
-            <strong>{quote.title || displayQuoteNumber(quote)}</strong>
-            <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
-          </button>)}
+          {related.relatedQuotes.map((quote) => <div className="ss-record-associated-row" key={quote.id}>
+            <button type="button" onClick={() => openQuote(quote.id)}>
+              <strong>{quote.title || displayQuoteNumber(quote)}</strong>
+              <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
+            </button>
+            {editing&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'quote',id:quote.id,name:quote.title||displayQuoteNumber(quote)}}/>}
+          </div>)}
           {externalQuotes.map(activity=><button type="button" key={activity.id}
             onClick={()=>setActivityPreviewId(activity.id)}
             aria-label={'View external quote details '+activity.summary}>
@@ -261,12 +270,14 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
             {person.title && <small>{person.title}</small>}
             {person.email && <a href={'mailto:' + person.email}>{person.email}</a>}
             {person.phone && <a href={'tel:' + person.phone}>{person.phone}</a>}
+            {editing&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'person',id:person.id,name:person.name||person.email||'Unnamed person'}}/>}
           </article>)}
           {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
         </div>
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="person"/>
       </RecordCard>
-      <RecordTasksPanel kind="company" id={company.id} name={company.name}/>
+      <RecordTasksPanel kind="company" id={company.id} name={company.name} editing={editing}/>
 
       <RecordCard title="Relationship history" extra={<span>{timeline.length} events</span>}>
         <CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{

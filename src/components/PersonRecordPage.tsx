@@ -3,6 +3,7 @@ import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout
 import {QuickCreate} from './QuickCreate';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
+import {RecordUnlinkAction} from './RecordUnlinkAction';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
@@ -194,10 +195,14 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             <small>Our Organization · View company record →</small>
           </button>}
           {related.company&&!isOurOrgCompany(related.company)&&related.company.id!==associatedOwnCompany?.id&&
-           <button type="button" onClick={()=>openCompany(related.company!.id)}>
-             <strong>{related.company.name}</strong>
-             <small>{isInternal?'Subcontractor firm':'Associated company'} · View company record →</small>
-           </button>}
+           <div className="ss-record-associated-row">
+             <button type="button" onClick={()=>openCompany(related.company!.id)}>
+               <strong>{related.company.name}</strong>
+               <small>{isInternal?'Subcontractor firm':'Associated company'} · View company record →</small>
+             </button>
+             {editing&&!isInternal&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
+               target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
+           </div>}
           {isInternal&&!associatedOwnCompany&&<p className="connections-record-helper">
             Listed in Our Organization. Mark your company SELF to connect its record automatically.
           </p>}
@@ -218,15 +223,19 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             </button>)}
           {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
         </div>
-        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject}/>
+        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing}/>
       </RecordCard>
       <RecordCard title="Quotes" extra={<span>{quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}</span>}>
        <div className="connections-record-entity-list">
-        {quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).map(q=><button
-          type="button" key={q.id} onClick={()=>openQuote(q.id)}>
-          <strong>{q.title||displayName+' quote'}</strong>
-          <small>{q.status} · Open quote →</small>
-         </button>)}
+        {quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).map(q=><div
+          className="ss-record-associated-row" key={q.id}>
+          <button type="button" onClick={()=>openQuote(q.id)}>
+            <strong>{q.title||displayName+' quote'}</strong>
+            <small>{q.status} · Open quote →</small>
+          </button>
+          {editing&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
+            target={{kind:'quote',id:q.id,name:q.title||displayName+' quote'}}/>}
+         </div>)}
         {!quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&
          <p className="connections-record-empty">No Quotes have this Person as their primary contact.</p>}
        </div>
@@ -234,7 +243,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
       </RecordCard>
     </>}
     right={<>
-      <RecordTasksPanel kind="person" id={person.id} name={displayName}/>
+      <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing}/>
       <RecordCard title="Contact details">
         <div className="connections-person-contact-actions">
           {person.email ? <a href={'mailto:' + person.email}>✉ Email</a> : <span>Email not provided</span>}

@@ -26,8 +26,8 @@ function useLinks(){
   add,setRole,remove,retry:()=>void load(scope,true)};
 }
 
-export function DealPeopleRelationships({dealId,people,onOpenPerson}:{
- dealId:string;people:readonly Contact[];onOpenPerson:(id:string)=>void;
+export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=false}:{
+ dealId:string;people:readonly Contact[];onOpenPerson:(id:string)=>void;editing?:boolean;
 }){
  const manager=useLinks();
  const createPerson=useCrmStore(s=>s.createContact);
@@ -67,10 +67,10 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson}:{
         await manager.setRole(dealId,person.id,editedRole);setEditingRole(null);
        })}>Save</button></>:<button type="button"
        onClick={()=>{setEditingRole(person.id);setEditedRole(link.role??'');}}>Role</button>}
-      <button type="button" disabled={busy} onClick={()=>{
+      {editing&&<button type="button" disabled={busy} onClick={()=>{
        if(!window.confirm('Remove '+person.name+' from this Deal? Their Person record and Activities stay intact.'))return;
        void update(()=>manager.remove(dealId,person.id));
-      }}>Unlink</button>
+      }}>Unlink</button>}
      </div>}
     </div>;
    })}
@@ -97,8 +97,8 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson}:{
  </section>;
 }
 
-export function PersonDealRelationships({personId,deals,onOpenDeal}:{
- personId:string;deals:readonly Project[];onOpenDeal:(id:string)=>void;
+export function PersonDealRelationships({personId,deals,onOpenDeal,editing=false}:{
+ personId:string;deals:readonly Project[];onOpenDeal:(id:string)=>void;editing?:boolean;
 }){
  const manager=useLinks();
  const createDeal=useCrmStore(s=>s.createProject);
@@ -126,7 +126,7 @@ export function PersonDealRelationships({personId,deals,onOpenDeal}:{
       <button type="button" className="ss-deal-relations-name" onClick={()=>onOpenDeal(deal.id)}>
        <strong>{deal.name}</strong><small>{link.role||'Direct contact'} · Open Deal →</small>
       </button>
-      {manager.editable&&<button type="button" disabled={busy} onClick={()=>{
+      {editing&&manager.editable&&<button type="button" disabled={busy} onClick={()=>{
        if(!window.confirm('Unlink this Deal? Existing Quotes and Activities are preserved.'))return;
        void apply(()=>manager.remove(deal.id,personId));
       }}>Unlink</button>}

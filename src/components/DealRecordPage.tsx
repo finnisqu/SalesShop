@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {QuickCreate} from './QuickCreate';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
+import {RecordUnlinkAction} from './RecordUnlinkAction';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {DealPeopleRelationships} from './DealPersonRelationships';
@@ -288,10 +289,14 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           onCancel={()=>setExternalQuoteOpen(false)}
           onRecorded={()=>{setExternalQuoteOpen(false);setNotice({kind:"applied",message:"External quote saved. It is now linked to this Deal and appears in Quotes."});}}/>}
         <div className="connections-record-entity-list">
-          {related.linkedQuotes.map(quote => <button type="button" key={quote.id} onClick={() => openQuote(quote.id)}>
-            <strong>{quote.title || displayQuoteNumber(quote)}</strong>
-            <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
-          </button>)}
+          {related.linkedQuotes.map(quote => <div className="ss-record-associated-row" key={quote.id}>
+            <button type="button" onClick={() => openQuote(quote.id)}>
+              <strong>{quote.title || displayQuoteNumber(quote)}</strong>
+              <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
+            </button>
+            {editing&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
+              target={{kind:'quote',id:quote.id,name:quote.title||displayQuoteNumber(quote)}}/>}
+          </div>)}
           {outsideQuotes.map(activity=><button type="button" key={activity.id}
             onClick={()=>setActivityPreviewId(activity.id)}
             aria-label={'Open external quote details '+activity.summary}>
@@ -306,14 +311,18 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       <RecordCard title="Notebook">
         <ProjectNotebookLinks project={deal} />
       </RecordCard>
-      <RecordTasksPanel kind="deal" id={deal.id} name={deal.name}/>
+      <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing}/>
     </>}
     right={<>
       <RecordCard title="Company">
         {related.company ? <div className="connections-record-entity-list">
-          <button type="button" onClick={() => openCompany(related.company!.id)}>
-            <strong>{related.company.name}</strong><small>Open company →</small>
-          </button>
+          <div className="ss-record-associated-row">
+            <button type="button" onClick={() => openCompany(related.company!.id)}>
+              <strong>{related.company.name}</strong><small>Open company →</small>
+            </button>
+            {editing&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
+              target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
+          </div>
         </div> : <p className="connections-record-empty">No associated company. Edit the deal to select one.</p>}
         <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
       </RecordCard>
@@ -330,7 +339,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           </div>)}
           {!related.dealPeople.length&&<p className="connections-record-empty">No contacts linked through Quotes or Activities. Add a direct Deal Person below.</p>}
         </div>
-        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson}/>
+        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={editing}/>
         {related.companyPeople.some(person=>!directIds.has(person.id))&&<details className="ss-deal-company-people">
           <summary>Other people at this company ({related.companyPeople.filter(person=>!directIds.has(person.id)).length})</summary>
           <div className="connections-record-entity-list">
