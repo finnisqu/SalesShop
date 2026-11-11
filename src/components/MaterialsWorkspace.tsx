@@ -22,6 +22,7 @@ import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogTool
 import { MaterialRateBook } from './MaterialRateBook';
 import { SupplierImportLauncher } from './SupplierImportCenter';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
+import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { restoreScrollAnchor } from '../lib/scrollAnchor';
 import { CatalogAddToQuoteButton, CatalogQuoteInsert } from './CatalogQuoteInsert';
@@ -361,7 +362,7 @@ export function MaterialsWorkspace({ embedded = false,externalQuery }: { embedde
                 type="button"
                 className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`}
                 onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}
-              >{isPinned ? 'Pinned' : 'Pin'}</button>
+              ><WorkspaceChromeIcon name="pin"/> {isPinned ? 'Pinned' : 'Pin'}</button>
               {!editing && <CatalogAddToQuoteButton onClick={() => setQuoteSource({ kind: 'material', material, variantId: variant.id })} />}
             </article>
           );
