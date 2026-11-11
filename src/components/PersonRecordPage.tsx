@@ -223,18 +223,6 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
         Unlink removes a direct association immediately after confirmation. It does not delete
         the related record or its history. Cancel Edit Page does not restore an unlinked association.
       </p>}
-      <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
-        <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
-        <div className="connections-record-entity-list">
-          {related.linkedDeals.map(({ project, quoteCount }) =>
-            <button type="button" key={project.id} onClick={() => openProject(project.id)}>
-              <strong>{project.name}</strong>
-              <small>Quote contact · {quoteCount} {quoteCount === 1 ? 'linked quote' : 'linked quotes'} →</small>
-            </button>)}
-          {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
-        </div>
-        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing||unlinking}/>
-      </RecordCard>
       <RecordRecentsPanel
         quoteCount={quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}
         activityCount={related.directActivities.length} quotes={<>
@@ -259,6 +247,19 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
           </button>)}
         {!related.directActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>}/>
+      <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
+      <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
+        <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
+        <div className="connections-record-entity-list">
+          {related.linkedDeals.map(({ project, quoteCount }) =>
+            <button type="button" key={project.id} onClick={() => openProject(project.id)}>
+              <strong>{project.name}</strong>
+              <small>Quote contact · {quoteCount} {quoteCount === 1 ? 'linked quote' : 'linked quotes'} →</small>
+            </button>)}
+          {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
+        </div>
+        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing||unlinking}/>
+      </RecordCard>
       <RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.contactId===person.id).length} linked</span>}>
         <div className="connections-record-entity-list">
           {notebookEntries.filter(entry=>entry.context?.contactId===person.id).map(entry=>
@@ -269,7 +270,6 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             <p className="connections-record-empty">No Notebook pages linked yet.</p>}
         </div>
       </RecordCard>
-      <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
     </>}
     right={<>
       <RecordCard title="Company">

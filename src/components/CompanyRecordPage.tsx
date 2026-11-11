@@ -281,19 +281,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
         Unlink removes a direct association immediately after confirmation. It does not delete
         the related record or its history. Cancel Edit Page does not restore an unlinked association.
       </p>}
-      <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
-        <div className="connections-record-entity-list">
-          {related.relatedProjects.map((project) => <div className="ss-record-associated-row" key={project.id}>
-            <button type="button" onClick={() => openProject(project.id)}>
-              <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
-            </button>
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
-              target={{kind:'deal',id:project.id,name:project.name}}/>}
-          </div>)}
-          {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
-        </div>
-        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
-      </RecordCard>
       <RecordRecentsPanel quoteCount={related.relatedQuotes.length+externalQuotes.length}
         activityCount={related.relatedActivities.length}
         quotes={<>
@@ -324,6 +311,20 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
           </button>)}
         {!related.relatedActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>}/>
+      <RecordTasksPanel kind="company" id={company.id} name={company.name} editing={editing||unlinking}/>
+      <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
+        <div className="connections-record-entity-list">
+          {related.relatedProjects.map((project) => <div className="ss-record-associated-row" key={project.id}>
+            <button type="button" onClick={() => openProject(project.id)}>
+              <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
+            </button>
+            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'deal',id:project.id,name:project.name}}/>}
+          </div>)}
+          {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
+        </div>
+        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
+      </RecordCard>
       <RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.companyId===company.id).length} linked</span>}>
         <div className="connections-record-entity-list">
           {notebookEntries.filter(entry=>entry.context?.companyId===company.id).map(entry=>
@@ -334,7 +335,6 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
             <p className="connections-record-empty">No Notebook pages linked yet.</p>}
         </div>
       </RecordCard>
-      <RecordTasksPanel kind="company" id={company.id} name={company.name} editing={editing||unlinking}/>
     </>}
     right={<>
       <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
