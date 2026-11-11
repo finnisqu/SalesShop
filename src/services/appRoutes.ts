@@ -17,14 +17,14 @@ export function parseSalesShopRoute(pathname:string):Partial<NavigationLocation>
     const id=path.slice('/quotes/'.length);
     return id&&!id.includes('/')?{view:'quotes',focusedQuoteId:clean(id)}:null;
   }
-  if(path==='/board')return{view:'board'};
+  if(path==='/board')return{view:'dashboard'};
   if(path.startsWith('/board/projects/')){
     const id=path.slice('/board/projects/'.length);
-    return id&&!id.includes('/')?{view:'board',focusedProjectId:clean(id)}:null;
+    return id&&!id.includes('/')?{view:'dashboard',focusedProjectId:clean(id)}:null;
   }
   if(path.startsWith('/board/accounts/')){
     const id=path.slice('/board/accounts/'.length);
-    return id&&!id.includes('/')?{view:'board',focusedCompanyId:clean(id)}:null;
+    return id&&!id.includes('/')?{view:'dashboard',focusedCompanyId:clean(id)}:null;
   }
   if(path==='/connections')return{view:'dashboard'};
   if(path.startsWith('/connections/companies/')){
