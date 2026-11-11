@@ -345,7 +345,9 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   );
 }
 
-export function Board() {
+export function Board({embeddedMode,searchQuery}:{
+  embeddedMode?:'projects'|'accounts';searchQuery?:string;
+}={}) {
   const hydrate = useCrmStore((state) => state.hydrate);
   const hydrated = useCrmStore((state) => state.hydrated);
   const projects = useCrmStore((state) => state.projects);
@@ -411,6 +413,8 @@ export function Board() {
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);
   const [boardMode, setBoardModeState] = useState<'projects' | 'accounts'>(initialBoardMode);
   const [boardSearch,setBoardSearch]=useState('');
+  const activeMode=embeddedMode??boardMode;
+  const effectiveSearch=embeddedMode?searchQuery??'':boardSearch;
   const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
   const [compactCards,setCompactCards]=useState(()=>{
     try{return window.localStorage.getItem(BOARD_COMPACT_KEY)==='true';}
@@ -434,7 +438,7 @@ export function Board() {
   const [dragStage, setDragStage] = useState<ProjectStage | null>(null);
   const boardRef = useRef<HTMLElement | null>(null);
   const mobileInteraction = isMobileBoardInteraction();
-  useBoardShiftWheelScroll(boardRef,hydrated&&boardMode==='projects');
+  useBoardShiftWheelScroll(boardRef,hydrated&&activeMode==='projects');
 
   const setBoardMode = (mode: 'projects' | 'accounts') => {
     if (mobileInteraction && mode !== boardMode) {
@@ -475,21 +479,21 @@ export function Board() {
   }, [focusedCompanyId]);
 
   useEffect(() => {
-    if (!hydrated || boardMode !== 'projects' || !mobileInteraction) return;
+    if (!hydrated || activeMode !== 'projects' || !mobileInteraction) return;
     const frame = window.requestAnimationFrame(() => restoreMobileBoardState(PROJECT_BOARD_POSITION_KEY, boardRef.current));
     return () => window.cancelAnimationFrame(frame);
-  }, [hydrated, boardMode, mobileInteraction, projects.length]);
+  }, [hydrated, activeMode, mobileInteraction, projects.length]);
 
   const projectsByStage = useMemo(() => {
     const grouped = new Map<ProjectStage, Project[]>();
     PROJECT_STAGES.forEach((stage) => grouped.set(stage, []));
     projects.filter(project=>matchesDealPipeline(project,pipelineView)&&
       [project.name,project.companyName,project.nextAction].some(value=>
-        (value??'').toLowerCase().includes(boardSearch.trim().toLowerCase())))
+        (value??'').toLowerCase().includes(effectiveSearch.trim().toLowerCase())))
       .forEach((project) => grouped.get(project.stage)?.push(project));
     grouped.forEach((items) => items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
     return grouped;
-  }, [projects,pipelineView,boardSearch]);
+  }, [projects,pipelineView,effectiveSearch]);
 
   const editingProject = projects.find((project) => project.id === editingId) ?? null;
 
@@ -501,16 +505,18 @@ export function Board() {
   };
 
   if (!hydrated) return <WorkspaceLoadingState title="Opening Board" detail="Loading deals and accounts…" />;
-  if (boardMode === 'accounts') return <AccountsBoard
+  if (activeMode === 'accounts') return <AccountsBoard embedded={Boolean(embeddedMode)}
     onShowProjects={() => setBoardMode('projects')}
-    searchQuery={boardSearch} onSearchChange={setBoardSearch}
+    searchQuery={effectiveSearch} onSearchChange={setBoardSearch}
     compactCards={compactCards} onToggleCompact={toggleCompact}
     isStageCollapsed={stage=>isStageCollapsed('accounts',stage)}
     onToggleStage={stage=>toggleStage('accounts',stage)} />;
 
+  const Surface=embeddedMode?'div':'main';
   return (
-    <main className={'board-view'+(compactCards?' is-compact':'')}>
-      <WorkspaceHeader className="board-header-panel board-foundation-header"
+    <Surface className={'board-view'+(compactCards?' is-compact':'')+
+      (embeddedMode?' connections-embedded-board':'')}>
+      {!embeddedMode&&<WorkspaceHeader className="board-header-panel board-foundation-header"
         title="Deals" help={<WorkspaceHelp page="board" section="deals"/>} mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Accounts'}]}
         mobileTabValue="projects" onMobileTabChange={value=>{
           if(value==='accounts')setBoardMode('accounts');
@@ -532,8 +538,24 @@ export function Board() {
         search={<input type="search" aria-label="Search Board deals" placeholder="Search deals…"
           value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/>}
         primary={<BoardQuickCreate kind="Deal" onCreate={createDealWithDetails}/>}
-      />
+      />}
 
+      {embeddedMode&&<div className="connections-board-tools" role="group" aria-label="Deal board controls">
+        <label>Pipeline
+          <select aria-label="Board pipeline" value={pipelineView}
+            onChange={event=>{setPipelineView(event.target.value as DealPipelineFilter);
+              boardRef.current?.scrollTo({left:0});}}>
+            <option value="all">All pipelines</option>
+            {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+            <option value="unassigned">Unassigned</option>
+          </select>
+        </label>
+        <button type="button" className="connections-board-compact"
+          aria-pressed={compactCards} onClick={toggleCompact}>
+          {compactCards?'Standard cards':'Compact cards'}
+        </button>
+        <BoardQuickCreate kind="Deal" onCreate={createDealWithDetails}/>
+       </div>}
       <MobileBoardStagePicker
         boardRef={boardRef}
         stages={PROJECT_STAGES}
@@ -603,6 +625,6 @@ export function Board() {
         setEditingId(null);
         if(focusedProjectId===editingProject.id)clearFocusedProject();
       }} />}
-    </main>
+    </Surface>
   );
 }
