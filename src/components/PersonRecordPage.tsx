@@ -191,6 +191,10 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
       </RecordCard>
     </>}
     center={<>
+      {editing&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
+        Unlink removes a direct association immediately after confirmation. It does not delete
+        the related record or its history. Cancel Edit Page does not restore an unlinked association.
+      </p>}
       <RecordCard title="Company">
         {(related.company||associatedOwnCompany) ? <div className="connections-record-entity-list">
           {associatedOwnCompany&&<button type="button" onClick={()=>openCompany(associatedOwnCompany.id)}>

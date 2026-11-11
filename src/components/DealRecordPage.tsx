@@ -280,6 +280,10 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
       </RecordCard>
     </>}
     center={<>
+      {editing&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
+        Unlink removes a direct association immediately after confirmation. It does not delete
+        the related record or its history. Cancel Edit Page does not restore an unlinked association.
+      </p>}
       {timelineBetaEnabled&&<RecordCard title="Project timeline · Beta">
         <p className="connections-record-helper">Track deposit, shop drawings, import batches, installations by building, invoices and retainage.</p>
         <button type="button" onClick={()=>setTimelineOpen(true)}>Open milestone timeline</button>
