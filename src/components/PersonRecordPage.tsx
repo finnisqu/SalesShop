@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {RecordInlineProperty} from './RecordInlineProperty';
+import {RecordActionsMenu} from './RecordActionsMenu';
+import {RecordRecentsPanel} from './RecordRecentsPanel';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {canEditTeamArea} from '../services/teamDepartments';
 import {QuickCreate} from './QuickCreate';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
@@ -43,8 +49,15 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const notebookEntries=useNotebookStore(state=>state.entries);
   const openPerson=useNavigationStore((state)=>state.openPerson);
 
+  const mode=useAuthStore(state=>state.mode),org=useAuthStore(state=>state.organizationId),
+    userId=useAuthStore(state=>state.user?.id),role=useAuthStore(state=>state.teamRole),
+    department=useAuthStore(state=>state.teamDepartment);
+  const perspective=useRolePerspectiveStore(state=>state.activePerspective);
+  const canEditRecord=!perspective&&(mode==='local'||Boolean(org&&userId&&
+    canEditTeamArea(role,department,'crm')));
   const person = people.find((candidate) => candidate.id === contactId);
   const [editing, setEditing] = useState(false);
+  const [unlinking,setUnlinking]=useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editError,setEditError]=useState('');
@@ -61,7 +74,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
 
   useEffect(() => {
-    setEditing(false);
+    setEditing(false);setUnlinking(false);
     setHistoryOpen(false);setActivityPreviewId(null);
     setNewCompanyName('');
     setEditError('');setNotice(null);
@@ -126,11 +139,17 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
     subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
     actions={<>
-      <button type="button" onClick={() => {
-        setNotice(null);setEditError('');
+      {canEditRecord&&<button type="button" onClick={() => {
+        setNotice(null);setEditError('');setUnlinking(false);
         if(editing)setNewCompanyName('');
         setEditing(value=>!value);
-      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>
+      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
+      <RecordActionsMenu editing={editing} unlinking={unlinking} disabled={!canEditRecord}
+        onEdit={()=>{setUnlinking(false);setEditing(v=>!v);}}
+        onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
+        onDelete={canEditRecord&&!isOurOrgContact(person)?async()=>{
+          await useCrmStore.getState().deleteContact(person.id);onBack();
+        }:undefined}/>
       <button type="button" onClick={()=>openActivityComposer({associations:[{
         type:'contact',id:person.id,label:'Person · '+displayName,
       }]})}>Log Activity</button>
@@ -178,10 +197,19 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             <button type="submit" className="connections-record-primary">Save changes</button>
           </div>
         </form> : <div className="connections-record-properties-list">
-          <RecordProperty label="Name">{displayName}</RecordProperty>
-          <RecordProperty label="Job title">{person.title || 'Not set'}</RecordProperty>
-          <RecordProperty label="Email">{person.email || 'Not set'}</RecordProperty>
-          <RecordProperty label="Phone">{person.phone || 'Not set'}</RecordProperty>
+          <RecordInlineProperty label="Name" value={person.name}
+            display={displayName} disabled={!canEditRecord}
+            validate={value=>!value.trim()&&!person.email?'Enter a name or email.':undefined}
+            onSave={value=>updateContact(person.id,{name:value.trim()})}/>
+          <RecordInlineProperty label="Job title" value={person.title??''}
+            disabled={!canEditRecord}
+            onSave={value=>updateContact(person.id,{title:value.trim()||undefined})}/>
+          <RecordInlineProperty label="Email" type="email" value={person.email??''}
+            disabled={!canEditRecord} validate={recordEmailError}
+            onSave={value=>updateContact(person.id,{email:value.trim()||undefined})}/>
+          <RecordInlineProperty label="Phone" value={person.phone??''}
+            disabled={!canEditRecord}
+            onSave={value=>updateContact(person.id,{phone:value.trim()||undefined})}/>
           <RecordProperty label="Company">{associatedOwnCompany?.name??(isInternal&&rosterGroupForContact(person,companies)==='employees'?
               'Our Organization':related.company?.name||'Not assigned')}</RecordProperty>
           <CrmOwnerControl kind="contact" recordId={person.id} ownerUserId={person.ownerUserId}/>
@@ -191,7 +219,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
       </RecordCard>
     </>}
     center={<>
-      {editing&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
+      {unlinking&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
         Unlink removes a direct association immediately after confirmation. It does not delete
         the related record or its history. Cancel Edit Page does not restore an unlinked association.
       </p>}
@@ -207,7 +235,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
                <strong>{related.company.name}</strong>
                <small>{isInternal?'Subcontractor firm':'Associated company'} · View company record →</small>
              </button>
-             {editing&&!isInternal&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
+             {(editing||unlinking)&&!isInternal&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
                target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
            </div>}
           {isInternal&&!associatedOwnCompany&&<p className="connections-record-helper">
@@ -230,7 +258,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             </button>)}
           {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
         </div>
-        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing}/>
+        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing||unlinking}/>
       </RecordCard>
       <RecordCard title="Quotes" extra={<span>{quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}</span>}>
        <div className="connections-record-entity-list">
@@ -240,7 +268,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
             <strong>{q.title||displayName+' quote'}</strong>
             <small>{q.status} · Open quote →</small>
           </button>
-          {editing&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
+          {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
             target={{kind:'quote',id:q.id,name:q.title||displayName+' quote'}}/>}
          </div>)}
         {!quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&
@@ -260,7 +288,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
       </RecordCard>
     </>}
     right={<>
-      <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing}/>
+      <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
       <RecordCard title="Contact details">
         <div className="connections-person-contact-actions">
           {person.email ? <a href={'mailto:' + person.email}>✉ Email</a> : <span>Email not provided</span>}
