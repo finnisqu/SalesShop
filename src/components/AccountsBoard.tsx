@@ -85,9 +85,9 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
 
   return (
     <div className="project-editor-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor account-editor" aria-label="Account details">
+      <aside ref={dialogRef} role="dialog" aria-modal="true" className="project-editor account-editor" aria-label="Company details">
         <header>
-          <div><span className="board-eyebrow">Account</span><h2>{company.name}</h2></div>
+          <div><span className="board-eyebrow">Company</span><h2>{company.name}</h2></div>
           <button type="button" className="editor-close" data-dialog-initial-focus onClick={onClose} aria-label="Close account details">×</button>
         </header>
 
@@ -202,8 +202,9 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
   );
 }
 
-export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isStageCollapsed,onToggleStage,searchQuery='',onSearchChange}:{
+export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isStageCollapsed,onToggleStage,searchQuery='',onSearchChange,embedded=false}:{
   onShowProjects:()=>void;
+  embedded?:boolean;
   searchQuery?:string;
   onSearchChange?:(value:string)=>void;
   compactCards:boolean;
@@ -256,22 +257,24 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
 
   const editingCompany = companies.find((company) => company.id === editingId) ?? null;
 
+  const Surface=embedded?'div':'main';
   return (
-    <main className={'board-view accounts-view'+(compactCards?' is-compact':'')}>
-      <WorkspaceHeader className="board-header-panel accounts-header-panel board-foundation-header"
-        title="Accounts" help={<WorkspaceHelp page="board" section="accounts"/>} mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Accounts'}]}
+    <Surface className={'board-view accounts-view'+(compactCards?' is-compact':'')+
+     (embedded?' connections-embedded-board':'')}>
+      {!embedded&&<WorkspaceHeader className="board-header-panel accounts-header-panel board-foundation-header"
+        title="Companies" help={<WorkspaceHelp page="connections" section="companies"/>} mobileTabs={[{value:'projects',label:'Deals'},{value:'accounts',label:'Companies'}]}
         mobileTabValue="accounts" onMobileTabChange={value=>{if(value==='projects')onShowProjects();}}
         tabs={<div className="board-view-toggle" role="group" aria-label="Board type">
           <Button variant="quiet" aria-pressed={false} onClick={onShowProjects}>Deals</Button>
-          <Button variant="quiet" className="active" aria-pressed={true}>Accounts</Button>
+          <Button variant="quiet" className="active" aria-pressed={true}>Companies</Button>
         </div>}
         more={<WorkspaceMoreMenu label="Board More" items={[{
           label:compactCards?'Standard cards':'Compact cards',onClick:onToggleCompact,active:compactCards,
         }]}/>}
-        search={<input type="search" aria-label="Search Board accounts"
-          placeholder="Search accounts…" value={searchQuery}
+        search={<input type="search" aria-label="Search Board companies"
+          placeholder="Search companies…" value={searchQuery}
           onChange={event=>onSearchChange?.(event.target.value)}/>}
-        primary={<BoardQuickCreate kind="Account"
+        primary={<BoardQuickCreate kind="Company"
           onCreate={name=>{
             const before=new Set(useCrmStore.getState().companies.map(c=>c.id));
             const id=resolveCompany(name,'customer');
@@ -279,8 +282,19 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
               useCrmStore.getState().updateCompany(id,companyRelationshipPatch({aliases:[]},'prospect'));
             return id;
           }}/>}
-      />
-
+      />}
+      {embedded&&<div className="connections-board-tools" role="group" aria-label="Company board controls">
+        <span className="connections-board-subtitle">Grouped by relationship health</span>
+        <button type="button" className="connections-board-compact" aria-pressed={compactCards}
+         onClick={onToggleCompact}>{compactCards?'Standard cards':'Compact cards'}</button>
+        <BoardQuickCreate kind="Company" onCreate={name=>{
+          const before=new Set(useCrmStore.getState().companies.map(c=>c.id));
+          const id=resolveCompany(name,'customer');
+          if(id&&!before.has(id))
+            useCrmStore.getState().updateCompany(id,companyRelationshipPatch({aliases:[]},'prospect'));
+          return id;
+        }}/>
+       </div>}
       <MobileBoardStagePicker
         boardRef={boardRef}
         stages={ACCOUNT_STAGES}
@@ -289,7 +303,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
       <section
         ref={boardRef}
         className="project-board account-board"
-        aria-label="Account relationship board"
+        aria-label="Company relationship board"
         onScroll={(event) => rememberMobileBoardStage(ACCOUNT_BOARD_POSITION_KEY, event.currentTarget)}
       >
         {ACCOUNT_STAGES.map((stage, stageIndex) => {
@@ -310,7 +324,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
                   onClick={()=>onToggleStage(stage)}>
                   <span className="board-column-title">
                     <span className="board-column-stage-name">{stage}</span>
-                    <span className="board-column-count">{accounts.length}<span className="board-column-count-suffix"> {accounts.length === 1 ? 'account' : 'accounts'}</span></span>
+                    <span className="board-column-count">{accounts.length}<span className="board-column-count-suffix"> {accounts.length === 1 ? 'company' : 'companies'}</span></span>
                   </span>
                   <span className="board-column-trailing">
                     
@@ -337,7 +351,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
                     >
                       <div className="account-card-title-row">
                         <h3><button type="button" className="board-entity-name"
-                          aria-label={'Preview account '+company.name}
+                          aria-label={'Preview company '+company.name}
                           onClick={event=>{event.stopPropagation();setPreview({kind:'company',id:company.id});}}>{company.name}</button></h3>
                         {expectedAnnualWork !== undefined && <strong className="account-card-title-value">{money.format(expectedAnnualWork)}</strong>}
                       </div>
@@ -354,7 +368,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
                     </article>
                   );
                 })}
-                {!accounts.length && <div className="board-empty-card">No accounts in this stage yet</div>}
+                {!accounts.length && <div className="board-empty-card">No companies in this stage yet</div>}
               </div>
             </section>
           );
@@ -367,6 +381,6 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
         setEditingId(null);
         if(focusedCompanyId===editingCompany.id)clearFocusedCompany();
       }} />}
-    </main>
+    </Surface>
   );
 }
