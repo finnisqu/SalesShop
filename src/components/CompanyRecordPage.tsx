@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {QuickCreate} from './QuickCreate';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {ourOrgPeople,rosterGroupForContact} from '../services/ourOrganizationDirectory';
@@ -163,8 +165,12 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
       </span><span>{related.relatedProjects.length} deals</span>
       <span>{related.relatedQuotes.length+externalQuotes.length} linked quotes</span></>}
     actions={<>
-      <button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(current=>!current);}}>{editing ? 'Cancel editing' : 'Edit company'}</button>
-      {company.kind === 'customer' && <button type="button" className="connections-record-primary" onClick={newQuote}>+ New Quote</button>}
+      <button type="button" onClick={() => {setNotice(null);setEditError('');setEditing(current=>!current);}}>
+        {editing?'Cancel Edit Page':'Edit Page'}</button>
+      <button type="button" onClick={()=>openActivityComposer({associations:[{
+        type:'company',id:company.id,label:'Company · '+company.name,
+      }]})}>Log Activity</button>
+      <QuickCreate context={{kind:'company',id:company.id,name:company.name}} launcherLabel="+ New"/>
     </>}
     left={<>
       <RecordCard title="About this company">

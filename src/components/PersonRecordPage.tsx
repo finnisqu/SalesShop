@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {QuickCreate} from './QuickCreate';
+import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
@@ -119,13 +121,17 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   return <><RecordPageLayout entityType="person" title={displayName} onBack={onBack}
     subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
-    actions={<button type="button" onClick={() => {
-      setNotice(null);setEditError('');
-      if(editing)setNewCompanyName('');
-      setEditing(value=>!value);
-    }}>
-      {editing ? 'Cancel editing' : 'Edit person'}
-    </button>}
+    actions={<>
+      <button type="button" onClick={() => {
+        setNotice(null);setEditError('');
+        if(editing)setNewCompanyName('');
+        setEditing(value=>!value);
+      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>
+      <button type="button" onClick={()=>openActivityComposer({associations:[{
+        type:'contact',id:person.id,label:'Person · '+displayName,
+      }]})}>Log Activity</button>
+      <QuickCreate context={{kind:'person',id:person.id,name:displayName}} launcherLabel="+ New"/>
+    </>}
     left={<>
       <RecordCard title="About this person">
         <RecordFormFeedback notice={notice}/>

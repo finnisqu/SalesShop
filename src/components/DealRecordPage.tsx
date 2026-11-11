@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import {QuickCreate} from './QuickCreate';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
@@ -196,7 +197,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         setNotice(null);setSaveError('');
         if(editing)setNewCompanyName('');
         setEditing(value=>!value);
-      }}>{editing ? 'Cancel editing' : 'Edit deal'}</button>
+      }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>
       {canEditCrm&&
         <button type="button" onClick={()=>{
            if(window.matchMedia('(max-width:760px)').matches){setExternalQuoteDialogOpen(true);setExternalQuoteOpen(false);}
@@ -205,7 +206,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
           {externalQuoteOpen?"Cancel external quote":"Record external quote"}
         </button>}
       {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
-      <button type="button" className="connections-record-primary" onClick={newQuote}>+ New Quote</button>
+      <QuickCreate context={{kind:'deal',id:deal.id,name:deal.name}} launcherLabel="+ New"/>
     </>}
     left={<>
       <RecordCard title="About this deal">
