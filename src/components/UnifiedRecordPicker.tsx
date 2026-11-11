@@ -5,11 +5,11 @@ import '../record-unified-picker.css';
 export interface RecordPickerOption{id:string;name:string;detail?:string;}
 /** Search existing links and create from the same field, like Quote material selection. */
 export function UnifiedRecordPicker({kind,items,onLink,onCreate,
-  createLabel,helper,disabled,extra}:{
+  createLabel,triggerLabel,helper,disabled,extra}:{
  kind:string;items:readonly RecordPickerOption[];
  onLink:(id:string)=>void|Promise<void>;
  onCreate?:(name:string)=>void|Promise<void>;
- createLabel?:string;helper?:string;disabled?:boolean;extra?:ReactNode;
+ createLabel?:string;triggerLabel?:string;helper?:string;disabled?:boolean;extra?:ReactNode;
 }){
  const [open,setOpen]=useState(false),[query,setQuery]=useState(''),
   [saving,setSaving]=useState(false),[error,setError]=useState('');
@@ -29,7 +29,7 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
   <button type="button" className="connections-record-add ss-unified-picker-trigger"
    disabled={disabled} aria-expanded={open}
    onClick={()=>{setOpen(prev=>!prev);setError('');setQuery('');}}>
-   {open?'Cancel':'+ Add '+kind}
+   {open?'Cancel':triggerLabel??'+ Add '+kind}
   </button>
   {open&&<div className="ss-unified-picker-panel" role="group"
     aria-label={'Add '+kind}>
@@ -37,7 +37,13 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
      placeholder={'Search '+kind.toLowerCase()+' or enter a new name…'}
      aria-label={'Search or create '+kind} disabled={saving}
      onChange={e=>{setQuery(e.target.value);setError('');}}
-     onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}/>
+     onKeyDown={e=>{
+       if(e.key==='Enter'){
+         // Selecting a Company is separate from submitting an enclosing Deal form.
+         e.preventDefault();return;
+       }
+       if(e.key==='Escape'){e.stopPropagation();setOpen(false);}
+     }}/>
    {extra}
    <div className="ss-unified-picker-results">
     <small>{needle?'Matching existing records':'Existing records'}</small>
