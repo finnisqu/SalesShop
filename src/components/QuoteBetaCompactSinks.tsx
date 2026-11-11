@@ -1,7 +1,7 @@
 import type {Quote,QuoteSection,QuoteTakeoffSink} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {SINK_CATEGORIES,SINK_CATEGORY_LABELS} from '../types/sink';
-import {FAUCET_HOLE_OFFSETS_IN,newTakeoffSink,takeoffSinkIncludedInQuote,quoteTakeoffSinkChargeConfirmation} from '../services/quoteTakeoffsLite';
+import {FAUCET_HOLE_OFFSETS_IN,newTakeoffSink,takeoffSinkIncludedInQuote} from '../services/quoteTakeoffsLite';
 import {TakeoffSinkCatalog} from './TakeoffCatalogPickers';
 import {FloatingRowMenu} from './QuoteBetaMeasureGrid';
 import './quote-beta-sink-inclusion.css';
@@ -41,11 +41,7 @@ export function QuoteBetaCompactSinks({quote,section,editable,stage}:{
         {stage==='materials'?<label className="qmb-sink-inclusion">
           <input type="checkbox" disabled={!editable} checked={included}
             aria-label={'Include sink '+(index+1)+' in quote total'}
-            onChange={event=>{
-              const include=event.target.checked;
-              if(window.confirm(quoteTakeoffSinkChargeConfirmation(quote,section.id,sink.id,include)))
-                setCharge(quote.id,section.id,sink.id,include);
-            }}/>
+            onChange={event=>setCharge(quote.id,section.id,sink.id,event.target.checked)}/>
           <span>{included?'Included in quote':'Specification only · not charged'}</span>
         </label>:!included&&<small className="qmb-sink-spec-only">Specification only · not charged</small>}
       </div>
