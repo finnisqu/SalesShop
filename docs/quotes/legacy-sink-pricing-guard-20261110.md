@@ -19,5 +19,11 @@ Live Supabase has one membership in each of three separate organizations; it is 
 ## Additional cloud-line safeguard
 An existing managed sink line keeps its original ID as an inactive line when the seller removes its charge. This prevents a stale priced line being recreated after sync, while a deleted sink still removes its line entirely.
 
-## Diagnostic finding
-A draft PR preview containing the production-equivalent main source and only a documentation marker **also failed** its Cloudflare build. Therefore the Cloudflare draft-branch check cannot yet validate code changes. The current main build remains green. Preserve this work as a draft until a trustworthy TS/Vitest run can verify it.
+## Verified build and manual browser release gate — November 11, 2026
+
+- The JSX brace error was corrected on PR #95. The later preview deployment failure was caused by missing `previews` configuration, not a failed application build.
+- `wrangler.jsonc` now declares SPA assets and `"previews": {}`. The release-candidate Cloudflare check passed, including the TypeScript build, default Quick Quote tests, sink-parity unit tests and preview deployment.
+- Added `e2e/legacy-sink-pricing-qc.pw.ts`: synthetic $630 saved quote including an unbilled legacy sink ($225) and separately priced builder sink allowance ($150). Browser acceptance checks that confirmation **cancel** preserves pricing, **approve** adds exactly $225, opt-out subtracts only the managed charge, refresh retains the inactive managed line ID and further opt-in does not duplicate it. A sent quote's checkbox and sell-price editor must be disabled.
+- Browser verification is **manual-only** and does not use Cloudflare production or customer Supabase. From GitHub Actions, choose **SalesShop Navigation Smoke**, select the **`batch/legacy-sink-guard-qa-20261110`** branch and choose suite **`legacy-sink-pricing`**, then click **Run workflow**. This is optional/manual and does not reactivate CI on pushes.
+- Alternatively on a local checkout: `npm run test:sink-parity:browser` (requires Playwright Chromium).
+- Merge of PR #95 remains blocked until that manual browser run succeeds and human review confirms acceptable desktop/phone presentation. Do not use customer quotes to conduct this test.

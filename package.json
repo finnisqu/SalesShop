@@ -19,7 +19,8 @@
     "test:timeline": "vitest run src/services/dealScheduleTemplates.test.ts src/store/dealTimelineBetaStore.test.ts",
     "test:crm-ownership": "vitest run src/services/crmOwnerReassignment.test.ts src/services/recordOwnershipAndRecovery.test.ts",
     "test:crm-ownership:browser": "playwright test e2e/crm-owner-reliability.pw.ts --project=phone-390 --project=desktop-1280",
-    "test:crm-workflows": "vitest run src/services/dealRecordView.test.ts src/services/ourOrganizationDirectory.test.ts src/services/activityRelations.test.ts src/services/companyRelationship.test.ts src/store/externalQuoteBackfill.test.ts src/components/ConnectionsBulkEditDialog.test.tsx src/services/activityLogFilters.test.ts src/components/SuppliersConnectionsLayout.test.ts src/store/personalTaskSubtasks.test.ts src/services/homeBadgeAgendaFocus.test.ts src/components/RecordRelatedActions.test.ts src/store/dealPeopleStore.test.ts src/components/TaskAndDealPeoplePolish.test.ts src/services/bidSubmissionTaskGuard.test.ts src/services/confirmedBidSubmissions.test.ts"
+    "test:crm-workflows": "vitest run src/services/dealRecordView.test.ts src/services/ourOrganizationDirectory.test.ts src/services/activityRelations.test.ts src/services/companyRelationship.test.ts src/store/externalQuoteBackfill.test.ts src/components/ConnectionsBulkEditDialog.test.tsx src/services/activityLogFilters.test.ts src/components/SuppliersConnectionsLayout.test.ts src/store/personalTaskSubtasks.test.ts src/services/homeBadgeAgendaFocus.test.ts src/components/RecordRelatedActions.test.ts src/store/dealPeopleStore.test.ts src/components/TaskAndDealPeoplePolish.test.ts src/services/bidSubmissionTaskGuard.test.ts src/services/confirmedBidSubmissions.test.ts",
+    "test:sink-parity:browser": "playwright test e2e/legacy-sink-pricing-qc.pw.ts --project=phone-390 --project=desktop-1280"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
