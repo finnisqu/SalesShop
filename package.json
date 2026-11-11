@@ -15,6 +15,7 @@
     "test:calendar": "vitest run src/services/salesCalendar.test.ts",
     "test:external-quotes": "vitest run src/store/externalQuoteBackfill.test.ts src/services/externalQuoteCalendarPersistence.test.ts src/services/homeCalendarBadges.test.ts src/services/homeCalendarDrilldown.test.ts",
     "test:quote-registry": "vitest run src/services/salesQuoteRegistry.test.ts src/services/externalQuoteCalendarPersistence.test.ts src/store/externalQuoteBackfill.test.ts",
+    "test:sink-parity": "vitest run src/services/quoteTakeoffsLite.test.ts",
     "test:timeline": "vitest run src/services/dealScheduleTemplates.test.ts src/store/dealTimelineBetaStore.test.ts",
     "test:crm-ownership": "vitest run src/services/crmOwnerReassignment.test.ts src/services/recordOwnershipAndRecovery.test.ts",
     "test:crm-ownership:browser": "playwright test e2e/crm-owner-reliability.pw.ts --project=phone-390 --project=desktop-1280",

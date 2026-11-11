@@ -1,4 +1,4 @@
-import type { Quote, QuoteSection, QuoteTakeoffPiece, QuoteAreaScope, QuoteTakeoffSink, QuoteLine, QuoteLineMaterialReference, QuoteProjectMaterial, QuoteSplashEdge } from '../types/quote';
+import {quoteTotal, type Quote, type QuoteSection, type QuoteTakeoffPiece, type QuoteAreaScope, type QuoteTakeoffSink, type QuoteLine, type QuoteLineMaterialReference, type QuoteProjectMaterial, type QuoteSplashEdge} from '../types/quote';
 
 /** Compatible with common shop dimensions: 25.5, 25 1/2, 25-1/2, 1/4, 25½. */
 const unicodeFractions: Record<string,string> = {
@@ -161,6 +161,36 @@ export function setQuoteTakeoffSinkCharge(quote:Quote,sectionId:string,sinkId:st
       ?{...line,includeInTotal:true}:line)};
 }
 
+/** Pricing proposal is pure and never persisted until the salesperson confirms. */
+export function reviewQuoteTakeoffSinkCharge(quote:Quote,sectionId:string,sinkId:string,include:boolean):{
+ before:number;after:number;difference:number;priceMissing:boolean;manualSinkChargePresent:boolean;
+}|null {
+ const sink=quote.sections.find(section=>section.id===sectionId)?.scope?.takeoffSinks?.find(s=>s.id===sinkId);
+ if(!sink)return null;
+ const proposed=setQuoteTakeoffSinkCharge(quote,sectionId,sinkId,include);
+ const before=quoteTotal(quote),after=quoteTotal(proposed);
+ return {before,after,difference:after-before,
+  priceMissing:include&&sink.unitPrice===undefined,
+  manualSinkChargePresent:include&&quote.lines.some(line=>
+   line.sectionId===sectionId&&!line.takeoffSinkId&&line.kind==='sink'&&line.includeInTotal),
+ };
+}
+/** Deliberate charge changes always show the before/after customer totals. */
+export function quoteTakeoffSinkChargeConfirmation(quote:Quote,sectionId:string,sinkId:string,include:boolean):string {
+ const review=reviewQuoteTakeoffSinkCharge(quote,sectionId,sinkId,include);
+ if(!review)return 'This sink could not be found. No changes were made.';
+ const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+ return [
+  include?'Include this sink in the customer quote total?':'Remove this sink charge from the customer quote total?',
+  'Current total: '+money.format(review.before),
+  'Proposed total: '+money.format(review.after),
+  'Difference: '+money.format(review.difference),
+  ...(review.priceMissing?['No sell price is set. It will remain unfinished until priced.']:[]),
+  ...(review.manualSinkChargePresent?['Review separately priced sink lines to avoid double charging.']:[]),
+  'This change happens only if you confirm.',
+ ].join('\n');
+}
+
 /** Sink rows are explicitly opted in to pricing. Existing manual sink rows
  * and catalog sink selections are NEVER modified or deleted. */
 export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteTakeoffSink[],explicitIncludedIds?:ReadonlySet<string>):Quote {
@@ -171,13 +201,16 @@ export function patchQuoteTakeoffSinks(quote:Quote,sectionId:string,sinks:QuoteT
   // A deliberately struck-through sink keeps its existing, inactive line
   // ID so normalized cloud sync cannot resurrect a stale charge on reload.
   // Legacy specifications-only sinks still never create billable lines.
-  const keepIds=new Set(sinks.filter(s=>s.includeInPricing||s.excludedFromContract).map(s=>s.id));
+  const keepIds=new Set(sinks.filter(s=>s.includeInPricing||s.excludedFromContract
+    ||managedExisting.some(line=>line.takeoffSinkId===s.id)).map(s=>s.id));
   const lines=quote.lines.filter(line=>!line.takeoffSinkId
     || line.sectionId!==sectionId || keepIds.has(line.takeoffSinkId));
   for(const sink of sinks){
     const existing=managedExisting.find(line=>line.takeoffSinkId===sink.id);
     if(!sink.includeInPricing){
-      if(sink.excludedFromContract&&existing){
+      if(existing){
+        // Keep a nonbillable line with the same ID through cloud round-trips
+        // so turning a charge off cannot resurrect a stale priced sink.
         const index=lines.findIndex(item=>item.id===existing.id);
         if(index>=0)lines[index]={...existing,quantity:sink.count,rate:sink.unitPrice,
           includeInTotal:false,customerVisible:false};

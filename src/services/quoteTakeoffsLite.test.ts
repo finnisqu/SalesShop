@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import {readFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {quoteTotal} from '../types/quote';
 import type { Quote,QuoteTakeoffPiece,QuoteLine } from '../types/quote';
 import { applyAreaScopeQuantity,resolveLineAreaScopeState } from './quoteAreaScope';
 import {
   parseInches,isValidTakeoffPiece,takeoffPieceSf,totalTakeoffSf,
   patchQuoteTakeoff,detachQuoteTakeoff,sectionTakeoffSf,newTakeoffPiece,
   takeoffPieceMiterInches,totalBillableMiterInches,roundedBillableTakeoffSf,
-  takeoffCustomerDetails,takeoffCustomerSpecs,
+  takeoffCustomerDetails,takeoffCustomerSpecs,takeoffSinkIncludedInQuote,
+  setQuoteTakeoffSinkCharge,patchQuoteTakeoffSinks,reviewQuoteTakeoffSinkCharge,
+  quoteTakeoffSinkChargeConfirmation,
 } from './quoteTakeoffsLite';
 
 const at='2026-10-12T18:30:00.000Z';
@@ -174,4 +179,90 @@ describe('Takeoffs Lite: precise fractional-inch piece measurements',()=>{
     expect(takeoffCustomerSpecs(quote().sections[1])).toBe('');
   });
 
+ it('preserves an existing specification-only sink and manual sink charge until confirmed opt-in',()=>{
+  const start=quote();
+  const sink={id:'legacy',category:'kitchen' as const,name:'Undermount',count:2,
+    includeInPricing:false,unitPrice:250};
+  start.sections[0].scope={...start.sections[0].scope,takeoffSinks:[sink]};
+  start.lines.push({id:'manual-sink',sectionId:'kitchen',kind:'sink',description:'Fixture allowance',
+    pricingMode:'quantity-rate',quantity:1,rate:180,customerVisible:true,includeInTotal:true});
+  const snapshot=JSON.stringify(start),before=quoteTotal(start);
+  expect(takeoffSinkIncludedInQuote(start,'kitchen','legacy')).toBe(false);
+  const proposal=reviewQuoteTakeoffSinkCharge(start,'kitchen','legacy',true)!;
+  expect(proposal.before).toBe(before);expect(proposal.after).toBe(before+500);
+  expect(proposal.manualSinkChargePresent).toBe(true);
+  expect(quoteTakeoffSinkChargeConfirmation(start,'kitchen','legacy',true))
+   .toContain('Review separately priced sink lines');
+  expect(JSON.stringify(start)).toBe(snapshot);
+  const applied=setQuoteTakeoffSinkCharge(start,'kitchen','legacy',true);
+  expect(quoteTotal(applied)).toBe(before+500);
+  expect(applied.lines.filter(l=>l.takeoffSinkId==='legacy')).toHaveLength(1);
+  expect(applied.lines.find(l=>l.id==='manual-sink')).toEqual(start.lines.find(l=>l.id==='manual-sink'));
+  expect(JSON.stringify(start)).toBe(snapshot);
+ });
+ it('never switches off an excluded legacy managed sink merely by editing its model',()=>{
+  const start=quote();
+  const sink={id:'old',category:'vanity' as const,name:'Sink',count:1,
+    includeInPricing:true,unitPrice:200};
+  start.sections[0].scope={...start.sections[0].scope,takeoffSinks:[sink]};
+  start.lines.push({id:'old-line',sectionId:'kitchen',takeoffSinkId:'old',kind:'sink',
+    description:'Legacy selection',pricingMode:'quantity-rate',quantity:1,rate:200,
+    customerVisible:false,includeInTotal:false});
+  const before=quoteTotal(start);
+  const updated=patchQuoteTakeoffSinks(start,'kitchen',[{...sink,name:'Renamed'}]);
+  expect(quoteTotal(updated)).toBe(before);
+  expect(updated.lines.find(l=>l.id==='old-line')?.includeInTotal).toBe(false);
+  expect(takeoffSinkIncludedInQuote(updated,'kitchen','old')).toBe(false);
+  const optedIn=setQuoteTakeoffSinkCharge(updated,'kitchen','old',true);
+  expect(optedIn.lines.filter(l=>l.takeoffSinkId==='old')).toHaveLength(1);
+  expect(optedIn.lines.find(l=>l.id==='old-line')?.includeInTotal).toBe(true);
+  expect(quoteTotal(optedIn)).toBe(before+200);
+ });
+ it('retains the difference between complimentary zero and unknown sink selling price',()=>{
+  const start=quote();
+  start.sections[0].scope={...start.sections[0].scope,takeoffSinks:[
+   {id:'free',category:'vanity',name:'Complimentary',count:1,includeInPricing:false,unitPrice:0},
+   {id:'unknown',category:'kitchen',name:'Unpriced',count:1,includeInPricing:false},
+  ]};
+  const free=setQuoteTakeoffSinkCharge(start,'kitchen','free',true);
+  const unknown=setQuoteTakeoffSinkCharge(free,'kitchen','unknown',true);
+  expect(free.lines.find(l=>l.takeoffSinkId==='free')?.rate).toBe(0);
+  expect(unknown.lines.find(l=>l.takeoffSinkId==='unknown')?.rate).toBeUndefined();
+  expect(reviewQuoteTakeoffSinkCharge(free,'kitchen','unknown',true)?.priceMissing).toBe(true);
+  expect(quoteTotal(unknown)).toBe(quoteTotal(start));
+ });
+ it('preserves a managed sink line ID when a salesperson toggles pricing off and on',()=>{
+  const original=quote();
+  const sink={id:'managed',category:'kitchen' as const,name:'3218',count:1,
+    unitPrice:175,includeInPricing:true};
+  original.sections[0].scope={...original.sections[0].scope,takeoffSinks:[sink]};
+  original.lines.push({id:'original-managed-line',sectionId:'kitchen',takeoffSinkId:sink.id,
+    kind:'sink',description:'Sink · 3218',pricingMode:'quantity-rate',quantity:1,
+    rate:175,customerVisible:false,includeInTotal:true});
+  const originalAmount=quoteTotal(original);
+  const optedOut=setQuoteTakeoffSinkCharge(original,'kitchen',sink.id,false);
+  expect(quoteTotal(optedOut)).toBe(originalAmount-175);
+  expect(optedOut.lines.find(l=>l.id==='original-managed-line')).toMatchObject({
+    takeoffSinkId:'managed',includeInTotal:false,customerVisible:false,rate:175,
+  });
+  const afterEdit=patchQuoteTakeoffSinks(optedOut,'kitchen',
+    [{...optedOut.sections[0].scope!.takeoffSinks![0],name:'3218 edited'}]);
+  expect(afterEdit.lines.filter(l=>l.takeoffSinkId===sink.id)).toHaveLength(1);
+  expect(afterEdit.lines.find(l=>l.id==='original-managed-line')?.includeInTotal).toBe(false);
+  const optedBackIn=setQuoteTakeoffSinkCharge(afterEdit,'kitchen',sink.id,true);
+  expect(optedBackIn.lines.filter(l=>l.takeoffSinkId===sink.id).map(l=>l.id))
+    .toEqual(['original-managed-line']);
+  expect(quoteTotal(optedBackIn)).toBe(originalAmount);
+  expect(original.lines.find(l=>l.id==='original-managed-line')?.includeInTotal).toBe(true);
+ });
+ it('requires explicit sink charge confirmation on both mobile and desktop editors',()=>{
+  const files=['src/components/QuotesMobileBeta.tsx','src/components/QuoteBetaCompactSinks.tsx',
+   'src/components/QuoteBetaMaterials.tsx','src/components/QuoteBetaSinkSelling.tsx'];
+  for(const file of files)expect(readFileSync(join(process.cwd(),file),'utf8'))
+   .toContain('quoteTakeoffSinkChargeConfirmation(');
+  expect(readFileSync(join(process.cwd(),'src/components/QuotesMobileBeta.tsx'),'utf8'))
+   .not.toContain('Sink charge is always included');
+  expect(readFileSync(join(process.cwd(),'src/store/quoteStore.ts'),'utf8'))
+   .toContain('!quoteIsCommerciallyEditable(current)');
+ });
 });
