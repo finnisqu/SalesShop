@@ -72,6 +72,7 @@ import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
 import {RecordPreviewDrawer} from './RecordPreviewDrawer';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {quoteTakeoffSinkChargeConfirmation} from '../services/quoteTakeoffsLite';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
 import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
@@ -140,6 +141,7 @@ function Field({label,children}:{label:string;children:React.ReactNode}) {
 }
 function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boolean}) {
   const update = useQuoteStore(s=>s.updateLine);
+  const setTakeoffCharge = useQuoteStore(s=>s.setTakeoffSinkCharge);
   const remove = useQuoteStore(s=>s.deleteLine);
   const reorderLine = useQuoteStore(s=>s.reorderLine);
   const moveLine = useQuoteStore(s=>s.moveLine);
@@ -214,7 +216,14 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
                 setRatesOpen(false);
               }}/>
           </div>}
-        {line.takeoffSinkId?<p className="qmb-help">Sink charge is always included in the quote total.</p>
+        {line.takeoffSinkId&&line.sectionId
+          ?<label className="qmb-check"><input type="checkbox" checked={line.includeInTotal}
+            aria-label="Include managed sink charge in quote total"
+            onChange={event=>{
+              const include=event.target.checked;
+              if(window.confirm(quoteTakeoffSinkChargeConfirmation(quote,line.sectionId!,line.takeoffSinkId!,include)))
+                setTakeoffCharge(quote.id,line.sectionId!,line.takeoffSinkId!,include);
+            }}/> {line.includeInTotal?'Included in quote':'Specification only · not charged'}</label>
           :<label className="qmb-check"><input type="checkbox" checked={line.includeInTotal} onChange={e=>update(quote.id,line.id,{includeInTotal:e.target.checked})}/> Include in quote total</label>}
 
         <div className="qmb-line-structure" aria-label="Line arrangement">

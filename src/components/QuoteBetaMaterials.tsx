@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import type { Quote, QuoteSection, QuoteTakeoffSink } from '../types/quote';
 import { SINK_CATEGORIES, SINK_CATEGORY_LABELS } from '../types/sink';
-import { newTakeoffSink, FAUCET_HOLE_OFFSETS_IN } from '../services/quoteTakeoffsLite';
+import {newTakeoffSink, FAUCET_HOLE_OFFSETS_IN, takeoffSinkIncludedInQuote, quoteTakeoffSinkChargeConfirmation} from '../services/quoteTakeoffsLite';
 import { FloatingRowMenu } from './QuoteBetaMeasureGrid';
 import { TakeoffMaterialCatalog, TakeoffSinkCatalog } from './TakeoffCatalogPickers';
 import {projectAreaCost} from '../services/quoteAreaCost';
@@ -15,6 +15,7 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
   part?:'all'|'material'|'sinks';separateSinkPricing?:boolean;scopeOnly?:boolean;showHeading?:boolean;
 }) {
   const updateSinks=useQuoteStore(s=>s.updateTakeoffSinks);
+  const setCharge=useQuoteStore(s=>s.setTakeoffSinkCharge);
   const selectMaterial=useQuoteStore(s=>s.selectTakeoffMaterial);
   const [showHelp,setShowHelp]=useState(false);
   const sinks=section.scope?.takeoffSinks??[];
@@ -53,7 +54,7 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
       <button className="qmb-quiet" type="button" onClick={()=>setShowHelp(v=>!v)}
         aria-expanded={showHelp}>ⓘ</button>
     </div>}
-    {showHelp&&showHeading&&<p className="qmb-help">Each selected sink creates a price line automatically. Choose quantities and customer selling prices beside the models; faucet holes are fabrication-only selections.</p>}
+    {showHelp&&showHeading&&<p className="qmb-help">New sinks can be priced individually. Legacy specification-only selections keep their billing choice until you explicitly include them; faucet holes are fabrication-only selections.</p>}
     <div className="qmb-sinks-sheet">
       {sinks.map((sink,index)=><div className="qmb-sink-line" key={sink.id}>
         <div className="qmb-sink-select-heading">Selection <span>Sink {index+1}</span></div>
@@ -77,7 +78,7 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
             onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=1000)patchSink(sink.id,{count:n});}}/></label>
           {!scopeOnly&&<label className="qmb-sink-price">
             $/each <input aria-label={'Sink '+(index+1)+' sell price'} type="number" inputMode="decimal"
-              min="0" step=".01" value={sink.unitPrice??''} placeholder="—" disabled={!editable}
+              min="0" step=".01" value={sink.unitPrice??''} placeholder="—" disabled={!editable||!takeoffSinkIncludedInQuote(quote,section.id,sink.id)}
               onChange={e=>{const n=Number(e.target.value);if(e.target.value===''||(Number.isFinite(n)&&n>=0))patchSink(sink.id,{unitPrice:e.target.value===''?undefined:n});}}/>
           </label>}
           <FloatingRowMenu width={338} label={'Faucet holes for Sink '+(index+1)}
@@ -105,6 +106,17 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
             </div>}
           </FloatingRowMenu>
         </div>
+        {!scopeOnly&&<label className="qmb-sink-inclusion">
+          <input type="checkbox" disabled={!editable} checked={takeoffSinkIncludedInQuote(quote,section.id,sink.id)}
+            aria-label={'Include sink '+(index+1)+' in quote total'}
+            onChange={event=>{
+              const include=event.target.checked;
+              if(window.confirm(quoteTakeoffSinkChargeConfirmation(quote,section.id,sink.id,include)))
+                setCharge(quote.id,section.id,sink.id,include);
+            }}/>
+          <span>{takeoffSinkIncludedInQuote(quote,section.id,sink.id)
+            ?'Included in quote':'Specification only · not charged'}</span>
+        </label>}
         {!scopeOnly&&<details className="qmb-buying-details qmb-sink-buying-details"
           aria-label={'Sink '+(index+1)+' private buying cost'}>
           <summary>Sink buying cost · internal <span aria-hidden="true">⌄</span></summary>
