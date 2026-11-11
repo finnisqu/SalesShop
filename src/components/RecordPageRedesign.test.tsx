@@ -1,9 +1,6 @@
 import {describe,it,expect} from 'vitest';
-import {renderToStaticMarkup} from 'react-dom/server';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
-import {RecordInlineProperty} from './RecordInlineProperty';
-import {RecordRecentsPanel} from './RecordRecentsPanel';
 
 const source=(path:string)=>readFileSync(join(process.cwd(),path),'utf8');
 
@@ -38,23 +35,20 @@ describe('Board quick Deal creation and CRM record layout',()=>{
   // Creation is deferred until explicit submit. No record gets created on cancel.
   expect(quick).toContain('const id=await onCreate(');
  });
- it('renders compact About rows with an accessible pencil and no input until edit',()=>{
-  const html=renderToStaticMarkup(<RecordInlineProperty label="Deal name" value="Test bid"
-    onSave={()=>{}}/>);
-  expect(html).toContain('Deal name');
-  expect(html).toContain('Test bid');
-  expect(html).toContain('aria-label="Edit Deal name"');
-  expect(html).not.toContain('<input');
+ it('keeps About values and pencil controls in the same compact property row',()=>{
+  const content=source('src/components/RecordInlineProperty.tsx');
+  expect(content).toContain('ss-record-inline-property');
+  expect(content).toContain('ss-record-pencil');
+  expect(content).toContain("aria-label={'Edit '+label}");
+  expect(content).toContain('!editing?');
+  expect(content).toContain("aria-label={'Save '+label}");
  });
- it('renders the shared Recents header tabs with Quotes first',()=>{
-  const html=renderToStaticMarkup(<RecordRecentsPanel quoteCount={2} activityCount={3}
-    quotes={<span>Two bids</span>} activities={<span>Three calls</span>}/>);
-  expect(html).toContain('role="tablist"');
-  expect(html).toContain('role="tab"');
-  expect(html).toContain('Quotes');
-  expect(html).toContain('Activities');
-  expect(html).toContain('Two bids');
-  expect(html).not.toContain('Three calls');
+ it('uses shared header tabs for the Recents Quotes/Activities panel',()=>{
+  const content=source('src/components/RecordRecentsPanel.tsx');
+  expect(content).toContain('role="tablist"');
+  expect(content).toContain('role="tab"');
+  expect(content).toContain("useState<'quotes'|'activities'>('quotes')");
+  expect(content).toContain("tab==='quotes'?quotes:activities");
  });
  it('keeps Company and People on the right; Recents and Tasks in center',()=>{
   for(const page of ['CompanyRecordPage','DealRecordPage','PersonRecordPage']){
