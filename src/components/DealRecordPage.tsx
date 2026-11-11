@@ -193,19 +193,11 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length+outsideQuotes.length} linked quotes</span></>}
     actions={<>
-      {timelineBetaEnabled&&<button type="button" onClick={()=>setTimelineOpen(true)}>Project timeline <small>Beta</small></button>}
       <button type="button" onClick={() => {
         setNotice(null);setSaveError('');
         if(editing)setNewCompanyName('');
         setEditing(value=>!value);
       }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>
-      {canEditCrm&&
-        <button type="button" onClick={()=>{
-           if(window.matchMedia('(max-width:760px)').matches){setExternalQuoteDialogOpen(true);setExternalQuoteOpen(false);}
-           else setExternalQuoteOpen(open=>!open);
-          }}>
-          {externalQuoteOpen?"Cancel external quote":"Record external quote"}
-        </button>}
       {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
       <QuickCreate context={{kind:'deal',id:deal.id,name:deal.name}} launcherLabel="+ New"/>
     </>}
@@ -289,6 +281,12 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
         <button type="button" onClick={()=>setTimelineOpen(true)}>Open milestone timeline</button>
       </RecordCard>}
       <RecordCard title="Quotes" extra={<span>{related.linkedQuotes.length+outsideQuotes.length} total</span>}>
+        {canEditCrm&&<button type="button" className="connections-record-add"
+          onClick={()=>{
+            if(window.matchMedia('(max-width:760px)').matches){
+              setExternalQuoteDialogOpen(true);setExternalQuoteOpen(false);
+            }else setExternalQuoteOpen(open=>!open);
+          }}>{externalQuoteOpen?'Cancel external quote':'Record external quote'}</button>}
         {externalQuoteOpen&&<ExternalQuoteSentForm key={deal.id} deal={deal}
           onCancel={()=>setExternalQuoteOpen(false)}
           onRecorded={()=>{setExternalQuoteOpen(false);setNotice({kind:"applied",message:"External quote saved. It is now linked to this Deal and appears in Quotes."});}}/>}
