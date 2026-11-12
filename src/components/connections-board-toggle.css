@@ -179,21 +179,42 @@
  :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host .board-column-header .board-carousel-position{display:inline-flex}
 }
 
-/* The phone header reserves one 44px primary action. Keep the layout switch
-   in its own compact row rather than squeezing two toggles into that slot. */
-.sales-app.view-dashboard .connections-mobile-layout-bar{display:none}
+/* The layout switch sits in the title slot, before the centered section
+   tabs. It must never occupy the fixed-width primary-action slot or add a row. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-heading
+ .ss-workspace-header__after-title{
+ display:flex;align-items:center;flex:0 0 auto;min-width:0;margin-left:3px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-heading
+ .ss-workspace-header__after-title .connections-layout-toggle{
+ min-height:36px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-heading
+ .ss-workspace-header__after-title .connections-layout-toggle button{
+ min-width:47px;min-height:28px;padding:5px 7px;font-size:10px;
+}
 .sales-app.view-dashboard .connections-board-header-create{display:none}
 @media(max-width:760px){
- .sales-app.view-dashboard .connections-layout-toggle.is-desktop{display:none!important}
- .sales-app.view-dashboard .connections-mobile-layout-bar{
-  box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
-  gap:10px;width:100%;min-width:0;padding:0 1px 5px;
+ /* The phone title lives in the global bar. One icon toggle precedes the
+    Connections section picker in its existing 62px header row. */
+ :root[data-sales-theme] .sales-app.view-dashboard .ss-workspace-header__mobile-nav{
+  gap:6px!important;
  }
- .sales-app.view-dashboard .connections-mobile-layout-bar>span{
-  font:750 11px/1.3 var(--ss-font-body);color:var(--ss-theme-muted);
+ :root[data-sales-theme] .sales-app.view-dashboard .ss-workspace-header__mobile-leading{
+  display:flex;align-items:center;justify-content:center;
+  flex:0 0 36px;width:36px;min-width:36px;max-width:36px;
  }
- .sales-app.view-dashboard .connections-mobile-layout-bar .connections-layout-toggle{
-  display:inline-flex!important;flex:0 0 auto;
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-mobile-layout-action{
+  box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+  width:36px;height:40px;padding:7px;
+  border:1px solid var(--ss-theme-border);border-radius:9px;
+  background:var(--ss-theme-card);color:var(--ss-theme-ink);cursor:pointer;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-mobile-layout-action svg{
+  width:19px;height:19px;flex:0 0 19px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-mobile-layout-action:focus-visible{
+  outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px;
  }
  :root[data-sales-theme] .sales-app.view-dashboard .ss-workspace-header.ss-workspace-header
   .ss-workspace-header__primary .connections-board-header-create{
