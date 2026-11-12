@@ -467,12 +467,7 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
     />}
     <div className="tasks-directory-content">
     <RecordFormFeedback notice={taskNotice} className="tasks-save-feedback"/>
-    <section className="tasks-directory-controls" aria-label="Task directory controls">
-      {embedded&&<nav className="tasks-records-tabs" aria-label="Task status">
-        {([['active','Open'],['completed','Completed']] as const).map(([key,label])=>
-         <button type="button" key={key} aria-pressed={filter===key} className={filter===key?'active':''}
-          onClick={()=>setFilter(key)}>{label}</button>)}
-      </nav>}
+    {!embedded&&<section className="tasks-directory-controls" aria-label="Task directory controls">
       <p className="tasks-directory-caption">{visible.length} {visible.length===1?'task':'tasks'} · {counts.active} open · {counts.today} due today · {counts.overdue} overdue</p>
       <div className="tasks-toolbar-slot" ref={setTaskToolbarHost}/>
       <div className="tasks-mobile-controls">
@@ -493,14 +488,19 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
           </label>
         </div>
       </div>
-    </section>
+    </section>}
     {!scope&&<p className="tasks-state">Your personal Tasks workspace will load after you sign in to a company.</p>}
     {scope&&storedScope!==scope&&<WorkspaceLoadingState title="Loading Tasks"
       detail="Opening your personal task list for this workspace…" />}
     {scope&&storedScope===scope&&<div className="tasks-table-container">
       <ConnectionsTable tableKey="tasks" columns={taskColumns} rows={taskTableRows}
-        toolbarTarget={taskToolbarHost}
+        toolbarTarget={embedded?undefined:taskToolbarHost}
         toolbarControls={<>
+          {embedded&&<nav className="tasks-records-tabs" aria-label="Task status">
+            {([['active','Open'],['completed','Completed']] as const).map(([key,label])=>
+             <button type="button" key={key} aria-pressed={filter===key} className={filter===key?'active':''}
+              onClick={()=>setFilter(key)}>{label}</button>)}
+          </nav>}
           <details className="tasks-overview-menu">
             <summary>Overview <WorkspaceChromeIcon name="chevron-down"/></summary>
             <div className="tasks-summary" aria-label="Task counts">
