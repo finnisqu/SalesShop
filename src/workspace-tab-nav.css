@@ -9,7 +9,9 @@
   gap:3px!important;padding:4px!important;margin:0!important;
   border:1px solid var(--ss-theme-border)!important;
   border-radius:11px!important;
-  background:var(--ss-theme-card)!important;
+  /* The outer pill must be lighter than the page header, on every theme.
+   * The active tab uses the theme tint to remain visually distinct. */
+  background:color-mix(in srgb,var(--ss-theme-tint) 86%,white 14%)!important;
   overflow:visible!important;
   box-sizing:border-box;
  }
