@@ -1,0 +1,10 @@
+/* All Records destinations use a single five-tab navigation with More. */
+.records-section-nav{display:flex;align-items:center;justify-content:center;
+ gap:6px;min-width:0;max-width:100%}
+.records-section-nav .records-section-nav-tabs{flex:0 1 auto;min-width:0}
+.records-section-more{display:flex;align-items:center;flex:0 0 auto}
+.records-section-more .ss-workspace-more summary{min-height:36px}
+@media(max-width:820px){
+ .records-section-nav{max-width:100%;gap:4px}
+ .records-section-more{display:none}
+}
