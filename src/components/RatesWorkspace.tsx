@@ -378,7 +378,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                 );
               })}
             </MobileCatalogReferenceList>
-            <div className="rates-reference-table-wrap">
+            <div className="rates-reference-table-wrap ss-worktable-surface">
               <table className="rates-reference-table">
                 <thead><tr><th>Item</th><th>Category</th><th>Cost</th><th>Suggested sell</th><th>Unit</th><th>Margin</th><th>Effective</th></tr></thead>
                 <tbody>
@@ -439,7 +439,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                 );
               })}
             </MobileCatalogReferenceList>
-            <div className="rates-reference-table-wrap">
+            <div className="rates-reference-table-wrap ss-worktable-surface">
               <table className="rates-reference-table rates-material-pricing-table">
                 <thead><tr><th>Level</th><th>Material cost ceiling</th><th>Standard customer price</th><th>Meaning</th></tr></thead>
                 <tbody>
