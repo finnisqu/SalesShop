@@ -25,6 +25,7 @@ import { SuppliersWorkspace } from './SuppliersWorkspace';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { CatalogPagination } from './CatalogPagination';
+import {WorktableFilterMenu} from './WorktableChrome';
 import { restoreScrollAnchor } from '../lib/scrollAnchor';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -626,12 +627,11 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
               <div className="catalog-card-actions">
                 <span className="catalog-card-hint">Variants reveal slab sizes, availability and supplier price programs.</span>
                 {!isMobileReference&&<>
-                  <details className="rates-filter-menu catalog-card-filter">
-                    <summary>Filter{activeFilterCount ? ' · '+activeFilterCount : ''}</summary>
-                    <div className="rates-filter-popover materials-foundation-filter-popover catalog-card-filter-panel">
+                  <WorktableFilterMenu className="catalog-card-filter"
+                    activeCount={activeFilterCount+Number(sort!=='stock-brand')}>
+                    <div className="materials-foundation-filter-popover catalog-card-filter-panel">
                       <MaterialsFilterFields idPrefix="materials-table" {...filterFields}/>
                     </div>
-                  </details>
                   <label className="catalog-card-sort">
                     <span className="catalog-control-label">Sort</span>
                     <select aria-label="Sort material library" value={sort}
@@ -642,6 +642,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
                       <option value="cost-asc">Cost · low first</option><option value="cost-desc">Cost · high first</option>
                     </select>
                   </label>
+                  </WorktableFilterMenu>
                 </>}
                 {embedded&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(true)}>Edit materials</button>}
               </div>
