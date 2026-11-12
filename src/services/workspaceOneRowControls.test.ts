@@ -24,18 +24,17 @@ describe('Connections-style Tasks and Quotes directory rows',()=>{
   expect(css).toContain('.tasks-toolbar-slot>.connections-grid-toolbar');
   expect(css).toContain('min-height:62px');
  });
- it('puts the document caption above the same full-width record toolbar',()=>{
+ it('uses the shared worktable toolbar for Quotes document type and filters',()=>{
   const start=quotes.indexOf('className="qmb-library-directory-controls"');
   const end=quotes.indexOf('className="qmb-documents-table"',start);
   const intro=quotes.slice(start,end);
-  expect(intro).toContain('qmb-library-directory-caption');
-  expect(intro).toContain('qmb-library-results-head');
+  expect(intro).not.toContain('qmb-library-directory-caption');
+  expect(intro).not.toContain('qmb-library-results-head');
   expect(intro).toContain('qmb-library-toolbar-slot');
   expect(intro).toContain('ref={setDocumentToolbarHost}');
   expect(quotes).toContain('toolbarTarget={documentToolbarHost}');
-  expect(quotes).toContain('toolbarControls={<div className="qmb-library-tools">');
+  expect(quotes).toContain('toolbarControls={<>{documentTypeControl}{sharedLibraryControls}</>}');
   expect(css).toContain('.qmb-library-toolbar-slot>.connections-grid-toolbar');
-  expect(css).toContain('.qmb-library-directory-caption');
   expect(quotes).toContain('onDocumentArchive=');
   expect(quotes).toContain('onDocumentRestore=');
  });
