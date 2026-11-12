@@ -120,7 +120,7 @@ export function CatalogWorkspace() {
       />
 
       {section==='materials'&&<SupplierImportLauncher placement="hidden"/>}
-      <section ref={sectionScrollRef} className={`catalog-section-host catalog-section-${section}`}>
+      <section ref={sectionScrollRef} className={`catalog-section-host catalog-reference-layout catalog-section-${section}`}>
         {section === 'materials' ? (
           <MaterialsWorkspace embedded externalQuery={catalogSearch}/>
         ) : section === 'sinks' ? (

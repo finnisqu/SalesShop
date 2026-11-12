@@ -56,6 +56,34 @@ describe('Batch #114 — Catalog layout parity',()=>{
   expect(parity).toContain('max-height:none');
   expect(parity).not.toContain('background:#fff');
  });
+ it('gives all five Catalog tabs one gutter and shared reference-table measurements',()=>{
+  const catalog=src('components/CatalogWorkspace.tsx');
+  const css=src('catalog-product-worktable.css');
+  const parity=css.split('Batch 116: the five Catalog tabs share one page gutter')[1];
+  expect(catalog).toContain('catalog-section-host catalog-reference-layout catalog-section-');
+  expect(parity).toBeTruthy();
+  for(const tab of ['materials','sinks','other','rates','tags']){
+    expect(parity).toContain('.catalog-section-'+tab);
+  }
+  expect(parity).toContain('padding:18px clamp(16px,3.7vw,64px) 24px');
+  expect(parity).toContain('overflow-y:auto');
+  expect(parity).toContain('>.rates-workspace.is-catalog-embedded');
+  expect(parity).toContain('>.catalog-product-worktable');
+  expect(parity).toContain('min-height:72px');
+  expect(parity).toContain('height:46px');
+  expect(parity).toContain('height:60px');
+ });
+ it('keeps Tags checkbox and pin cells visible and preserves rotated phone layout',()=>{
+  const css=src('catalog-product-worktable.css');
+  const parity=css.split('Batch 116: the five Catalog tabs share one page gutter')[1];
+  expect(parity).toContain('.connections-check-cell,.connections-pin-cell');
+  expect(parity).toContain('min-width:52px');
+  expect(parity).toContain('overflow:visible');
+  expect(parity).toContain('min-height:64px');
+  expect(parity).toContain('max-height:520px');
+  expect(parity).toContain('padding:0;');
+  expect(parity).toContain('tr.has-pinned-variant');
+ });
  it('stretches the comparison tables to the full workspace width',()=>{
   const css=src('catalog-product-worktable.css');
   expect(css).toContain('.catalog-product-worktable>.catalog-product-card');

@@ -661,3 +661,264 @@
  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
   .connections-data-table{min-width:650px;}
 }
+
+
+/*
+ * Batch 116: the five Catalog tabs share one page gutter, one scroll owner,
+ * and identical reference-card/table measurements.  Replaces differing
+ * legacy inner padding (Rates/Materials 22px; Other/Tags 12–24px; Sinks 0).
+ * Dedicated Materials pagination and per-section business tools remain intact.
+ */
+@media (min-width: 701px) {
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-workspace{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout:is(
+    .catalog-section-materials,.catalog-section-sinks,.catalog-section-other,
+    .catalog-section-rates,.catalog-section-tags
+  ){
+    box-sizing:border-box;
+    display:block;
+    flex:1 1 auto;
+    min-width:0;
+    min-height:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
+    scrollbar-gutter:stable;
+    padding:18px clamp(16px,3.7vw,64px) 24px;
+    background:var(--ss-theme-canvas);
+  }
+  /* The section host owns the gutter/scroll. Prevent stacked offsets. */
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+  >.rates-workspace.is-catalog-embedded{
+    box-sizing:border-box;
+    width:100%;
+    max-width:none;
+    height:auto;
+    min-height:0;
+    margin:0;
+    padding:0;
+    overflow:visible;
+    background:transparent;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+  >.catalog-product-worktable{
+    box-sizing:border-box;
+    width:100%;
+    max-width:none;
+    min-width:0;
+    margin:0;
+    padding:0;
+    align-content:start;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+  .rates-reference-host,
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+  .materials-reference-host{
+    width:100%;
+    max-width:none;
+    min-width:0;
+    margin:0;
+  }
+  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+  :is(.materials-reference-card,.catalog-product-card,.catalog-tags-card,
+      .rates-reference-host>.rates-reference-card){
+    box-sizing:border-box;
+    width:100%;
+    max-width:none;
+    margin-left:0;
+    margin-right:0;
+  }
+}
+
+/* Matching top title band for all five worktables (Materials is the reference). */
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host.catalog-reference-layout :is(
+ .materials-reference-card,.catalog-product-card,.catalog-tags-card,
+ .rates-reference-host>.rates-reference-card
+)>header.catalog-card-header{
+ box-sizing:border-box;
+ min-height:72px;
+ padding:12px 14px;
+ display:flex;
+ align-items:center;
+ gap:12px;
+ background:var(--ss-theme-base);
+ border-bottom:1px solid var(--ss-theme-border);
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host.catalog-reference-layout .catalog-card-header
+ >div:first-child>strong{
+ font:750 12px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host.catalog-reference-layout .catalog-card-header
+ >div:first-child>small{
+ font:500 10px/1.4 var(--ss-font-body,system-ui,sans-serif);
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog
+.catalog-section-host.catalog-reference-layout .catalog-card-actions{
+ gap:8px;
+}
+
+/* Stable column-heading and row rhythm, shared across the five tabs. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ :is(.rates-reference-table,.connections-data-table) thead th{
+ box-sizing:border-box;
+ height:46px;
+ min-height:46px;
+ padding:0 12px;
+ vertical-align:middle;
+ border-color:var(--ss-theme-border);
+ background:var(--ss-theme-base);
+ color:var(--ss-theme-muted);
+ font:850 9px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ letter-spacing:.04em;
+ text-align:left;
+ text-transform:uppercase;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ :is(.rates-reference-table,.connections-data-table) tbody tr:not(.materials-variant-expanded-row)>td{
+ box-sizing:border-box;
+ height:60px;
+ min-height:60px;
+ padding:10px 12px;
+ border-color:var(--ss-theme-border);
+ vertical-align:middle;
+ font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ :is(.rates-reference-table,.connections-data-table) tbody tr:not(.materials-variant-expanded-row):nth-child(even)>td{
+ background:var(--ss-theme-base);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ :is(.rates-reference-table,.connections-data-table) tbody tr:not(.materials-variant-expanded-row):nth-child(odd)>td{
+ background:var(--ss-theme-card);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ :is(.rates-reference-table,.connections-data-table) tbody tr:not(.materials-variant-expanded-row):hover>td{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ .rates-reference-table tbody tr.is-expanded:not(.materials-variant-expanded-row)>td,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ .materials-reference-table tbody tr.has-pinned-variant:not(.materials-variant-expanded-row)>td{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-materials
+ .materials-reference-table tbody tr.has-pinned-variant>td:first-child{
+ box-shadow:inset 3px 0 var(--ss-theme-accent);
+}
+
+/* Tags uses a ConnectionsTable internally. Keep its selection/pin cells
+   distinct, centered and wide enough for real touch targets (no clipped dots). */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags
+ .catalog-tags-card .connections-data-table :is(th,td):is(
+   .connections-check-cell,.connections-pin-cell
+ ){
+ box-sizing:border-box;
+ width:52px;
+ min-width:52px;
+ max-width:52px;
+ padding:7px!important;
+ text-align:center;
+ overflow:visible;
+ text-overflow:clip;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags
+ .catalog-tags-card .connections-data-table
+ :is(.connections-check-cell,.connections-pin-cell) :is(input,button){
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ flex:none;
+ vertical-align:middle;
+ margin:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags
+ .catalog-tags-card .connections-data-table .connections-pin-cell button{
+ box-sizing:border-box;
+ width:32px;
+ height:32px;
+ min-width:32px;
+ min-height:32px;
+ padding:5px;
+ border:0;
+ background:transparent;
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags
+ .catalog-tags-card .connections-grid-toolbar{
+ min-height:64px;
+ padding:10px 14px;
+ background:var(--ss-theme-tint);
+ border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags
+ .catalog-tags-card .connections-data-table thead th>button{
+ min-height:40px;
+ color:var(--ss-theme-muted);
+ font:850 9px/1.35 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags
+ .catalog-tags-card .connections-data-table tbody td:not(
+ .connections-check-cell,.connections-pin-cell
+ ){
+ max-width:none;
+}
+
+/* Pricing pages and product pages should share the same table headings,
+   not a second smaller style inherited from Rates or Connections. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ .catalog-product-table th:last-child,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ .rates-reference-table th:last-child{
+ border-right:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ .catalog-card-header :is(button,summary,select):focus-visible{
+ outline:2px solid var(--ss-theme-accent);
+ outline-offset:2px;
+}
+
+/* Preserve the pre-existing mobile tool sheets and screen-safe layout. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ :is(.rates-reference-table,.connections-data-table) tbody tr:not(.materials-variant-expanded-row)>td{
+  height:auto;
+  min-height:0;
+  padding:8px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ :is(.materials-reference-card,.catalog-product-card,.catalog-tags-card,
+     .rates-reference-host>.rates-reference-card)>header.catalog-card-header{
+  min-height:0;
+  padding:9px 10px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ :is(.rates-reference-table,.connections-data-table) thead th{
+  height:40px;min-height:40px;padding:0 8px;
+ }
+}
+
+
+/* A rotated touch phone may be wider than 700px; it still uses the mobile
+   Catalog toolbar and must not inherit the desktop 64px page gutter. */
+@media (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout:is(
+  .catalog-section-materials,.catalog-section-sinks,.catalog-section-other,
+  .catalog-section-rates,.catalog-section-tags
+ ){
+  box-sizing:border-box;
+  padding:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  scrollbar-gutter:auto;
+ }
+}
