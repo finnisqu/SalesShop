@@ -5,7 +5,8 @@ import {usePersonalTaskStore,taskScope,subtaskProgress} from '../store/personalT
 import {useQuoteStore} from '../store/quoteStore';
 import {useNotebookStore} from '../store/notebookStore';
 import {openHomeNote} from '../services/homeNotes';
-import {dailyNotebookPages,notebookPlainText,notebookCalendarDates,openNotebookCalendarDate} from '../services/notebookDaily';
+import {notebookCalendarDates,openNotebookCalendarDate} from '../services/notebookDaily';
+import {homeOutstandingTasks,outstandingDueLabel} from '../services/homeOutstandingTasks';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
@@ -42,7 +43,7 @@ function RecentActivityIcon({kind,method,activityType}:{kind:'activity'|'complet
    <><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></>}
  </svg></span>;
 }
-type SidecarCreateKind='quote'|'activity'|'note';
+type SidecarCreateKind='quote'|'activity'|'task';
 function SidecarCreateIcon({kind}:{kind:SidecarCreateKind}){
  return <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
   stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
@@ -50,8 +51,8 @@ function SidecarCreateIcon({kind}:{kind:SidecarCreateKind}){
   {kind==='quote'?<><rect x="5" y="3" width="14" height="18" rx="2"/>
    <path d="M9 8h6M9 12h6M9 16h4"/></>:
    kind==='activity'?<><path d="M5 3h3l2 5-2 2a16 16 0 0 0 6 6l2-2 5 2v3a2 2 0 0 1-2 2C11 20 4 13 3 5a2 2 0 0 1 2-2Z"/></>:
-   <><rect x="5" y="3" width="14" height="18" rx="2"/>
-    <path d="M9 8h6M9 12h6M9 16h4M3 7v11"/></>}
+   <><rect x="3.5" y="3.5" width="17" height="17" rx="3"/>
+    <path d="m7.5 12 3 3 6-6"/></>}
  </svg>;
 }
 
@@ -87,7 +88,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const [badgeFocus,setBadgeFocus]=useState<{date:string;metric:CalendarBadgeMetric}|null>(null);
  const [expandedHistory,setExpandedHistory]=useState<Set<string>>(()=>new Set());
  const agendaRef=useRef<HTMLElement>(null);
- const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'notes'>('quotes');
+ const [sidecarTab,setSidecarTab]=useState<'quotes'|'recent'|'tasks'>('quotes');
  const [sidecarCreateOpen,setSidecarCreateOpen]=useState(false);
  const [sidecarMenuPosition,setSidecarMenuPosition]=useState<CSSProperties>({top:-9999,left:-9999});
  const sidecarMenuRef=useRef<HTMLDivElement>(null);
@@ -123,8 +124,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   if(kind==='activity'&&mayLogActivity){
    setSidecarTab('recent');openActivityComposer();
   }
-  if(kind==='note'){
-   setSidecarTab('notes');openHomeNote();
+  if(kind==='task'){
+   setSidecarTab('tasks');requestTaskModal({mode:'create'});
   }
  };
  useEffect(()=>{
@@ -253,8 +254,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   [ownQuotes,sources.activities]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
   [ownTasks,sources.activities,ownQuotes,personal]);
- const dailyPages=useMemo(()=>notebookReady?dailyNotebookPages(notebookEntries):[],
-  [notebookEntries,notebookReady]);
+ const outstanding=useMemo(()=>homeOutstandingTasks(ownTasks),[ownTasks]);
  const calendarDatesForDay=useMemo(()=>notebookReady?notebookCalendarDates(notebookEntries,selected):[],
   [notebookEntries,notebookReady,selected]);
  useEffect(()=>{setShowAllDay(false);setAddOpen(false);},[selected]);
@@ -362,9 +362,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  // Render the Recent panel into a separate Home section without duplicating
  // any calendar data subscriptions, previews, or quick-create logic.
  const recentPanel=embedded&&showRecent?(
-  <aside className="sales-calendar-sidecar" aria-label="Recent work and private notes">
+  <aside className="sales-calendar-sidecar" aria-label="Recent work and outstanding tasks">
       <div className="sales-calendar-sidecar-topline">
-       <h3>Pick up where you left off</h3>
+       <h3>Recents</h3>
        <div className="home-sidecar-create" ref={sidecarCreateRef}>
         <button ref={sidecarCreateButton} type="button"
          className="home-note-sidecar-add" title="Quick create"
@@ -396,8 +396,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
            onClick={()=>createFromSidecar('activity')}>
            <SidecarCreateIcon kind="activity"/><span>Log Activity</span>
          </button>}
-         <button type="button" role="menuitem" onClick={()=>createFromSidecar('note')}>
-           <SidecarCreateIcon kind="note"/><span>New Note</span>
+         <button type="button" role="menuitem" onClick={()=>createFromSidecar('task')}>
+           <SidecarCreateIcon kind="task"/><span>New Task</span>
          </button>
         </div>,document.body)}
        </div>
@@ -407,10 +407,10 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
         onClick={()=>{setSidecarTab('quotes');setSidecarCreateOpen(false);}}>Quotes</button>
        <button type="button" role="tab" aria-selected={sidecarTab==='recent'}
         onClick={()=>{setSidecarTab('recent');setSidecarCreateOpen(false);}}>Activity</button>
-       <button type="button" role="tab" aria-selected={sidecarTab==='notes'}
-        onClick={()=>{setSidecarTab('notes');setSidecarCreateOpen(false);}}>Notes</button>
+       <button type="button" role="tab" aria-selected={sidecarTab==='tasks'}
+        onClick={()=>{setSidecarTab('tasks');setSidecarCreateOpen(false);}}>Outstanding</button>
       </div>
-      <div className={'sales-calendar-sidecar-list'+(sidecarTab==='notes'?' is-notes':'')}>
+      <div className={'sales-calendar-sidecar-list'+(sidecarTab==='tasks'?' is-outstanding':'')}>
        {sidecarTab==='quotes'
         ?recentQuotes.length?recentQuotes.map(q=><button type="button" key={q.id}
           onClick={()=>q.kind==='external'
@@ -427,20 +427,18 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
            <small>{new Date(item.timestamp).toLocaleDateString()} · {item.detail}</small>
           </span>
          </button>):<p>Completed tasks and logged interactions will appear here.</p>
-        :<div className="home-daily-notes-list">
-          {dailyPages.length>0&&<small className="home-note-group-label">Daily pages</small>}
-          {dailyPages.map(page=><button type="button" className="home-note-list-item"
-           key={page.id} onClick={()=>openHomeNote({mode:'preview',entryId:page.id})}>
-           <span className="home-note-list-indicator" aria-hidden="true"/>
-           <span className="home-note-list-copy">
-            <strong>{page.title}</strong>
-            <small>{notebookPlainText(page.contentHtml).slice(0,145)||
-              ((page.agendaItems?.length??0)+' linked items')}</small>
-           </span>
-          </button>)}
-          {!dailyPages.length&&
-           <p>No notes yet. Use + to start today's Notebook page.</p>}
-         </div>}
+        :outstanding.length?outstanding.map(task=><button type="button" key={task.id}
+         className={'home-outstanding-task-row'+(task.dueDate&&task.dueDate<today?' is-overdue':'')}
+         onClick={()=>requestTaskModal({mode:'preview',id:task.id})}>
+          <span className="home-outstanding-task-copy">
+           <strong>{task.title}</strong>
+           <small>{outstandingDueLabel(task,today)}
+            {task.dueTime?' · '+task.dueTime:''}
+            {task.dueDateResponsibility==='external'?' · External dependency':''}</small>
+          </span>
+          {task.priority==='urgent'&&<span className="home-outstanding-priority"
+            aria-label="Urgent task" title="Urgent task">!</span>}
+         </button>):<p>All caught up. No outstanding tasks.</p>}
       </div>
     </aside>
  ):null;
