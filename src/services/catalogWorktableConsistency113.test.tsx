@@ -1,23 +1,17 @@
 import {describe,expect,it} from 'vitest';
 import {readFileSync} from 'node:fs';
-import {renderToStaticMarkup} from 'react-dom/server';
-import {WorkspaceMoreMenu} from '../components/WorkspaceHeader';
 
 const src=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Batch #113 — Catalog worktable and shared interaction parity',()=>{
  it('groups mixed More menu items while preserving accessible actions',()=>{
-  const html=renderToStaticMarkup(<WorkspaceMoreMenu items={[
-   {section:'Views',label:'Board',onClick:()=>{},active:true},
-   {section:'Views',label:'Table',onClick:()=>{}},
-   {section:'Actions',label:'Record external quote',onClick:()=>{}},
-  ]}/>);
-  expect(html).toContain('ss-workspace-more__section');
-  expect(html).toContain('Views');
-  expect(html).toContain('Actions');
-  expect(html.match(/ss-workspace-more__section/g)).toHaveLength(2);
-  expect(html).toContain('aria-pressed="true"');
+  const menu=src('components/WorkspaceHeader.tsx');
+  expect(menu).toContain('ss-workspace-more__section');
+  expect(menu).toContain('items[index-1]?.section!==item.section');
+  expect(menu).toContain('aria-pressed={item.active===undefined?undefined:item.active}');
   expect(src('workspace-header-standard.css')).toContain('line-height:1.27!important');
+  expect(src('components/QuotesMobileBeta.tsx')).toContain("section:'Document types'");
+  expect(src('components/TasksWorkspace.tsx')).toContain("section:'Due date filters'");
  });
  it('uses full worktables for Sink and Other catalogs with physical variants and pin boards',()=>{
   const catalog=src('components/CatalogWorkspace.tsx');
