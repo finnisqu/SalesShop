@@ -152,3 +152,66 @@
  .sales-calendar-day.is-today:not(.is-selected){
  border-color:var(--ss-theme-accent)!important;
 }
+
+/* Week-only alignment: a fixed date column ensures every badge begins at the
+   same horizontal position, regardless of single- or double-digit dates. */
+@media(min-width:760px){
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day{
+  display:grid!important;grid-template-columns:60px minmax(0,1fr)!important;
+  align-items:center!important;justify-content:initial!important;
+  column-gap:2px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select{
+  position:relative!important;inset:auto!important;
+  grid-column:1!important;grid-row:1!important;
+  display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:flex-start!important;
+  flex:0 0 auto!important;width:100%!important;height:100%!important;
+  gap:2px!important;padding:0 2px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-week-day-label{
+  order:0!important;flex:0 0 27px!important;min-width:27px!important;
+  font-size:11px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select>span:first-of-type{
+  order:1!important;flex:0 0 auto;min-width:20px;
+  font-variant-numeric:tabular-nums;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots{
+  box-sizing:border-box;grid-column:2!important;grid-row:1!important;
+  position:static!important;inset:auto!important;
+  width:100%!important;max-width:100%!important;
+  margin:0!important;padding:0!important;
+  justify-self:start!important;justify-content:flex-start!important;
+  align-items:center!important;flex-wrap:wrap!important;gap:3px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots :is(i,.home-calendar-badge-action){
+  min-width:22px!important;min-height:20px!important;height:20px!important;
+  padding:0 4px!important;font-size:10px!important;
+ }
+}
+@media(max-width:759px){
+ /* Each phone date already has its own equal-width column. Keep its badges in
+    a separate bottom-aligned strip rather than letting the date text move them. */
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select{
+  gap:1px!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots{
+  left:3px!important;right:auto!important;bottom:3px!important;
+  justify-content:flex-start!important;margin:0!important;
+  max-width:calc(100% - 6px)!important;
+ }
+ .sales-home .sales-home-calendar-card .sales-calendar-inline
+ .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots :is(i,.home-calendar-badge-action){
+  min-width:14px!important;min-height:16px!important;height:16px!important;
+  padding:0 2px!important;font-size:9px!important;
+ }
+}
