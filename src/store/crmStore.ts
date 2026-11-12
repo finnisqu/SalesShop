@@ -584,6 +584,15 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       ? current.amount
       : patch.amount === undefined || (typeof patch.amount === 'number' && Number.isFinite(patch.amount))
         ? patch.amount : current.amount;
+    const hasDeadlineEdit=Object.prototype.hasOwnProperty.call(patch,'dueDate');
+    const deadlineChanged=hasDeadlineEdit&&(patch.dueDate??undefined)!==(current.dueDate??undefined);
+    const originalDueDate=current.originalDueDate??(current.dueDate||patch.dueDate||undefined);
+    const dueDateHistory=deadlineChanged?
+      [...(current.dueDateHistory??[]),{
+        from:current.dueDate,to:patch.dueDate,at:timestamp,
+        responsibility:patch.dueDateResponsibility??current.dueDateResponsibility??'neutral',
+        reason:patch.dueDateChangeReason?.trim().slice(0,500)||undefined,
+      }]:current.dueDateHistory;
     const stageTransition = patch.stage
       ? applyProjectStageTransition(current, patch.stage, get().activities, timestamp)
       : null;
@@ -596,6 +605,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         ...(effectiveStage ? { stage: effectiveStage } : {}),
         ...(stageTransition?.changed ? { stageChangedAt: timestamp } : {}),
         ...(normalizedCompany ?? {}),
+        ...(hasDeadlineEdit?{originalDueDate,dueDateHistory}:{}),
         name: patch.name?.trim() || project.name,
         amount,
         updatedAt: timestamp,
