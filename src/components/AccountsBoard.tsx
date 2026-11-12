@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { inferAccountHealth } from '../services/accountHealth';
 import {
   isMobileBoardInteraction,
@@ -202,11 +202,14 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
   );
 }
 
-export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isStageCollapsed,onToggleStage,searchQuery='',onSearchChange,embedded=false}:{
+export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isStageCollapsed,onToggleStage,
+  searchQuery='',onSearchChange,embedded=false,allowedCompanyIds,toolbarControl,onOpenQuoteMetadata}:{
   onShowProjects:()=>void;
   embedded?:boolean;
   searchQuery?:string;
   onSearchChange?:(value:string)=>void;
+  allowedCompanyIds?:ReadonlySet<string>;toolbarControl?:ReactNode;
+  onOpenQuoteMetadata?:(id:string)=>void;
   compactCards:boolean;
   onToggleCompact:()=>void;
   isStageCollapsed:(stage:AccountStage)=>boolean;
@@ -234,14 +237,16 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
   const accountsByStage = useMemo(() => {
     const grouped = new Map<AccountStage, AccountRow[]>();
     ACCOUNT_STAGES.forEach((stage) => grouped.set(stage, []));
-    companies.filter(company=>!isOurOrgCompany(company)).filter(company=>[company.name,...visibleCompanyAliases(company)].some(text=>
-      text.toLowerCase().includes(searchQuery.trim().toLowerCase()))).forEach((company) => {
+    companies.filter(company=>!isOurOrgCompany(company)).filter(company=>allowedCompanyIds
+      ?allowedCompanyIds.has(company.id)
+      :[company.name,...visibleCompanyAliases(company)].some(text=>
+        text.toLowerCase().includes(searchQuery.trim().toLowerCase()))).forEach((company) => {
       const health = inferAccountHealth(company, contacts, projects, activities);
       grouped.get(health.stage)?.push({ company, health });
     });
     grouped.forEach((items) => items.sort((a, b) => a.company.name.localeCompare(b.company.name)));
     return grouped;
-  }, [companies, contacts, projects, activities,searchQuery]);
+  }, [companies, contacts, projects, activities,searchQuery,allowedCompanyIds]);
 
   useEffect(() => {
     if (!mobileInteraction) return;
@@ -284,7 +289,7 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
           }}/>}
       />}
       {embedded&&<div className="connections-board-tools" role="group" aria-label="Company board controls">
-        <span className="connections-board-subtitle">Grouped by relationship health</span>
+        {toolbarControl??<span className="connections-board-subtitle">Grouped by relationship health</span>}
         <button type="button" className="connections-board-compact" aria-pressed={compactCards}
          onClick={onToggleCompact}>{compactCards?'Standard cards':'Compact cards'}</button>
         <BoardQuickCreate kind="Company" onCreate={name=>{
@@ -344,10 +349,10 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
                     <article
                       className="project-card account-card"
                       key={company.id}
-                      onClick={mobileInteraction ? () => setPreview({kind:'company',id:company.id}) : undefined}
+                      onClick={()=>setPreview({kind:'company',id:company.id})}
                       tabIndex={0}
                       onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPreview({kind:'company',id:company.id}); } }}
-                      title={mobileInteraction ? 'Tap name to preview' : 'Click name to preview'}
+                      title={mobileInteraction ? 'Tap card to preview' : 'Click anywhere to preview'}
                     >
                       <div className="account-card-title-row">
                         <h3><button type="button" className="board-entity-name"
@@ -376,7 +381,8 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
       </section>
 
       {preview&&<RecordPreviewDrawer record={preview} onClose={()=>setPreview(null)}
-        onSelect={setPreview} onEditBoard={preview.kind==='company'?record=>setEditingId(record.id):undefined}/>}
+        onSelect={setPreview} onGoToQuotePage={onOpenQuoteMetadata}
+        onEditBoard={preview.kind==='company'?record=>setEditingId(record.id):undefined}/>}
       {editingCompany && <AccountEditor company={editingCompany} onClose={() => {
         setEditingId(null);
         if(focusedCompanyId===editingCompany.id)clearFocusedCompany();
