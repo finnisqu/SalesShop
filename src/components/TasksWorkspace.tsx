@@ -650,7 +650,7 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
         <dl>
          <div><dt>Due</dt><dd>{viewing.dueDate?formatDate(viewing.dueDate)+(viewing.dueTime?' · '+viewing.dueTime:''):'No due date'}</dd></div>
          {viewing.originalDueDate&&<div><dt>Original due</dt><dd>{formatDate(viewing.originalDueDate)}</dd></div>}
-         {viewing.dueDateResponsibility==='external'&&<div><dt>Deadline shift</dt><dd>External dependency</dd></div>
+         {viewing.dueDateResponsibility==='external'&&<div><dt>Deadline shift</dt><dd>External dependency</dd></div>}
          {viewing.startDate&&<div><dt>Start</dt><dd>{formatDate(viewing.startDate)}</dd></div>}
         </dl>
         <TaskPreviewDueControls task={viewing} onUpdate={update}/>
