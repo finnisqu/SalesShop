@@ -8,7 +8,7 @@ async function library(page:import('@playwright/test').Page){
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Records',exact:true})).toBeVisible();
   return beta;
 }
 /** Quick Quotes hide the old desktop navigator; Back advances toward the library.
@@ -18,7 +18,7 @@ async function backToDocuments(page:import('@playwright/test').Page){
   for(let attempt=0;attempt<3&&await beta.locator('.qmb-quote-editor').isVisible();attempt++){
     await beta.locator('.qmb-quote-footer .qmb-guided-back').click();
   }
-  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Records',exact:true})).toBeVisible();
 }
 async function create(page:import('@playwright/test').Page,template:string,starting?:string){
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
@@ -78,8 +78,8 @@ test('create new community from a previous builder rate agreement without making
   await expect(beta.getByRole('navigation',{name:'Calculated builder workflow'})).toBeVisible();
   await expect(beta.getByRole('button',{name:/Spreadsheet/})).toHaveCount(0);
   await backToDocuments(page);
-  await beta.getByRole('button',{name:'Community Plan Pricing',exact:true}).click();
-  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
+  await beta.getByRole('combobox',{name:'Filter quote document type'}).selectOption('community-pricing');
+  await expect(beta.getByRole('heading',{name:'Records',exact:true})).toBeVisible();
   await expect(beta.getByRole('region',{name:'documents table'})
     .getByRole('button',{name:'QC 1 Document'})).toBeVisible();
 });
