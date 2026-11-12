@@ -1299,46 +1299,12 @@ export function QuotesMobileBeta() {
              {statusFilter==='archived'?'Archived documents':'My documents'} · {documentTableRows.length} {documentTableRows.length===1?'record':'records'} · click a name to preview its record
            </p>
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
-           <div className="qmb-library-mobile-filters">
-             <div className="qmb-library-tools">
-             <label><span>Show</span>
-               <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
-                 <option value="active">Active ({counts.active+externalQuoteRecords.length})</option>
-                 <option value="drafts">Drafts ({counts.drafts})</option>
-                 <option value="issued">Issued ({counts.issued+externalQuoteRecords.length})</option>
-                 <option value="archived">Archived ({counts.archived})</option>
-               </select>
-             </label>
-             <label><span>Sort</span><select aria-label="Sort documents" value={documentSort}
-               onChange={e=>setDocumentSort(e.target.value as SalesDocumentSort)}>
-               <option value="recent">Recently edited</option>
-               <option value="name">Document name</option>
-               <option value="company">Customer / company</option>
-               <option value="oldest">Oldest edited</option>
-             </select></label>
-           </div>
-           </div>
+           <div className="qmb-library-mobile-filters">{sharedLibraryControls}</div>
          </div>
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
              toolbarTarget={documentToolbarHost}
-             toolbarControls={<div className="qmb-library-tools">
-             <label><span>Show</span>
-               <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
-                 <option value="active">Active ({counts.active+externalQuoteRecords.length})</option>
-                 <option value="drafts">Drafts ({counts.drafts})</option>
-                 <option value="issued">Issued ({counts.issued+externalQuoteRecords.length})</option>
-                 <option value="archived">Archived ({counts.archived})</option>
-               </select>
-             </label>
-             <label><span>Sort</span><select aria-label="Sort documents" value={documentSort}
-               onChange={e=>setDocumentSort(e.target.value as SalesDocumentSort)}>
-               <option value="recent">Recently edited</option>
-               <option value="name">Document name</option>
-               <option value="company">Customer / company</option>
-               <option value="oldest">Oldest edited</option>
-             </select></label>
-           </div>}
+             toolbarControls={sharedLibraryControls}
              onOpen={id=>id.startsWith('external:')
                 ?setExternalQuotePreviewId(id.slice('external:'.length))
                 :setDocumentPreviewId(id)}
