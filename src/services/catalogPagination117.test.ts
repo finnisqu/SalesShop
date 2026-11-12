@@ -36,15 +36,17 @@ describe('Batch #117 — all five Catalog worktables paginate consistently',()=>
   const table=src('components/ConnectionsTable.tsx');
   expect(tags).toContain('catalogPagination catalogPaginationKey=');
   expect(table).toContain('catalogPagination?<CatalogPagination');
-  expect(table).toContain('{!catalogPagination&&<footer className="connections-grid-pagination">');
-  expect(table).toContain('const pages=Math.max(1,Math.ceil(sorted.length/pageSize));');
+  expect(table).toContain('!catalogPagination&&<WorktablePagination');
+  expect(table).toContain('const pageRange=catalogPageRange(sorted.length,page,pageSize);');
  });
  it('keeps a visible, responsive page-size control even when there are no results',()=>{
   const view=src('components/CatalogPagination.tsx');
   const css=src('catalog-product-worktable.css');
-  expect(view).toContain('Showing {range.first}–{range.last} of {total}');
-  expect(view).toContain('disabled={range.page<=1}');
-  expect(view).toContain('disabled={range.page>=range.pageCount}');
+  const chrome=src('components/WorktableChrome.tsx');
+  expect(view).toContain('<WorktablePagination');
+  expect(chrome).toContain('{range.first}–{range.last} of {total}');
+  expect(chrome).toContain('disabled={range.page<=1}');
+  expect(chrome).toContain('disabled={range.page>=range.pageCount}');
   expect(css).toContain('Batch 117: one usable Materials-style pagination band');
   expect(css).toContain('.catalog-pagination-size');
   expect(css).toContain('.catalog-pagination-extras');
