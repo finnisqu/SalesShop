@@ -17,7 +17,7 @@ describe('correct existing external quote submission',()=>{
  afterEach(()=>vi.restoreAllMocks());
  it('preserves the Activity identity, recording evidence, and Deal when correcting details',async()=>{
   const saved=await useCrmStore.getState().recordExternalQuoteSent(
-    'deal-correct',4400,'2025-05-11','Excel');
+    'deal-correct',4400,'2025-05-11','Excel','activity_correct_a','2026-11-10T12:00:00Z');
   expect(saved).toBe(true);
   const original=useCrmStore.getState();
   const existing=original.activities[0];
@@ -38,7 +38,8 @@ describe('correct existing external quote submission',()=>{
   expect(after.projects).toEqual(original.projects);
  });
  it('rejects impossible corrections without altering the saved quote or Deal',async()=>{
-  await useCrmStore.getState().recordExternalQuoteSent('deal-correct',2400,'2025-05-11','PDF');
+  await useCrmStore.getState().recordExternalQuoteSent('deal-correct',2400,'2025-05-11','PDF',
+    'activity_correct_b','2026-11-10T12:00:00Z');
   const original=useCrmStore.getState();
   const activity=original.activities[0];
   for(const change of [
