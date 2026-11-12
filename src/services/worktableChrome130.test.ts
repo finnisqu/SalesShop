@@ -68,6 +68,17 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(css).toContain('.records-section-more .ss-workspace-more>summary');
   expect(css).toContain('background:var(--ss-theme-tint)');
  });
+ it('keeps Suppliers on the same Catalog and Records chrome',()=>{
+  const suppliers=src('components/SuppliersWorkspace.tsx');
+  expect(suppliers).toContain('toolbarFilters={<label className="supplier-status-filter">');
+  expect(suppliers).toContain('<CatalogPagination label="Suppliers"');
+  expect(suppliers).toContain('<WorktableFilterMenu activeCount=');
+  expect(suppliers).toContain('<WorktableSurface className="supplier-directory-table-scroll"');
+  const chrome=src('worktable-chrome.css');
+  expect(chrome).toContain('.ss-worktable-filter-menu:not([open])>.ss-worktable-filter-panel');
+  expect(chrome).toContain('.qmb-library-mobile-filters .ss-worktable-filter-panel');
+  expect(chrome).toContain('.ss-worktable-surface.connections-table-scroll');
+ });
  it('keeps paging in the top toolbar while preserving mobile worktable behavior',()=>{
   const table=src('components/ConnectionsTable.tsx');
   const css=src('worktable-chrome.css');
