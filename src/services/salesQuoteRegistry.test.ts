@@ -43,6 +43,21 @@ describe('one first-class quote index for both submission methods',()=>{
   });
   expect(externalRecord.updatedAt).toBe('2026-11-10T12:00:00Z');
  });
+ it('includes archived native quotes only when the library requests them',()=>{
+  const archived={...native,archivedAt:'2026-11-11T12:00:00Z'};
+  expect(buildSalesQuoteRegistry([archived],[],[deal])).toEqual([]);
+  const index=buildSalesQuoteRegistry([archived],[],[deal],{includeArchived:true});
+  expect(index).toHaveLength(1);
+  expect(index[0]).toMatchObject({id:'native:q1',archived:true});
+ });
+ it('uses correction timestamps and keeps a corrected external quote as one Activity',()=>{
+  const corrected={...external,metadata:{...external.metadata,
+   amount:91000,bidSentDate:'2026-09-26',editedAt:'2026-11-12T12:00:00Z'}};
+  const records=buildSalesQuoteRegistry([], [corrected,corrected],[deal]);
+  expect(records).toHaveLength(1);
+  expect(records[0]).toMatchObject({id:'external:a1',value:91000,
+   sentDate:'2026-09-26',updatedAt:'2026-11-12T12:00:00Z'});
+ });
  it('never turns native quote history into an external bid',()=>{
   const ordinary={...external,id:'fake',quoteId:'q1'};
   expect(isExternalQuoteActivity(ordinary)).toBe(false);

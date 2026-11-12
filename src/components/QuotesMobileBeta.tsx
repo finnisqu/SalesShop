@@ -11,7 +11,7 @@ import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
 import {openDetailedQuoteEditor} from '../services/quoteEditorNavigation';
 import { useNavigationStore } from '../store/navigationStore';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
-import { canIssueTeamQuote } from '../services/teamDepartments';
+import { canIssueTeamQuote,canEditTeamArea } from '../services/teamDepartments';
 import {quoteIsCommerciallyEditable,canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
 import {
   parseInches, newTakeoffPiece, takeoffCustomerSpecs,
@@ -72,7 +72,12 @@ import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
 import {RecordPreviewDrawer} from './RecordPreviewDrawer';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
+import {QuoteLibraryFilterControls} from './QuoteLibraryFilterControls';
+import {matchesQuoteLibraryRecord,compareQuoteLibraryRecords,restoreQuoteLibraryFilters,
+ DEFAULT_QUOTE_LIBRARY_FILTERS,type SavedQuoteLibraryFilters} from '../services/salesQuoteLibraryView';
+import {scopedStorageKey} from '../lib/developerPlayground';
 import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import '../sales-documents-table.css';
@@ -114,9 +119,16 @@ const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(m
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
 const documentColumns:ConnectionColumn[]=[
- {key:'name',label:'Document'},{key:'number',label:'Number'},{key:'company',label:'Customer'},
- {key:'type',label:'Template'},{key:'status',label:'Status'},
- {key:'amount',label:'Amount'},{key:'updated',label:'Last edited'}];
+ {key:'name',label:'Quote / document'},{key:'number',label:'Number'},{key:'company',label:'Customer'},
+ {key:'deal',label:'Deal'},{key:'type',label:'Source / type'},{key:'status',label:'Status'},
+ {key:'amount',label:'Amount'},{key:'updated',label:'Date'}];
+const quoteLibraryFilterKey=(mode:'cloud'|'local',org:string|null,user:string|undefined)=>
+ scopedStorageKey('salesshop-quote-library-view-v2:')+
+ (mode==='cloud'?(org??'no-org')+':'+(user??'no-user'):'local');
+function readQuoteLibraryFilterState(key:string):SavedQuoteLibraryFilters{
+ try{return restoreQuoteLibraryFilters(JSON.parse(sessionStorage.getItem(key)??'null'));}
+ catch{return {...DEFAULT_QUOTE_LIBRARY_FILTERS};}
+}
 type Page = 'library' | 'quote' | 'area' | 'review';
 type QuoteTab = 'build' | 'details' | 'pricing' | 'preview';
 type AreaTab = 'measure' | 'materials' | 'pricing' | 'calculator';
@@ -570,10 +582,36 @@ export function QuotesMobileBeta() {
   const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
-  const [search,setSearch]=useState('');
+  // One session-scoped library state for native and external quotes.
+  const libraryFilterKey=quoteLibraryFilterKey(authMode,organizationId,userId);
+  const [libraryFilterState,setLibraryFilterState]=useState(()=>
+    ({key:libraryFilterKey,values:readQuoteLibraryFilterState(libraryFilterKey)}));
+  const libraryFilters=libraryFilterState.key===libraryFilterKey
+    ?libraryFilterState.values:DEFAULT_QUOTE_LIBRARY_FILTERS;
+  const updateLibraryFilters=(patch:Partial<SavedQuoteLibraryFilters>)=>{
+    setLibraryFilterState(previous=>({
+      key:libraryFilterKey,
+      values:{...(previous.key===libraryFilterKey?previous.values:
+        readQuoteLibraryFilterState(libraryFilterKey)),...patch},
+    }));
+  };
+  useEffect(()=>{
+    setLibraryFilterState({key:libraryFilterKey,values:readQuoteLibraryFilterState(libraryFilterKey)});
+  },[libraryFilterKey]);
+  useEffect(()=>{
+    if(libraryFilterState.key!==libraryFilterKey)return;
+    try{sessionStorage.setItem(libraryFilterKey,JSON.stringify(libraryFilterState.values));}
+    catch{/* best effort; no CRM content is persisted here */}
+  },[libraryFilterKey,libraryFilterState]);
+  const search=libraryFilters.query;
+  const setSearch=(query:string)=>updateLibraryFilters({query});
+  const statusFilter=libraryFilters.status;
+  const setStatusFilter=(status:SalesDocumentStatusFilter)=>updateLibraryFilters({status});
+  const documentSort=libraryFilters.sort;
+  const setDocumentSort=(sort:SalesDocumentSort)=>updateLibraryFilters({sort});
+  const documentFilter=libraryFilters.template;
+  const setDocumentFilter=(template:'all'|SalesDocumentTemplate)=>updateLibraryFilters({template});
   const [documentToolbarHost,setDocumentToolbarHost]=useState<HTMLDivElement|null>(null);
-  const [statusFilter,setStatusFilter]=useState<SalesDocumentStatusFilter>('active');
-  const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
   const [areaPresetsOpen,setAreaPresetsOpen]=useState(false);
   const [copyAreaOpen,setCopyAreaOpen]=useState(false);
@@ -593,8 +631,9 @@ export function QuotesMobileBeta() {
   },[layoutScope]);
   const [documentPreviewId,setDocumentPreviewId]=useState<string|null>(null);
   const [externalQuotePreviewId,setExternalQuotePreviewId]=useState<string|null>(null);
+  const [recordExternalOpen,setRecordExternalOpen]=useState(false);
   const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
-  const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
+  // Template selection is part of the same saved library filter state above.
   // Keep the new-document library first; follow-ups are a secondary destination.
   const [followUpsTab,setFollowUpsTab]=useState(false);
   const stockRates=useRateBookStore(s=>s.items);
@@ -711,9 +750,16 @@ export function QuotesMobileBeta() {
   const myQuotes=useMemo(()=>authMode==='cloud'?quotes.filter(q=>q.ownerUserId===userId):quotes,
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
-  const externalQuoteRecords=useMemo(()=>mySalesQuoteRegistry(
-    buildSalesQuoteRegistry([],crmActivities,crmDeals),authMode,userId,crmDeals),
-    [crmActivities,crmDeals,authMode,userId]);
+  const libraryRegistry=useMemo(()=>mySalesQuoteRegistry(
+    buildSalesQuoteRegistry(myQuotes,crmActivities,crmDeals,{includeArchived:true}),
+    authMode,userId,crmDeals),[myQuotes,crmActivities,crmDeals,authMode,userId]);
+  const registryById=useMemo(()=>new Map(libraryRegistry.map(record=>[record.id,record])),
+    [libraryRegistry]);
+  const assignedDealIds=useMemo(()=>new Set(crmDeals
+    .filter(deal=>Boolean(userId)&&deal.assignedUserId===userId).map(deal=>deal.id)),
+    [crmDeals,userId]);
+  const externalQuoteRecords=useMemo(()=>libraryRegistry.filter(record=>record.source==='external'),
+    [libraryRegistry]);
   const generalTakeoff=quote?.sections.find(isGeneralTakeoffSection);
   const [showDeleteGeneralTakeoff,setShowDeleteGeneralTakeoff]=useState(false);
   const deleteGeneralTakeoff=useQuoteStore(s=>s.deleteSection);
@@ -751,6 +797,8 @@ export function QuotesMobileBeta() {
   const canBrowseTeam=authMode==='cloud'&&(teamRole==='owner'||teamRole==='admin')&&!previewRole;
   const canIssue=authMode!=='cloud'||canIssueTeamQuote(teamRole,department);
   const canManageLibrary=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,department));
+  const canRecordExternal=authMode==='local'||(!previewRole&&
+    Boolean(organizationId&&userId&&canEditTeamArea(teamRole,department,'crm')));
   // Quick Create opens the template workflow, never a blank quote or just the Quotes index.
   useEffect(()=>{
     const launch=()=>{
@@ -769,34 +817,40 @@ export function QuotesMobileBeta() {
   },[canManageLibrary]);
 
   const counts=salesDocumentCounts(myQuotes);
+  const quoteVisible=(recordId:string)=>{
+    const record=registryById.get(recordId);
+    return Boolean(record&&matchesQuoteLibraryRecord(record,libraryFilters,userId,assignedDealIds));
+  };
   const list=filterSalesDocuments(myQuotes,{
-    query:search,template:documentFilter,status:statusFilter,sort:documentSort,
-  });
+    query:'',template:documentFilter,status:statusFilter,sort:documentSort,
+  }).filter(q=>quoteVisible('native:'+q.id));
   const externalList=useMemo(()=>{
     if(documentFilter!=='all'||(statusFilter!=='active'&&statusFilter!=='issued'))return [];
-    const needle=search.toLocaleLowerCase().trim();
-    const matching=externalQuoteRecords.filter(record=>!needle||
-      [record.name,record.companyName,record.dealName,record.platform,
-       record.status,String(record.value??'')].join(' ').toLocaleLowerCase().includes(needle));
-    return [...matching].sort((a,b)=>
-      documentSort==='name'?a.name.localeCompare(b.name):
-      documentSort==='company'?(a.companyName??'').localeCompare(b.companyName??''):
-      documentSort==='oldest'?a.updatedAt.localeCompare(b.updatedAt):
-      b.updatedAt.localeCompare(a.updatedAt));
-  },[externalQuoteRecords,documentFilter,statusFilter,search,documentSort]);
+    return externalQuoteRecords.filter(record=>matchesQuoteLibraryRecord(
+      record,libraryFilters,userId,assignedDealIds))
+      .sort((a,b)=>compareQuoteLibraryRecords(a,b,documentSort));
+  },[externalQuoteRecords,documentFilter,statusFilter,libraryFilters,userId,assignedDealIds,documentSort]);
+  const allLibraryRecords=[
+    ...list.flatMap(q=>{
+      const record=registryById.get('native:'+q.id);
+      return record?[record]:[];
+    }),...externalList,
+  ].sort((a,b)=>compareQuoteLibraryRecords(a,b,documentSort));
   const documentTableRows:ConnectionTableRow[]=[
    ...list.map(q=>({
     id:q.id,name:q.title||'Untitled document',archived:!!q.archivedAt,
     association:{type:'quote' as const,id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
     values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
       company:q.companyName||q.contactName||'',
-      type:salesTemplateLabel(salesDocumentTemplate(q)),
+      deal:registryById.get('native:'+q.id)?.dealName??'',
+      type:'SalesShop · '+salesTemplateLabel(salesDocumentTemplate(q)),
       status:quoteBetaStatusLabel(q)+(q.archivedAt?' · Archived':''),
       amount:q.documentType==='pricing-schedule'
         ?String(q.pricingSchedule?.customerItems.length??0)+' price rows'
         :money.format(quoteTotal(q)),
-      updated:formatPersonalDate(new Date(q.updatedAt),
-        readPersonalDateTimePreferences(userId??null)),
+      updated:q.sentAt?'Sent '+q.sentAt.slice(0,10):
+        'Updated '+formatPersonalDate(new Date(q.updatedAt),
+          readPersonalDateTimePreferences(userId??null)),
     },
     sortValues:{amount:quoteTotal(q),updated:q.updatedAt},
    })),
@@ -804,19 +858,27 @@ export function QuotesMobileBeta() {
     id:x.id,name:x.name,readOnly:true,
     association:x.projectId?{type:'project' as const,id:x.projectId,
       label:'External bid · '+x.name}:undefined,
-    values:{name:x.name,number:'—',
+    values:{name:x.name,number:x.number||'—',
       company:x.companyName||x.dealName||'',
+      deal:x.dealName||'',
       type:'External'+(x.platform?' · '+x.platform:''),
-      status:'Sent',
+      status:x.status,
       amount:x.value===undefined?'—':money.format(x.value),
-      updated:x.sentDate||x.updatedAt.slice(0,10)},
+      updated:'Sent '+(x.sentDate||x.updatedAt.slice(0,10))},
     sortValues:{amount:x.value??0,updated:x.updatedAt},
    })),
-  ];
-  const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active';
-  const resetLibraryFilters=()=>{
-    setSearch('');setDocumentFilter('all');setStatusFilter('active');setDocumentSort('recent');
-  };
+  ].sort((a,b)=>{
+    const recordA=registryById.get(a.id.startsWith('external:')?a.id:'native:'+a.id);
+    const recordB=registryById.get(b.id.startsWith('external:')?b.id:'native:'+b.id);
+    return recordA&&recordB?compareQuoteLibraryRecords(recordA,recordB,documentSort):0;
+  });
+  const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active'||
+    documentSort!=='recent'||libraryFilters.source!=='all'||libraryFilters.owner!=='all'||
+    Boolean(libraryFilters.from||libraryFilters.to);
+  const resetLibraryFilters=()=>updateLibraryFilters({...DEFAULT_QUOTE_LIBRARY_FILTERS});
+  const sharedLibraryControls=<QuoteLibraryFilterControls filters={libraryFilters} counts={counts}
+    externalCount={externalQuoteRecords.length} canFilterOwner={authMode==='cloud'}
+    onChange={updateLibraryFilters} onClear={resetLibraryFilters}/>;
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
@@ -1217,6 +1279,8 @@ export function QuotesMobileBeta() {
           {label:'Community Plan Pricing',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('community-pricing');},active:!followUpsTab&&documentFilter==='community-pricing'},
           {label:'Custom Spreadsheet',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('spreadsheet');},active:!followUpsTab&&documentFilter==='spreadsheet'},
           {label:'Follow-ups',onClick:()=>setFollowUpsTab(true),active:followUpsTab},
+          {label:'Record external quote',disabled:!canRecordExternal,
+            onClick:()=>setRecordExternalOpen(true)},
           {label:'Active documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('active');},active:statusFilter==='active'},
           {label:'Draft documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('drafts');},active:statusFilter==='drafts'},
           {label:'Issued documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('issued');},active:statusFilter==='issued'},
@@ -1241,46 +1305,12 @@ export function QuotesMobileBeta() {
              {statusFilter==='archived'?'Archived documents':'My documents'} · {documentTableRows.length} {documentTableRows.length===1?'record':'records'} · click a name to preview its record
            </p>
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
-           <div className="qmb-library-mobile-filters">
-             <div className="qmb-library-tools">
-             <label><span>Show</span>
-               <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
-                 <option value="active">Active ({counts.active+externalQuoteRecords.length})</option>
-                 <option value="drafts">Drafts ({counts.drafts})</option>
-                 <option value="issued">Issued ({counts.issued+externalQuoteRecords.length})</option>
-                 <option value="archived">Archived ({counts.archived})</option>
-               </select>
-             </label>
-             <label><span>Sort</span><select aria-label="Sort documents" value={documentSort}
-               onChange={e=>setDocumentSort(e.target.value as SalesDocumentSort)}>
-               <option value="recent">Recently edited</option>
-               <option value="name">Document name</option>
-               <option value="company">Customer / company</option>
-               <option value="oldest">Oldest edited</option>
-             </select></label>
-           </div>
-           </div>
+           <div className="qmb-library-mobile-filters">{sharedLibraryControls}</div>
          </div>
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
              toolbarTarget={documentToolbarHost}
-             toolbarControls={<div className="qmb-library-tools">
-             <label><span>Show</span>
-               <select value={statusFilter} aria-label="Document status" onChange={e=>setStatusFilter(e.target.value as SalesDocumentStatusFilter)}>
-                 <option value="active">Active ({counts.active+externalQuoteRecords.length})</option>
-                 <option value="drafts">Drafts ({counts.drafts})</option>
-                 <option value="issued">Issued ({counts.issued+externalQuoteRecords.length})</option>
-                 <option value="archived">Archived ({counts.archived})</option>
-               </select>
-             </label>
-             <label><span>Sort</span><select aria-label="Sort documents" value={documentSort}
-               onChange={e=>setDocumentSort(e.target.value as SalesDocumentSort)}>
-               <option value="recent">Recently edited</option>
-               <option value="name">Document name</option>
-               <option value="company">Customer / company</option>
-               <option value="oldest">Oldest edited</option>
-             </select></label>
-           </div>}
+             toolbarControls={sharedLibraryControls}
              onOpen={id=>id.startsWith('external:')
                 ?setExternalQuotePreviewId(id.slice('external:'.length))
                 :setDocumentPreviewId(id)}
@@ -1293,45 +1323,60 @@ export function QuotesMobileBeta() {
              })}/>
          </div>
          <div className="qmb-library-grid">
-        {list.map(q=><div className="qmb-library-entry" key={q.id}>
-          <button type="button" className="qmb-card qmb-listcard"
-            onContextMenu={event=>contextActions.openPointer(event,q.title||'Quote',quoteMenuActions(q))}
-            onKeyDown={event=>contextActions.openKeyboard(event,q.title||'Quote',quoteMenuActions(q))}
-            aria-disabled={!!q.archivedAt}
-            title={q.archivedAt?'Restore from Archived to reopen':'Open '+(q.title||'document')}
-            onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
-            <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
-              <span className="qmb-chip">{quoteBetaStatusLabel(q)}</span></div>
-            <strong>{q.title||'Untitled document'}</strong>
-            <div className="qmb-library-updated">Edited {formatPersonalDate(new Date(q.updatedAt),readPersonalDateTimePreferences(useAuthStore.getState().user?.id??null))}</div>
-            <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}{q.documentType==='quote'?' · '+q.sections.length+' Areas':''}</small>
-              <b>{q.documentType==='pricing-schedule'?`${q.pricingSchedule?.customerItems.length??0} published rows`:money.format(quoteTotal(q))}</b></div>
-          </button>
-          {canManageLibrary&&<div className="qmb-library-card-actions">
-            {q.archivedAt?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore to active</button>:
-              <>
-                <button type="button" onClick={()=>setLibraryAction({id:q.id,kind:'archive'})}>Archive</button>
-                {canPermanentlyDeleteQuote(q,quotes)&&<button type="button" className="is-danger"
-                  onClick={()=>setLibraryAction({id:q.id,kind:'delete'})}>Delete draft</button>}
-              </>}
-          </div>}
-        </div>)}
-        {externalList.map(x=><div className="qmb-library-entry" key={x.id}>
-          <button type="button" className="qmb-card qmb-listcard"
-            onClick={()=>setExternalQuotePreviewId(x.sourceId)}
-            aria-label={'Open external quote details for '+x.name}>
-            <div className="qmb-split">
-              <small>External · {x.platform||'Builder platform'}</small>
-              <span className="qmb-chip">Sent</span>
+        {allLibraryRecords.map(record=>{
+          const q=record.source==='salesshop'
+            ?myQuotes.find(item=>item.id===record.sourceId):null;
+          if(q)return <div className="qmb-library-entry" key={record.id}>
+            <button type="button" className="qmb-card qmb-listcard"
+              onContextMenu={event=>contextActions.openPointer(event,q.title||'Quote',quoteMenuActions(q))}
+              onKeyDown={event=>contextActions.openKeyboard(event,q.title||'Quote',quoteMenuActions(q))}
+              title={'Preview '+(q.title||'document')}
+              onClick={()=>setDocumentPreviewId(q.id)}>
+              <div className="qmb-split"><small>SalesShop · {displayQuoteNumber(q)}</small>
+                <span className="qmb-chip">{quoteBetaStatusLabel(q)}</span></div>
+              <strong>{q.title||'Untitled document'}</strong>
+              <div className="qmb-library-updated">
+                {q.sentAt?'Sent '+q.sentAt.slice(0,10):
+                  'Updated '+formatPersonalDate(new Date(q.updatedAt),
+                    readPersonalDateTimePreferences(useAuthStore.getState().user?.id??null))}
+              </div>
+              <div className="qmb-split">
+                <small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}
+                  {record.dealName?' · '+record.dealName:''}
+                </small>
+                <b>{q.documentType==='pricing-schedule'
+                  ?`${q.pricingSchedule?.customerItems.length??0} published rows`
+                  :money.format(quoteTotal(q))}</b>
+              </div>
+            </button>
+            <div className="qmb-library-card-actions">
+              {!q.archivedAt&&<button type="button" onClick={()=>openQuote(q.id)}>Open quote</button>}
+              {canManageLibrary&&(q.archivedAt
+                ?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore to active</button>
+                :<>
+                  <button type="button" onClick={()=>setLibraryAction({id:q.id,kind:'archive'})}>Archive</button>
+                  {canPermanentlyDeleteQuote(q,quotes)&&<button type="button" className="is-danger"
+                    onClick={()=>setLibraryAction({id:q.id,kind:'delete'})}>Delete draft</button>}
+                </>)}
             </div>
-            <strong>{x.name}</strong>
-            <div className="qmb-library-updated">Sent {x.sentDate||'Date not recorded'}</div>
-            <div className="qmb-split">
-              <small>{x.companyName||x.dealName||'Linked Deal'} · External quote</small>
-              <b>{x.value===undefined?'Value not recorded':money.format(x.value)}</b>
-            </div>
-          </button>
-        </div>)}
+          </div>;
+          return <div className="qmb-library-entry" key={record.id}>
+            <button type="button" className="qmb-card qmb-listcard"
+              onClick={()=>setExternalQuotePreviewId(record.sourceId)}
+              aria-label={'Open external quote details for '+record.name}>
+              <div className="qmb-split">
+                <small>External · {record.platform||'Builder platform'}</small>
+                <span className="qmb-chip">{record.status}</span>
+              </div>
+              <strong>{record.name}</strong>
+              <div className="qmb-library-updated">Sent {record.sentDate||'Date not recorded'}</div>
+              <div className="qmb-split">
+                <small>{record.companyName||'No company'} · {record.dealName||'Linked Deal'}</small>
+                <b>{record.value===undefined?'Value not recorded':money.format(record.value)}</b>
+              </div>
+            </button>
+          </div>;
+        })}
         </div>
         {!documentTableRows.length&&<div className="qmb-empty">
           {statusFilter==='archived'&&!search.trim()&&documentFilter==='all'?
@@ -1547,6 +1592,9 @@ export function QuotesMobileBeta() {
         setDocumentPreviewId(null);
         requestQuoteMetadataPage(id,()=>setView('dashboard'));
       }}/>}
+    {recordExternalOpen&&<ExternalQuoteBackfillDialog
+      onClose={()=>setRecordExternalOpen(false)}
+      onRecorded={()=>setRecordExternalOpen(false)}/>}
     {externalQuotePreviewId&&<CalendarActivityPreview activityId={externalQuotePreviewId}
       onClose={()=>setExternalQuotePreviewId(null)}
       onSelect={(kind,id)=>{
