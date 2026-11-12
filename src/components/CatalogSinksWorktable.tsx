@@ -7,6 +7,7 @@ import {scopedStorageKey} from '../lib/developerPlayground';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
+import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-sink-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -101,6 +102,16 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
      sort==='cost'?(a.variants[0]?.internalCost??Infinity)-(b.variants[0]?.internalCost??Infinity):
      (a.brand??a.supplier??'').localeCompare(b.brand??b.supplier??'')||a.name.localeCompare(b.name));
  },[models,showInactive,category,query,externalQuery,sort]);
+ const pagination=useCatalogPagination(filtered.length,
+  JSON.stringify([query,externalQuery,category,showInactive,sort]));
+ const pagedModels=filtered.slice(pagination.start,pagination.end);
+ // After creating a record, navigate to its page in the sorted catalog.
+ useEffect(()=>{
+  if(!expanded)return;
+  const index=filtered.findIndex(row=>row.id===expanded);
+  if(index>=0)pagination.setPage(Math.floor(index/pagination.pageSize)+1);
+ },[expanded,filtered,pagination.pageSize]);
+
  const update=<T extends keyof SinkModel,>(model:SinkModel,key:T,value:SinkModel[T])=>
   updateModel(model.id,{[key]:value});
  const updateV=<T extends keyof SinkVariant,>(model:SinkModel,variant:SinkVariant,key:T,value:SinkVariant[T])=>
@@ -178,12 +189,16 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
       {editing?'Done editing':'Edit sinks'}</button>}
     </div>
    </header>
+   <CatalogPagination label="Sinks" total={filtered.length}
+    page={pagination.page} pageSize={pagination.pageSize}
+    onPageChange={next=>{pagination.setPage(next);setExpanded(null);}}
+    onPageSizeChange={size=>{pagination.setPageSize(size);setExpanded(null);}}/>
    <div className="rates-reference-table-wrap catalog-product-scroll">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr><th>Brand</th><th>Model</th><th>Category</th><th>Material</th><th>Mount</th>
       <th>Total W × L × H</th><th>Variants</th></tr></thead>
      <tbody>
-      {filtered.map(model=>{
+      {pagedModels.map(model=>{
        const open=expanded===model.id,variants=model.variants.filter(v=>showInactive||v.active);
        return <Fragment key={model.id}>
         <tr className={open?'is-expanded':''}>
