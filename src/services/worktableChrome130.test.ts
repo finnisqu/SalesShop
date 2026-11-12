@@ -108,12 +108,14 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(table).toContain('connections-grid-title');
   expect(styles).toContain('.connections-grid-title');
  });
- it('masks the gap above frozen headers instead of showing scrolling rows',()=>{
+ it('clips frozen headers inside the table and never masks the toolbar',()=>{
   const styles=src('worktable-chrome.css');
-  expect(styles).toContain('.ss-worktable-surface table thead th::before');
-  expect(styles).toContain('bottom:100%;height:48px');
-  expect(styles).toContain('background:var(--ss-theme-card);pointer-events:none');
+  expect(styles).not.toContain('.ss-worktable-surface table thead th::before');
+  expect(styles).not.toContain('bottom:100%;height:48px');
+  expect(styles).toContain('clip-path:inset(0 round var(--ss-worktable-corner))');
   expect(styles).toContain('position:sticky;top:0;z-index:3');
+  expect(styles).toContain('.connections-grid-shell>.connections-grid-toolbar');
+  expect(styles).toContain('position:relative;z-index:5');
  });
  it('keeps paging in the top toolbar while preserving mobile worktable behavior',()=>{
   const table=src('components/ConnectionsTable.tsx');
