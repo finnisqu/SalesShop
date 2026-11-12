@@ -423,7 +423,7 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
   };
   const quickDue=(id:string,preset:TaskDuePreset)=>{
     const task=own.find(item=>item.id===id);
-    if(!task||taskComplete(task)||task.status==='canceled')return;
+    if(!task||taskComplete(task)||task.status==='canceled'||isProtectedBidTask(task))return;
     const date=taskDuePresetDate(today,preset);
     // Keep an existing due-time when moving a deadline; clearing the date also clears its time.
     update(id,{dueDate:date,dueTime:date?task.dueTime:undefined});
