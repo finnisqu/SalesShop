@@ -73,6 +73,10 @@ import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './
 import {RecordPreviewDrawer} from './RecordPreviewDrawer';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
+import {QuoteLibraryFilterControls} from './QuoteLibraryFilterControls';
+import {matchesQuoteLibraryRecord,compareQuoteLibraryRecords,restoreQuoteLibraryFilters,
+ DEFAULT_QUOTE_LIBRARY_FILTERS,type SavedQuoteLibraryFilters} from '../services/salesQuoteLibraryView';
+import {scopedStorageKey} from '../lib/developerPlayground';
 import {requestQuoteMetadataPage} from '../services/quoteMetadataNavigation';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import '../sales-documents-table.css';
@@ -114,9 +118,16 @@ const PricingScheduleWorkspace=lazy(()=>import('./PricingDocumentEditor').then(m
 const money = new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'});
 const sf = new Intl.NumberFormat('en-US', {maximumFractionDigits:2});
 const documentColumns:ConnectionColumn[]=[
- {key:'name',label:'Document'},{key:'number',label:'Number'},{key:'company',label:'Customer'},
- {key:'type',label:'Template'},{key:'status',label:'Status'},
- {key:'amount',label:'Amount'},{key:'updated',label:'Last edited'}];
+ {key:'name',label:'Quote / document'},{key:'number',label:'Number'},{key:'company',label:'Customer'},
+ {key:'deal',label:'Deal'},{key:'type',label:'Source / type'},{key:'status',label:'Status'},
+ {key:'amount',label:'Amount'},{key:'updated',label:'Date'}];
+const quoteLibraryFilterKey=(mode:'cloud'|'local',org:string|null,user:string|undefined)=>
+ scopedStorageKey('salesshop-quote-library-view-v2:')+
+ (mode==='cloud'?(org??'no-org')+':'+(user??'no-user'):'local');
+function readQuoteLibraryFilterState(key:string):SavedQuoteLibraryFilters{
+ try{return restoreQuoteLibraryFilters(JSON.parse(sessionStorage.getItem(key)??'null'));}
+ catch{return {...DEFAULT_QUOTE_LIBRARY_FILTERS};}
+}
 type Page = 'library' | 'quote' | 'area' | 'review';
 type QuoteTab = 'build' | 'details' | 'pricing' | 'preview';
 type AreaTab = 'measure' | 'materials' | 'pricing' | 'calculator';
@@ -570,10 +581,36 @@ export function QuotesMobileBeta() {
   const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
-  const [search,setSearch]=useState('');
+  // One session-scoped library state for native and external quotes.
+  const libraryFilterKey=quoteLibraryFilterKey(authMode,organizationId,userId);
+  const [libraryFilterState,setLibraryFilterState]=useState(()=>
+    ({key:libraryFilterKey,values:readQuoteLibraryFilterState(libraryFilterKey)}));
+  const libraryFilters=libraryFilterState.key===libraryFilterKey
+    ?libraryFilterState.values:DEFAULT_QUOTE_LIBRARY_FILTERS;
+  const updateLibraryFilters=(patch:Partial<SavedQuoteLibraryFilters>)=>{
+    setLibraryFilterState(previous=>({
+      key:libraryFilterKey,
+      values:{...(previous.key===libraryFilterKey?previous.values:
+        readQuoteLibraryFilterState(libraryFilterKey)),...patch},
+    }));
+  };
+  useEffect(()=>{
+    setLibraryFilterState({key:libraryFilterKey,values:readQuoteLibraryFilterState(libraryFilterKey)});
+  },[libraryFilterKey]);
+  useEffect(()=>{
+    if(libraryFilterState.key!==libraryFilterKey)return;
+    try{sessionStorage.setItem(libraryFilterKey,JSON.stringify(libraryFilterState.values));}
+    catch{/* best effort; no CRM content is persisted here */}
+  },[libraryFilterKey,libraryFilterState]);
+  const search=libraryFilters.query;
+  const setSearch=(query:string)=>updateLibraryFilters({query});
+  const statusFilter=libraryFilters.status;
+  const setStatusFilter=(status:SalesDocumentStatusFilter)=>updateLibraryFilters({status});
+  const documentSort=libraryFilters.sort;
+  const setDocumentSort=(sort:SalesDocumentSort)=>updateLibraryFilters({sort});
+  const documentFilter=libraryFilters.template;
+  const setDocumentFilter=(template:'all'|SalesDocumentTemplate)=>updateLibraryFilters({template});
   const [documentToolbarHost,setDocumentToolbarHost]=useState<HTMLDivElement|null>(null);
-  const [statusFilter,setStatusFilter]=useState<SalesDocumentStatusFilter>('active');
-  const [documentSort,setDocumentSort]=useState<SalesDocumentSort>('recent');
   const [showNewDocument,setShowNewDocument]=useState(false);
   const [areaPresetsOpen,setAreaPresetsOpen]=useState(false);
   const [copyAreaOpen,setCopyAreaOpen]=useState(false);
@@ -594,7 +631,7 @@ export function QuotesMobileBeta() {
   const [documentPreviewId,setDocumentPreviewId]=useState<string|null>(null);
   const [externalQuotePreviewId,setExternalQuotePreviewId]=useState<string|null>(null);
   const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
-  const [documentFilter,setDocumentFilter]=useState<'all'|SalesDocumentTemplate>('all');
+  // Template selection is part of the same saved library filter state above.
   // Keep the new-document library first; follow-ups are a secondary destination.
   const [followUpsTab,setFollowUpsTab]=useState(false);
   const stockRates=useRateBookStore(s=>s.items);
@@ -711,9 +748,16 @@ export function QuotesMobileBeta() {
   const myQuotes=useMemo(()=>authMode==='cloud'?quotes.filter(q=>q.ownerUserId===userId):quotes,
     [authMode,quotes,userId]);
   const quote=myQuotes.find(q=>q.id===activeQuoteId)??null;
-  const externalQuoteRecords=useMemo(()=>mySalesQuoteRegistry(
-    buildSalesQuoteRegistry([],crmActivities,crmDeals),authMode,userId,crmDeals),
-    [crmActivities,crmDeals,authMode,userId]);
+  const libraryRegistry=useMemo(()=>mySalesQuoteRegistry(
+    buildSalesQuoteRegistry(myQuotes,crmActivities,crmDeals,{includeArchived:true}),
+    authMode,userId,crmDeals),[myQuotes,crmActivities,crmDeals,authMode,userId]);
+  const registryById=useMemo(()=>new Map(libraryRegistry.map(record=>[record.id,record])),
+    [libraryRegistry]);
+  const assignedDealIds=useMemo(()=>new Set(crmDeals
+    .filter(deal=>Boolean(userId)&&deal.assignedUserId===userId).map(deal=>deal.id)),
+    [crmDeals,userId]);
+  const externalQuoteRecords=useMemo(()=>libraryRegistry.filter(record=>record.source==='external'),
+    [libraryRegistry]);
   const generalTakeoff=quote?.sections.find(isGeneralTakeoffSection);
   const [showDeleteGeneralTakeoff,setShowDeleteGeneralTakeoff]=useState(false);
   const deleteGeneralTakeoff=useQuoteStore(s=>s.deleteSection);
@@ -769,34 +813,40 @@ export function QuotesMobileBeta() {
   },[canManageLibrary]);
 
   const counts=salesDocumentCounts(myQuotes);
+  const quoteVisible=(recordId:string)=>{
+    const record=registryById.get(recordId);
+    return Boolean(record&&matchesQuoteLibraryRecord(record,libraryFilters,userId,assignedDealIds));
+  };
   const list=filterSalesDocuments(myQuotes,{
-    query:search,template:documentFilter,status:statusFilter,sort:documentSort,
-  });
+    query:'',template:documentFilter,status:statusFilter,sort:documentSort,
+  }).filter(q=>quoteVisible('native:'+q.id));
   const externalList=useMemo(()=>{
     if(documentFilter!=='all'||(statusFilter!=='active'&&statusFilter!=='issued'))return [];
-    const needle=search.toLocaleLowerCase().trim();
-    const matching=externalQuoteRecords.filter(record=>!needle||
-      [record.name,record.companyName,record.dealName,record.platform,
-       record.status,String(record.value??'')].join(' ').toLocaleLowerCase().includes(needle));
-    return [...matching].sort((a,b)=>
-      documentSort==='name'?a.name.localeCompare(b.name):
-      documentSort==='company'?(a.companyName??'').localeCompare(b.companyName??''):
-      documentSort==='oldest'?a.updatedAt.localeCompare(b.updatedAt):
-      b.updatedAt.localeCompare(a.updatedAt));
-  },[externalQuoteRecords,documentFilter,statusFilter,search,documentSort]);
+    return externalQuoteRecords.filter(record=>matchesQuoteLibraryRecord(
+      record,libraryFilters,userId,assignedDealIds))
+      .sort((a,b)=>compareQuoteLibraryRecords(a,b,documentSort));
+  },[externalQuoteRecords,documentFilter,statusFilter,libraryFilters,userId,assignedDealIds,documentSort]);
+  const allLibraryRecords=[
+    ...list.flatMap(q=>{
+      const record=registryById.get('native:'+q.id);
+      return record?[record]:[];
+    }),...externalList,
+  ].sort((a,b)=>compareQuoteLibraryRecords(a,b,documentSort));
   const documentTableRows:ConnectionTableRow[]=[
    ...list.map(q=>({
     id:q.id,name:q.title||'Untitled document',archived:!!q.archivedAt,
     association:{type:'quote' as const,id:q.id,label:'Quote · '+(q.title||displayQuoteNumber(q))},
     values:{name:q.title||'Untitled document',number:displayQuoteNumber(q),
       company:q.companyName||q.contactName||'',
-      type:salesTemplateLabel(salesDocumentTemplate(q)),
+      deal:registryById.get('native:'+q.id)?.dealName??'',
+      type:'SalesShop · '+salesTemplateLabel(salesDocumentTemplate(q)),
       status:quoteBetaStatusLabel(q)+(q.archivedAt?' · Archived':''),
       amount:q.documentType==='pricing-schedule'
         ?String(q.pricingSchedule?.customerItems.length??0)+' price rows'
         :money.format(quoteTotal(q)),
-      updated:formatPersonalDate(new Date(q.updatedAt),
-        readPersonalDateTimePreferences(userId??null)),
+      updated:q.sentAt?'Sent '+q.sentAt.slice(0,10):
+        'Updated '+formatPersonalDate(new Date(q.updatedAt),
+          readPersonalDateTimePreferences(userId??null)),
     },
     sortValues:{amount:quoteTotal(q),updated:q.updatedAt},
    })),
@@ -804,19 +854,27 @@ export function QuotesMobileBeta() {
     id:x.id,name:x.name,readOnly:true,
     association:x.projectId?{type:'project' as const,id:x.projectId,
       label:'External bid · '+x.name}:undefined,
-    values:{name:x.name,number:'—',
+    values:{name:x.name,number:x.number||'—',
       company:x.companyName||x.dealName||'',
+      deal:x.dealName||'',
       type:'External'+(x.platform?' · '+x.platform:''),
-      status:'Sent',
+      status:x.status,
       amount:x.value===undefined?'—':money.format(x.value),
-      updated:x.sentDate||x.updatedAt.slice(0,10)},
+      updated:'Sent '+(x.sentDate||x.updatedAt.slice(0,10))},
     sortValues:{amount:x.value??0,updated:x.updatedAt},
    })),
-  ];
-  const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active';
-  const resetLibraryFilters=()=>{
-    setSearch('');setDocumentFilter('all');setStatusFilter('active');setDocumentSort('recent');
-  };
+  ].sort((a,b)=>{
+    const recordA=registryById.get(a.id.startsWith('external:')?a.id:'native:'+a.id);
+    const recordB=registryById.get(b.id.startsWith('external:')?b.id:'native:'+b.id);
+    return recordA&&recordB?compareQuoteLibraryRecords(recordA,recordB,documentSort):0;
+  });
+  const hasLibraryFilters=search.trim().length>0||documentFilter!=='all'||statusFilter!=='active'||
+    documentSort!=='recent'||libraryFilters.source!=='all'||libraryFilters.owner!=='all'||
+    Boolean(libraryFilters.from||libraryFilters.to);
+  const resetLibraryFilters=()=>updateLibraryFilters({...DEFAULT_QUOTE_LIBRARY_FILTERS});
+  const sharedLibraryControls=<QuoteLibraryFilterControls filters={libraryFilters} counts={counts}
+    externalCount={externalQuoteRecords.length} canFilterOwner={authMode==='cloud'}
+    onChange={updateLibraryFilters} onClear={resetLibraryFilters}/>;
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
