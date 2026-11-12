@@ -10,7 +10,7 @@ async function openLibrary(page:Page){
   });
   await page.reload();
   const beta=page.getByRole('main',{name:'Quotes mobile beta'});
-  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Records',exact:true})).toBeVisible();
   return beta;
 }
 async function makeDocument(page:Page,template:string,name:string){
@@ -28,7 +28,7 @@ async function makeDocument(page:Page,template:string,name:string){
     for(let attempt=0;attempt<3&&await beta.locator('.qmb-quote-editor').isVisible();attempt++)
       await beta.locator('.qmb-quote-footer .qmb-guided-back').click();
   }
-  await expect(beta.getByRole('heading',{name:'Quotes',exact:true})).toBeVisible();
+  await expect(beta.getByRole('heading',{name:'Records',exact:true})).toBeVisible();
 }
 test('mobile documents search by name/template and filter by status without losing the new action',async({page},info)=>{
   test.skip(info.project.name!=='phone-390','Mobile document discovery and filters');
@@ -40,8 +40,7 @@ test('mobile documents search by name/template and filter by status without losi
   await expect(beta.locator('.qmb-library-entry')).toHaveCount(1);
   await expect(beta.locator('.qmb-library-entry')).toContainText('Smith Kitchen');
   await beta.getByRole('button',{name:'Clear document search'}).click();
-  await beta.getByRole('navigation',{name:'Document library sections'})
-    .getByRole('button',{name:'Community Plan Pricing'}).click();
+  await beta.getByRole('combobox',{name:'Filter quote document type'}).selectOption('community-pricing');
   await expect(beta.locator('.qmb-library-entry')).toHaveCount(1);
   await expect(beta.locator('.qmb-library-entry')).toContainText('Oakwood Pricing');
   await beta.getByRole('combobox',{name:'Document status'}).selectOption('issued');
