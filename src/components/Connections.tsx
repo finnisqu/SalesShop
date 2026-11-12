@@ -471,6 +471,34 @@ export function Connections() {
     <main className="connections-workspace connections-directory-layout">
       <WorkspaceHeader title="Connections" help={<WorkspaceHelp page="connections" section={tab}/>} 
         className="connections-heading connections-foundation-heading"
+        afterTitle={(tab==='companies'||tab==='deals')&&
+          <div className="connections-layout-toggle" role="group"
+           aria-label={(tab==='deals'?'Deals':'Companies')+' layout'}>
+            <button type="button" aria-label="Table layout"
+              aria-pressed={layouts[activeLayoutKind]==='table'}
+              onClick={()=>chooseLayout(activeLayoutKind,'table')}>Table</button>
+            <button type="button" aria-label="Board layout"
+              aria-pressed={layouts[activeLayoutKind]==='board'}
+              onClick={()=>chooseLayout(activeLayoutKind,'board')}>Board</button>
+          </div>}
+        mobileBeforeTabs={(tab==='companies'||tab==='deals')&&
+          <button type="button" className="connections-mobile-layout-action"
+            aria-label={'Switch '+(tab==='deals'?'Deals':'Companies')+' to '+
+              (layouts[activeLayoutKind]==='board'?'Table':'Board')+' view'}
+            title={'Switch to '+(layouts[activeLayoutKind]==='board'?'Table':'Board')+' view'}
+            onClick={()=>chooseLayout(activeLayoutKind,layouts[activeLayoutKind]==='board'?'table':'board')}>
+            {layouts[activeLayoutKind]==='board'
+              ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+                 strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                 <rect x="3" y="4" width="18" height="16" rx="2"/>
+                 <path d="M3 9.5h18M3 14.5h18M9 4v16"/>
+               </svg>
+              :<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+                 strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                 <rect x="3" y="4" width="18" height="16" rx="2"/>
+                 <path d="M9 4v16M15 4v16"/>
+               </svg>}
+          </button>}
         mobileTabs={[...CONNECTIONS_TABS.map(item=>({value:item.id,label:item.label})),
           {value:'quotes',label:'Quotes'},{value:'activity',label:'Activity history'}]}
         mobileTabValue={tab} onMobileTabChange={value=>chooseTab(value as ConnectionsTab)}
@@ -493,13 +521,6 @@ export function Connections() {
             tab==='suppliers'?'Search suppliers and brands…':
             tab==='quotes'?'Search quotes…':'Search activities…'}/>}
         primary={<>
-          {(tab==='companies'||tab==='deals')&&
-           <div className="connections-layout-toggle is-desktop" role="group" aria-label={tab==='deals'?'Deals layout':'Companies layout'}>
-            <button type="button" aria-label="Table layout" aria-pressed={layouts[activeLayoutKind]==='table'}
-              onClick={()=>chooseLayout(activeLayoutKind,'table')}>Table</button>
-            <button type="button" aria-label="Board layout" aria-pressed={layouts[activeLayoutKind]==='board'}
-              onClick={()=>chooseLayout(activeLayoutKind,'board')}>Board</button>
-           </div>}
           {tab==='companies'&&layouts.companies==='table'&&<Button variant="primary" className="connections-add"
             onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
           {(tab==='deals'||tab==='companies')&&layouts[activeLayoutKind]==='board'&&
@@ -530,14 +551,6 @@ export function Connections() {
             }}>+ Quote</Button>}
         </>}
       />
-      {(tab==='companies'||tab==='deals')&&
-       <div className="connections-mobile-layout-bar">
-        <span>{tab==='deals'?'Deals display':'Companies display'}</span>
-        <div className="connections-layout-toggle is-mobile" role="group" aria-label={tab==='deals'?'Deals layout':'Companies layout'}>
-         <button type="button" aria-pressed={layouts[activeLayoutKind]==='table'} onClick={()=>chooseLayout(activeLayoutKind,'table')}>Table</button>
-         <button type="button" aria-pressed={layouts[activeLayoutKind]==='board'} onClick={()=>chooseLayout(activeLayoutKind,'board')}>Board</button>
-        </div>
-       </div>}
       {!recordsReady&&<WorkspaceLoadingState title="Loading Connections"
         detail="Opening companies, people, deals and quote links…" />}
       <div className="connections-directory-content"
