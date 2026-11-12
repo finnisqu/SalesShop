@@ -84,3 +84,162 @@
  background:var(--ss-theme-base);color:var(--ss-theme-ink);
  font:550 12px/1.4 var(--ss-font-body,system-ui,sans-serif);resize:vertical;
 }
+
+
+/* Batch 114: Catalog's reference tables share one full-width surface and toolbar grammar. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-product-worktable{
+ display:grid;grid-template-columns:minmax(0,1fr);align-content:start;
+ width:100%;max-width:none;margin:0;padding:0 0 20px;gap:12px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-product-worktable>.catalog-product-card,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-tags-card,
+:root[data-sales-theme] .sales-app.view-catalog .materials-reference-card,
+:root[data-sales-theme] .sales-app.view-catalog .rates-reference-host>.rates-reference-card{
+ box-sizing:border-box;width:100%;max-width:none;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog :is(
+ .catalog-product-card,.materials-reference-card,.rates-reference-host>.rates-reference-card
+){overflow:visible;}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-header{
+ position:relative;z-index:2;box-sizing:border-box;
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+ gap:10px 16px;min-width:0;min-height:62px;padding:10px 13px;
+ background:var(--ss-theme-card);border-bottom:1px solid var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-header>div:first-child{
+ display:grid;gap:3px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-header>div:first-child>strong{
+ font-size:13px;line-height:1.3;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-header>div:first-child>small{
+ font-size:11px;color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-actions{
+ display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+ gap:7px;min-width:0;margin-left:auto;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-hint{
+ font-size:10px;line-height:1.3;color:var(--ss-theme-muted);
+ max-width:290px;white-space:normal;margin-right:6px;
+}
+:root[data-sales-theme] .sales-app.view-catalog :is(
+ .catalog-card-filter>summary,.catalog-card-edit,.catalog-embedded-edit-row>button
+){
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ height:35px;min-height:35px;padding:7px 12px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:750 11px/1.3 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter{
+ position:relative;min-width:0;list-style:none;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter>summary{
+ list-style:none;gap:5px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter>summary::-webkit-details-marker{display:none;}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter>summary::after{
+ content:'⌄';font-size:13px;line-height:1;opacity:.7;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter[open]>summary{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter-panel{
+ position:absolute;left:auto;right:0;top:calc(100% + 6px);z-index:90;
+ box-sizing:border-box;display:grid;align-content:start;gap:10px;
+ width:max-content;min-width:260px;max-width:min(350px,86vw);max-height:68dvh;
+ overflow-y:auto;padding:12px;border:1px solid var(--ss-theme-border);
+ border-radius:10px;background:var(--ss-theme-card);
+ box-shadow:0 12px 28px rgba(0,0,0,.13);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter-panel>label:not(.catalog-card-checkbox){
+ display:grid;gap:5px;min-width:0;font-size:11px;font-weight:720;color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter-panel :is(input[type=search],select){
+ box-sizing:border-box;min-height:36px;width:100%;min-width:0;padding:6px 9px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);font:550 12px var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-checkbox{
+ display:flex;align-items:center;gap:7px;font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-catalog :is(.catalog-card-sort,.catalog-card-category){
+ display:inline-flex;align-items:center;gap:6px;min-width:0;margin:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-control-label{
+ color:var(--ss-theme-muted);font-size:10px;font-weight:730;white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app.view-catalog :is(.catalog-card-sort,.catalog-card-category)>select{
+ box-sizing:border-box;min-height:35px;height:35px;min-width:125px;max-width:195px;
+ padding:6px 25px 6px 9px;border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:650 11px/1.3 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-edit{
+ background:var(--ss-theme-accent);border-color:var(--ss-theme-accent);color:var(--ss-theme-contrast);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-embedded-edit-row{
+ display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;
+ min-height:52px;padding:8px 12px;margin-bottom:10px;
+ border:1px solid var(--ss-theme-border);border-radius:10px;background:var(--ss-theme-card);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-embedded-edit-row>strong{
+ font-size:12px;margin-right:auto;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-embedded-edit-row>label{
+ display:flex;align-items:center;gap:6px;font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-embedded-edit-row>button{
+ background:var(--ss-theme-accent);border-color:var(--ss-theme-accent);color:var(--ss-theme-contrast);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-tags-workspace.catalog-product-worktable{
+ padding:0 0 20px;display:grid;gap:12px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-tags-card .connections-grid-shell{
+ width:100%;max-width:none;margin:0;border:0;border-radius:0;box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-tags-card .connections-grid-toolbar{
+ border-radius:0;background:var(--ss-theme-tint);border-bottom:1px solid var(--ss-theme-border);
+ padding:8px 12px;min-height:47px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-tags-card .connections-table-scroll{
+ width:100%;max-width:none;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-tags-card .connections-grid-pagination{
+ border-top:1px solid var(--ss-theme-border);
+}
+@media (min-width:761px){
+ :root[data-sales-theme] .sales-app.view-catalog .materials-workspace.is-catalog-embedded>.materials-controls,
+ :root[data-sales-theme] .sales-app.view-catalog .rates-workspace.is-catalog-embedded>.rates-reference-controls{
+  display:none;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-card-hint{display:none;}
+}
+@media (max-width:760px){
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-worktable{
+  padding:8px 0 20px;gap:9px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-card-header{
+  padding:9px 10px;gap:8px;align-items:flex-start;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-card-actions{
+  justify-content:flex-start;gap:6px;width:100%;margin-left:0;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-card-hint{display:none;}
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter-panel{
+  right:auto;left:0;min-width:210px;max-width:min(320px,90vw);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-card-actions .catalog-card-edit{
+  margin-left:auto;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-rates-actions :is(
+  .catalog-card-filter,.catalog-card-sort,.catalog-card-category
+ ){display:none;}
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-card-filter>summary{
+  min-height:40px;height:40px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-tags-card .connections-grid-toolbar{
+  padding:6px 8px;
+ }
+}
