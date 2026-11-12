@@ -179,6 +179,10 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     const now=nextTaskEditTimestamp(original.updatedAt),patch=sanitize(changes);
     // Once recorded, the original due date and prior revisions cannot be rewritten.
     delete patch.originalDueDate;delete patch.dueDateHistory;
+    if(isProtectedBidTask(original)){
+      // Generated bid task dates are owned by the linked Deal; never log a fake revision.
+      delete patch.dueDate;delete patch.dueDateResponsibility;delete patch.dueDateChangeReason;
+    }
     const dueChanged='dueDate'in patch&&(patch.dueDate??undefined)!==(original.dueDate??undefined);
     const originalDueDate=original.originalDueDate??(original.dueDate||patch.dueDate);
     const dueDateHistory=dueChanged?[...(original.dueDateHistory??[]),{
@@ -191,8 +195,6 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     if(isProtectedBidTask(original)){
       delete patch.sourceObjectId;
       delete patch.submissionConfirmedAt;
-      // The linked Deal, not Task shortcuts, owns the bid deadline.
-      delete patch.dueDate;delete patch.dueDateResponsibility;delete patch.dueDateChangeReason;
       if(patch.status==='completed'&&!original.submissionConfirmedAt)
         patch.status=original.status==='completed'?'completed':'open';
     }
