@@ -649,12 +649,12 @@ export function Connections() {
         tabs={<SectionTabs className="connections-tabs" aria-label="Connections sections"
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
         more={<WorkspaceMoreMenu label="Connections More" items={[
-          {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
+          {section:'Directories',label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
           {label:'Suppliers',active:tab==='suppliers',onClick:()=>chooseTab('suppliers')},
-          {label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
-          {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
+          {section:'Actions',label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
+          {section:'Directories',label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
           ...(tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled?[
-            {label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
+            {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
           ]:[]),
         ]}/>}
