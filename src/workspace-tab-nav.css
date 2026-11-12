@@ -56,11 +56,15 @@
   background:var(--ss-theme-tint)!important;
   box-shadow:inset 0 -2px var(--ss-theme-accent)!important;
  }
- :root[data-sales-theme] .sales-app .ss-workspace-header
- .ss-header-tab-pill .ss-section-tab:not(.active):hover,
- :root[data-sales-theme] .sales-app .ss-workspace-header
- .ss-header-tab-pill .ss-workspace-more.is-tab:not([open])>summary:hover{
-  background:color-mix(in srgb,var(--ss-theme-tint) 45%,transparent)!important;
+ /* The nested Records SectionTabs must win over the shared idle-tab
+  * selector (whose :is() specificity also includes the More summary).
+  * Catalog already has its own explicit active selector below. */
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+ .ss-workspace-header .ss-header-tab-pill.records-section-nav>
+ .records-section-nav-tabs.ss-section-tabs>.ss-section-tab.active{
+  border-color:var(--ss-theme-border)!important;
+  background:var(--ss-theme-tint)!important;
+  box-shadow:inset 0 -2px var(--ss-theme-accent)!important;
  }
  /* More belongs to the capsule, with no divider, separate button border,
   * or ellipsis. Only its small chevron communicates the dropdown. */
