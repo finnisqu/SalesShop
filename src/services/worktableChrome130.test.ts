@@ -67,12 +67,14 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(nav).toContain('records-section-nav ss-header-tab-pill');
   expect(nav).toContain('items={additional} asTab');
   expect(catalog).toContain('catalog-foundation-tabs ss-header-tab-pill');
-  expect(css).toContain('--ss-header-pill-shell:color-mix(in srgb,var(--ss-theme-card) 94%,white 6%)');
-  expect(css).toContain('--ss-header-pill-tab:color-mix(in srgb,var(--ss-theme-tint) 92%,black 8%)');
-  expect(css).toContain('--ss-header-pill-active:color-mix(in srgb,var(--ss-theme-tint) 80%,black 20%)');
-  expect(css).toContain('background:var(--ss-header-pill-shell)!important');
-  expect(css).toContain('background:var(--ss-header-pill-tab)!important');
-  expect(css).toContain('background:var(--ss-header-pill-active)!important');
+  // Preserve the original Catalog hierarchy: light capsule, clear tabs,
+  // and a single softly filled active tab rather than six separate chips.
+  expect(css).toContain('background:var(--ss-theme-card)!important;overflow:visible!important');
+  expect(css).toContain('background:transparent!important;box-shadow:none!important');
+  expect(css).toContain('background:var(--ss-theme-tint)!important');
+  expect(css).not.toContain('--ss-header-pill-tab:');
+  expect(css).toContain('height:36px!important;min-height:36px!important');
+  expect(css).toContain('padding:7px 9px!important');
   expect(css).toContain('font:750 11px/1.2');
   expect(css).toContain('border-left:0!important');
   expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
