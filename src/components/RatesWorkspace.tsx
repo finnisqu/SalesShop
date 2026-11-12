@@ -18,6 +18,7 @@ import { RatesFilterFields } from './RatesFilterFields';
 import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { RateBook } from './RateBook';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
+import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 type ReferenceCategory = 'all' | RateBookCategory;
@@ -150,6 +151,17 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
   }, [guide.rules, query]);
 
   const showingMaterialPricing = category === 'material';
+  const pagination=useCatalogPagination(
+    showingMaterialPricing?materialPricingRows.length:rateRows.length,
+    JSON.stringify([query,externalQuery,category,behaviorFilter,unitFilter,overrideFilter,rateSort])
+  );
+  const pagedRates=rateRows.slice(pagination.start,pagination.end);
+  const pagedLevels=materialPricingRows.slice(pagination.start,pagination.end);
+  const paginationRow=<CatalogPagination label={showingMaterialPricing?'Material pricing':'Rates'}
+    total={showingMaterialPricing?materialPricingRows.length:rateRows.length}
+    page={pagination.page} pageSize={pagination.pageSize}
+    onPageChange={next=>{pagination.setPage(next);setExpandedRateId(null);setExpandedLevelId(null);}}
+    onPageSizeChange={size=>{pagination.setPageSize(size);setExpandedRateId(null);setExpandedLevelId(null);}}/>;
   const activeReferenceFilters = showingMaterialPricing
     ? 0
     : Number(behaviorFilter !== 'all') + Number(unitFilter !== 'all') + Number(overrideFilter !== 'all');
@@ -340,7 +352,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                 setQuery(''); selectCategory('all'); clearReferenceFilters();
               } : undefined}
             >
-              {rateRows.map((item) => {
+              {pagedRates.map((item) => {
                 const expanded = expandedRateId === item.id;
                 return (
                   <MobileCatalogReferenceCard
@@ -369,7 +381,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
               <table className="rates-reference-table">
                 <thead><tr><th>Item</th><th>Category</th><th>Cost</th><th>Suggested sell</th><th>Unit</th><th>Margin</th><th>Effective</th></tr></thead>
                 <tbody>
-                  {rateRows.map((item) => (
+                  {pagedRates.map((item) => (
                     <tr key={item.id}>
                       <td className="rates-reference-item"><strong>{item.name}</strong><small>{item.code || 'No code'}</small></td>
                       <td>{RATE_BOOK_CATEGORY_LABELS[item.category]}</td>
@@ -403,7 +415,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                 setQuery(''); selectCategory('all'); clearReferenceFilters();
               }}
             >
-              {materialPricingRows.map((rule) => {
+              {pagedLevels.map((rule) => {
                 const expanded = expandedLevelId === rule.id;
                 return (
                   <MobileCatalogReferenceCard
@@ -429,7 +441,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
               <table className="rates-reference-table rates-material-pricing-table">
                 <thead><tr><th>Level</th><th>Material cost ceiling</th><th>Standard customer price</th><th>Meaning</th></tr></thead>
                 <tbody>
-                  {materialPricingRows.map((rule) => (
+                  {pagedLevels.map((rule) => (
                     <tr key={rule.id}>
                       <td className="rates-reference-item"><strong>{rule.label}</strong><small>Standard material level</small></td>
                       <td className="number">{rule.maxMaterialCost === undefined ? 'No ceiling' : `${money.format(rule.maxMaterialCost)}/SF cost`}</td>
