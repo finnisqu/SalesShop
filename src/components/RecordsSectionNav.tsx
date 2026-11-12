@@ -23,6 +23,11 @@ export type RecordsSection=RecordsMainTab|RecordsMoreTab;
 export const RECORDS_SECTIONS=[...RECORDS_MAIN_TABS,...RECORDS_MORE_TABS];
 
 export const RECORDS_TAB_KEY='salesshop-connections-tab-v1';
+export const RECORDS_QUOTES_LIBRARY_KEY='salesshop-records-quotes-library-v1';
+export function requestRecordsQuotesLibrary(){
+ try{sessionStorage.setItem(RECORDS_QUOTES_LIBRARY_KEY,'1');}
+ catch{/* optional browser storage */}
+}
 export function rememberRecordsSection(next:RecordsSection){
  // The Quotes library owns its own route; don't reopen the legacy quote
  // metadata table when someone returns to the Records dashboard.
