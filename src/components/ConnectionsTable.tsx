@@ -33,7 +33,7 @@ interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tas
  bulkActions?:(selected:ConnectionTableRow[],clear:()=>void)=>ReactNode;
  /** Catalog Tags pagination shares Materials' controls; other directories remain unchanged. */
  catalogPagination?:boolean;catalogPaginationKey?:string;}
-const PAGE_SIZE=25;
+const PAGE_SIZE=DEFAULT_CATALOG_PAGE_SIZE;
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
  try{const data=JSON.parse(localStorage.getItem(key)??'[]') as unknown;
