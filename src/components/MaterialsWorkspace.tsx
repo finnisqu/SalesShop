@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import {createPortal} from 'react-dom';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useNavigationStore } from '../store/navigationStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
@@ -89,7 +90,9 @@ function compareOptionalNumbers(left?: number, right?: number) {
   return left - right;
 }
 
-export function MaterialsWorkspace({ embedded = false,externalQuery }: { embedded?: boolean;externalQuery?:string } = {}) {
+export function MaterialsWorkspace({embedded=false,externalQuery,headerTarget}:{
+ embedded?:boolean;externalQuery?:string;headerTarget?:HTMLElement|null;
+}={}) {
   const openBuilderRates = useNavigationStore(state=>state.openBuilderRates);
   const settings = useCompanySettingsStore((state) => state.settings);
   const hydrated = useCompanySettingsStore((state) => state.hydrated);
@@ -370,11 +373,38 @@ export function MaterialsWorkspace({ embedded = false,externalQuery }: { embedde
     );
   };
 
+  const headerTools=headerTarget&&embedded&&!isMobileReference&&sectionView==='catalog'?
+   createPortal(<div className="catalog-materials-header-tools">
+    <button type="button" onClick={openBuilderRates} title="Builder material pricing levels">Levels ↗</button>
+    <SupplierImportLauncher placement="toolbar"/>
+    <button type="button" className="catalog-header-edit" onClick={()=>setEditing(value=>!value)}>
+     {editing?'Done':'Edit'}</button>
+    {!editing&&<>
+      <details className="rates-filter-menu catalog-header-filter">
+        <summary>Filter{activeFilterCount?' · '+activeFilterCount:''}</summary>
+        <div className="rates-filter-popover materials-foundation-filter-popover">
+          <MaterialsFilterFields idPrefix="materials-header" {...filterFields}/>
+        </div>
+      </details>
+      <label className="catalog-header-sort" title="Sort materials">
+       <select aria-label="Sort material library" value={sort} onChange={event=>
+        setSort(event.target.value as MaterialSort)}>
+        <option value="stock-brand">STOCK / brand</option>
+        <option value="name">Name</option><option value="brand">Brand</option>
+        <option value="type">Type</option>
+        <option value="cost-asc">Cost ↑</option><option value="cost-desc">Cost ↓</option>
+       </select>
+      </label>
+    </>}
+    {editing&&<label className="catalog-header-inactive">
+      <input type="checkbox" checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/>
+      Inactive</label>}
+   </div>,headerTarget):null;
   if (!hydrated) return <WorkspaceLoadingState title="Opening Materials" detail="Loading colors, slab variants, and supplier costs…" />;
 
   return (
     <main className={`rates-workspace materials-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
-      <header className="rates-workspace-header">
+      {(!embedded||!headerTarget||isMobileReference)&&<header className="rates-workspace-header">
         <div>
           <span className="board-eyebrow">Supplier material library</span>
           <h1>Materials</h1>
@@ -403,7 +433,8 @@ export function MaterialsWorkspace({ embedded = false,externalQuery }: { embedde
             </button>
           )}
         </div>
-      </header>
+      </header>}
+      {headerTools}
 
       {!embedded && <nav className="materials-subtabs" aria-label="Materials workspace sections">
         <button
@@ -431,7 +462,7 @@ export function MaterialsWorkspace({ embedded = false,externalQuery }: { embedde
           <Button variant="secondary" className="materials-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open material catalog tools">
             <span>•••</span><strong>Tools</strong>
           </Button>
-          {!editing && (
+          {!editing && (!headerTarget||isMobileReference) && (
             <>
               <details className="rates-filter-menu">
                 <summary>Filter{activeFilterCount ? ` · ${activeFilterCount}` : ''}</summary>
