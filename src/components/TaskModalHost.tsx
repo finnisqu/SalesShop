@@ -6,6 +6,7 @@ import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './Previ
 import {TrashIcon,PencilIcon} from './TrashIcon';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {TaskEditor} from './TasksWorkspace';
+import {TaskPreviewDueControls} from './TaskPreviewDueControls';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskChanges,type TaskLink,normalizedSubtasks,subtaskProgress,isProtectedBidTask,bidTaskDealId} from '../store/personalTaskStore';
 import type {CalendarTaskRequest} from '../services/taskModalEvents';
@@ -59,9 +60,8 @@ export function TaskModalHost(){
  useEffect(()=>{setRequest(null);setLinkedPreview(null);setExternalDealId(null);},[scope]);
  if((!request&&!linkedPreview&&!externalDealId)||!scope||storedScope!==scope||previewRole)return null;
  const task=request?.mode==='preview'?tasks.find(t=>t.id===request.id&&!t.deletedAt):null;
- const linkedDealId=task?.sourceObjectId?.startsWith('deal-submit:')
-  ?task.sourceObjectId.slice('deal-submit:'.length)
-  :task?.linked?.type==='project'?task.linked.id:null;
+ const linkedDealId=task?(bidTaskDealId(task)??
+  normalizedTaskAssociations(task).find(link=>link.type==='project')?.id??null):null;
  const relatedQuote=task?quotes.find(quote=>!quote.archivedAt&&
   (mode!=='cloud'||quote.ownerUserId===userId)&&
   (quote.projectId===linkedDealId||normalizedTaskAssociations(task)
@@ -133,6 +133,7 @@ export function TaskModalHost(){
        {task.sourceObjectId?.startsWith('deal-submit:')&&<span>Bid submission</span>}
       </div>
       <dl><div><dt>Due</dt><dd>{task.dueDate||'No due date'}{task.dueTime?' · '+task.dueTime:''}</dd></div></dl>
+      <TaskPreviewDueControls task={task} onUpdate={update}/>
       {task.notes&&<p className="tasks-preview-notes">{task.notes}</p>}
       {normalizedSubtasks(task.subtasks).length>0&&<section className="tasks-preview-subtasks"
        aria-label="Subtasks">
@@ -164,6 +165,9 @@ export function TaskModalHost(){
       </div>
       <div className="tasks-preview-actions-right">
        {isProtectedBidTask(task)&&!task.submissionConfirmedAt?<>
+        {linkedDealId&&<button type="button" onClick={()=>{
+         close();nav.openProject(linkedDealId);
+        }}>Open linked Deal ↗</button>}
         {relatedQuote&&<button type="button" onClick={()=>{
          close();nav.openQuote(relatedQuote.id);
         }}>Open linked Quote ↗</button>}
