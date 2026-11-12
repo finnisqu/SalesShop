@@ -207,7 +207,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
          onChange={e=>setStartDate(e.target.value)}/></label>
         <label>Current due date<input type="date" value={dueDate} title="Task deadline"
          disabled={isProtectedBidTask(initial)}
-         onChange={e=>setDueDate(e.target.value)}/></label>
+         onChange={e=>{setDueDate(e.target.value);setDueDateResponsibility('neutral');setDueDateChangeReason('');}}/></label>
         <label>Due time<input type="time" disabled={!dueDate} value={dueTime}
          onChange={e=>setDueTime(e.target.value)}/></label>
         {initialTaskId&&<label>Original due date
