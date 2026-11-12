@@ -144,7 +144,7 @@ export function TaskModalHost(){
             change.responsibility==='internal'?'Our team':'No fault assigned'}
           {change.reason?' · '+change.reason:''}
         </li>)}</ul>
-      </details>
+      </details>}
       <TaskPreviewDueControls task={task} onUpdate={update}/>
       {task.notes&&<p className="tasks-preview-notes">{task.notes}</p>}
       {normalizedSubtasks(task.subtasks).length>0&&<section className="tasks-preview-subtasks"
