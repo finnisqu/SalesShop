@@ -41,7 +41,7 @@ const displayDate = (value?: string) => {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
 };
 
-export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () => void }) {
+export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; onBack: () => void; backLabel?: string }) {
   const hydrated = useCrmStore(state => state.hydrated);
   const deals = useCrmStore(state => state.projects);
   const companies = useCrmStore(state => state.companies);
@@ -193,7 +193,7 @@ export function DealRecordPage({ dealId, onBack }: { dealId: string; onBack: () 
     <DealTimelineBeta deal={deal}/>
   </section>;
 
-  return <><RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack}
+  return <><RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack} backLabel={backLabel}
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length+outsideQuotes.length} linked quotes</span></>}
     actions={<>

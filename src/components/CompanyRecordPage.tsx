@@ -38,7 +38,7 @@ const dateLabel = (value: string) => {
 };
 const optionalNumber = (value: string) => value.trim() === '' ? undefined : Number(value);
 
-export function CompanyRecordPage({ companyId, onBack }: { companyId: string; onBack: () => void }) {
+export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId: string; onBack: () => void; backLabel?: string }) {
   const companies = useCrmStore((state) => state.companies);
   const crmHydrated = useCrmStore((state) => state.hydrated);
   const contacts = useCrmStore((state) => state.contacts);
@@ -165,7 +165,7 @@ export function CompanyRecordPage({ companyId, onBack }: { companyId: string; on
     setNewAlias('');
   };
 
-  return <><RecordPageLayout entityType="company" title={company.name} onBack={onBack}
+  return <><RecordPageLayout entityType="company" title={company.name} onBack={onBack} backLabel={backLabel}
     subtitle={companyRelationshipLabel(company)}
     badge={<><span className={'connections-record-stage'+(isOurCompany(company)?' is-self-company':'')}>
       {isOurCompany(company)?'SELF · Our Company':companyRelationshipLabel(company)}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from 'react';
 import {createPortal} from 'react-dom';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import { CompanyRecordPage } from './CompanyRecordPage';
@@ -39,7 +39,8 @@ import {useAuthStore} from '../store/authStore';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry,dedupeExternalQuoteActivities} from '../services/salesQuoteRegistry';
-import {DEAL_PIPELINES,dealPipelineLabel,type DealPipeline,type ProjectStage} from '../types/crm';
+import {DEAL_PIPELINES,dealPipelineLabel,matchesDealPipeline,
+ type DealPipeline,type DealPipelineFilter,type ProjectStage} from '../types/crm';
 import {companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,isOurCompany,visibleCompanyAliases,type CompanyRelationship,
  type EditableCompanyRelationship} from '../services/companyRelationship';
@@ -63,6 +64,44 @@ export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; descri
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
 const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
+const SEARCH_KEY=scopedStorageKey('salesshop-connections-tab-search-v1');
+const COMPANY_FILTER_KEY=scopedStorageKey('salesshop-connections-company-filter-v1');
+const PIPELINE_FILTER_KEY='salesshop-board-pipeline-v1';
+function initialDealPipeline():DealPipelineFilter{
+  try{
+    const saved=localStorage.getItem(PIPELINE_FILTER_KEY);
+    if(saved==='all'||saved==='unassigned'||DEAL_PIPELINES.some(item=>item.id===saved))
+      return saved as DealPipelineFilter;
+  }catch{/* best effort */}
+  return 'all';
+}
+const SCROLL_KEY=scopedStorageKey('salesshop-connections-scroll-v1');
+type DirectoryScroll={main?:number;tableTop?:number;tableLeft?:number;boardLeft?:number};
+function initialDirectoryScrolls():Record<string,DirectoryScroll>{
+  try{
+    const raw=JSON.parse(sessionStorage.getItem(SCROLL_KEY)??'{}') as Record<string,DirectoryScroll>;
+    return raw&&typeof raw==='object'?raw:{};
+  }catch{return {};}
+}
+function initialTabSearches():Partial<Record<ConnectionsTab,string>>{
+  try{
+    const raw=JSON.parse(sessionStorage.getItem(SEARCH_KEY)??'{}') as Record<string,unknown>;
+    if(!raw||typeof raw!=='object')return {};
+    const saved:Partial<Record<ConnectionsTab,string>>={};
+    for(const tab of ['companies','people','deals','organization','suppliers','quotes','activity'] as ConnectionsTab[]){
+      if(typeof raw[tab]==='string')saved[tab]=(raw[tab] as string).slice(0,300);
+    }
+    return saved;
+  }catch{return {};}
+}
+function initialCompanyFilter():CompanyFilter{
+  try{
+    const saved=sessionStorage.getItem(COMPANY_FILTER_KEY);
+    return ['all','prospect','customer','unclassified','partner','self'].includes(saved??'')
+      ?saved as CompanyFilter:'all';
+  }catch{return 'all';}
+}
+
 function initialLayouts():DirectoryLayouts{
   try{
     const raw=JSON.parse(localStorage.getItem(LAYOUT_KEY)??'{}') as Partial<DirectoryLayouts>;
@@ -171,7 +210,17 @@ export function Connections() {
    window.addEventListener('salesshop:open-suppliers',show);
    return()=>window.removeEventListener('salesshop:open-suppliers',show);
   },[]);
-  const [query, setQuery] = useState('');
+  // Keep each directory's search while switching tabs, views and record pages.
+  // Session scope avoids carrying private CRM search terms into another session.
+  const [tabSearches,setTabSearches]=useState<Partial<Record<ConnectionsTab,string>>>(initialTabSearches);
+  const query=tabSearches[tab]??'';
+  const setQuery=(value:string)=>{
+    setTabSearches(previous=>{
+      const next={...previous,[tab]:value};
+      try{sessionStorage.setItem(SEARCH_KEY,JSON.stringify(next));}catch{/* best effort */}
+      return next;
+    });
+  };
   const [peopleAttention,setPeopleAttention]=useState<PeopleAttentionFilter>('all');
   const [activityFilters,setActivityFilters]=useState<ActivityLogFilters>(DEFAULT_ACTIVITY_LOG_FILTERS);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
@@ -182,7 +231,36 @@ export function Connections() {
     const id=consumeQuoteMetadataRequest();
     if(id){setQuoteRecordId(id);setTab('quotes');}
   },[]);
-  const [companyFilter, setCompanyFilter] = useState<CompanyFilter>('all');
+  // Remember both the outer directory and nested table/board position while
+  // visiting related records or other SalesShop tabs.
+  const directoryRef=useRef<HTMLElement|null>(null);
+  const scrollPositions=useRef<Record<string,DirectoryScroll>>(initialDirectoryScrolls());
+  const scrollKey=tab+':'+(tab==='companies'?layouts.companies:tab==='deals'?layouts.deals:'table');
+  const rememberScroll=(event:UIEvent<HTMLElement>)=>{
+    const node=event.target as HTMLElement;
+    if(!node||!directoryRef.current)return;
+    const current=scrollPositions.current[scrollKey]??{};
+    if(node===directoryRef.current)current.main=node.scrollTop;
+    else if(node.classList.contains('connections-table-scroll')){
+      current.tableTop=node.scrollTop;current.tableLeft=node.scrollLeft;
+    }else if(node.classList.contains('project-board'))current.boardLeft=node.scrollLeft;
+    else return;
+    scrollPositions.current[scrollKey]=current;
+  };
+  useEffect(()=>()=>{
+    try{sessionStorage.setItem(SCROLL_KEY,JSON.stringify(scrollPositions.current));}
+    catch{/* best effort */}
+  },[]);
+  const [pipelineFilter,setPipelineFilter]=useState<DealPipelineFilter>(initialDealPipeline);
+  const choosePipelineFilter=(filter:DealPipelineFilter)=>{
+    setPipelineFilter(filter);
+    try{localStorage.setItem(PIPELINE_FILTER_KEY,filter);}catch{/* best effort */}
+  };
+  const [companyFilter, setCompanyFilter] = useState<CompanyFilter>(initialCompanyFilter);
+  const chooseCompanyFilter=(filter:CompanyFilter)=>{
+    setCompanyFilter(filter);
+    try{sessionStorage.setItem(COMPANY_FILTER_KEY,filter);}catch{/* best effort */}
+  };
   const [companyCreating, setCompanyCreating] = useState(false);
   const [newCompany, setNewCompany] = useState('');
   const [newCompanyRelationship, setNewCompanyRelationship] = useState<EditableCompanyRelationship>('prospect');
@@ -243,12 +321,29 @@ export function Connections() {
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const setView = useNavigationStore((state) => state.setView);
+  const navigationHistory=useNavigationStore(state=>state.history);
+  const goBack=useNavigationStore(state=>state.goBack);
   const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
+  useEffect(()=>{
+    if(focusedCompanyId||focusedContactId||focusedDealId||quoteRecordId||!recordsReady)return;
+    const frame=requestAnimationFrame(()=>{
+      const root=directoryRef.current;
+      if(!root)return;
+      const saved=scrollPositions.current[scrollKey];
+      if(!saved)return;
+      root.scrollTop=saved.main??0;
+      const table=root.querySelector<HTMLElement>('.connections-table-scroll');
+      if(table){table.scrollTop=saved.tableTop??0;table.scrollLeft=saved.tableLeft??0;}
+      const board=root.querySelector<HTMLElement>('.project-board');
+      if(board)board.scrollLeft=saved.boardLeft??0;
+    });
+    return()=>cancelAnimationFrame(frame);
+  },[scrollKey,recordsReady,focusedCompanyId,focusedContactId,focusedDealId,quoteRecordId]);
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
     setPreview(null);setActivityPreview(null);setQuoteRecordId(null);
-    setTab(next); setQuery(''); setNotice('');setPeopleAttention('all');
+    setTab(next);setNotice('');setPeopleAttention('all');
     setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
     // Activity history is an on-demand utility, never the default landing page.
     if (CONNECTIONS_TABS.some((item) => item.id === next)) {
@@ -279,8 +374,9 @@ export function Connections() {
     .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById,
       companies,needle,peopleAttention,lastContactByPerson,followUpByPerson,todayKey]);
   const projectRows = useMemo(() => projects
+    .filter(project=>matchesDealPipeline(project,pipelineFilter))
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction, dealPipelineLabel(project.pipeline)).includes(needle))
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle,pipelineFilter]);
   const quoteRegistry=useMemo(()=>buildSalesQuoteRegistry(quotes,activities,projects),
     [quotes,activities,projects]);
   const personalQuoteRecords=useMemo(()=>mySalesQuoteRegistry(
@@ -321,6 +417,8 @@ export function Connections() {
       pipeline:dealPipelineLabel(d.pipeline),stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
       next:d.nextAction??'',updated:timeLabel(d.updatedAt)},
     sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}})):[],[tab,projectRows,companiesById]);
+  const allowedCompanyIds=useMemo(()=>new Set(companyRows.map(company=>company.id)),[companyRows]);
+  const allowedDealIds=useMemo(()=>new Set(projectRows.map(deal=>deal.id)),[projectRows]);
   const quoteTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='quotes'?quoteRows.map(q=>({
     id:q.id,name:q.name,
     association:q.source==='external'&&q.projectId
@@ -433,27 +531,48 @@ export function Connections() {
   const isCreateOpen=companyCreating||personCreating||dealCreating;
   const newRecordRef=useDismissibleLayer<HTMLElement>(isCreateOpen,closeNewRecord);
   useModalScrollLock(isCreateOpen);
+  // A Company → Deal → Person journey should return to its immediate related
+  // record. Direct navigation and records opened from a directory still use
+  // the ordinary Connections breadcrumb instead.
+  const previousLocation=navigationHistory[navigationHistory.length-1];
+  const previousRelated=previousLocation?.view==='dashboard'?
+    previousLocation.focusedCompanyId?{id:previousLocation.focusedCompanyId,label:'Company'}:
+    previousLocation.focusedProjectId?{id:previousLocation.focusedProjectId,label:'Deal'}:
+    previousLocation.focusedContactId?{id:previousLocation.focusedContactId,label:'Person'}:null:null;
+  const relatedBack=(currentId:string)=>{
+    if(!previousRelated||previousRelated.id===currentId)return false;
+    goBack();
+    return true;
+  };
+  const recordBackLabel=(currentId:string)=>previousRelated&&previousRelated.id!==currentId
+    ?'Back to '+previousRelated.label:'Connections';
   const backToDeals = () => {
+    if(focusedDealId&&relatedBack(focusedDealId))return;
     chooseTab('deals');
     setView('dashboard');
   };
   const backToPeople = () => {
+    if(focusedContactId&&relatedBack(focusedContactId))return;
     const person=contacts.find(c=>c.id===focusedContactId);
     chooseTab(person&&isOurOrgContact(person,companies)?'organization':'people');
     setView('dashboard');
   };
   const backToCompanies = () => {
+    if(focusedCompanyId&&relatedBack(focusedCompanyId))return;
     chooseTab('companies');
     setView('dashboard');
   };
   if (focusedDealId) return <main className="connections-workspace">
-    <DealRecordPage dealId={focusedDealId} onBack={backToDeals} />
+    <DealRecordPage dealId={focusedDealId} onBack={backToDeals}
+      backLabel={recordBackLabel(focusedDealId)}/>
   </main>;
   if (focusedContactId) return <main className="connections-workspace">
-    <PersonRecordPage contactId={focusedContactId} onBack={backToPeople} />
+    <PersonRecordPage contactId={focusedContactId} onBack={backToPeople}
+      backLabel={recordBackLabel(focusedContactId)}/>
   </main>;
   if (focusedCompanyId) return <main className="connections-workspace">
-    <CompanyRecordPage companyId={focusedCompanyId} onBack={backToCompanies} />
+    <CompanyRecordPage companyId={focusedCompanyId} onBack={backToCompanies}
+      backLabel={recordBackLabel(focusedCompanyId)}/>
   </main>;
 
   if(quoteRecordId)return <main className="connections-workspace">
@@ -462,13 +581,38 @@ export function Connections() {
     }} onPreview={()=>{setQuoteRecordId(null);setPreview({kind:'quote',id:quoteRecordId});}}/>
   </main>;
   const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
+  const openQuoteMetadata=(id:string)=>{
+    setPreview(null);setQuoteRecordId(id);setTab('quotes');
+  };
+  const dealPipelineControl=<label className="connections-filter connections-inline-type-filter">
+    Pipeline
+    <select aria-label="Filter Deals by pipeline" value={pipelineFilter}
+      onChange={event=>choosePipelineFilter(event.target.value as DealPipelineFilter)}>
+      <option value="all">All pipelines</option>
+      {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+      <option value="unassigned">Unassigned</option>
+    </select>
+  </label>;
+  const companyFilterControl=<label className="connections-filter connections-inline-type-filter">
+    Type
+    <select aria-label="Filter Companies by type" value={companyFilter}
+      onChange={event=>chooseCompanyFilter(event.target.value as CompanyFilter)}>
+      <option value="all">All</option>
+      <option value="prospect">Prospects</option>
+      <option value="customer">Customers</option>
+      <option value="unclassified">Not classified</option>
+      <option value="partner">Partners / other</option>
+      <option value="self">Our Company (SELF)</option>
+    </select>
+  </label>;
   const openRegistryQuote=(id:string)=>{
     if(id.startsWith('external:')){setActivityPreview(id.slice('external:'.length));return;}
     const nativeId=id.startsWith('native:')?id.slice('native:'.length):id;
     setPreview({kind:'quote',id:nativeId});
   };
   return (
-    <main className="connections-workspace connections-directory-layout">
+    <main ref={directoryRef} onScrollCapture={rememberScroll}
+      className="connections-workspace connections-directory-layout">
       <WorkspaceHeader title="Connections" help={<WorkspaceHelp page="connections" section={tab}/>} 
         className="connections-heading connections-foundation-heading"
         afterTitle={(tab==='companies'||tab==='deals')&&
@@ -570,7 +714,9 @@ export function Connections() {
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab==='companies'&&layouts.companies==='board'&&
             <div className="connections-board-host" aria-label="Company board layout">
-              <Board embeddedMode="accounts" searchQuery={query}/>
+              <Board embeddedMode="accounts" searchQuery={query}
+                allowedCompanyIds={allowedCompanyIds} companyToolbarControl={companyFilterControl}
+                onOpenQuoteMetadata={openQuoteMetadata}/>
             </div>}
           {tab === 'companies' && layouts.companies==='table' && (
             <section className="connections-directory" aria-label="Company directory">
@@ -578,18 +724,7 @@ export function Connections() {
               <p className="connections-count">{companyRows.length} companies · preview or open full details</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
-                toolbarControls={<label className="connections-filter connections-inline-type-filter">
-                  Type
-                  <select aria-label="Filter Companies by type" value={companyFilter}
-                    onChange={e=>setCompanyFilter(e.target.value as CompanyFilter)}>
-                    <option value="all">All</option>
-                    <option value="prospect">Prospects</option>
-                    <option value="customer">Customers</option>
-                    <option value="unclassified">Not classified</option>
-                    <option value="partner">Partners / other</option>
-                    <option value="self">Our Company (SELF)</option>
-                  </select>
-                </label>}
+                toolbarControls={companyFilterControl}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
@@ -668,7 +803,10 @@ export function Connections() {
           )}
           {tab==='deals'&&layouts.deals==='board'&&
             <div className="connections-board-host" aria-label="Deal board layout">
-              <Board embeddedMode="projects" searchQuery={query}/>
+              <Board embeddedMode="projects" searchQuery={query}
+                allowedDealIds={allowedDealIds} pipelineFilter={pipelineFilter}
+                onPipelineFilterChange={choosePipelineFilter}
+                onOpenQuoteMetadata={openQuoteMetadata}/>
             </div>}
           {tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled&&dealsView==='timeline'&&
             <DealTimelineBetaOverview projects={projectRows} onOpen={openProject}/>}
@@ -682,6 +820,7 @@ export function Connections() {
             </div>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
+              toolbarControls={dealPipelineControl}
                onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
@@ -801,7 +940,7 @@ export function Connections() {
         onSelect={(kind,id)=>{setActivityPreview(null);setPreview({kind,id});}}/>}
       {preview&&<RecordPreviewDrawer record={preview}
         onClose={()=>setPreview(null)} onSelect={setPreview}
-        onGoToQuotePage={id=>{setPreview(null);setQuoteRecordId(id);setTab('quotes');}}/>}
+        onGoToQuotePage={openQuoteMetadata}/>}
       {(companyCreating||personCreating||dealCreating)&&createPortal(
         <div className="connections-create-backdrop" onPointerDown={event=>{
           if(event.target===event.currentTarget)closeNewRecord();

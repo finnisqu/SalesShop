@@ -15,7 +15,7 @@ export function RecordProperty({ label, children }: { label: string; children: R
 
 /** Reusable entity record shell: one scroll surface, three responsive information regions. */
 export function RecordPageLayout({
-  entityType, recordTypeLabel, collectionLabel, title, subtitle, badge, actions, onBack, left, center, right,
+  entityType, recordTypeLabel, collectionLabel, title, subtitle, badge, actions, onBack, backLabel='Connections', left, center, right,
 }: {
   entityType: 'company' | 'person' | 'project';
   recordTypeLabel?: string;
@@ -25,6 +25,7 @@ export function RecordPageLayout({
   badge?: ReactNode;
   actions?: ReactNode;
   onBack: () => void;
+  backLabel?: string;
   left: ReactNode;
   center: ReactNode;
   right: ReactNode;
@@ -38,7 +39,7 @@ export function RecordPageLayout({
   };
   return <section className="connections-record-page" data-record-type={entityType} aria-label={(recordTypeLabel ?? (entityType === 'project' ? 'Deal' : entityType)) + ' record'}>
     <nav className="connections-record-breadcrumb" aria-label="Breadcrumb">
-      <button type="button" onClick={onBack}>← Connections</button>
+      <button type="button" onClick={onBack}>← {backLabel}</button>
       <span aria-hidden="true">/</span>
       <span>{collectionLabel ?? (entityType === 'company' ? 'Companies' : entityType === 'person' ? 'People' : 'Deals')}</span>
       <span aria-hidden="true">/</span>

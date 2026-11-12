@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from 'react';
 import '../project-activity.css';
 import '../board-integrity.css';
 import { projectAttentionFlags } from '../services/boardIntegrity';
@@ -88,10 +88,10 @@ function ProjectCard({ project, onOpen, onDragStart, mobileInteraction }: {
       className="project-card"
       draggable={!mobileInteraction}
       onDragStart={mobileInteraction ? undefined : onDragStart}
-      onClick={mobileInteraction ? onOpen : undefined}
+      onClick={onOpen}
       tabIndex={0}
       onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(); } }}
-      title={mobileInteraction ? 'Tap name to preview' : 'Drag card to move · click name to preview'}
+      title={mobileInteraction ? 'Tap card to preview' : 'Drag card to move · click anywhere to preview'}
     >
       <div className="project-card-pin" aria-hidden="true" />
       <div className="project-card-company">{project.companyName || 'Unassigned company'}</div>
@@ -345,8 +345,12 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   );
 }
 
-export function Board({embeddedMode,searchQuery}:{
+export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds,
+  companyToolbarControl,onOpenQuoteMetadata,pipelineFilter,onPipelineFilterChange}:{
   embeddedMode?:'projects'|'accounts';searchQuery?:string;
+  allowedDealIds?:ReadonlySet<string>;allowedCompanyIds?:ReadonlySet<string>;
+  companyToolbarControl?:ReactNode;onOpenQuoteMetadata?:(id:string)=>void;
+  pipelineFilter?:DealPipelineFilter;onPipelineFilterChange?:(value:DealPipelineFilter)=>void;
 }={}) {
   const hydrate = useCrmStore((state) => state.hydrate);
   const hydrated = useCrmStore((state) => state.hydrated);
@@ -415,7 +419,12 @@ export function Board({embeddedMode,searchQuery}:{
   const [boardSearch,setBoardSearch]=useState('');
   const activeMode=embeddedMode??boardMode;
   const effectiveSearch=embeddedMode?searchQuery??'':boardSearch;
-  const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
+  const [localPipelineView,setLocalPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
+  const pipelineView=pipelineFilter??localPipelineView;
+  const setPipelineView=(next:DealPipelineFilter)=>{
+    setLocalPipelineView(next);
+    onPipelineFilterChange?.(next);
+  };
   const [compactCards,setCompactCards]=useState(()=>{
     try{return window.localStorage.getItem(BOARD_COMPACT_KEY)==='true';}
     catch{return false;}
@@ -488,12 +497,13 @@ export function Board({embeddedMode,searchQuery}:{
     const grouped = new Map<ProjectStage, Project[]>();
     PROJECT_STAGES.forEach((stage) => grouped.set(stage, []));
     projects.filter(project=>matchesDealPipeline(project,pipelineView)&&
-      [project.name,project.companyName,project.nextAction].some(value=>
-        (value??'').toLowerCase().includes(effectiveSearch.trim().toLowerCase())))
+      (allowedDealIds?allowedDealIds.has(project.id):
+       [project.name,project.companyName,project.nextAction].some(value=>
+        (value??'').toLowerCase().includes(effectiveSearch.trim().toLowerCase()))))
       .forEach((project) => grouped.get(project.stage)?.push(project));
     grouped.forEach((items) => items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
     return grouped;
-  }, [projects,pipelineView,effectiveSearch]);
+  }, [projects,pipelineView,effectiveSearch,allowedDealIds]);
 
   const editingProject = projects.find((project) => project.id === editingId) ?? null;
 
@@ -508,6 +518,8 @@ export function Board({embeddedMode,searchQuery}:{
   if (activeMode === 'accounts') return <AccountsBoard embedded={Boolean(embeddedMode)}
     onShowProjects={() => setBoardMode('projects')}
     searchQuery={effectiveSearch} onSearchChange={setBoardSearch}
+    allowedCompanyIds={allowedCompanyIds} toolbarControl={companyToolbarControl}
+    onOpenQuoteMetadata={onOpenQuoteMetadata}
     compactCards={compactCards} onToggleCompact={toggleCompact}
     isStageCollapsed={stage=>isStageCollapsed('accounts',stage)}
     onToggleStage={stage=>toggleStage('accounts',stage)} />;
@@ -620,7 +632,8 @@ export function Board({embeddedMode,searchQuery}:{
       </section>
 
       {preview&&<RecordPreviewDrawer record={preview} onClose={()=>setPreview(null)}
-        onSelect={setPreview} onEditBoard={preview.kind==='deal'?record=>setEditingId(record.id):undefined}/>}
+        onSelect={setPreview} onGoToQuotePage={onOpenQuoteMetadata}
+        onEditBoard={preview.kind==='deal'?record=>setEditingId(record.id):undefined}/>}
       {editingProject && <ProjectEditor project={editingProject} onClose={() => {
         setEditingId(null);
         if(focusedProjectId===editingProject.id)clearFocusedProject();

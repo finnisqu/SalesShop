@@ -35,6 +35,44 @@ assert(contains(board,[
   'if(companyId)setProjectCompany(id,companyId)'
 ]),'Board Deal relationship persistence changed');
 
+// Batch #110: an embedded Board and the Table directory must share the
+// same Connections search/filter results and one record-preview workflow.
+const connections=source('src/components/Connections.tsx');
+const companiesBoard=source('src/components/AccountsBoard.tsx');
+const recordShell=source('src/components/RecordPageLayout.tsx');
+assert(contains(connections,[
+  'const [tabSearches,setTabSearches]',
+  "sessionStorage.setItem(SEARCH_KEY",
+  'const allowedCompanyIds=useMemo(',
+  'const allowedDealIds=useMemo(',
+  'allowedCompanyIds={allowedCompanyIds}',
+  'allowedDealIds={allowedDealIds}',
+  'pipelineFilter={pipelineFilter}',
+  'toolbarControls={dealPipelineControl}',
+  'toolbarControls={companyFilterControl}',
+  'companyToolbarControl={companyFilterControl}',
+  'onGoToQuotePage={openQuoteMetadata}',
+  'const previousRelated=',
+  'if(focusedDealId&&relatedBack(focusedDealId))return',
+  'onScrollCapture={rememberScroll}',
+]),'Connections search, relationship navigation or scroll restoration regressed');
+assert(contains(board,[
+  'allowedDealIds?allowedDealIds.has(project.id)',
+  'const pipelineView=pipelineFilter??localPipelineView',
+  'onPipelineFilterChange?.(next)',
+  'onClick={onOpen}',
+  'onGoToQuotePage={onOpenQuoteMetadata}',
+]),'Embedded Deal Board and Table record parity regressed');
+assert(contains(companiesBoard,[
+  'allowedCompanyIds.has(company.id)',
+  'onClick={()=>setPreview({kind:\'company\',id:company.id})}',
+  'onGoToQuotePage={onOpenQuoteMetadata}',
+]),'Embedded Company Board and Table record parity regressed');
+assert(contains(recordShell,[
+  "backLabel='Connections'",
+  '← {backLabel}',
+]),'Record breadcrumb context regressed');
+
 const inline=source('src/components/RecordInlineProperty.tsx');
 assert(contains(inline,[
   'ss-record-inline-property','ss-record-pencil',
