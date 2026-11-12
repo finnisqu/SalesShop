@@ -1,4 +1,4 @@
-import {useMemo,useState} from 'react';
+import {useEffect,useMemo,useState} from 'react';
 import {useNotebookStore} from '../store/notebookStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {notebookPageNavigationLabel} from '../services/notebookPageNavigationLabel';
@@ -9,6 +9,8 @@ export function RecordsPagesDirectory({query=''}:{query?:string}){
  const entries=useNotebookStore(s=>s.entries);
  const folders=useNotebookStore(s=>s.folders);
  const hydrated=useNotebookStore(s=>s.hydrated);
+ const hydrate=useNotebookStore(s=>s.hydrate);
+ useEffect(()=>hydrate(),[hydrate]);
  const move=useNotebookStore(s=>s.moveEntryToFolder);
  const favorite=useNotebookStore(s=>s.toggleFavorite);
  const hide=useNotebookStore(s=>s.toggleHidden);
