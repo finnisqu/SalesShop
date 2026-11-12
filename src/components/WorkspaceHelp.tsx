@@ -24,11 +24,11 @@ const pages:Record<WorkspaceHelpPage,Article>={
   {label:'Preview',text:'Click a card name to see its record without leaving Board.'},
   {label:'Scroll',text:'Shift + mouse wheel moves across the whole Board, even over a column. Ordinary wheel scrolls within columns.'},
   {label:'Reduce clutter',text:'Collapse column headings or use More to show compact cards.'}]},
- connections:{name:'Connections',intro:'Your CRM directory of companies, people, deals, and their relationships.',tips:[
+ connections:{name:'Records',intro:'One workspace for tasks, deals, companies, people, activities, and their relationships.',tips:[
   {label:'Explore related records',text:'Tap a name to preview. Follow related records inside the preview and use Back on mobile to return to the previous one.'},
   {label:'Related records',text:'Select multiple People or Deals, then Bulk edit → Connect to company to assign or clear their Company. Explicit direct Deal-to-Person membership is a future relationship type.'},
   {label:'Prospects vs Customers',text:'Classify each Company as Prospect, Customer or Partner. Legacy companies remain Unclassified until you choose. Filter the Companies directory by status.'},
-  {label:'Historical quotes',text:'Connections → Deals → Record external quote. Completed Deals retain their stage, totals and tasks when you enter an older quote.'},
+  {label:'Historical quotes',text:'Records → Deals → Record external quote. Completed Deals retain their stage, totals and tasks when you enter an older quote.'},
   {label:'Quick actions',text:'On mobile, change company type or deal stage inline, call or email a contact, or open its full record directly.'},
   {label:'Activity links',text:'Open an Activity from Activity history to edit its People, Company, Deal or Quote links. Create missing records without leaving the logging form.'},
   {label:'Our Organization',text:'Keep employees and subcontractors in their own directory. Add reusable roles via + Add role, and give subcontractors a linked external Company. This does not grant Team access.'},
