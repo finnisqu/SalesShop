@@ -436,8 +436,11 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const day=new Date(bidSentDate+'T12:00:00');
     const dayKey=[day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),
       String(day.getDate()).padStart(2,'0')].join('-');
+    const today=new Date();
+    const todayKey=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),
+      String(today.getDate()).padStart(2,'0')].join('-');
     if(!/^\d{4}-\d{2}-\d{2}$/.test(bidSentDate)||!Number.isFinite(day.getTime())||
-      dayKey!==bidSentDate||day.getTime()>Date.now()||
+      dayKey!==bidSentDate||bidSentDate>todayKey||
       !Number.isFinite(amount)||amount<0)
       throw new Error('Enter a valid past sent date and nonnegative quote amount.');
     const timestamp=now();
