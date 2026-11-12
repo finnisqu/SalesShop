@@ -134,7 +134,7 @@ export function CatalogTagsWorkspace({externalQuery}:{externalQuery?:string}={})
     </div>
    </header>
    {hydrated?<ConnectionsTable tableKey="tags" columns={columns} rows={rows}
-    onOpen={open}/>:<p className="catalog-tags-empty">Loading catalog tags…</p>}
+    onOpen={open} catalogPagination catalogPaginationKey={JSON.stringify([query,usage])}/>:<p className="catalog-tags-empty">Loading catalog tags…</p>}
   </section>
  {inspect&&createPortal(<div className="catalog-tags-backdrop" onMouseDown={event=>{
    if(event.target===event.currentTarget)close();
