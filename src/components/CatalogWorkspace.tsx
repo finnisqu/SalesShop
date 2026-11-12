@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { MaterialsWorkspace } from './MaterialsWorkspace';
 import { RatesWorkspace } from './RatesWorkspace';
-import { SinksWorkspace } from './SinksWorkspace';
+import { CatalogSinksWorktable } from './CatalogSinksWorktable';
+import { CatalogOtherWorktable } from './CatalogOtherWorktable';
 import { CatalogTagsWorkspace } from './CatalogTagsWorkspace';
 import { useNavigationStore, type CatalogSection } from '../store/navigationStore';
-import { SectionTabs, Panel } from '../design-system/components';
+import { SectionTabs } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import {useAuthStore} from '../store/authStore';
@@ -49,32 +50,6 @@ export const CATALOG_SECTIONS: Array<{
   },
 ];
 
-function OtherCatalogComingSoon() {
-  const examples = [
-    'Brackets & corbels',
-    'Dishwasher brackets',
-    'Stone samples',
-    'Clips & fasteners',
-    'Protective film',
-    'Adhesives & consumables',
-  ];
-
-  return (
-    <section className="catalog-other-coming-soon">
-      <Panel className="catalog-other-card catalog-foundation-other-card"
-        heading={<><h2>Other</h2><span className="catalog-other-state">Planned</span></>}>
-        <p>
-          Accessories, shop supplies, and related purchasing items will live here.
-        </p>
-        <div className="catalog-other-example-grid">
-          {examples.map((item) => <span key={item}>{item}</span>)}
-        </div>
-        <small>Examples of future catalog categories.</small>
-      </Panel>
-    </section>
-  );
-}
-
 export function CatalogWorkspace() {
   const section = useNavigationStore((state) => state.catalogSection);
   const setSection = useNavigationStore((state) => state.setCatalogSection);
@@ -104,7 +79,7 @@ export function CatalogWorkspace() {
   };
   const openBuilderRates=useNavigationStore(state=>state.openBuilderRates);
   const requestCatalogAdd=()=>{
-    if(!canAdd||section==='other')return;
+    if(!canAdd)return;
     window.dispatchEvent(new Event('sales-shop:catalog-create'));
   };
 
@@ -124,16 +99,17 @@ export function CatalogWorkspace() {
           aria-label="Catalog sections" items={CATALOG_SECTIONS.map(({ id, label }) => ({ id, label }))}
           selected={section} onSelect={next=>{setCatalogSearch('');setSection(next);}} />}
         more={<WorkspaceMoreMenu items={[
-          {label:'Builder material levels',onClick:openBuilderRates},
-          {label:'Clear catalog search',onClick:()=>setCatalogSearch(''),disabled:!catalogSearch.trim()},
-          {label:'Suppliers · Connections',onClick:openSuppliers},
-          {label:tableDensity==='compact'?'Use comfortable table rows':'Use compact table rows',
+          {section:'Navigation',label:'Builder material levels',onClick:openBuilderRates},
+          {section:'Search & filters',label:'Clear catalog search',
+  onClick:()=>setCatalogSearch(''),disabled:!catalogSearch.trim()},
+          {section:'Navigation',label:'Suppliers · Connections',onClick:openSuppliers},
+          {section:'View',label:tableDensity==='compact'?'Use comfortable table rows':'Use compact table rows',
             onClick:()=>setTableDensity(tableDensity==='compact'?'comfortable':'compact'),active:tableDensity==='compact'},
         ]}/>}
         search={<input type="search" aria-label="Search Catalog" placeholder={'Search '+section+'…'}
-          value={catalogSearch} disabled={section==='other'}
+          value={catalogSearch}
           onChange={event=>setCatalogSearch(event.target.value)}/>}
-        primary={<button type="button" disabled={!canAdd||section==='other'}
+        primary={<button type="button" disabled={!canAdd}
           onClick={requestCatalogAdd}>{addLabels[section]}</button>}
       />
 
@@ -141,9 +117,9 @@ export function CatalogWorkspace() {
         {section === 'materials' ? (
           <MaterialsWorkspace embedded externalQuery={catalogSearch} />
         ) : section === 'sinks' ? (
-          <SinksWorkspace embedded externalQuery={catalogSearch} />
+          <CatalogSinksWorktable externalQuery={catalogSearch} />
         ) : section === 'other' ? (
-          <OtherCatalogComingSoon />
+          <CatalogOtherWorktable externalQuery={catalogSearch} />
         ) : section === 'rates' ? (
           <RatesWorkspace embedded externalQuery={catalogSearch} />
         ) : section === 'tags' ? (
