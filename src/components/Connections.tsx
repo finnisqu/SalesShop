@@ -10,6 +10,7 @@ import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
 import {TasksWorkspace} from './TasksWorkspace';
 import {RecordsPagesDirectory} from './RecordsPagesDirectory';
+import '../records-workspace-polish.css';
 import {SuppliersWorkspace} from './SuppliersWorkspace';
 import '../suppliers-connections.css';
 import {isOurOrgCompany,ourOrgCompanyIds,isOurOrgContact} from '../services/ourOrganizationDirectory';
