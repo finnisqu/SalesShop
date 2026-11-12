@@ -91,7 +91,7 @@
 
 /* Calendar-first Home: navigation lives in the primary tabs, creation in the header. */
 .sales-home.is-calendar-home{gap:16px}
-.sales-home-top-actions{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.sales-home-top-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;flex:0 0 auto}
 .sales-home-top-actions .sales-log-launcher{min-height:42px;padding:9px 15px;
  background:var(--ss-theme-card);border:1px solid var(--ss-theme-border);
  color:var(--ss-theme-ink);font-size:13px;font-weight:750;border-radius:9px}
