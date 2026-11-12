@@ -38,6 +38,24 @@ describe('Batch #114 — Catalog layout parity',()=>{
   expect(tags).toContain('catalog-card-filter');
   expect(tags).toContain('ConnectionsTable tableKey="tags"');
  });
+ it('matches Materials typography, borders and row surfaces throughout Catalog',()=>{
+  const css=src('catalog-product-worktable.css');
+  const parity=css.split('Batch 115 — Materials is the canonical Catalog visual language.')[1];
+  expect(parity).toBeTruthy();
+  for(const section of ['catalog-section-sinks','catalog-section-other','catalog-section-rates','catalog-section-tags']){
+    expect(parity).toContain(section);
+  }
+  for(const token of ['--ss-theme-border','--ss-theme-card','--ss-theme-base',
+    '--ss-theme-tint','--ss-theme-ink','--ss-theme-muted','--ss-theme-accent']){
+    expect(parity).toContain(token);
+  }
+  expect(parity).toContain('.catalog-sink-variant.materials-variant-line');
+  expect(parity).toContain('grid-template-columns:minmax(0,1fr)');
+  expect(parity).toContain('.catalog-product-pin-board');
+  expect(parity).toContain('.connections-data-table thead th');
+  expect(parity).toContain('max-height:none');
+  expect(parity).not.toContain('background:#fff');
+ });
  it('stretches the comparison tables to the full workspace width',()=>{
   const css=src('catalog-product-worktable.css');
   expect(css).toContain('.catalog-product-worktable>.catalog-product-card');
