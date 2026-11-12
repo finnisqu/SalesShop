@@ -15,7 +15,7 @@ export function RecordProperty({ label, children }: { label: string; children: R
 
 /** Reusable entity record shell: one scroll surface, three responsive information regions. */
 export function RecordPageLayout({
-  entityType, recordTypeLabel, collectionLabel, title, subtitle, badge, actions, onBack, backLabel='Connections', left, center, right,
+  entityType, recordTypeLabel, collectionLabel, title, subtitle, badge, actions, onBack, backLabel='Records', left, center, right,
 }: {
   entityType: 'company' | 'person' | 'project';
   recordTypeLabel?: string;
