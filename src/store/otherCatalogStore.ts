@@ -32,7 +32,7 @@ let timer:number|undefined;
 const num=(value:unknown)=>typeof value==='number'&&Number.isFinite(value)?value:undefined;
 function normalize(raw:unknown):OtherCatalogItem[]{
  if(!Array.isArray(raw))return [];
- return raw.flatMap(item=>{
+ return raw.flatMap((item):OtherCatalogItem[]=>{
   if(!item||typeof item!=='object')return [];
   const obj=item as Partial<OtherCatalogItem>;
   if(!obj.id||!obj.name)return [];
@@ -103,18 +103,18 @@ export const useOtherCatalogStore=create<OtherCatalogState>((set,get)=>({
  },
  addItem:()=>{
   const id=uid('other_item'),time=new Date().toISOString();
-  const next=[...get().items,{
+  const next:OtherCatalogItem[]=[...get().items,{
    id,name:'New catalog item',category:'Accessories',unit:'each',active:true,updatedAt:time,
    variants:[{id:uid('other_variant'),label:'Standard',active:true,default:true}],
   }];
   set({items:next});scheduleSave(next);return id;
  },
  updateItem:(id,patch)=>{
-  const next=get().items.map(item=>item.id===id?{...item,...patch,updatedAt:new Date().toISOString()}:item);
+  const next:OtherCatalogItem[]=get().items.map(item=>item.id===id?{...item,...patch,updatedAt:new Date().toISOString()}:item);
   set({items:next});scheduleSave(next);
  },
  addVariant:(id)=>{
-  const next=get().items.map(item=>item.id===id?{
+  const next:OtherCatalogItem[]=get().items.map(item=>item.id===id?{
    ...item,updatedAt:new Date().toISOString(),
    variants:[...item.variants,{id:uid('other_variant'),
     label:'Variant '+(item.variants.length+1),active:true,default:false}],
@@ -122,7 +122,7 @@ export const useOtherCatalogStore=create<OtherCatalogState>((set,get)=>({
   set({items:next});scheduleSave(next);
  },
  updateVariant:(id,variantId,patch)=>{
-  const next=get().items.map(item=>item.id===id?{
+  const next:OtherCatalogItem[]=get().items.map(item=>item.id===id?{
    ...item,updatedAt:new Date().toISOString(),
    variants:item.variants.map(variant=>variant.id===variantId?{...variant,...patch}:
     patch.default?{...variant,default:false}:variant),
@@ -130,7 +130,7 @@ export const useOtherCatalogStore=create<OtherCatalogState>((set,get)=>({
   set({items:next});scheduleSave(next);
  },
  duplicateVariant:(id,variantId)=>{
-  const next=get().items.map(item=>{
+  const next:OtherCatalogItem[]=get().items.map(item=>{
    if(item.id!==id)return item;
    const source=item.variants.find(variant=>variant.id===variantId);
    if(!source)return item;
@@ -141,7 +141,7 @@ export const useOtherCatalogStore=create<OtherCatalogState>((set,get)=>({
   set({items:next});scheduleSave(next);
  },
  removeVariant:(id,variantId)=>{
-  const next=get().items.map(item=>{
+  const next:OtherCatalogItem[]=get().items.map(item=>{
    if(item.id!==id||item.variants.length<=1)return item;
    let variants=item.variants.filter(variant=>variant.id!==variantId);
    if(!variants.some(v=>v.default&&v.active)){
