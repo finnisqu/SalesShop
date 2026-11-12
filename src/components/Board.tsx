@@ -553,7 +553,7 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
       />}
 
       {embeddedMode&&<div className="connections-board-tools" role="group" aria-label="Deal board controls">
-        <label>Pipeline
+        <label className="connections-pipeline-dropdown">
           <select aria-label="Board pipeline" value={pipelineView}
             onChange={event=>{setPipelineView(event.target.value as DealPipelineFilter);
               boardRef.current?.scrollTo({left:0});}}>
