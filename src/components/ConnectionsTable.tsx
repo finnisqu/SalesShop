@@ -51,8 +51,10 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  const [bulkTaskEditing,setBulkTaskEditing]=useState(false);
  const [mobileBulkMode,setMobileBulkMode]=useState(false);
  const [sort,setSort]=useState({
-   key:tableKey==='documents'?'updated':tableKey==='tasks'?'due':'name',
-   reverse:tableKey==='documents',
+   key:tableKey==='activity'?'occurred':
+     tableKey==='documents'||tableKey==='pages'?'updated':
+     tableKey==='tasks'?'due':'name',
+   reverse:tableKey==='documents'||tableKey==='pages'||tableKey==='activity',
  });
  const [page,setPage]=useState(1);
  const [pageSize,setPageSize]=useState<number>(()=>{
