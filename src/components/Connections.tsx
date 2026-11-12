@@ -37,6 +37,7 @@ import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {PreviewPanelClose} from './PreviewPanelChrome';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
+import {useDismissibleDetails} from './useDismissibleDetails';
 import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
@@ -226,6 +227,9 @@ export function Connections() {
   };
   const [peopleAttention,setPeopleAttention]=useState<PeopleAttentionFilter>('all');
   const [activityFilters,setActivityFilters]=useState<ActivityLogFilters>(DEFAULT_ACTIVITY_LOG_FILTERS);
+  const activityFilterMenuRef=useRef<HTMLDetailsElement>(null);
+  useDismissibleDetails(activityFilterMenuRef);
+  const activeActivityFilters=Object.values(activityFilters).filter(value=>value!=='all').length;
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [activityPreview,setActivityPreview]=useState<string|null>(null);
   const [orgCreateRequest,setOrgCreateRequest]=useState(0);
@@ -888,7 +892,12 @@ export function Connections() {
           {tab==='activity'&&<section className="connections-directory records-activity-directory" aria-label="Activity history">
             <ConnectionsTable tableKey="activity" columns={ACTIVITY_COLUMNS} rows={activityTableRows}
               onOpen={id=>{const activity=activityRows.find(a=>a.id===id);if(activity)openActivity(activity);}}
-              toolbarControls={<div className="connections-activity-filters" aria-label="Filter Activity history">
+              toolbarControls={<details className="records-activity-filter-menu" ref={activityFilterMenuRef}>
+                <summary aria-label={'Activity filters'+(activeActivityFilters?' · '+activeActivityFilters+' active':'')}>
+                  Filters{activeActivityFilters>0&&<span className="records-filter-active-count">{activeActivityFilters}</span>}
+                </summary>
+                <div className="records-activity-filter-popover">
+                 <div className="connections-activity-filters" aria-label="Filter Activity history">
                 <label>Method
               <select value={activityFilters.method} onChange={e=>setActivityFilters(f=>({
                 ...f,method:e.target.value as ActivityLogFilters['method']}))}>
@@ -932,7 +941,9 @@ export function Connections() {
             <button type="button" disabled={JSON.stringify(activityFilters)===
               JSON.stringify(DEFAULT_ACTIVITY_LOG_FILTERS)}
               onClick={()=>setActivityFilters(DEFAULT_ACTIVITY_LOG_FILTERS)}>Clear filters</button>
-              </div>}/>
+                 </div>
+                </div>
+              </details>}/>
           </section>}
       </div>
       {externalQuotePickerOpen&&<ExternalQuoteBackfillDialog
