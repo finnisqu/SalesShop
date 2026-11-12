@@ -182,3 +182,27 @@
   grid-row:2;grid-column:1/-1;
  }
 }
+
+/* Quotes-only center alignment.
+ * The library is the only Records view with a separate action-More in the
+ * header's right tools track. Anchor navigation to the physical midpoint
+ * of the full-width header, independent of how the right tools measure.
+ * At narrower widths the standard two-row grid remains in charge. */
+@media(min-width:1400px){
+ :root[data-sales-theme] .sales-app.view-quotes
+ .qmb-library-workspace-header.ss-workspace-header{
+  position:relative;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes
+ .qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tabs{
+  position:absolute!important;
+  top:50%!important;
+  left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  width:min(440px,calc(100% - 36px))!important;
+  max-width:440px!important;
+  margin:0!important;
+  justify-self:unset!important;
+  justify-content:center!important;
+ }
+}
