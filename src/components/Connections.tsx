@@ -20,7 +20,7 @@ import {DealTimelineBetaOverview} from './DealTimelineBeta';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
 import { Button, StatusText } from '../design-system/components';
 import {WorkspaceHeader} from './WorkspaceHeader';
-import {RecordsSectionNav,RECORDS_MAIN_TABS,RECORDS_SECTIONS,rememberRecordsSection,
+import {RecordsSectionNav,RECORDS_MAIN_TABS,RECORDS_SECTIONS,rememberRecordsSection,requestRecordsQuotesLibrary,
  type RecordsSection} from './RecordsSectionNav';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import { useCrmStore } from '../store/crmStore';
@@ -342,7 +342,7 @@ export function Connections() {
   const chooseTab = (next: ConnectionsTab) => {
     // Quotes owns a full document library and builder. Records navigation
     // opens that existing route instead of the older metadata-only directory.
-    if(next==='quotes'){setView('quotes');return;}
+    if(next==='quotes'){requestRecordsQuotesLibrary();setView('quotes');return;}
     setPreview(null);setActivityPreview(null);setQuoteRecordId(null);
     setTab(next);setNotice('');setPeopleAttention('all');
     setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
