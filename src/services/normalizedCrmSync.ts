@@ -104,6 +104,14 @@ export async function loadNormalizedCrm(organizationId: string): Promise<CrmDocu
       pipeline: normalizeDealPipeline(row.pipeline),
       stageChangedAt: valueOrUndefined(row.stage_changed_at),
       dueDate: valueOrUndefined(row.due_date),
+      originalDueDate:valueOrUndefined(row.original_due_date),
+      dueDateResponsibility:row.due_date_responsibility==='internal'
+        ||row.due_date_responsibility==='external'||row.due_date_responsibility==='neutral'
+        ?row.due_date_responsibility:undefined,
+      dueDateChangeReason:valueOrUndefined(row.due_date_change_reason),
+      dueDateHistory:Array.isArray(row.due_date_history)
+        ?row.due_date_history.filter((entry):entry is import('../types/crm').DueDateRevision=>
+          !!entry&&typeof entry==='object'&&typeof entry.at==='string') : [],
       assignedUserId: valueOrUndefined(row.assigned_user_id),
       amount: numericOrUndefined(row.amount),
       nextAction: valueOrUndefined(row.next_action),
@@ -291,6 +299,10 @@ export async function syncNormalizedCrm(organizationId: string, document: CrmDoc
         pipeline: normalizeDealPipeline(project.pipeline) ?? null,
         stage_changed_at: stageChangedAt ?? project.updatedAt,
         due_date: project.dueDate ?? null,
+        original_due_date:project.originalDueDate??null,
+        due_date_responsibility:project.dueDateResponsibility??null,
+        due_date_change_reason:project.dueDateChangeReason??null,
+        due_date_history:project.dueDateHistory??[],
         // Assignment changes use a separately acknowledged server update.
         // Ordinary CRM sync must never restore stale assignment values.
         assigned_user_id: assigneeForCrmSync(project.assignedUserId,server),
