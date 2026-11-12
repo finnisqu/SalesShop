@@ -34,11 +34,17 @@
 :root[data-sales-theme] .sales-app .ss-worktable-surface{
  clip-path:inset(0 round var(--ss-worktable-corner));
 }
+/* Keep the whole heading as the sticky paint layer. Individual rounded
+ * cells have transparent corner pixels; without an opaque backing there,
+ * scrolled body rows can peek through. The backing is confined to the
+ * header's own height — never extended upward into the toolbar. */
 :root[data-sales-theme] .sales-app .ss-worktable-surface table thead{
- background:var(--ss-worktable-head-fill);
+ position:sticky;top:0;z-index:3;
+ background:var(--ss-theme-card);
+ isolation:isolate;
 }
 :root[data-sales-theme] .sales-app .ss-worktable-surface table thead th{
- position:sticky;top:0;z-index:3;
+ position:relative;top:auto;z-index:auto;
  background:var(--ss-worktable-head-fill)!important;
 }
 /* The toolbar is a sibling, not part of the table's clipping region.
