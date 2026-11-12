@@ -51,7 +51,7 @@ export function RecordsSectionNav({selected,onSelect,extraMore=[]}:{
   <SectionTabs className="connections-tabs records-section-nav-tabs"
    aria-label="Records sections" items={RECORDS_MAIN_TABS}
    selected={selected} onSelect={onSelect}/>
-  <div className="records-section-more">
+  <div className={"records-section-more"+(RECORDS_MORE_TABS.some(item=>item.id===selected)?" is-active":"")}>
    <WorkspaceMoreMenu label="Records sections" items={additional}/>
   </div>
  </div>;
