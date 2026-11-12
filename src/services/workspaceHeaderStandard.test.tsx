@@ -47,7 +47,9 @@ describe('Six-workspace standardized header',()=>{
   expect(board).toContain('boardSearch.trim().toLowerCase()');
   expect(accounts).toContain('searchQuery.trim().toLowerCase()');
   expect(catalog).toContain("window.dispatchEvent(new Event('sales-shop:catalog-create'))");
-  expect(catalog).toContain("disabled={section==='other'}");
+  expect(catalog).toContain("disabled={!canAdd}");
+  expect(catalog).toContain('<CatalogSinksWorktable externalQuery={catalogSearch}');
+  expect(catalog).toContain('<CatalogOtherWorktable externalQuery={catalogSearch}');
   expect(tasks).toContain('onChange={event=>setSearch(event.target.value)}');
   for(const file of ['MaterialsWorkspace','SinksWorkspace','RatesWorkspace','SuppliersWorkspace','CatalogTagsWorkspace']){
    expect(src('components/'+file+'.tsx')).toContain("sales-shop:catalog-create");
