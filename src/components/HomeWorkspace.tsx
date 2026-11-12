@@ -1,7 +1,5 @@
 import {useEffect,useState} from 'react';
 import {useQuoteStore} from '../store/quoteStore';
-import {usePersonalTaskStore,taskScope} from '../store/personalTaskStore';
-import {useNavigationStore} from '../store/navigationStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
@@ -25,19 +23,6 @@ export function HomeWorkspace(){
  const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
  const scope=homeCalendarScope(mode,orgId,userId);
  const [recentHost,setRecentHost]=useState<HTMLDivElement|null>(null);
- const tasks=usePersonalTaskStore(s=>s.tasks);
- const taskStoreScope=usePersonalTaskStore(s=>s.scope);
- const navigate=useNavigationStore(s=>s.setView);
- const today=(()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');})();
- const activeTasks=taskStoreScope===taskScope(mode,orgId,userId)
-   ?tasks.filter(task=>!task.deletedAt&&!task.completedAt&&task.status!=='completed'&&task.status!=='canceled'):[];
- const overdueTasks=activeTasks.filter(task=>task.dueDate&&task.dueDate<today);
- const externalOverdue=overdueTasks.filter(task=>task.dueDateResponsibility==='external');
- const openTasks=(filter:'active'|'overdue')=>{
-   try{sessionStorage.setItem('salesshop-connections-tab-v1','tasks');
-     sessionStorage.setItem('salesshop-records-task-filter-v1',filter);}catch{/* optional browser storage */}
-   navigate('dashboard');
- };
  useEffect(()=>hydrate(),[hydrate]);
  useEffect(()=>{
   let active=true;
@@ -73,16 +58,6 @@ export function HomeWorkspace(){
      onClick={()=>openActivityComposer()}>Log Activity</button>}
    {canCreate&&<QuickCreate />}
    {!canCreate&&!canLog&&<p className="sales-home-no-actions">Quick actions are unavailable in the current workspace view.</p>}
-   <div className="sales-home-task-focus" aria-label="Tasks needing attention">
-     <button type="button" onClick={()=>openTasks('active')} title="Review outstanding tasks">
-       <strong>{activeTasks.length}</strong> Outstanding
-     </button>
-     <button type="button" className={overdueTasks.length?'has-overdue':''}
-       onClick={()=>openTasks('overdue')} title="Review overdue tasks by current due date">
-       <strong>{overdueTasks.length}</strong> Overdue
-       {externalOverdue.length>0&&<small>{externalOverdue.length} external</small>}
-     </button>
-   </div>
   </div>;
  const sections={
   quickActions:<section className="sales-home-actions-section" key="quickActions"
@@ -95,7 +70,7 @@ export function HomeWorkspace(){
       showCalendar={shown.calendar} showRecent={shown.recent}/>
    </section>,
   recent:<section className="sales-home-recent-card" key="recent"
-    hidden={!shown.recent} aria-label="Recent work and notes">
+    hidden={!shown.recent} aria-label="Recent work and outstanding tasks">
     <div ref={setRecentHost} className="sales-home-recent-host"/>
    </section>,
  };

@@ -46,7 +46,9 @@ export const notebookToday=()=>{
   String(value.getDate()).padStart(2,'0')].join('-');
 };
 export interface NotebookCalendarRequest{
- entryId:string;itemId?:string;selectedText?:string;date?:string;
+ entryId?:string;itemId?:string;selectedText?:string;date?:string;
+ /** Home can create calendar entries without opening a Notebook page. */
+ standalone?:boolean;
 }
 export function openNotebookCalendarDate(detail:NotebookCalendarRequest):void{
  window.dispatchEvent(new CustomEvent<NotebookCalendarRequest>(

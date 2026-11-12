@@ -1047,3 +1047,41 @@
   align-content:end!important;max-height:30px!important;overflow:hidden!important;
  }
 }
+
+
+/* Home Recents: tasks are arranged by current due date, not creation date. */
+.sales-calendar-sidecar-list.is-outstanding button.home-outstanding-task-row{
+ box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+ gap:10px;width:100%;min-height:58px;
+ padding:9px 12px;text-align:left;
+ color:var(--ss-theme-ink,#333);
+ background:transparent;
+ border:0;border-bottom:1px solid var(--ss-theme-border,#ddd);
+}
+.sales-calendar-sidecar-list.is-outstanding .home-outstanding-task-copy{
+ box-sizing:border-box;display:grid;gap:5px;min-width:0;flex:1;
+}
+.sales-calendar-sidecar-list.is-outstanding .home-outstanding-task-copy strong{
+ display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:12px;font-weight:750;
+}
+.sales-calendar-sidecar-list.is-outstanding .home-outstanding-task-copy small{
+ display:block;color:var(--ss-theme-muted,#777);font-size:10px;
+ white-space:normal;line-height:1.35;
+}
+.sales-calendar-sidecar-list.is-outstanding .home-outstanding-task-row.is-overdue
+ .home-outstanding-task-copy small{font-weight:650}
+.sales-calendar-sidecar-list.is-outstanding .home-outstanding-task-row:hover{
+ background:var(--ss-theme-tint,#eee);
+}
+.sales-calendar-sidecar-list.is-outstanding .home-outstanding-priority{
+ flex:0 0 19px;width:19px;height:19px;
+ display:inline-grid;place-items:center;
+ border:1px solid var(--ss-theme-border,#d4c9b5);border-radius:6px;
+ color:var(--ss-theme-ink,#333);font-weight:800;font-size:11px;
+}
+@media(max-width:760px){
+ .sales-calendar-sidecar-list.is-outstanding button.home-outstanding-task-row{
+  min-height:52px;padding:9px 10px;
+ }
+}

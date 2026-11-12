@@ -110,7 +110,7 @@ export function Sidebar({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ id: string; placement: 'before' | 'after' } | null>(null);
 
-  const hiddenCount = entries.filter((entry) => entry.hidden).length;
+  const hiddenCount = entries.filter((entry) => entry.hidden&&!entry.isCalendarInbox).length;
   const folderRows=useMemo(()=>folderTree(folders),[folders]);
   const childrenMap=useMemo(()=>{
     const children=new Map<string,string[]>();
@@ -128,7 +128,7 @@ export function Sidebar({
   };
   const folderCount=(id:string)=>{
     const ids=descendants(id);
-    return entries.filter(entry=>!!entry.folderId&&ids.has(entry.folderId)).length;
+    return entries.filter(entry=>!entry.isCalendarInbox&&!!entry.folderId&&ids.has(entry.folderId)).length;
   };
   const visibleFolderRows=folderRows.filter(({folder})=>{
     const seen=new Set<string>();let parent=folder.parentId;
@@ -192,6 +192,7 @@ export function Sidebar({
   const visibleEntries = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return entries.filter((entry) => {
+      if(entry.isCalendarInbox)return false;
       if (entry.hidden && !showHidden && entry.id !== activeEntryId) return false;
       if(filter==='all'&&activeFolderId===UNFILED&&entry.folderId)return false;
       if (filter==='all' && visibleFolderIds && activeFolderId!==UNFILED &&
@@ -349,7 +350,7 @@ export function Sidebar({
             }}
             onClick={()=>{setActiveFolderId(UNFILED);setFilter('all');setShowTrash(false);}}>
             <span aria-hidden="true">▤</span><strong>Unfiled</strong>
-            <small>{entries.filter(entry=>!entry.folderId).length}</small>
+            <small>{entries.filter(entry=>!entry.folderId&&!entry.isCalendarInbox).length}</small>
           </button>
           {visibleFolderRows.map(({folder,depth})=>{
             const isCollapsed=collapsedFolders.includes(folder.id);

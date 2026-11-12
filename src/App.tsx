@@ -262,12 +262,12 @@ function App() {
   const entry = entries.find((candidate) => candidate.id === activeEntryId) ?? null;
   const companion = !notebookCompact
     ?entries.find(candidate=>candidate.id===companionId&&candidate.id!==activeEntryId)??null:null;
-  const companionOptions=entries.filter(candidate=>candidate.id!==activeEntryId&&(!candidate.hidden||candidate.id===companionId));
+  const companionOptions=entries.filter(candidate=>!candidate.isCalendarInbox&&candidate.id!==activeEntryId&&(!candidate.hidden||candidate.id===companionId));
   // Use the same page list for the desktop selector and the mobile header
   // navigator. Even when searching, keep the currently open page visible.
   const notebookPageOptions=useMemo(()=>{
     const search=notebookHeaderSearch.trim().toLowerCase();
-    return entries.filter(candidate=>(!candidate.isPostItInbox||candidate.id===activeEntryId)&&
+    return entries.filter(candidate=>!candidate.isCalendarInbox&&(!candidate.isPostItInbox||candidate.id===activeEntryId)&&
       (!candidate.hidden||candidate.id===activeEntryId)&&
       (!search||candidate.id===activeEntryId||candidate.title.toLowerCase().includes(search)))
       .sort((a,b)=>Number(b.favorite)-Number(a.favorite)||

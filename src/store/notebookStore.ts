@@ -41,6 +41,8 @@ interface NotebookState {
   hydrate: () => void;
   createEntry: (folderId?: string) => void;
   appendDailyCapture: (date:string,text:string)=>string|null;
+  /** Direct calendar entries live in the existing private date store, not Tasks. */
+  addStandaloneCalendarDate: (input:{title:string;date:string;time?:string;annual?:boolean})=>{entryId:string;itemId:string}|null;
   addAgendaItem: (entryId:string,item:Pick<NotebookAgendaItem,'title'|'sourceText'|'date'|'kind'> & Partial<Pick<NotebookAgendaItem,'time'|'annual'|'taskId'>>)=>string|null;
   updateAgendaItem: (entryId:string,itemId:string,patch:Partial<Pick<NotebookAgendaItem,'title'|'date'|'time'|'annual'>>)=>void;
   deleteAgendaItem: (entryId:string,itemId:string)=>void;
@@ -205,6 +207,7 @@ function duplicateEntryModel(source: NotebookEntry): NotebookEntry {
     title: `${source.title || 'Untitled page'} copy`,
     // A copy is a regular page; only the original may be the global Post-it inbox.
     isPostItInbox: false,
+    isCalendarInbox: false,
     dailyDate: undefined,
     agendaItems: [],
     favorite: false,
@@ -248,8 +251,8 @@ function appendObject(entries: NotebookEntry[], entryId: string, object: Noteboo
 }
 
 function nextVisibleEntry(entries: NotebookEntry[], excludingId?: string) {
-  return entries.find((entry) => entry.id !== excludingId && !entry.hidden)
-    ?? entries.find((entry) => entry.id !== excludingId)
+  return entries.find((entry) => entry.id !== excludingId && !entry.isCalendarInbox && !entry.hidden)
+    ?? entries.find((entry) => entry.id !== excludingId && !entry.isCalendarInbox)
     ?? null;
 }
 
@@ -268,8 +271,9 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     resetHistory();
     const stored = localNotebookRepository.load();
     if (stored?.entries.length) {
-      const startEntry = stored.entries.find((entry) => entry.favorite && entry.openAtStart);
-      const fallback = stored.entries.find((entry) => entry.id === stored.activeEntryId) ?? stored.entries[0];
+      const startEntry = stored.entries.find((entry) => !entry.isCalendarInbox&&entry.favorite && entry.openAtStart);
+      const fallback = stored.entries.find((entry) => entry.id === stored.activeEntryId&&!entry.isCalendarInbox)
+        ?? stored.entries.find(entry=>!entry.isCalendarInbox) ?? stored.entries[0];
       set({
         entries: stored.entries,
         folders: stored.folders??[],
@@ -329,6 +333,30 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     persist(entries,get().activeEntryId);
     set({entries,...historyFlags()});
     return entry.id;
+  },
+
+  addStandaloneCalendarDate: (input) => {
+    const title=input.title.trim().slice(0,240);
+    if(!get().hydrated||!title||!validNotebookDay(input.date))return null;
+    const timestamp=now(),itemId=id('agenda');
+    const item:NotebookAgendaItem={
+      id:itemId,kind:'calendar-date',title,date:input.date,
+      sourceText:'',time:input.time||undefined,annual:input.annual||undefined,
+      createdAt:timestamp,updatedAt:timestamp,
+    };
+    const inbox=get().entries.find(page=>page.isCalendarInbox);
+    checkpoint(get(),'agenda:standalone-calendar');
+    const entries=inbox?mapEntry(get().entries,inbox.id,page=>({
+      ...page,agendaItems:[...(page.agendaItems??[]),item],updatedAt:timestamp,
+    })):[...get().entries,{
+      ...newEntry(),id:'page_calendar_inbox',title:'Calendar',
+      isCalendarInbox:true,hidden:true,deletionLocked:true,
+      agendaItems:[item],createdAt:timestamp,updatedAt:timestamp,
+    }];
+    const entryId=inbox?.id??'page_calendar_inbox';
+    persist(entries,get().activeEntryId);
+    set({entries,...historyFlags()});
+    return {entryId,itemId};
   },
 
   addAgendaItem: (entryId,input) => {
