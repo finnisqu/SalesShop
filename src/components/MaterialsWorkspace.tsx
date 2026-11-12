@@ -1,5 +1,4 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import {createPortal} from 'react-dom';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useNavigationStore } from '../store/navigationStore';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
@@ -90,8 +89,8 @@ function compareOptionalNumbers(left?: number, right?: number) {
   return left - right;
 }
 
-export function MaterialsWorkspace({embedded=false,externalQuery,headerTarget}:{
- embedded?:boolean;externalQuery?:string;headerTarget?:HTMLElement|null;
+export function MaterialsWorkspace({embedded=false,externalQuery}:{
+ embedded?:boolean;externalQuery?:string;
 }={}) {
   const openBuilderRates = useNavigationStore(state=>state.openBuilderRates);
   const settings = useCompanySettingsStore((state) => state.settings);
@@ -373,38 +372,11 @@ export function MaterialsWorkspace({embedded=false,externalQuery,headerTarget}:{
     );
   };
 
-  const headerTools=headerTarget&&embedded&&!isMobileReference&&sectionView==='catalog'?
-   createPortal(<div className="catalog-materials-header-tools">
-    <button type="button" onClick={openBuilderRates} title="Builder material pricing levels">Levels ↗</button>
-    <SupplierImportLauncher placement="toolbar"/>
-    <button type="button" className="catalog-header-edit" onClick={()=>setEditing(value=>!value)}>
-     {editing?'Done':'Edit'}</button>
-    {!editing&&<>
-      <details className="rates-filter-menu catalog-header-filter">
-        <summary>Filter{activeFilterCount?' · '+activeFilterCount:''}</summary>
-        <div className="rates-filter-popover materials-foundation-filter-popover">
-          <MaterialsFilterFields idPrefix="materials-header" {...filterFields}/>
-        </div>
-      </details>
-      <label className="catalog-header-sort" title="Sort materials">
-       <select aria-label="Sort material library" value={sort} onChange={event=>
-        setSort(event.target.value as MaterialSort)}>
-        <option value="stock-brand">STOCK / brand</option>
-        <option value="name">Name</option><option value="brand">Brand</option>
-        <option value="type">Type</option>
-        <option value="cost-asc">Cost ↑</option><option value="cost-desc">Cost ↓</option>
-       </select>
-      </label>
-    </>}
-    {editing&&<label className="catalog-header-inactive">
-      <input type="checkbox" checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/>
-      Inactive</label>}
-   </div>,headerTarget):null;
   if (!hydrated) return <WorkspaceLoadingState title="Opening Materials" detail="Loading colors, slab variants, and supplier costs…" />;
 
   return (
     <main className={`rates-workspace materials-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
-      {(!embedded||!headerTarget||isMobileReference)&&<header className="rates-workspace-header">
+      {!embedded&&<header className="rates-workspace-header">
         <div>
           <span className="board-eyebrow">Supplier material library</span>
           <h1>Materials</h1>
@@ -434,7 +406,6 @@ export function MaterialsWorkspace({embedded=false,externalQuery,headerTarget}:{
           )}
         </div>
       </header>}
-      {headerTools}
 
       {!embedded && <nav className="materials-subtabs" aria-label="Materials workspace sections">
         <button
@@ -462,7 +433,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,headerTarget}:{
           <Button variant="secondary" className="materials-mobile-tools-trigger" onClick={() => setMobileToolsOpen(true)} aria-label="Open material catalog tools">
             <span>•••</span><strong>Tools</strong>
           </Button>
-          {!editing && (!headerTarget||isMobileReference) && (
+          {!editing && (!embedded||isMobileReference) && (
             <>
               <details className="rates-filter-menu">
                 <summary>Filter{activeFilterCount ? ` · ${activeFilterCount}` : ''}</summary>
@@ -542,6 +513,11 @@ export function MaterialsWorkspace({embedded=false,externalQuery,headerTarget}:{
         <SuppliersWorkspace />
       ) : editing ? (
         <div className="materials-editor-host">
+          {embedded&&<div className="catalog-embedded-edit-row">
+            <strong>Editing materials</strong>
+            <label><input type="checkbox" checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Show inactive</label>
+            <button type="button" onClick={()=>setEditing(false)}>Done editing</button>
+          </div>}
           <MaterialRateBook query={query} showInactive={showInactive} mode="catalog" />
         </div>
       ) : (
@@ -652,9 +628,30 @@ export function MaterialsWorkspace({embedded=false,externalQuery,headerTarget}:{
           </section>}
 
           <section className="rates-reference-card materials-reference-card">
-            <header>
+            <header className="catalog-card-header">
               <div><strong>Supplier material catalog</strong><small>{materials.length} matching material{materials.length === 1 ? '' : 's'}</small></div>
-              <span>Variants reveal slab size, square footage, availability, and every active supplier price program.</span>
+              <div className="catalog-card-actions">
+                <span className="catalog-card-hint">Variants reveal slab sizes, availability and supplier price programs.</span>
+                {!isMobileReference&&<>
+                  <details className="rates-filter-menu catalog-card-filter">
+                    <summary>Filter{activeFilterCount ? ' · '+activeFilterCount : ''}</summary>
+                    <div className="rates-filter-popover materials-foundation-filter-popover catalog-card-filter-panel">
+                      <MaterialsFilterFields idPrefix="materials-table" {...filterFields}/>
+                    </div>
+                  </details>
+                  <label className="catalog-card-sort">
+                    <span className="catalog-control-label">Sort</span>
+                    <select aria-label="Sort material library" value={sort}
+                      onChange={event=>setSort(event.target.value as MaterialSort)}>
+                      <option value="stock-brand">STOCK / brand</option>
+                      <option value="name">Name A–Z</option><option value="brand">Brand A–Z</option>
+                      <option value="type">Material type</option>
+                      <option value="cost-asc">Cost · low first</option><option value="cost-desc">Cost · high first</option>
+                    </select>
+                  </label>
+                </>}
+                {embedded&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(true)}>Edit materials</button>}
+              </div>
             </header>
             {pagination}
             {isMobileReference ? (
