@@ -38,6 +38,17 @@ describe('shared workspace chrome',()=>{
     expect(html).not.toContain('>Board More<');
   });
 
+  it('renders the navigation More as a normal pill tab with a dropdown chevron',()=>{
+    const html=renderToStaticMarkup(<WorkspaceMoreMenu label="Records sections" asTab
+      items={[{section:'More records',label:'Pages',onClick:()=>{}}]}/>);
+    expect(html).toContain('ss-workspace-more is-tab');
+    expect(html).toContain('ss-chrome-icon-chevron-down');
+    expect(html).not.toContain('ss-chrome-icon-more');
+    expect(html).toContain('aria-label="Records sections menu"');
+    expect(html).toContain('More records');
+    expect(html).toContain('Pages');
+  });
+
   it('marks the selected mobile section without creating duplicate active tabs',()=>{
     const html=renderToStaticMarkup(<MobileWorkspaceTabs title="Connections"
       items={[{value:'companies',label:'Companies'},{value:'people',label:'People'}]}
