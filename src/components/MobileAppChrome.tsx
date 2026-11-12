@@ -32,7 +32,7 @@ const CATALOG_LABELS:Partial<Record<CatalogSection,string>>={
  suppliers:'Suppliers',
 };
 function viewLabel(view:AppView){
- return APP_DESTINATIONS.find(item=>item.view===view)?.label??'SalesShop';
+ return view==='tasks'?'Records':APP_DESTINATIONS.find(item=>item.view===view)?.label??'SalesShop';
 }
 function catalogLabel(section:CatalogSection){
  return CATALOG_LABELS[section]??'Catalog';
