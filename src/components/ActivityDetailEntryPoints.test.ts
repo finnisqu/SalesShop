@@ -31,7 +31,9 @@ describe('Shared CRM Activity detail access',()=>{
   expect(preview).toContain('type="datetime-local"');
   expect(preview).toContain('<TaskAssociationsField options={options} value={links}');
   expect(preview).toContain('onCreated={link=>setLinks(previous=>');
-  expect(preview).toContain('Edit activity</button>');
+  expect(preview).toContain("{externalQuote?'Correct quote details':'Edit activity'}</button>");
+  expect(preview).toContain('correctExternalQuote(activityId');
+  expect(preview).toContain('Save correction');
   expect(store).toContain("source.type!=='manual-touchpoint'&&source.type!=='notebook-touchpoint'");
   expect(store).toContain("editedAt:now(),editedByUserId:auth.user?.id");
  });
