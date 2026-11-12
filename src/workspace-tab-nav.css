@@ -11,9 +11,13 @@
   gap:3px!important;padding:4px!important;margin:0!important;
   border:1px solid var(--ss-theme-border)!important;
   border-radius:11px!important;
-  /* The outer pill must be lighter than the page header, on every theme.
-   * The active tab uses the theme tint to remain visually distinct. */
-  background:color-mix(in srgb,var(--ss-theme-tint) 86%,white 14%)!important;
+  /* A lighter shell with inset darker tabs, including Dark. Tint alone is
+   * lighter than Card in some dark palettes, so give all tab states their
+   * own shared fill rather than relying on reversed theme luminance. */
+  --ss-header-pill-shell:color-mix(in srgb,var(--ss-theme-card) 94%,white 6%);
+  --ss-header-pill-tab:color-mix(in srgb,var(--ss-theme-tint) 92%,black 8%);
+  --ss-header-pill-active:color-mix(in srgb,var(--ss-theme-tint) 80%,black 20%);
+  background:var(--ss-header-pill-shell)!important;
   overflow:visible!important;
   box-sizing:border-box;
  }
@@ -34,7 +38,7 @@
   height:36px!important;min-height:36px!important;max-height:36px!important;
   padding:7px 10px!important;margin:0!important;
   border:1px solid transparent!important;border-radius:8px!important;
-  background:transparent!important;box-shadow:none!important;
+  background:var(--ss-header-pill-tab)!important;box-shadow:none!important;
   color:var(--ss-theme-ink)!important;white-space:nowrap!important;
   font:750 11px/1.2 var(--ss-font-body,system-ui,sans-serif)!important;
   letter-spacing:normal!important;
@@ -63,7 +67,7 @@
   height:36px!important;min-height:36px!important;max-height:36px!important;
   gap:5px!important;padding:7px 10px!important;margin:0!important;
   border:1px solid transparent!important;border-radius:8px!important;
-  background:transparent!important;box-shadow:none!important;
+  background:var(--ss-header-pill-tab)!important;box-shadow:none!important;
   color:var(--ss-theme-ink)!important;cursor:pointer;
   font:750 11px/1.2 var(--ss-font-body,system-ui,sans-serif)!important;
   letter-spacing:normal!important;
@@ -82,7 +86,7 @@
  .ss-workspace-more.is-tab>summary,
  :root[data-sales-theme] .sales-app .ss-workspace-header
  .ss-header-tab-pill .ss-workspace-more.is-tab[open]>summary{
-  background:var(--ss-theme-tint)!important;
+  background:var(--ss-header-pill-active)!important;
   border-color:var(--ss-theme-border)!important;
   box-shadow:inset 0 -2px var(--ss-theme-accent)!important;
  }
@@ -90,7 +94,7 @@
  .ss-header-tab-pill .ss-section-tab:not(.active):hover,
  :root[data-sales-theme] .sales-app .ss-workspace-header
  .ss-header-tab-pill .ss-workspace-more.is-tab:not([open])>summary:hover{
-  background:color-mix(in srgb,var(--ss-theme-card) 65%,var(--ss-theme-tint) 35%)!important;
+  background:color-mix(in srgb,var(--ss-header-pill-tab) 70%,var(--ss-header-pill-active) 30%)!important;
  }
  :root[data-sales-theme] .sales-app .ss-header-tab-pill
  .ss-workspace-more.is-tab:not([open])>.ss-workspace-more__menu{
