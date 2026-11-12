@@ -168,7 +168,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
     ...(!showingMaterialPricing && overrideFilter !== 'all' ? [{ key: 'overrides', label: overrideFilter === 'has' ? 'Division overrides' : 'Base rates', onRemove: () => setOverrideFilter('all') }] : []),
   ];
 
-  const catalogReferenceActions=embedded&&<div className="catalog-card-actions catalog-rates-actions">
+  const catalogReferenceActions=embedded?<div className="catalog-card-actions catalog-rates-actions">
     <span className="catalog-card-hint">{showingMaterialPricing?'Standard material pricing levels.':'Browse labor, service and add-on rates.'}</span>
     <label className="catalog-card-category"><span className="catalog-control-label">Category</span>
       <select aria-label="Rate category" value={category} onChange={event=>selectCategory(event.target.value as ReferenceCategory)}>
@@ -201,7 +201,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
     <button type="button" className="catalog-card-edit" onClick={()=>{
       syncEditorCategory(category);setEditing(true);
     }}>Edit pricing</button>
-  </div>;
+  </div>:null;
 
   if (!hydrated) return <WorkspaceLoadingState title="Opening Rates" detail="Loading labor, service, and material pricing…" />;
 
