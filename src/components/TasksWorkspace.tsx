@@ -467,6 +467,11 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
     />}
     <div className="tasks-directory-content">
     <RecordFormFeedback notice={taskNotice} className="tasks-save-feedback"/>
+    {embedded&&<nav className="tasks-records-mobile-tabs tasks-records-tabs" aria-label="Task status on mobile">
+      {([['active','Open'],['completed','Completed']] as const).map(([key,label])=>
+       <button type="button" key={key} aria-pressed={filter===key}
+        className={filter===key?'active':''} onClick={()=>setFilter(key)}>{label}</button>)}
+    </nav>}
     {!embedded&&<section className="tasks-directory-controls" aria-label="Task directory controls">
       <p className="tasks-directory-caption">{visible.length} {visible.length===1?'task':'tasks'} · {counts.active} open · {counts.today} due today · {counts.overdue} overdue</p>
       <div className="tasks-toolbar-slot" ref={setTaskToolbarHost}/>
