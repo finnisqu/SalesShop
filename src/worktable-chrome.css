@@ -246,3 +246,53 @@
   grid-template-columns:1fr;
  }
 }
+
+/* Old Catalog dropdown rules positioned a second absolute panel *inside* the
+ * shared popover. Force its legacy contents to remain in normal flow. */
+:root[data-sales-theme] .sales-app.view-catalog
+ .ss-worktable-filter-panel :is(.catalog-card-filter-panel,.materials-foundation-filter-popover,.rates-filter-popover){
+ position:static!important;left:auto!important;right:auto!important;top:auto!important;
+ display:grid;box-sizing:border-box;min-width:0!important;max-width:100%!important;
+ width:100%!important;max-height:none!important;overflow:visible!important;
+ margin:0!important;padding:0!important;gap:10px;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .ss-worktable-filter-panel .catalog-card-sort{
+ display:grid;grid-template-columns:minmax(0,1fr);
+ align-items:start;gap:5px;min-width:0;max-width:100%;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .ss-worktable-filter-panel .catalog-card-sort select{
+ display:block;max-width:100%!important;width:100%!important;min-width:0;
+}
+/* Previous Catalog pagination was an oversized three-column grid.
+ * The shared pagination component is now the single control inside one
+ * compact top band, so reset the retired grid and its extra margins. */
+:root[data-sales-theme] .sales-app.view-catalog
+ .catalog-section-host.catalog-reference-layout .catalog-pagination.materials-page-controls{
+ display:flex!important;flex-wrap:wrap;align-items:center;
+ justify-content:space-between;gap:8px;min-height:52px;
+ width:100%;padding:8px 12px;margin:0;
+ grid-template-columns:none!important;
+ background:var(--ss-theme-card);border:1px solid var(--ss-theme-border);
+ border-left:0;border-right:0;border-radius:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .catalog-section-host.catalog-reference-layout .catalog-pagination .catalog-pagination-extras{
+ display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+ min-width:0;margin-left:auto;gap:8px;flex:0 1 auto;
+}
+/* Keep header overlays from clipping, while table wrappers themselves retain
+ * the rounded edge and horizontal scroll required for wide spreadsheets. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-product-card,
+:root[data-sales-theme] .sales-app.view-catalog .materials-reference-card,
+:root[data-sales-theme] .sales-app.view-catalog .rates-reference-card{
+ overflow:visible;
+}
+:root[data-sales-theme] .sales-app .ss-worktable-filter-panel :is(input,select):focus-visible,
+:root[data-sales-theme] .sales-app .ss-worktable-pagination :is(select,button):focus-visible,
+:root[data-sales-theme] .sales-app .ss-worktable-filter-menu>summary:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
