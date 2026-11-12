@@ -1215,6 +1215,10 @@ export function QuotesMobileBeta() {
     :null;
   if(!hydrated)return <main className="qmb"><p className="qmb-loading">Opening sales documents…</p></main>;
   if(canBrowseTeam&&libraryMode==='team')return <main className="quotes-view qmb-team">
+    <WorkspaceHeader title="Records" help={<WorkspaceHelp page="quotes" section="library"/>}
+      mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
+      mobileTabValue="quotes" onMobileTabChange={value=>selectRecordsSection(value as RecordsSection)}
+      tabs={<RecordsSectionNav selected="quotes" onSelect={selectRecordsSection}/>}/>
     <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes</button></div>
     {signedShopOutcomesEnabled
       ? <ShopOutcomesWorkspace onShowMine={()=>setLibraryMode('mine')}/>
