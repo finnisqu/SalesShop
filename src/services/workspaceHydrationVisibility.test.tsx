@@ -7,10 +7,10 @@ const crm=readFileSync(new URL('../components/Connections.tsx',import.meta.url),
 const tasks=readFileSync(new URL('../components/TasksWorkspace.tsx',import.meta.url),'utf8');
 
 describe('Workspace data hydration feedback',()=>{
-  it('announces Connections load instead of showing empty records before hydration',()=>{
+  it('announces Records load instead of showing empty records before hydration',()=>{
     const html=renderToStaticMarkup(<Connections/>);
-    expect(html).toContain('Loading Connections');
-    expect(html).toContain('Opening accounts, contacts, deals');
+    expect(html).toContain('Loading Records');
+    expect(html).toContain('Opening companies, people, deals');
     expect(html).toContain('role="status"');
     expect(crm).toContain("style={!recordsReady?{display:'none'}:undefined}");
     expect(crm).toContain("const recordsReady=crmReady&&quotesReady;");
@@ -22,7 +22,7 @@ describe('Workspace data hydration feedback',()=>{
     expect(tasks).toContain("if(rolePreview)return");
   });
   it('preserves the existing headers and controls after stores hydrate',()=>{
-    expect(crm).toContain('title="Connections" titleAdornment');
+    expect(crm).toContain('<WorkspaceHeader title="Records"');
     expect(crm).toContain('rows={companyTableRows}');
     expect(tasks).toContain('<WorkspaceHeader title="Tasks"');
     expect(tasks).toContain('rows={taskTableRows}');
