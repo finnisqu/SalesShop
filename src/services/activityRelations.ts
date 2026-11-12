@@ -23,6 +23,48 @@ export function activityRelations(activity:Activity):ActivityRelation[]{
  }).map(item=>({...item}));
 }
 
+/**
+ * New interactions may be logged from a Person, Deal or Quote without manually
+ * selecting each parent record. Materialize those factual links in the saved
+ * metadata too, rather than writing hidden primary columns the history reader
+ * cannot see. Explicit selections take precedence and edits remain opt-in.
+ */
+export function activityRelationsWithContext(
+ selected:readonly ActivityRelation[],
+ contacts:readonly {id:string;companyId?:string}[],
+ deals:readonly {id:string;companyId?:string}[],
+ quotes:readonly {id:string;projectId?:string;companyId?:string}[],
+):ActivityRelation[]{
+ const all:ActivityRelation[]=[];
+ const seen=new Set<string>();
+ const add=(type:ActivityRelation['type'],id:string|undefined)=>{
+  if(!id)return;
+  const key=type+':'+id;
+  if(seen.has(key))return;
+  seen.add(key);all.push({type,id});
+ };
+ for(const link of selected){
+  if(!link?.id||!allowed.has(link.type))continue;
+  const key=link.type+':'+link.id;
+  if(seen.has(key))continue;
+  seen.add(key);all.push({...link});
+ }
+ for(const link of selected){
+  if(link.type==='contact')add('company',contacts.find(c=>c.id===link.id)?.companyId);
+  if(link.type==='project')add('company',deals.find(d=>d.id===link.id)?.companyId);
+  if(link.type==='quote'){
+   const quote=quotes.find(q=>q.id===link.id);
+   add('project',quote?.projectId);
+   add('company',quote?.companyId);
+  }
+ }
+ // A Quote's Deal may own the Company even when the Quote doesn't.
+ for(const link of [...all]){
+  if(link.type==='project')add('company',deals.find(d=>d.id===link.id)?.companyId);
+ }
+ return all;
+}
+
 export function primaryActivityRelations(links:readonly ActivityRelation[]){
  const first=(type:ActivityRelation['type'])=>links.find(link=>link.type===type)?.id;
  return {contactId:first('contact'),companyId:first('company'),
