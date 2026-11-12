@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from 'react';
 import {createPortal} from 'react-dom';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import { CompanyRecordPage } from './CompanyRecordPage';
@@ -65,6 +65,14 @@ const TAB_KEY = 'salesshop-connections-tab-v1';
 const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
 const SEARCH_KEY=scopedStorageKey('salesshop-connections-tab-search-v1');
 const COMPANY_FILTER_KEY=scopedStorageKey('salesshop-connections-company-filter-v1');
+const SCROLL_KEY=scopedStorageKey('salesshop-connections-scroll-v1');
+type DirectoryScroll={main?:number;tableTop?:number;tableLeft?:number;boardLeft?:number};
+function initialDirectoryScrolls():Record<string,DirectoryScroll>{
+  try{
+    const raw=JSON.parse(sessionStorage.getItem(SCROLL_KEY)??'{}') as Record<string,DirectoryScroll>;
+    return raw&&typeof raw==='object'?raw:{};
+  }catch{return {};}
+}
 function initialTabSearches():Partial<Record<ConnectionsTab,string>>{
   try{
     const raw=JSON.parse(sessionStorage.getItem(SEARCH_KEY)??'{}') as Record<string,unknown>;
@@ -213,6 +221,26 @@ export function Connections() {
     const id=consumeQuoteMetadataRequest();
     if(id){setQuoteRecordId(id);setTab('quotes');}
   },[]);
+  // Remember both the outer directory and nested table/board position while
+  // visiting related records or other SalesShop tabs.
+  const directoryRef=useRef<HTMLElement|null>(null);
+  const scrollPositions=useRef<Record<string,DirectoryScroll>>(initialDirectoryScrolls());
+  const scrollKey=tab+':'+(tab==='companies'?layouts.companies:tab==='deals'?layouts.deals:'table');
+  const rememberScroll=(event:UIEvent<HTMLElement>)=>{
+    const node=event.target as HTMLElement;
+    if(!node||!directoryRef.current)return;
+    const current=scrollPositions.current[scrollKey]??{};
+    if(node===directoryRef.current)current.main=node.scrollTop;
+    else if(node.classList.contains('connections-table-scroll')){
+      current.tableTop=node.scrollTop;current.tableLeft=node.scrollLeft;
+    }else if(node.classList.contains('project-board'))current.boardLeft=node.scrollLeft;
+    else return;
+    scrollPositions.current[scrollKey]=current;
+  };
+  useEffect(()=>()=>{
+    try{sessionStorage.setItem(SCROLL_KEY,JSON.stringify(scrollPositions.current));}
+    catch{/* best effort */}
+  },[]);
   const [companyFilter, setCompanyFilter] = useState<CompanyFilter>(initialCompanyFilter);
   const chooseCompanyFilter=(filter:CompanyFilter)=>{
     setCompanyFilter(filter);
@@ -281,6 +309,21 @@ export function Connections() {
   const navigationHistory=useNavigationStore(state=>state.history);
   const goBack=useNavigationStore(state=>state.goBack);
   const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
+  useEffect(()=>{
+    if(focusedCompanyId||focusedContactId||focusedDealId||quoteRecordId||!recordsReady)return;
+    const frame=requestAnimationFrame(()=>{
+      const root=directoryRef.current;
+      if(!root)return;
+      const saved=scrollPositions.current[scrollKey];
+      if(!saved)return;
+      root.scrollTop=saved.main??0;
+      const table=root.querySelector<HTMLElement>('.connections-table-scroll');
+      if(table){table.scrollTop=saved.tableTop??0;table.scrollLeft=saved.tableLeft??0;}
+      const board=root.querySelector<HTMLElement>('.project-board');
+      if(board)board.scrollLeft=saved.boardLeft??0;
+    });
+    return()=>cancelAnimationFrame(frame);
+  },[scrollKey,recordsReady,focusedCompanyId,focusedContactId,focusedDealId,quoteRecordId]);
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
@@ -543,7 +586,8 @@ export function Connections() {
     setPreview({kind:'quote',id:nativeId});
   };
   return (
-    <main className="connections-workspace connections-directory-layout">
+    <main ref={directoryRef} onScrollCapture={rememberScroll}
+      className="connections-workspace connections-directory-layout">
       <WorkspaceHeader title="Connections" help={<WorkspaceHelp page="connections" section={tab}/>} 
         className="connections-heading connections-foundation-heading"
         afterTitle={(tab==='companies'||tab==='deals')&&
