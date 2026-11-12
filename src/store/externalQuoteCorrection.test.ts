@@ -2,6 +2,8 @@ import {beforeEach,afterEach,describe,expect,it,vi} from 'vitest';
 import type {Project,ProjectStage} from '../types/crm';
 import {localCrmRepository} from '../data/crmRepository';
 import {useCrmStore} from './crmStore';
+import {useAuthStore} from './authStore';
+import {useRolePerspectiveStore} from './rolePerspectiveStore';
 
 function deal(stage:ProjectStage):Project{
  return {id:'deal-correct',name:'Builder apartments',stage,amount:9999,
@@ -10,6 +12,10 @@ function deal(stage:ProjectStage):Project{
 }
 describe('correct existing external quote submission',()=>{
  beforeEach(()=>{
+  // Unit fixtures must not inherit a configured Cloudflare/Supabase account.
+  // In production the correction uses the separately validated cloud-save path.
+  useAuthStore.setState({mode:'local',user:null,organizationId:null,teamRole:null});
+  useRolePerspectiveStore.setState({activePerspective:null});
   vi.spyOn(localCrmRepository,'save').mockImplementation(()=>{});
   useCrmStore.setState({companies:[],contacts:[],projects:[deal('Completed')],
     activities:[],hydrated:true});
