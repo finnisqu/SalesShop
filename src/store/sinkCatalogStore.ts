@@ -158,6 +158,16 @@ function normalizeVariant(raw: Partial<SinkVariant>, index: number): SinkVariant
     internalCost: numberOrUndefined(raw.internalCost),
     sellPrice: numberOrUndefined(raw.sellPrice),
     effectiveDate: raw.effectiveDate,
+    finish:raw.finish,
+    cornerRadiusIn:numberOrUndefined(raw.cornerRadiusIn),
+    bowlWidthIn:numberOrUndefined(raw.bowlWidthIn),
+    bowlLengthIn:numberOrUndefined(raw.bowlLengthIn),
+    bowlHeightIn:numberOrUndefined(raw.bowlHeightIn),
+    totalWidthIn:numberOrUndefined(raw.totalWidthIn),
+    totalLengthIn:numberOrUndefined(raw.totalLengthIn),
+    totalHeightIn:numberOrUndefined(raw.totalHeightIn),
+    availableColors:Array.isArray(raw.availableColors)?
+      raw.availableColors.filter((color):color is string=>typeof color==='string'&&Boolean(color.trim())):[],
     notes: raw.notes,
     history: normalizeHistory(raw.history),
   };
@@ -184,6 +194,9 @@ function normalizeModel(raw: Partial<SinkModel>, index: number): SinkModel {
     category,
     widthIn: numberOrUndefined(raw.widthIn),
     depthIn: numberOrUndefined(raw.depthIn),
+    heightIn: numberOrUndefined(raw.heightIn),
+    availableColors:Array.isArray(raw.availableColors)?
+      raw.availableColors.filter((color):color is string=>typeof color==='string'&&Boolean(color.trim())):[],
     mountType: raw.mountType,
     material: raw.material,
     notes: raw.notes,
@@ -351,6 +364,11 @@ export const useSinkCatalogStore = create<SinkCatalogState>((set, get) => ({
         internalCost: seed.internalCost,
         sellPrice: seed.sellPrice,
         effectiveDate: seed.effectiveDate,
+        finish:seed.finish,
+        cornerRadiusIn:seed.cornerRadiusIn,
+        bowlWidthIn:seed.bowlWidthIn,bowlLengthIn:seed.bowlLengthIn,bowlHeightIn:seed.bowlHeightIn,
+        totalWidthIn:seed.totalWidthIn,totalLengthIn:seed.totalLengthIn,totalHeightIn:seed.totalHeightIn,
+        availableColors:seed.availableColors?structuredClone(seed.availableColors):[],
         notes: seed.notes,
         history: structuredClone(seed.history ?? []),
       };
