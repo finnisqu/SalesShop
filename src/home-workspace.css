@@ -91,11 +91,11 @@
 
 /* Calendar-first Home: navigation lives in the primary tabs, creation in the header. */
 .sales-home.is-calendar-home{gap:16px}
-.sales-home-top-actions{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.sales-home-top-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;flex:0 0 auto}
 .sales-home-top-actions .sales-log-launcher{min-height:42px;padding:9px 15px;
- background:var(--ss-theme-accent,#917246);border-color:var(--ss-theme-accent,#917246);
- color:var(--ss-theme-accent-ink,#fff);font-size:13px;font-weight:800}
-.sales-home-top-actions .sales-log-launcher:hover{filter:brightness(1.08)}
+ background:var(--ss-theme-card);border:1px solid var(--ss-theme-border);
+ color:var(--ss-theme-ink);font-size:13px;font-weight:750;border-radius:9px}
+.sales-home-top-actions .sales-log-launcher:hover{background:var(--ss-theme-tint)}
 .sales-home-top-actions .quick-create-launcher{display:grid;place-items:center;
  min-width:42px;min-height:42px;border-radius:11px;font-size:21px}
 .sales-home-calendar-card{display:grid;gap:12px;padding:16px;
@@ -204,3 +204,16 @@
  .sales-home-recent-line{grid-template-columns:minmax(0,1fr) auto 10px}
  .sales-home-recent-line span{display:none}
 }
+
+/* Compact task triage uses existing secondary/chrome palette in all themes. */
+.sales-home-task-focus{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding-left:8px;
+ border-left:1px solid var(--ss-theme-border)}
+.sales-home-task-focus button{display:inline-flex;align-items:center;gap:5px;
+ min-height:39px;padding:7px 10px;border-radius:8px;border:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);font-size:11px;font-weight:700;cursor:pointer}
+.sales-home-task-focus button:hover{background:var(--ss-theme-tint)}
+.sales-home-task-focus button strong{font-variant-numeric:tabular-nums;font-weight:850}
+.sales-home-task-focus button.has-overdue strong{color:var(--ss-theme-ink)}
+.sales-home-task-focus button small{color:var(--ss-theme-muted);font-size:9px}
+@media(max-width:760px){.sales-home-task-focus{padding-left:0;border-left:0;width:100%}
+ .sales-home-task-focus button{flex:1;justify-content:center;min-height:38px}}

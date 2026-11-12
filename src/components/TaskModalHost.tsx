@@ -132,7 +132,19 @@ export function TaskModalHost(){
        <span>{task.status??'open'}</span><span>{task.priority??'normal'} priority</span>
        {task.sourceObjectId?.startsWith('deal-submit:')&&<span>Bid submission</span>}
       </div>
-      <dl><div><dt>Due</dt><dd>{task.dueDate||'No due date'}{task.dueTime?' · '+task.dueTime:''}</dd></div></dl>
+      <dl><div><dt>Due</dt><dd>{task.dueDate||'No due date'}{task.dueTime?' · '+task.dueTime:''}</dd></div>
+        {task.originalDueDate&&<div><dt>Original due date</dt><dd>{task.originalDueDate}</dd></div>}
+        {task.dueDateResponsibility==='external'&&<div><dt>Delay attribution</dt><dd>External dependency</dd></div>}
+      </dl>
+      {Boolean(task.dueDateHistory?.length)&&<details className="task-deadline-history">
+        <summary>Deadline history · {task.dueDateHistory?.length} change(s)</summary>
+        <ul>{task.dueDateHistory?.map((change,index)=><li key={index}>
+          {change.from||'Unscheduled'} → {change.to||'Unscheduled'}
+          {' · '}{change.responsibility==='external'?'External dependency':
+            change.responsibility==='internal'?'Our team':'No fault assigned'}
+          {change.reason?' · '+change.reason:''}
+        </li>)}</ul>
+      </details>
       <TaskPreviewDueControls task={task} onUpdate={update}/>
       {task.notes&&<p className="tasks-preview-notes">{task.notes}</p>}
       {normalizedSubtasks(task.subtasks).length>0&&<section className="tasks-preview-subtasks"

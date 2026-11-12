@@ -6,7 +6,7 @@ const quotes=read('components/QuotesMobileBeta.tsx');
 const table=read('components/ConnectionsTable.tsx');
 const css=read('workspace-table-control-strip.css');
 describe('Connections-style Tasks and Quotes directory rows',()=>{
- it('puts the task caption above the same full-width record toolbar as Connections',()=>{
+ it('keeps standalone Tasks caption while placing embedded status tabs inside Records table toolbar',()=>{
   const start=tasks.indexOf('className="tasks-directory-controls"');
   const end=tasks.indexOf("!scope&&<p",start);
   const intro=tasks.slice(start,end);
@@ -14,9 +14,10 @@ describe('Connections-style Tasks and Quotes directory rows',()=>{
   expect(intro).toContain('tasks-directory-caption');
   expect(intro).toContain('tasks-toolbar-slot');
   expect(intro).toContain('ref={setTaskToolbarHost}');
-  expect(tasks).toContain('toolbarTarget={taskToolbarHost}');
+  expect(tasks).toContain('toolbarTarget={embedded?undefined:taskToolbarHost}');
   expect(tasks).toContain('toolbarControls={<>');
   expect(tasks).toContain('tasks-overview-menu');
+  expect(tasks).toContain('tasks-records-tabs');
   expect(tasks).toContain('className="tasks-queue-filter"');
   expect(tasks).toContain('WorkspaceHelp page="tasks"');
   expect(css).toContain('.tasks-directory-controls .tasks-directory-caption');

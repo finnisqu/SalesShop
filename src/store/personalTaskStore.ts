@@ -47,6 +47,10 @@ function deriveSubtaskStatus(status:TaskStatus,subtasks:TaskSubtask[]):TaskStatu
 }
 export interface PersonalTask {
   id:string;title:string;dueDate?:string;dueTime?:string;sourceObjectId?:string;deletedAt?:string;workspaceScope?:string;
+  originalDueDate?:string;
+  dueDateResponsibility?:'internal'|'external'|'neutral';
+  dueDateChangeReason?:string;
+  dueDateHistory?:Array<{from?:string;to?:string;at:string;responsibility?:'internal'|'external'|'neutral';reason?:string}>;
   linked?:TaskLink;associations?:TaskAssociation[];sourceLabel?:string;sourceText?:string;
   startDate?:string;
   notes?:string;type?:TaskType;priority?:TaskPriority;status?:TaskStatus;
@@ -123,6 +127,9 @@ function sanitize(change:TaskChanges):TaskChanges {
   if('queue'in next)next.queue=trim(next.queue,80);
   if('subtasks'in next)next.subtasks=normalizedSubtasks(next.subtasks);
   if('dueDate'in next&&!validDate(next.dueDate))next.dueDate=undefined;
+  if('dueDateChangeReason'in next)next.dueDateChangeReason=trim(next.dueDateChangeReason,500);
+  if('dueDateResponsibility'in next&&!['internal','external','neutral'].includes(next.dueDateResponsibility??''))
+    next.dueDateResponsibility='neutral';
   if('startDate'in next&&!validDate(next.startDate))next.startDate=undefined;
   if('associations'in next){
     next.associations=normalizedTaskAssociations({associations:next.associations,linked:next.linked,sourceLabel:next.sourceLabel})
@@ -156,6 +163,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     const nextStatus=isProtectedBidTask(fields)&&!fields.submissionConfirmedAt&&
       proposedStatus==='completed'?'open':proposedStatus;
     const task:PersonalTask={...fields,id:'task_'+crypto.randomUUID(),title:clean,workspaceScope:scope,
+      originalDueDate:fields.dueDate,dueDateHistory:[],
       type:fields.type??'todo',priority:fields.priority??'normal',
       status:nextStatus,completedAt:nextStatus==='completed'?now:undefined,
       createdAt:now,updatedAt:now};
@@ -169,6 +177,19 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       task.workspaceScope===scope&&!task.deletedAt);
     if(!original)return;
     const now=nextTaskEditTimestamp(original.updatedAt),patch=sanitize(changes);
+    // Once recorded, the original due date and prior revisions cannot be rewritten.
+    delete patch.originalDueDate;delete patch.dueDateHistory;
+    if(isProtectedBidTask(original)){
+      // Generated bid task dates are owned by the linked Deal; never log a fake revision.
+      delete patch.dueDate;delete patch.dueDateResponsibility;delete patch.dueDateChangeReason;
+    }
+    const dueChanged='dueDate'in patch&&(patch.dueDate??undefined)!==(original.dueDate??undefined);
+    const originalDueDate=original.originalDueDate??(original.dueDate||patch.dueDate);
+    const dueDateHistory=dueChanged&&Boolean(original.dueDate)?[...(original.dueDateHistory??[]),{
+      from:original.dueDate,to:patch.dueDate,at:now,
+      responsibility:patch.dueDateResponsibility??'neutral',
+      reason:patch.dueDateChangeReason?.trim()||undefined,
+    }]:original.dueDateHistory;
     // Do not allow changing the protected identity or marking a submission task
     // complete via editor, bulk actions, checklists, or manual Task controls.
     if(isProtectedBidTask(original)){
@@ -183,7 +204,11 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
         patch.subtasks??normalizedSubtasks(task.subtasks));
       const status=isProtectedBidTask(task)&&!task.submissionConfirmedAt&&
         task.status!=='completed'&&proposed==='completed'?'open':proposed;
-      return {...task,...patch,title:patch.title||task.title,
+      return {...task,...patch,
+        ...(dueChanged?{originalDueDate,dueDateHistory,
+          dueDateResponsibility:patch.dueDateResponsibility??'neutral',
+          dueDateChangeReason:patch.dueDateChangeReason??undefined}:{}),
+        title:patch.title||task.title,
         completedAt:status==='completed'?(task.completedAt??now):undefined,
         status,updatedAt:now};
     });
@@ -254,9 +279,21 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
        return {...task,status:'canceled' as const,updatedAt:now};
       }
       // An intentional cancel is a user override, not a retry condition.
-      if(task.status==='canceled'||task.dueDate===deal.dueDate)return task;
+      if(task.status==='canceled')return task;
+      if(task.dueDate===deal.dueDate){
+        if(task.originalDueDate||!deal.originalDueDate)return task;
+        changed=true;return {...task,originalDueDate:deal.originalDueDate,updatedAt:now};
+      }
       changed=true;
-      return {...task,dueDate:deal.dueDate,updatedAt:now};
+      return {...task,dueDate:deal.dueDate,
+        originalDueDate:task.originalDueDate??deal.originalDueDate??task.dueDate,
+        dueDateResponsibility:deal.dueDateResponsibility??'neutral',
+        dueDateHistory:[...(task.dueDateHistory??[]),{
+          from:task.dueDate,to:deal.dueDate,at:now,
+          responsibility:deal.dueDateResponsibility??'neutral',
+          reason:deal.dueDateChangeReason,
+        }],
+        updatedAt:now};
     });
     for(const deal of due.values()){
       const id='task_deal_submit_'+deal.id;
@@ -269,6 +306,9 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       changed=true;
       updated.unshift({
        id,title:'Submit quote · '+deal.name,dueDate:deal.dueDate,
+        originalDueDate:deal.originalDueDate??deal.dueDate,
+        dueDateResponsibility:deal.dueDateResponsibility??'neutral',
+        dueDateHistory:[],
        type:'todo',priority:'normal',status:'open',queue:'Bid submissions',
        sourceObjectId:'deal-submit:'+deal.id,
        linked:{type:'project',id:deal.id},

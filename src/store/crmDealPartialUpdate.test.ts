@@ -37,6 +37,30 @@ describe('CRM Deal inline and partial edit data integrity',()=>{
     expect(useCrmStore.getState().activities).toHaveLength(0);
   });
 
+
+  it('preserves the first bid date through repeated internally and externally caused reschedules',()=>{
+    useCrmStore.getState().updateProject('deal-a',{dueDate:'2026-11-20'});
+    expect(current().originalDueDate).toBe('2026-11-20');
+    useCrmStore.getState().updateProject('deal-a',{
+      dueDate:'2026-11-25',dueDateResponsibility:'external',dueDateChangeReason:'Builder delayed selection',
+    });
+    expect(current()).toMatchObject({dueDate:'2026-11-25',originalDueDate:'2026-11-20',
+      dueDateResponsibility:'external'});
+    expect(current().dueDateHistory?.at(-1)).toMatchObject({
+      from:'2026-11-20',to:'2026-11-25',responsibility:'external',reason:'Builder delayed selection'});
+    useCrmStore.getState().updateProject('deal-a',{dueDate:'2026-11-28'});
+    expect(current().originalDueDate).toBe('2026-11-20');
+    expect(current().dueDateHistory?.at(-1)?.responsibility).toBe('neutral');
+    expect(current().dueDateHistory).toHaveLength(2);
+  });
+
+  it('does not invent a historical original date for older imported Deals',()=>{
+    useCrmStore.setState({projects:[{...startingDeal,dueDate:'2026-11-11'}]});
+    expect(current().originalDueDate).toBeUndefined();
+    useCrmStore.getState().updateProject('deal-a',{dueDate:'2026-11-19'});
+    expect(current().originalDueDate).toBe('2026-11-11');
+  });
+
   it('supports setting zero and intentionally clearing an amount',()=>{
     useCrmStore.getState().updateProject('deal-a',{amount:0});
     expect(current().amount).toBe(0);

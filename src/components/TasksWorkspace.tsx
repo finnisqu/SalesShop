@@ -66,6 +66,7 @@ function reminderValue(value?:string){
 type TaskEditorRecovery={
  title:string;type:TaskType;priority:TaskPriority;status:TaskStatus;
  dueDate:string;startDate:string;dueTime:string;reminderAt:string;
+ dueDateResponsibility?:'internal'|'external'|'neutral';dueDateChangeReason?:string;
  queue:string;notes:string;selectedLinks:TaskAssociation[];subtasks:TaskSubtask[];newSubtask?:string;
 };
 type ActiveTaskDraft={kind:'new'|'existing';id?:string;draftIdentity?:string};
@@ -94,6 +95,9 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [dueDate,setDueDate]=useState(initialTaskId
    ?recovered?.dueDate??draft.dueDate??''
    :draft.dueDate??recovered?.dueDate??'');
+  const [dueDateResponsibility,setDueDateResponsibility]=useState<'internal'|'external'|'neutral'>(
+    recovered?.dueDateResponsibility??draft.dueDateResponsibility??'neutral');
+  const [dueDateChangeReason,setDueDateChangeReason]=useState(recovered?.dueDateChangeReason??draft.dueDateChangeReason??'');
   const [startDate,setStartDate]=useState(recovered?.startDate??draft.startDate??'');
   const [dueTime,setDueTime]=useState(recovered?.dueTime??draft.dueTime??'');
   const [reminderAt,setReminderAt]=useState(recovered?.reminderAt??reminderValue(draft.reminderAt));
@@ -113,13 +117,13 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>recovered?.selectedLinks??normalizedTaskAssociations(initial));
   // Every form change is durable locally before submission. No unsaved task is sent to cloud.
   useEffect(()=>{
-   writeSavedDraft(scopeKey,{title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks,newSubtask});
+   writeSavedDraft(scopeKey,{title,type,priority,status,dueDate,dueDateResponsibility,dueDateChangeReason,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks,newSubtask});
    writeSavedDraft<ActiveTaskDraft>(activeKey,{
     kind:initialTaskId?'existing':'new',
     id:initialTaskId??undefined,
     draftIdentity:initialTaskId?undefined:draftIdentity,
    });
-  },[scopeKey,activeKey,title,type,priority,status,dueDate,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks,newSubtask]);
+  },[scopeKey,activeKey,title,type,priority,status,dueDate,dueDateResponsibility,dueDateChangeReason,startDate,dueTime,reminderAt,queue,notes,selectedLinks,subtasks,newSubtask]);
   const close=()=>{clearSavedDraft(activeKey);onCancel();};
   const editorRef=useDismissibleLayer<HTMLFormElement>(true,close);
   const discard=()=>{clearSavedDraft(scopeKey);close();};
@@ -152,6 +156,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
         [...subtasks,{id:'sub_'+crypto.randomUUID(),title:pending,completed:false}]:subtasks;
       onSave({title:title.trim(),type,priority,status,startDate:startDate||undefined,dueDate:dueDate||undefined,
         dueTime:dueDate?dueTime||undefined:undefined,reminderAt:normalizeLocalReminder(reminderAt),
+        dueDateResponsibility,dueDateChangeReason:dueDateChangeReason.trim()||undefined,
         notes,queue,subtasks:savedSubtasks,associations:selectedLinks,
         linked:selectedLinks[0]?{type:selectedLinks[0].type,id:selectedLinks[0].id}:undefined,
         sourceLabel:selectedLinks[0]?.label??sourceLabel,sourceText,sourceObjectId});
@@ -200,10 +205,23 @@ export function TaskEditor({initial,onCancel,onSave}:{
        <div className="tasks-editor-grid tasks-editor-date-grid">
         <label>Start on<input type="date" value={startDate} title="Optional start date"
          onChange={e=>setStartDate(e.target.value)}/></label>
-        <label>Due date<input type="date" value={dueDate} title="Task deadline"
-         onChange={e=>setDueDate(e.target.value)}/></label>
+        <label>Current due date<input type="date" value={dueDate} title="Task deadline"
+         disabled={isProtectedBidTask(initial)}
+         onChange={e=>{setDueDate(e.target.value);setDueDateResponsibility('neutral');setDueDateChangeReason('');}}/></label>
         <label>Due time<input type="time" disabled={!dueDate} value={dueTime}
          onChange={e=>setDueTime(e.target.value)}/></label>
+        {initialTaskId&&<label>Original due date
+         <input type="text" readOnly value={draft.originalDueDate??'Not previously recorded'}/></label>}
+        {!isProtectedBidTask(initial)&&<>
+         <label>Deadline responsibility<select value={dueDateResponsibility}
+           onChange={e=>setDueDateResponsibility(e.target.value as 'internal'|'external'|'neutral')}>
+           <option value="neutral">Unassigned / no team fault</option>
+           <option value="external">Client / external dependency</option>
+           <option value="internal">Our team</option>
+         </select></label>
+         <label>Reschedule reason<input maxLength={500} value={dueDateChangeReason}
+           onChange={e=>setDueDateChangeReason(e.target.value)} placeholder="Optional explanation"/></label>
+        </>}
        </div>
        <button type="button" className="tasks-editor-reminder-toggle"
         aria-expanded={showReminder} onClick={()=>setShowReminder(value=>!value)}>
@@ -261,7 +279,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
   </div>;
 }
 
-export function TasksWorkspace(){
+export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:boolean;externalQuery?:string}={}){
   const mode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),orgId=useAuthStore(s=>s.organizationId);
   const teamRole=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
   const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
@@ -288,8 +306,18 @@ export function TasksWorkspace(){
    previousScope.current=scope;
    setEditing(null);setViewingId(null);setExternalDealId(null);setTaskNotice(null);
   },[scope]);
-  const [filter,setFilter]=useState<Filter>('active');
+  const [filter,setFilter]=useState<Filter>(()=>{
+  try{
+   const target=sessionStorage.getItem('salesshop-records-task-filter-v1');
+   if(target==='overdue'||target==='active'){
+    sessionStorage.removeItem('salesshop-records-task-filter-v1');
+    return target;
+   }
+  }catch{/* optional browser storage */}
+  return 'active';
+ });
   const [search,setSearch]=useState('');
+  const searchTerm=embedded?externalQuery:search;
   const [taskToolbarHost,setTaskToolbarHost]=useState<HTMLDivElement|null>(null);
   const today=localDay();
   useEffect(()=>{
@@ -350,14 +378,14 @@ export function TasksWorkspace(){
     if(filter==='completed'&&!finished)return false;
     if(queueFilter!=='all'&&(t.queue??'')!==queueFilter)return false;
     return (t.title+' '+(t.notes??'')+' '+(t.sourceLabel??'')+' '+
-      (t.associations??[]).map(x=>x.label??'').join(' ')+' '+(t.queue??'')).toLowerCase().includes(search.trim().toLowerCase());
+      (t.associations??[]).map(x=>x.label??'').join(' ')+' '+(t.queue??'')).toLowerCase().includes(searchTerm.trim().toLowerCase());
   }).sort((a,b)=>{
     const aDone=taskComplete(a),bDone=taskComplete(b);
     if(aDone!==bDone)return aDone?1:-1;
     const weight=(p?:TaskPriority)=>({urgent:0,high:1,normal:2,low:3})[p??'normal'];
     return (a.dueDate??'9999').localeCompare(b.dueDate??'9999')||
       weight(a.priority)-weight(b.priority)||b.updatedAt.localeCompare(a.updatedAt);
-  }),[own,filter,search,queueFilter,today]);
+  }),[own,filter,searchTerm,queueFilter,today]);
   // Calendar navigation is preview-first, with editing explicitly chosen from the preview.
   useEffect(()=>{
    const show=()=>{
@@ -395,7 +423,7 @@ export function TasksWorkspace(){
   };
   const quickDue=(id:string,preset:TaskDuePreset)=>{
     const task=own.find(item=>item.id===id);
-    if(!task||taskComplete(task)||task.status==='canceled')return;
+    if(!task||taskComplete(task)||task.status==='canceled'||isProtectedBidTask(task))return;
     const date=taskDuePresetDate(today,preset);
     // Keep an existing due-time when moving a deadline; clearing the date also clears its time.
     update(id,{dueDate:date,dueTime:date?task.dueTime:undefined});
@@ -411,8 +439,8 @@ export function TasksWorkspace(){
     setTaskNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
   };
   if(rolePreview)return <main className="tasks-workspace"><h1>Tasks</h1><p>Personal tasks are not shown in role preview.</p></main>;
-  return <main className="tasks-workspace" aria-label="SalesShop tasks">
-    <WorkspaceHeader title="Tasks" help={<WorkspaceHelp page="tasks" section={filter}/>} className="tasks-header"
+  return <main className={"tasks-workspace"+(embedded?" is-records-embedded":"")} aria-label="SalesShop tasks">
+    {!embedded&&<WorkspaceHeader title="Tasks" help={<WorkspaceHelp page="tasks" section={filter}/>} className="tasks-header"
       mobileTabs={[
        {value:'active',label:'Open'},{value:'completed',label:'Completed'},
       ]} mobileTabValue={filter} onMobileTabChange={value=>setFilter(value as typeof filter)}
@@ -436,10 +464,15 @@ export function TasksWorkspace(){
         value={search} onChange={event=>setSearch(event.target.value)}/>}
       primary={<button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})}
         disabled={!scope}>+ Task</button>}
-    />
+    />}
     <div className="tasks-directory-content">
     <RecordFormFeedback notice={taskNotice} className="tasks-save-feedback"/>
-    <section className="tasks-directory-controls" aria-label="Task directory controls">
+    {embedded&&<nav className="tasks-records-mobile-tabs tasks-records-tabs" aria-label="Task status on mobile">
+      {([['active','Open'],['completed','Completed']] as const).map(([key,label])=>
+       <button type="button" key={key} aria-pressed={filter===key}
+        className={filter===key?'active':''} onClick={()=>setFilter(key)}>{label}</button>)}
+    </nav>}
+    {!embedded&&<section className="tasks-directory-controls" aria-label="Task directory controls">
       <p className="tasks-directory-caption">{visible.length} {visible.length===1?'task':'tasks'} · {counts.active} open · {counts.today} due today · {counts.overdue} overdue</p>
       <div className="tasks-toolbar-slot" ref={setTaskToolbarHost}/>
       <div className="tasks-mobile-controls">
@@ -460,14 +493,19 @@ export function TasksWorkspace(){
           </label>
         </div>
       </div>
-    </section>
+    </section>}
     {!scope&&<p className="tasks-state">Your personal Tasks workspace will load after you sign in to a company.</p>}
     {scope&&storedScope!==scope&&<WorkspaceLoadingState title="Loading Tasks"
       detail="Opening your personal task list for this workspace…" />}
     {scope&&storedScope===scope&&<div className="tasks-table-container">
       <ConnectionsTable tableKey="tasks" columns={taskColumns} rows={taskTableRows}
-        toolbarTarget={taskToolbarHost}
+        toolbarTarget={embedded?undefined:taskToolbarHost}
         toolbarControls={<>
+          {embedded&&<nav className="tasks-records-tabs" aria-label="Task status">
+            {([['active','Open'],['completed','Completed']] as const).map(([key,label])=>
+             <button type="button" key={key} aria-pressed={filter===key} className={filter===key?'active':''}
+              onClick={()=>setFilter(key)}>{label}</button>)}
+          </nav>}
           <details className="tasks-overview-menu">
             <summary>Overview <WorkspaceChromeIcon name="chevron-down"/></summary>
             <div className="tasks-summary" aria-label="Task counts">
@@ -611,9 +649,20 @@ export function TasksWorkspace(){
         </div>
         <dl>
          <div><dt>Due</dt><dd>{viewing.dueDate?formatDate(viewing.dueDate)+(viewing.dueTime?' · '+viewing.dueTime:''):'No due date'}</dd></div>
+         {viewing.originalDueDate&&<div><dt>Original due</dt><dd>{formatDate(viewing.originalDueDate)}</dd></div>}
+         {viewing.dueDateResponsibility==='external'&&<div><dt>Deadline shift</dt><dd>External dependency</dd></div>
          {viewing.startDate&&<div><dt>Start</dt><dd>{formatDate(viewing.startDate)}</dd></div>}
         </dl>
         <TaskPreviewDueControls task={viewing} onUpdate={update}/>
+        {Boolean(viewing.dueDateHistory?.length)&&<details className="task-deadline-history">
+         <summary>Deadline history · {viewing.dueDateHistory?.length} change(s)</summary>
+         <ul>{viewing.dueDateHistory?.map((change,index)=><li key={index}>
+          {change.from||'Unscheduled'} → {change.to||'Unscheduled'}
+          {' · '}{change.responsibility==='external'?'External dependency':
+            change.responsibility==='internal'?'Our team':'No fault assigned'}
+          {change.reason?' · '+change.reason:''}
+         </li>)}</ul>
+        </details>
         {viewing.notes&&<p className="tasks-preview-notes">{viewing.notes}</p>}
         {normalizedSubtasks(viewing.subtasks).length>0&&<section className="tasks-preview-subtasks" aria-label="Subtasks">
          <strong>Checklist · {subtaskProgress(viewing).done}/{subtaskProgress(viewing).total}</strong>

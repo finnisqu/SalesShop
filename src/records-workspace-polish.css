@@ -1,0 +1,99 @@
+/* Records: keep the embedded Tasks directory in the same page frame. */
+.sales-app.view-dashboard .connections-directory-layout .tasks-workspace.is-records-embedded{
+ display:block;flex:none;width:100%;height:auto;min-height:0;
+ box-sizing:border-box;padding:0;margin:0;background:transparent;
+ color:var(--ss-theme-ink);overflow:visible;
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-directory-content{
+ max-width:none;width:100%;min-width:0;padding:0;margin:0;
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-directory-controls,
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-table-container{
+ max-width:none;width:100%;min-width:0;margin:0;
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-directory-controls{
+ display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+ padding:10px 13px;border:1px solid var(--ss-theme-border);
+ border-radius:10px 10px 0 0;background:var(--ss-theme-base);
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-directory-caption{
+ margin:0;color:var(--ss-theme-muted);font-size:11px;
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-tabs{
+ display:inline-flex;align-items:center;gap:4px;padding:3px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;background:var(--ss-theme-tint);
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-tabs button{
+ min-height:33px;padding:6px 13px;border:1px solid transparent;border-radius:6px;
+ background:transparent;color:var(--ss-theme-ink);
+ font:750 12px/1.2 var(--ss-font-body,system-ui,sans-serif);
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-tabs button.active{
+ background:var(--ss-theme-base);border-color:var(--ss-theme-border);
+ box-shadow:0 1px 3px rgba(0,0,0,.06);
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-toolbar-slot{
+ margin-left:auto;min-width:0;
+}
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-list{max-width:none}
+.sales-app.view-dashboard .connections-pipeline-dropdown{gap:0;}
+.sales-app.view-dashboard .connections-pipeline-dropdown select{min-height:35px;}
+
+/* One owning page scrollbar; no nested vertical bars inside worktables. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-reference-layout :is(
+    .rates-reference-table-wrap,.materials-reference-table-wrap,.catalog-product-scroll,.connections-table-scroll
+  ),
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout :is(.connections-table-scroll,.tasks-table-container .connections-table-scroll){
+  max-height:none!important;height:auto!important;
+  overflow:visible!important;overscroll-behavior:initial;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-reference-layout :is(
+   .rates-reference-table,.materials-reference-table,.connections-data-table
+  ) thead th,
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-data-table thead th{
+  position:sticky;top:0;z-index:3;
+  background:var(--ss-theme-base);
+  box-shadow:0 1px 0 var(--ss-theme-border);
+ }
+ /* Avoid a sticky header concealing inline filters or pin boards. */
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-reference-layout .catalog-card-header{z-index:5;}
+}
+@media(max-width:820px){
+ .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-directory-controls{
+  border-radius:8px;align-items:flex-start;
+ }
+ .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-tabs{width:100%}
+ .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-tabs button{flex:1}
+ .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-toolbar-slot{width:100%}
+}
+
+/* The desktop Tasks table is hidden on phones; keep the status selector reachable. */
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-mobile-tabs{display:none}
+@media(max-width:820px){
+ .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-mobile-tabs{
+  display:flex;width:100%;box-sizing:border-box;margin:0 0 9px;
+ }
+ .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-mobile-tabs button{
+  flex:1;min-height:40px;
+ }
+}
+
+/* On narrow displays, only horizontal column access is scrollable. Pages,
+   never table wells, own vertical scrolling regardless of records shown. */
+@media(max-width:820px){
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-reference-layout :is(
+   .rates-reference-table-wrap,.materials-reference-table-wrap,.catalog-product-scroll,.connections-table-scroll
+  ),
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout .connections-table-scroll{
+  height:auto!important;max-height:none!important;
+  overflow-y:visible!important;overscroll-behavior-y:auto!important;
+ }
+}

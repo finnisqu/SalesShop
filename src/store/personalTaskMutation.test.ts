@@ -39,6 +39,33 @@ describe('fast mobile Task edits and private cloud merge',()=>{
     }finally{vi.useRealTimers();}
   });
 
+
+  it('stores immutable original Task deadlines through multiple reschedules and attribution changes',()=>{
+    usePersonalTaskStore.setState({tasks:[task('task-a',{dueDate:'2026-11-12'})]});
+    usePersonalTaskStore.getState().updateTask('task-a',{
+      dueDate:'2026-11-17',dueDateResponsibility:'external',dueDateChangeReason:'Waiting for GC',
+    });
+    usePersonalTaskStore.getState().updateTask('task-a',{dueDate:'2026-11-20'});
+    const current=usePersonalTaskStore.getState().tasks[0];
+    expect(current).toMatchObject({dueDate:'2026-11-20',originalDueDate:'2026-11-12'});
+    expect(current.dueDateHistory).toHaveLength(2);
+    expect(current.dueDateHistory?.[0]).toMatchObject({responsibility:'external',reason:'Waiting for GC'});
+    expect(current.dueDateHistory?.[1]?.responsibility).toBe('neutral');
+    usePersonalTaskStore.getState().updateTask('task-a',{originalDueDate:'2026-12-01'});
+    expect(usePersonalTaskStore.getState().tasks[0].originalDueDate).toBe('2026-11-12');
+  });
+
+  it('keeps auto bid Task deadlines controlled by their Deal, not manual Task edits',()=>{
+    usePersonalTaskStore.setState({tasks:[task('bid',{
+      sourceObjectId:'deal-submit:deal-a',dueDate:'2026-11-15',originalDueDate:'2026-11-10'
+    })]});
+    usePersonalTaskStore.getState().updateTask('bid',{dueDate:'2026-11-30'});
+    const current=usePersonalTaskStore.getState().tasks[0];
+    expect(current.dueDate).toBe('2026-11-15');
+    expect(current.originalDueDate).toBe('2026-11-10');
+    expect(current.dueDateHistory??[]).toHaveLength(0);
+  });
+
   it('does not mutate a deleted task or cross-scope record',()=>{
     const deleted=task('deleted',{deletedAt:stamp});
     const foreign=task('foreign',{workspaceScope:'org:another:user:owner'});
