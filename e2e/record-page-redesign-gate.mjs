@@ -7,7 +7,7 @@ const contains = (text, pieces) => pieces.every(piece=>text.includes(piece));
 const app=source('src/App.tsx');
 const start=app.indexOf('<nav className="app-tabs"');
 const tabs=app.slice(start,app.indexOf('</nav>',start));
-const names=['Home','Records','Quotes','Catalog','Notebook'];
+const names=['Home','Records','Catalog','Notebook'];
 const positions=names.map(name=>tabs.indexOf('>'+name+'</button>'));
 assert(positions.every(position=>position>=0),'Missing desktop navigation item');
 assert.deepEqual(positions,[...positions].sort((a,b)=>a-b),'Incorrect desktop navigation order');
@@ -38,12 +38,30 @@ assert(contains(board,[
 // Records retains the Board and Table directory's shared search/filter results,
 // record-preview workflow, and consolidated Tasks and Activities navigation.
 const connections=source('src/components/Connections.tsx');
+const recordsNav=source('src/components/RecordsSectionNav.tsx');
+const beta=source('src/components/QuotesMobileBeta.tsx');
 assert(contains(connections,[
   '<WorkspaceHeader title="Records"',
-  "{ id: 'tasks', label: 'Tasks'",
-  "{ id: 'activity', label: 'Activities'",
+  '<RecordsSectionNav selected={tab as RecordsSection}',
+  "if(next==='quotes'){setView('quotes');return;}",
   '<TasksWorkspace embedded externalQuery={query}/>',
-]),'Records navigation lost its Tasks or Activities tabs');
+]),'Records navigation must open the real Quotes workspace, preserving Tasks');
+assert(contains(recordsNav,[
+  "id:'companies',label:'Companies'",
+  "id:'people',label:'People'",
+  "id:'deals',label:'Deals'",
+  "id:'quotes',label:'Quotes'",
+  "id:'tasks',label:'Tasks'",
+  "id:'suppliers',label:'Suppliers'",
+  "id:'pages',label:'Pages'",
+  "id:'activity',label:'Activity'",
+]),'Records section tabs or More directories changed');
+assert(contains(beta,[
+  '<RecordsSectionNav selected="quotes"',
+  'mobileTabs={RECORDS_SECTIONS.map',
+  'Filter quote document type',
+  'QuoteMatrixBuilder',
+]),'Full Quotes library must remain accessible under Records');
 const companiesBoard=source('src/components/AccountsBoard.tsx');
 const recordShell=source('src/components/RecordPageLayout.tsx');
 assert(contains(connections,[
