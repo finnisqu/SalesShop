@@ -686,7 +686,8 @@ export function Connections() {
           </div>}
           {tab==='deals'&&layouts.deals==='table'&&<Button variant="primary" className="connections-add"
             onClick={()=>setDealCreating(value=>!value)}>+ Deal</Button>}
-          $1
+          {tab==='activity'&&<Button variant="primary" className="connections-add"
+            onClick={()=>openActivityComposer({})}>+ Activity</Button>}
           {tab==='tasks'&&<Button variant="primary" className="connections-add"
             onClick={()=>{
               try{sessionStorage.setItem('salesshop-create-task-v1','1');}catch{}
@@ -719,7 +720,7 @@ export function Connections() {
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab==='tasks'&&<TasksWorkspace embedded externalQuery={query}/>}
           {tab==='pages'&&<RecordsPagesDirectory query={query}/>}
-          $1
+          {tab==='companies'&&layouts.companies==='board'&&
             <div className="connections-board-host" aria-label="Company board layout">
               <Board embeddedMode="accounts" searchQuery={query}
                 allowedCompanyIds={allowedCompanyIds} companyToolbarControl={companyFilterControl}
