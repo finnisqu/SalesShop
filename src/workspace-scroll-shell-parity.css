@@ -37,7 +37,18 @@
 }
 :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content {
   gap:12px;
-  padding:14px 0 32px;
+  padding:0 0 32px;
+}
+/* Records: the top rhythm belongs OUTSIDE the scrollport, not inside
+ * its padding. Scrolling rows used to show through the padded region above
+ * the frozen table header. Margin reduces the actual scrollport viewport,
+ * so overflow is clipped before it can paint into the page-header gap.
+ * This is structural, not an overlay or an oversized header mask. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-content{
+  margin-top:var(--ss-workspace-content-top,14px);
+  padding-top:0!important;
+ }
 }
 :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-content {
   gap:8px;
