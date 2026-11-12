@@ -122,6 +122,7 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
   }catch(e){setError(e instanceof Error?e.message:'Could not add role.');}
  };
  return <section className="our-org-directory">
+  <div className="our-org-unified-toolbar">
   <div className="our-org-heading">
    <div><h2>Our Organization</h2>
     <p>Employees and subcontractors. Separate from customer and partner contacts; not a Team login directory.</p>
@@ -130,13 +131,14 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
     {ownCompany&&<button type="button" className="our-org-self-company-link"
        onClick={()=>openCompany(ownCompany.id)}>
        View {ownCompany.name} · SELF ↗</button>}
-    {editable&&<span className="our-org-heading-note">Use + Person in the header to add someone.</span>}
+
    </div>
   </div>
   <div className="our-org-tabs" role="group" aria-label="Internal people type">
    {OUR_ORG_GROUPS.map(item=><button type="button" key={item.id}
     aria-pressed={group===item.id} onClick={()=>{setGroup(item.id);setShowEditor(false);setError('');}}>
     {item.title} <span>{count(item.id)}</span></button>)}
+  </div>
   </div>
   {showEditor&&editable&&<form ref={formRef} className="our-org-form" onSubmit={save}>
    <div className="our-org-form-title"><strong>{editingId?'Edit':'Add'} person</strong>

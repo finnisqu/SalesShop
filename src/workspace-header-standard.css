@@ -297,3 +297,72 @@
 @media(max-width:760px){
  :root[data-sales-theme] .sales-app .ss-workspace-more__menu>button{min-height:44px}
 }
+
+/* Menu taxonomy is shared by Quotes, Catalog, Tasks and Connections. */
+:root[data-sales-theme] .sales-app .ss-workspace-more__entry{display:grid;min-width:0;}
+:root[data-sales-theme] .sales-app .ss-workspace-more__entry>button{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ min-height:40px;width:100%;padding:9px 11px;border:0;border-radius:var(--ss-ui-row-radius,7px);
+ background:transparent;color:var(--ss-theme-ink);text-align:left;
+ font:650 12px/1.3 var(--ss-font-body,system-ui,sans-serif);cursor:pointer;
+}
+:root[data-sales-theme] .sales-app .ss-workspace-more__entry>button:is(:hover,[aria-pressed="true"]){
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app .ss-workspace-more__entry>button:disabled{opacity:.46;cursor:not-allowed;}
+:root[data-sales-theme] .sales-app .ss-workspace-more__section{
+ margin:7px 5px 3px;padding:10px 6px 4px;
+ border-top:1px solid var(--ss-theme-border);
+ font:750 10px/1.2 var(--ss-font-body,system-ui,sans-serif);
+ text-transform:uppercase;letter-spacing:.07em;color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app .ss-workspace-more__entry:first-child .ss-workspace-more__section{
+ margin-top:0;padding-top:5px;border-top:0;
+}
+/* Protect descenders such as g, p and y across all standard workspace headings. */
+:root[data-sales-theme] .sales-app .ss-workspace-header__intro h1{
+ line-height:1.27!important;overflow:visible!important;text-overflow:clip!important;
+ padding-block:2px;max-height:none!important;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app .ss-workspace-more__entry>button{min-height:44px;}
+}
+
+/* A compact Materials-specific action strip lives on the existing header row. */
+:root[data-sales-theme] .sales-app .catalog-header .ss-workspace-header__intro{
+ overflow:visible;gap:8px;
+}
+:root[data-sales-theme] .sales-app .catalog-materials-header-slot{display:flex;min-width:0;align-items:center;}
+:root[data-sales-theme] .sales-app .catalog-materials-header-tools{
+ display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app .catalog-materials-header-tools :is(button,summary,select){
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ min-height:32px;height:32px;max-height:32px;
+ padding:5px 8px;margin:0;border:1px solid var(--ss-theme-border);
+ border-radius:7px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:720 10px/1.25 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app .catalog-materials-header-tools .catalog-header-edit{
+ background:var(--ss-theme-accent);color:var(--ss-theme-contrast);border-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme] .sales-app .catalog-materials-header-tools .rates-filter-menu{
+ position:relative;min-width:0;
+}
+:root[data-sales-theme] .sales-app .catalog-materials-header-tools .rates-filter-popover{
+ position:absolute;z-index:100;top:calc(100% + 6px);left:0;width:min(350px,85vw);
+ max-height:65dvh;overflow-y:auto;
+}
+:root[data-sales-theme] .sales-app .catalog-materials-header-tools .catalog-header-inactive{
+ display:flex;align-items:center;gap:3px;font-size:10px;
+}
+:root[data-sales-theme] .sales-app .catalog-materials-header-tools .catalog-header-sort select{
+ width:92px;min-width:0;padding-inline:5px;
+}
+@media(max-width:1399px){
+ :root[data-sales-theme] .sales-app .catalog-materials-header-tools{gap:4px;}
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app .catalog-materials-header-slot{display:none}
+}

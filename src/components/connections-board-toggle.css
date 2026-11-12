@@ -221,3 +221,12 @@
   display:flex!important;
  }
 }
+
+/* Board and Table use the same centered workspace width on desktop. */
+@media(min-width:761px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-board-host{
+  width:min(100%,var(--ss-workspace-width,1360px));
+  max-width:var(--ss-workspace-width,1360px);
+  margin-inline:auto;
+ }
+}

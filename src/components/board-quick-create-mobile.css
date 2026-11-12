@@ -90,3 +90,46 @@
 .board-create-fields{max-height:65vh;overflow-y:auto;overscroll-behavior:contain}
 .board-create-error{color:var(--ss-danger,#b33);font-size:12px}
 @media(max-width:760px){.board-create-details input[type="date"]{font-size:16px;min-height:44px}}
+
+/* Picker buttons must use the app's input/button language even though this dialog
+   is portaled to the document body (outside .sales-app style selectors). */
+:root[data-sales-theme] .board-create-sheet .board-create-details
+ :is(.ss-unified-picker-trigger,.ss-unified-picker-create,.ss-unified-picker-results>button,
+ .ss-record-association-current>button,.board-create-chips>button){
+ box-sizing:border-box;min-height:39px;
+ padding:9px 11px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:650 12px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ text-align:left;cursor:pointer;
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details .ss-unified-picker-trigger{
+ display:flex;align-items:center;justify-content:space-between;
+ width:100%;background:var(--ss-theme-card);border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details .ss-unified-picker-panel{
+ display:grid;gap:8px;max-height:260px;padding:10px;
+ background:var(--ss-theme-card);border:1px solid var(--ss-theme-border);border-radius:10px;
+ box-shadow:0 8px 24px #0002;
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details
+ :is(.ss-unified-picker-panel input,.ss-record-association-current){
+ box-sizing:border-box;width:100%;min-width:0;min-height:41px;
+ padding:9px 11px;border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:500 12px/1.3 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details .ss-unified-picker-results{
+ display:grid;gap:4px;min-width:0;max-height:170px;overflow:auto;
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details .ss-unified-picker-results>button{
+ display:grid;gap:3px;width:100%;
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details input[type="date"]{
+ box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:9px 11px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);font:500 13px/1.3 var(--ss-font-body);
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details .ss-unified-picker-trigger:focus-visible{
+ outline:2px solid var(--ss-focus);outline-offset:2px;
+}

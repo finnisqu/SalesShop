@@ -15,8 +15,6 @@ import {
 } from '../types/sink';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
-import { CatalogAddToQuoteButton, CatalogQuoteInsert } from './CatalogQuoteInsert';
-import type { CatalogQuoteSource } from '../services/catalogQuoteInsertion';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const MOUNT_TYPES: Array<[SinkMountType, string]> = [
@@ -60,7 +58,6 @@ export function SinksWorkspace({ embedded = false,externalQuery }: { embedded?: 
 
   const [editing, setEditing] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
-  const [quoteSource, setQuoteSource] = useState<CatalogQuoteSource | null>(null);
   const [expandedMobileSinkId, setExpandedMobileSinkId] = useState<string | null>(null);
   const [isMobileCatalog, setIsMobileCatalog] = useState(
     () => embedded && typeof window !== 'undefined' && window.matchMedia(PHONE_LAYOUT_QUERY).matches,
@@ -221,7 +218,6 @@ export function SinksWorkspace({ embedded = false,externalQuery }: { embedded?: 
                           {variant.history.length > 1 && <div><span>Price versions</span><strong>{variant.history.length}</strong></div>}
                         </div>
                       )}
-                      {!editing && variant.active && <CatalogAddToQuoteButton onClick={() => setQuoteSource({ kind: 'sink', model: selected, variantId: variant.id })} />}
                     </article>
                   ))}
                 </div>
@@ -359,7 +355,6 @@ export function SinksWorkspace({ embedded = false,externalQuery }: { embedded?: 
 
         {!isMobileCatalog && renderSinkDetail(selected)}
       </div>
-    {quoteSource && <CatalogQuoteInsert source={quoteSource} onClose={() => setQuoteSource(null)} />}
     </main>
   );
 }

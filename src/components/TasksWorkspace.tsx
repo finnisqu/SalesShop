@@ -422,12 +422,12 @@ export function TasksWorkspace(){
            aria-pressed={filter===key} onClick={()=>setFilter(key)}>{label}</button>)}
       </nav>}
       more={<WorkspaceMoreMenu items={[
-        {label:'Due today',onClick:()=>setFilter('today'),active:filter==='today'},
+        {section:'Due date filters',label:'Due today',onClick:()=>setFilter('today'),active:filter==='today'},
         {label:'Upcoming tasks',onClick:()=>setFilter('upcoming'),active:filter==='upcoming'},
         {label:'Overdue tasks',onClick:()=>setFilter('overdue'),active:filter==='overdue'},
         {label:'Start later',onClick:()=>setFilter('scheduled'),active:filter==='scheduled'},
-        {label:'All history',onClick:()=>setFilter('all'),active:filter==='all'},
-        {label:'Activity history',onClick:()=>{
+        {section:'History',label:'All history',onClick:()=>setFilter('all'),active:filter==='all'},
+        {section:'Related workspaces',label:'Activity history',onClick:()=>{
           try{window.sessionStorage.setItem('salesshop-open-activity-history-v1','1');}catch{}
           nav.setView('dashboard');window.dispatchEvent(new Event('salesshop:open-activity-history'));
         }},

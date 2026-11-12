@@ -1275,20 +1275,20 @@ export function QuotesMobileBeta() {
               }}>{item.title}</button>)}
         </nav>}
         more={<WorkspaceMoreMenu items={[
-          {label:'Builder Rate Schedule',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('builder-rates');},active:!followUpsTab&&documentFilter==='builder-rates'},
+          {section:'Document types',label:'Builder Rate Schedule',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('builder-rates');},active:!followUpsTab&&documentFilter==='builder-rates'},
           {label:'Community Plan Pricing',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('community-pricing');},active:!followUpsTab&&documentFilter==='community-pricing'},
           {label:'Custom Spreadsheet',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('spreadsheet');},active:!followUpsTab&&documentFilter==='spreadsheet'},
-          {label:'Follow-ups',onClick:()=>setFollowUpsTab(true),active:followUpsTab},
-          {label:'Record external quote',disabled:!canRecordExternal,
+          {section:'Workspaces',label:'Follow-ups',onClick:()=>setFollowUpsTab(true),active:followUpsTab},
+          {section:'Actions',label:'Record external quote',disabled:!canRecordExternal,
             onClick:()=>setRecordExternalOpen(true)},
-          {label:'Active documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('active');},active:statusFilter==='active'},
+          {section:'Status filters',label:'Active documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('active');},active:statusFilter==='active'},
           {label:'Draft documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('drafts');},active:statusFilter==='drafts'},
           {label:'Issued documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('issued');},active:statusFilter==='issued'},
           {label:'Archived documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('archived');},active:statusFilter==='archived'},
           ...(canBrowseTeam?[{label:signedShopOutcomesEnabled?'Shop Outcomes':'Team Quotes',
             onClick:()=>setLibraryMode('team')}]:[]),
-          {label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
-          {label:'Clear search and filters',onClick:resetLibraryFilters,disabled:!hasLibraryFilters},
+          {section:'Tools',label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
+          {section:'Search & filters',label:'Clear search and filters',onClick:resetLibraryFilters,disabled:!hasLibraryFilters},
         ]}/>}
         search={<input type="search" value={search} onChange={event=>setSearch(event.target.value)}
           aria-label="Search my documents" placeholder="Search documents…" disabled={followUpsTab}/>}

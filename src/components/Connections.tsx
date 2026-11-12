@@ -649,12 +649,12 @@ export function Connections() {
         tabs={<SectionTabs className="connections-tabs" aria-label="Connections sections"
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
         more={<WorkspaceMoreMenu label="Connections More" items={[
-          {label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
+          {section:'Directories',label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
           {label:'Suppliers',active:tab==='suppliers',onClick:()=>chooseTab('suppliers')},
-          {label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
-          {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
+          {section:'Actions',label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
+          {section:'Directories',label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
           ...(tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled?[
-            {label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
+            {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
           ]:[]),
         ]}/>}
@@ -721,7 +721,7 @@ export function Connections() {
           {tab === 'companies' && layouts.companies==='table' && (
             <section className="connections-directory" aria-label="Company directory">
               
-              <p className="connections-count">{companyRows.length} companies · preview or open full details</p>
+              
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
                 toolbarControls={companyFilterControl}
@@ -749,7 +749,7 @@ export function Connections() {
           {tab === 'people' && (
             <section className="connections-directory" aria-label="People directory">
               
-              <p className="connections-count">{peopleRows.length} people · preview or open full details</p>
+              
               <div className="connections-people-attention-filters" role="group" aria-label="People follow-up filters">
                {([
                  ['all','All'],['never','Never contacted'],
@@ -813,7 +813,7 @@ export function Connections() {
           {tab === 'deals' && layouts.deals==='table' && (!timelineBetaEnabled||dealsView==='list') && <section className="connections-directory" aria-label="Deals directory">
             
             <div className="connections-deals-capture-bar">
-              <span>{projectRows.length} Deals · stages, bid dates and linked quotes</span>
+              <span className="connections-deals-capture-title">Deals</span>
               <button type="button" disabled={!canBulkEdit} onClick={()=>setExternalQuotePickerOpen(true)}>
                <span aria-hidden="true">+</span> Record external quote
               </button>
@@ -840,7 +840,7 @@ export function Connections() {
             {!projectRows.length && <StatusText state="empty" className="connections-empty">No deals match your search.</StatusText>}
           </section>}
           {tab === 'quotes' && <section className="connections-directory" aria-label="Quote metadata directory">
-            <p className="connections-count">{quoteRows.length} quote records · SalesShop and external submissions</p>
+            
             <ConnectionsTable key="quotes" tableKey="quotes" columns={quoteColumns}
               rows={quoteTableRows} onOpen={openRegistryQuote} onBulkTask={bulkTask}/>
             <div className="connections-mobile-quote-records">

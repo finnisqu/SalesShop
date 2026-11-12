@@ -234,8 +234,6 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
              onClick={()=>onTaskToggleComplete(row.id,row.values.status==='completed'||row.values.status==='canceled')}>
              {row.values.status==='completed'||row.values.status==='canceled'?'Reopen':'Complete'}
            </button>}
-           {onTaskDelete&&<button type="button" className="connections-task-delete"
-             aria-label={'Delete '+row.name} onClick={()=>onTaskDelete(row.id)}><TrashIcon/> Delete</button>}
            {onTaskDuePreset&&<select defaultValue="" aria-label={'Quick due date for '+row.name}
              disabled={row.values.status==='completed'||row.values.status==='canceled'}
              onChange={event=>{
@@ -247,6 +245,9 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
              <option value="today">Today</option><option value="tomorrow">Tomorrow</option>
              <option value="next-week">In 7 days</option><option value="clear">Clear due date</option>
            </select>}
+           {onTaskDelete&&<button type="button" className="connections-task-delete"
+             title={'Delete '+row.name} aria-label={'Delete '+row.name}
+             onClick={()=>onTaskDelete(row.id)}><TrashIcon/></button>}
          </td>}
        </tr>)}
        {!display.length&&<tr><td colSpan={visible.length+2+(hasRowActions?1:0)}>No matching records.</td></tr>}
