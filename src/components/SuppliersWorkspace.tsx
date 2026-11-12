@@ -40,6 +40,8 @@ import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { Button, Field } from '../design-system/components';
 import { SupplierProfileFields } from './SupplierProfileFields';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
+import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
+import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 
 type SupplierFreshness = 'missing' | 'stale' | 'due-soon' | 'current' | 'inactive';
 type SupplierFilter = 'all' | 'attention' | 'current' | 'missing';
@@ -265,6 +267,8 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
       return !needle || `${supplier.name} ${supplier.brands.join(' ')} ${statusLabels[supplier.freshness]}`.toLowerCase().includes(needle);
     });
   }, [rollups, query, filter]);
+  const supplierPagination=useCatalogPagination(filtered.length,query+'|'+filter);
+  const pagedSuppliers=filtered.slice(supplierPagination.start,supplierPagination.end);
 
   const supplierColumns:ConnectionColumn[]=[
     {key:'name',label:'Supplier'}, {key:'brands',label:'Brands'},
@@ -442,7 +446,7 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
         {embeddedInConnections ? (<>
           <ConnectionsTable tableKey="suppliers" columns={supplierColumns} rows={supplierTableRows}
             onOpen={chooseSupplier}
-            toolbarControls={<label className="supplier-status-filter">Pricing status
+            toolbarFilters={<label className="supplier-status-filter">Pricing status
               <select value={filter} aria-label="Filter suppliers by pricing status"
                 onChange={event=>setFilter(event.target.value as SupplierFilter)}>
                 <option value="all">All statuses</option>
@@ -450,7 +454,7 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
                 <option value="current">Current pricing</option>
                 <option value="missing">Missing pricing</option>
               </select>
-            </label>}/>
+            </label>} filterCount={Number(filter!=='all')}/>
           <div className="supplier-mobile-directory-list" aria-label="Supplier cards">
            {filtered.map(supplier=><button type="button" key={supplier.key}
              className="supplier-mobile-directory-card" onClick={()=>chooseSupplier(supplier.key)}>
@@ -472,22 +476,30 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
           <div className="supplier-directory-toolbar">
             <input type="search" value={query} onChange={event=>setQuery(event.target.value)}
               aria-label="Search suppliers" placeholder="Search suppliers and brands…"/>
-            <select value={filter} onChange={event=>setFilter(event.target.value as SupplierFilter)}
-              aria-label="Supplier status filter">
-              <option value="all">All suppliers</option>
-              <option value="attention">Needs attention</option>
-              <option value="current">Current pricing</option>
-              <option value="missing">Missing pricing</option>
-            </select>
+            <WorktableFilterMenu activeCount={Number(filter!=='all')}>
+              <label>Pricing status
+                <select value={filter} onChange={event=>setFilter(event.target.value as SupplierFilter)}
+                  aria-label="Supplier status filter">
+                  <option value="all">All suppliers</option>
+                  <option value="attention">Needs attention</option>
+                  <option value="current">Current pricing</option>
+                  <option value="missing">Missing pricing</option>
+                </select>
+              </label>
+            </WorktableFilterMenu>
           </div>
-          <div className="supplier-directory-table-scroll">
+          <CatalogPagination label="Suppliers" total={filtered.length}
+            page={supplierPagination.page} pageSize={supplierPagination.pageSize}
+            onPageChange={supplierPagination.setPage}
+            onPageSizeChange={supplierPagination.setPageSize}/>
+          <WorktableSurface className="supplier-directory-table-scroll" label="Suppliers catalog worktable">
             <table className="supplier-directory-table">
               <thead><tr>
                 <th scope="col">Supplier</th><th scope="col">Brands</th>
                 <th scope="col">Materials</th><th scope="col">Pricing status</th>
                 <th scope="col">Effective</th><th scope="col">Next review</th>
               </tr></thead>
-              <tbody>{filtered.map(supplier=><tr key={supplier.key}>
+              <tbody>{pagedSuppliers.map(supplier=><tr key={supplier.key}>
                 <th scope="row"><button type="button" onClick={()=>chooseSupplier(supplier.key)}>
                   {supplier.name}<span aria-hidden="true">›</span></button></th>
                 <td>{supplier.brands.length?supplier.brands.join(' · '):'—'}</td>
@@ -500,7 +512,7 @@ export function SuppliersWorkspace({externalQuery,embeddedInConnections=false}:{
             </table>
             {!filtered.length&&<p className="supplier-directory-empty">
               No suppliers match. Clear the search or select another status.</p>}
-          </div>
+          </WorktableSurface>
         </>}
       </section>}
       {!directoryOpen&&<div className="supplier-workbench is-record-mode">
