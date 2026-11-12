@@ -1,54 +1,24 @@
-/* Records and Catalog use the same segmented, filled navigation grammar.
- * The More directory picker is a member of the group, not a separate button. */
+/* Records navigation structure only. The shared appearance for these
+ * and Catalog tabs lives in workspace-tab-nav.css (ss-header-tab-pill). */
 .records-section-nav{
- display:flex;align-items:center;justify-content:center;gap:2px;
- min-width:0;max-width:100%;padding:3px;
- border:1px solid var(--ss-theme-border);
- border-radius:11px;background:var(--ss-theme-tint);
+ display:inline-flex;align-items:center;justify-content:center;
+ gap:3px;min-width:0;max-width:100%;
 }
 .records-section-nav .records-section-nav-tabs{
- display:flex;align-items:center;flex:0 1 auto;gap:2px;min-width:0;
- max-width:none;padding:0;margin:0;border:0;
- border-radius:0;background:transparent;
-}
-.records-section-nav .records-section-nav-tabs>button{
- box-sizing:border-box;flex:0 0 auto;min-width:0;min-height:36px;
- height:36px;padding:7px 10px;margin:0;
- border:1px solid transparent;border-radius:8px;
- background:transparent;color:var(--ss-theme-ink);
- font-size:12px;font-weight:750;
-}
-.records-section-nav .records-section-nav-tabs>button small{display:none}
-.records-section-nav .records-section-nav-tabs>button.active{
- border-color:var(--ss-theme-border);
- background:var(--ss-theme-card);
- box-shadow:inset 0 -2px var(--ss-theme-accent);
+ display:inline-flex;align-items:center;flex:0 1 auto;
+ gap:3px;min-width:0;max-width:none;margin:0;
 }
 .records-section-more{
  display:flex;align-items:center;flex:0 0 auto;
- padding-left:3px;margin-left:3px;
- border-left:1px solid var(--ss-theme-border);
+ margin:0;padding:0;border:0;
 }
 .records-section-more .ss-workspace-more{position:relative;min-width:0}
-.records-section-more .ss-workspace-more>summary{
- box-sizing:border-box;display:inline-flex;justify-content:center;
- align-items:center;gap:4px;
- width:auto;min-width:70px;height:36px;min-height:36px;
- padding:7px 10px;border:1px solid transparent;border-radius:8px;
- background:transparent;color:var(--ss-theme-ink);
- font-size:12px;font-weight:750;
-}
-.records-section-more:is(.is-active,:has(.ss-workspace-more[open]))
- .ss-workspace-more>summary{
- border-color:var(--ss-theme-border);
- background:var(--ss-theme-card);
- box-shadow:inset 0 -2px var(--ss-theme-accent);
-}
 .records-section-more .ss-workspace-more__menu{z-index:100}
 @media(max-width:760px){
  .records-section-nav{max-width:100%}
  .records-section-more{display:none}
 }
+/* Records' More menu must extend beyond the header tab rail. */
 @media(min-width:761px){
  :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
   .ss-workspace-header{position:relative;z-index:20}
@@ -56,26 +26,8 @@
   .ss-workspace-header :is(.ss-workspace-header__tabs,.records-section-nav){
   overflow:visible!important;
  }
- :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
-  .ss-workspace-header .records-section-nav-tabs.ss-section-tabs{
-  border:0!important;border-radius:0!important;
-  background:transparent!important;padding:0!important;gap:2px!important;
-  overflow:visible!important;
- }
- :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
-  .ss-workspace-header .records-section-nav-tabs.ss-section-tabs>.ss-section-tab{
-  box-sizing:border-box;min-width:0!important;height:36px!important;
-  min-height:36px!important;padding:7px 10px!important;
-  margin:0!important;
- }
- :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
-  .ss-workspace-header .records-section-more .ss-workspace-more>summary{
-  width:auto!important;min-width:70px!important;height:36px!important;
-  min-height:36px!important;padding:7px 10px!important;
-  border-radius:8px!important;
- }
 }
-/* The same input appears in the shared filter popover on desktop and phone. */
+/* The document type selector belongs to the shared Quotes worktable filter. */
 .qmb-records-document-type{
  display:inline-flex;align-items:center;gap:7px;
  font-size:11px;font-weight:750;color:var(--ss-theme-muted);
