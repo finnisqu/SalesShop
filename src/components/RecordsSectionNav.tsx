@@ -42,12 +42,12 @@ export function RecordsSectionNav({selected,onSelect,extraMore=[]}:{
   })),
   ...extraMore,
  ];
- return <nav className="records-section-nav" aria-label="Records sections">
+ return <div className="records-section-nav" role="group" aria-label="Records sections">
   <SectionTabs className="connections-tabs records-section-nav-tabs"
    aria-label="Records sections" items={RECORDS_MAIN_TABS}
    selected={selected} onSelect={onSelect}/>
   <div className="records-section-more">
    <WorkspaceMoreMenu label="Records sections" items={additional}/>
   </div>
- </nav>;
+ </div>;
 }
