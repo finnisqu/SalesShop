@@ -306,3 +306,19 @@
 }
 .connections-data-table .connections-table-open{display:inline-flex;align-items:center;gap:2px;max-width:100%}
 .connections-data-table .connections-table-open .connections-table-self-badge{flex:0 0 auto}
+
+/* Identical button heights and deliberate spacing in Task quick actions. */
+:root[data-sales-theme] .sales-app .connections-row-actions:has(.connections-task-delete){
+ white-space:nowrap;vertical-align:middle;
+}
+:root[data-sales-theme] .sales-app .connections-row-actions:has(.connections-task-delete)>:is(button,select){
+ display:inline-flex;align-items:center;justify-content:center;
+ box-sizing:border-box;height:36px;min-height:36px;max-height:36px;
+ margin:0 4px 0 0;vertical-align:middle;border-radius:8px;
+}
+:root[data-sales-theme] .sales-app .connections-row-actions .connections-task-delete{
+ width:36px;min-width:36px;padding:7px!important;margin:0!important;
+}
+:root[data-sales-theme] .sales-app .connections-row-actions .connections-task-delete svg{
+ width:15px;height:15px;
+}
