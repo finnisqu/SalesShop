@@ -185,7 +185,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     }
     const dueChanged='dueDate'in patch&&(patch.dueDate??undefined)!==(original.dueDate??undefined);
     const originalDueDate=original.originalDueDate??(original.dueDate||patch.dueDate);
-    const dueDateHistory=dueChanged?[...(original.dueDateHistory??[]),{
+    const dueDateHistory=dueChanged&&Boolean(original.dueDate)?[...(original.dueDateHistory??[]),{
       from:original.dueDate,to:patch.dueDate,at:now,
       responsibility:patch.dueDateResponsibility??'neutral',
       reason:patch.dueDateChangeReason?.trim()||undefined,
