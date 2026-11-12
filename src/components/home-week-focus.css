@@ -164,12 +164,14 @@
  }
  .sales-home .sales-home-calendar-card .sales-calendar-inline
  .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select{
-  position:relative!important;inset:auto!important;
-  grid-column:1!important;grid-row:1!important;
+  /* The date stays in column one visually, but the native button must cover
+     the whole seven-day row. Badges remain above it as independent controls. */
+  position:absolute!important;inset:0!important;
+  grid-column:1 / -1!important;grid-row:1!important;
   display:flex!important;flex-direction:row!important;
   align-items:center!important;justify-content:flex-start!important;
   flex:0 0 auto!important;width:100%!important;height:100%!important;
-  gap:2px!important;padding:0 2px!important;
+  gap:2px!important;padding:0 9px!important;
  }
  .sales-home .sales-home-calendar-card .sales-calendar-inline
  .sales-calendar-popover.is-inline.is-week .sales-calendar-week-day-label{
