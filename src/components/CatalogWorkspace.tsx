@@ -97,7 +97,7 @@ export function CatalogWorkspace() {
         mobileTabs={CATALOG_SECTIONS.map(({id,label})=>({value:id,label}))}
         mobileTabValue={section}
         onMobileTabChange={value=>{setCatalogSearch('');setSection(value as typeof section);}}
-        tabs={<SectionTabs className="catalog-section-nav catalog-foundation-tabs"
+        tabs={<SectionTabs className="catalog-section-nav catalog-foundation-tabs ss-header-tab-pill"
           aria-label="Catalog sections" items={CATALOG_SECTIONS.map(({ id, label }) => ({ id, label }))}
           selected={section} onSelect={next=>{setCatalogSearch('');setSection(next);}} />}
         more={<WorkspaceMoreMenu items={[
