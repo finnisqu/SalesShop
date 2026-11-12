@@ -344,7 +344,8 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
               <div><strong>Current company rates</strong><small>{rateRows.length} active reference{rateRows.length===1?'':'s'}</small></div>
               {catalogReferenceActions??<span>Click Edit pricing when you want to make changes.</span>}
              </header>
-            <MobileCatalogReferenceList
+            {paginationRow}
+             <MobileCatalogReferenceList
               label="Company rate reference"
               empty={!rateRows.length}
               emptyMessage="No active rates match the current search and filters."
@@ -406,7 +407,8 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                <div><strong>Standard material pricing</strong><small>{materialPricingRows.length} active pricing level{materialPricingRows.length === 1 ? '' : 's'}</small></div>
                {catalogReferenceActions??<span>Supplier colors and slab variants live in Materials.</span>}
              </header>
-            <MobileCatalogReferenceList
+            {paginationRow}
+             <MobileCatalogReferenceList
               label="Standard material price levels"
               empty={!materialPricingRows.length}
               emptyMessage="No active material pricing levels match this search."
