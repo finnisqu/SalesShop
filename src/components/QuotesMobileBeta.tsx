@@ -1317,45 +1317,60 @@ export function QuotesMobileBeta() {
              })}/>
          </div>
          <div className="qmb-library-grid">
-        {list.map(q=><div className="qmb-library-entry" key={q.id}>
-          <button type="button" className="qmb-card qmb-listcard"
-            onContextMenu={event=>contextActions.openPointer(event,q.title||'Quote',quoteMenuActions(q))}
-            onKeyDown={event=>contextActions.openKeyboard(event,q.title||'Quote',quoteMenuActions(q))}
-            aria-disabled={!!q.archivedAt}
-            title={q.archivedAt?'Restore from Archived to reopen':'Open '+(q.title||'document')}
-            onClick={()=>{if(!q.archivedAt)openQuote(q.id);}}>
-            <div className="qmb-split"><small>{displayQuoteNumber(q)}</small>
-              <span className="qmb-chip">{quoteBetaStatusLabel(q)}</span></div>
-            <strong>{q.title||'Untitled document'}</strong>
-            <div className="qmb-library-updated">Edited {formatPersonalDate(new Date(q.updatedAt),readPersonalDateTimePreferences(useAuthStore.getState().user?.id??null))}</div>
-            <div className="qmb-split"><small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}{q.documentType==='quote'?' · '+q.sections.length+' Areas':''}</small>
-              <b>{q.documentType==='pricing-schedule'?`${q.pricingSchedule?.customerItems.length??0} published rows`:money.format(quoteTotal(q))}</b></div>
-          </button>
-          {canManageLibrary&&<div className="qmb-library-card-actions">
-            {q.archivedAt?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore to active</button>:
-              <>
-                <button type="button" onClick={()=>setLibraryAction({id:q.id,kind:'archive'})}>Archive</button>
-                {canPermanentlyDeleteQuote(q,quotes)&&<button type="button" className="is-danger"
-                  onClick={()=>setLibraryAction({id:q.id,kind:'delete'})}>Delete draft</button>}
-              </>}
-          </div>}
-        </div>)}
-        {externalList.map(x=><div className="qmb-library-entry" key={x.id}>
-          <button type="button" className="qmb-card qmb-listcard"
-            onClick={()=>setExternalQuotePreviewId(x.sourceId)}
-            aria-label={'Open external quote details for '+x.name}>
-            <div className="qmb-split">
-              <small>External · {x.platform||'Builder platform'}</small>
-              <span className="qmb-chip">Sent</span>
+        {allLibraryRecords.map(record=>{
+          const q=record.source==='salesshop'
+            ?myQuotes.find(item=>item.id===record.sourceId):null;
+          if(q)return <div className="qmb-library-entry" key={record.id}>
+            <button type="button" className="qmb-card qmb-listcard"
+              onContextMenu={event=>contextActions.openPointer(event,q.title||'Quote',quoteMenuActions(q))}
+              onKeyDown={event=>contextActions.openKeyboard(event,q.title||'Quote',quoteMenuActions(q))}
+              title={'Preview '+(q.title||'document')}
+              onClick={()=>setDocumentPreviewId(q.id)}>
+              <div className="qmb-split"><small>SalesShop · {displayQuoteNumber(q)}</small>
+                <span className="qmb-chip">{quoteBetaStatusLabel(q)}</span></div>
+              <strong>{q.title||'Untitled document'}</strong>
+              <div className="qmb-library-updated">
+                {q.sentAt?'Sent '+q.sentAt.slice(0,10):
+                  'Updated '+formatPersonalDate(new Date(q.updatedAt),
+                    readPersonalDateTimePreferences(useAuthStore.getState().user?.id??null))}
+              </div>
+              <div className="qmb-split">
+                <small>{q.companyName||'Customer not selected'} · {salesTemplateLabel(salesDocumentTemplate(q))}
+                  {record.dealName?' · '+record.dealName:''}
+                </small>
+                <b>{q.documentType==='pricing-schedule'
+                  ?`${q.pricingSchedule?.customerItems.length??0} published rows`
+                  :money.format(quoteTotal(q))}</b>
+              </div>
+            </button>
+            <div className="qmb-library-card-actions">
+              {!q.archivedAt&&<button type="button" onClick={()=>openQuote(q.id)}>Open quote</button>}
+              {canManageLibrary&&(q.archivedAt
+                ?<button type="button" onClick={()=>restoreQuote(q.id)}>Restore to active</button>
+                :<>
+                  <button type="button" onClick={()=>setLibraryAction({id:q.id,kind:'archive'})}>Archive</button>
+                  {canPermanentlyDeleteQuote(q,quotes)&&<button type="button" className="is-danger"
+                    onClick={()=>setLibraryAction({id:q.id,kind:'delete'})}>Delete draft</button>}
+                </>)}
             </div>
-            <strong>{x.name}</strong>
-            <div className="qmb-library-updated">Sent {x.sentDate||'Date not recorded'}</div>
-            <div className="qmb-split">
-              <small>{x.companyName||x.dealName||'Linked Deal'} · External quote</small>
-              <b>{x.value===undefined?'Value not recorded':money.format(x.value)}</b>
-            </div>
-          </button>
-        </div>)}
+          </div>;
+          return <div className="qmb-library-entry" key={record.id}>
+            <button type="button" className="qmb-card qmb-listcard"
+              onClick={()=>setExternalQuotePreviewId(record.sourceId)}
+              aria-label={'Open external quote details for '+record.name}>
+              <div className="qmb-split">
+                <small>External · {record.platform||'Builder platform'}</small>
+                <span className="qmb-chip">{record.status}</span>
+              </div>
+              <strong>{record.name}</strong>
+              <div className="qmb-library-updated">Sent {record.sentDate||'Date not recorded'}</div>
+              <div className="qmb-split">
+                <small>{record.companyName||'No company'} · {record.dealName||'Linked Deal'}</small>
+                <b>{record.value===undefined?'Value not recorded':money.format(record.value)}</b>
+              </div>
+            </button>
+          </div>;
+        })}
         </div>
         {!documentTableRows.length&&<div className="qmb-empty">
           {statusFilter==='archived'&&!search.trim()&&documentFilter==='all'?
