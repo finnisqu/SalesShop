@@ -590,7 +590,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const dueDateHistory=deadlineChanged?
       [...(current.dueDateHistory??[]),{
         from:current.dueDate,to:patch.dueDate,at:timestamp,
-        responsibility:patch.dueDateResponsibility??current.dueDateResponsibility??'neutral',
+        responsibility:patch.dueDateResponsibility??'neutral',
         reason:patch.dueDateChangeReason?.trim().slice(0,500)||undefined,
       }]:current.dueDateHistory;
     const stageTransition = patch.stage
@@ -606,6 +606,10 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         ...(stageTransition?.changed ? { stageChangedAt: timestamp } : {}),
         ...(normalizedCompany ?? {}),
         ...(hasDeadlineEdit?{originalDueDate,dueDateHistory}:{}),
+         ...(deadlineChanged?{
+           dueDateResponsibility:patch.dueDateResponsibility??'neutral',
+           dueDateChangeReason:patch.dueDateChangeReason??undefined,
+         }:{}),
         name: patch.name?.trim() || project.name,
         amount,
         updatedAt: timestamp,
