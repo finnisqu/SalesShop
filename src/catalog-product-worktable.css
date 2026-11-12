@@ -276,6 +276,7 @@
  background:var(--ss-theme-card);
  color:var(--ss-theme-ink);
  box-shadow:var(--ss-shadow-raised,0 4px 14px rgba(0,0,0,.05));
+ overflow:visible; /* Filter popovers must escape the rounded worktable header. */
 }
 :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
  .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
@@ -582,6 +583,7 @@
 }
 :root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
  .connections-table-scroll{
+ max-height:none; /* Match Materials' page scroll instead of an inner 570px well. */
  border:0;border-radius:0;background:var(--ss-theme-card);
 }
 :root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
