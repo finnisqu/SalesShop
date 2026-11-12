@@ -12,6 +12,7 @@ import {useDismissibleDetails} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
 import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE,CATALOG_PAGE_SIZES,catalogPageRange} from './CatalogPagination';
+import {WorktableFilterMenu,WorktablePagination,WorktableSurface} from './WorktableChrome';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;readOnly?:boolean;isSelfCompany?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization'|'pages'|'activity';columns:ConnectionColumn[];rows:ConnectionTableRow[];
@@ -29,6 +30,9 @@ interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tas
  toolbarTarget?:HTMLElement|null;
  /** Filters/overview controls slotted before Columns, sharing the same toolbar and selection state. */
  toolbarControls?:ReactNode;
+ /** All page-specific filters use the same compact and dismissible popover. */
+ toolbarFilters?:ReactNode;
+ filterCount?:number;
  /** Contextual actions for selected records (e.g. page properties). */
  bulkActions?:(selected:ConnectionTableRow[],clear:()=>void)=>ReactNode;
  /** Catalog Tags pagination shares Materials' controls; other directories remain unchanged. */
@@ -41,7 +45,7 @@ function read(key:string):string[]{
  catch{return[];}
 }
 export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,onTaskDelete,onBulkTaskDelete,
- onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls,bulkActions,catalogPagination=false,catalogPaginationKey=''}:Props){
+ onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls,toolbarFilters,filterCount=0,bulkActions,catalogPagination=false,catalogPaginationKey=''}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
@@ -136,6 +140,12 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        <button type="button" onClick={()=>setSelected([])}>Clear</button>
      </>}
      {toolbarControls&&<div className="connections-toolbar-controls">{toolbarControls}</div>}
+     {toolbarFilters&&<WorktableFilterMenu activeCount={filterCount}>
+       {toolbarFilters}
+     </WorktableFilterMenu>}
+     {!catalogPagination&&<WorktablePagination label={tableKey} total={sorted.length}
+       page={currentPage} pageSize={pageSize} onPageChange={setPage}
+       onPageSizeChange={size=>{setPageSize(size);setPage(1);}}/>}
      <details className="connections-columns-menu" ref={columnsMenuRef}><summary><WorkspaceChromeIcon name="columns"/> Columns</summary>
        <div className="connections-columns-popover"><strong>Columns</strong>
          <small>Choose and reorder. Saved on this device.</small>
@@ -209,7 +219,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        </button><button type="button" onClick={()=>togglePin(item.id)} aria-label={'Unpin '+item.name}>×</button>
      </div>)}</div>
    </div>}
-   <div className="connections-table-scroll" role="region" aria-label="Scrollable connections table" tabIndex={0}>
+   <WorktableSurface className="connections-table-scroll" label={tableKey+" worktable"}>
      <table className="connections-data-table">
        <thead><tr>
          <th className="connections-check-cell"><input ref={selectPageRef} type="checkbox" checked={allOnPage}
@@ -278,7 +288,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        {!display.length&&<tr><td colSpan={visible.length+2+(hasRowActions?1:0)}>No matching records.</td></tr>}
        </tbody>
      </table>
-   </div>
+   </WorktableSurface>
    {bulkEditing&&onBulkEdit&&['companies','people','deals'].includes(tableKey)&&<ConnectionsBulkEditDialog
      scope={tableKey as 'companies'|'people'|'deals'} count={chosen.length}
      companies={bulkEditCompanies} onClose={()=>setBulkEditing(false)}
@@ -298,19 +308,6 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        await onBulkTaskProperty(chosen,change);
        setBulkTaskEditing(false);setMobileBulkMode(false);setSelected([]);
      }}/>} 
-   {!catalogPagination&&<footer className="connections-grid-pagination">
-     <span>{'Showing '+pageRange.first+'–'+pageRange.last+' of '+sorted.length}</span>
-     <label className="connections-page-size">Show
-       <select aria-label={tableKey+' per page'} value={pageSize}
-        onChange={event=>{setPageSize(Number(event.target.value));setPage(1);}}>
-        {CATALOG_PAGE_SIZES.map(size=><option key={size} value={size}>{size} per page</option>)}
-       </select>
-     </label>
-     <div className="connections-page-navigation">
-       <button type="button" disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>← Previous</button>
-       <span>Page {currentPage} of {pages}</span>
-       <button type="button" disabled={currentPage>=pages} onClick={()=>setPage(currentPage+1)}>Next →</button>
-     </div>
-   </footer>}
+
  </section>;
 }
