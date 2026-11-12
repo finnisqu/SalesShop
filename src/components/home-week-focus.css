@@ -42,7 +42,7 @@
   box-sizing:border-box;display:flex!important;align-items:center!important;justify-content:space-between!important;
   height:auto!important;min-height:0!important;max-height:none!important;
   padding:3px 7px!important;overflow:hidden;
-  border:1px solid transparent!important;border-radius:8px!important;
+  border:1px solid var(--ss-theme-border)!important;border-radius:8px!important;
   background:transparent;
  }
  .sales-home .sales-home-calendar-card .sales-calendar-inline
@@ -67,7 +67,7 @@
  .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots{
   position:static!important;display:flex!important;flex:0 1 auto;
   width:auto!important;max-width:60%!important;min-width:0;
-  align-items:center;justify-content:flex-end;gap:3px!important;
+  align-items:center;justify-content:flex-end;gap:3px!important;margin-left:auto!important;
  }
  .sales-home .sales-home-calendar-card .sales-calendar-inline
  .sales-calendar-popover.is-inline.is-week .sales-calendar-day-preview{
@@ -106,7 +106,8 @@
  .sales-calendar-popover.is-inline.is-week .sales-calendar-day{
   box-sizing:border-box;display:flex!important;flex-direction:column;
   height:64px!important;min-height:64px!important;max-height:64px!important;
-  padding:4px 2px!important;border-radius:8px!important;
+  padding:4px 2px!important;border:1px solid var(--ss-theme-border)!important;
+  border-radius:8px!important;
  }
  .sales-home .sales-home-calendar-card .sales-calendar-inline
  .sales-calendar-popover.is-inline.is-week .sales-calendar-day .sales-calendar-day-select{
@@ -121,9 +122,9 @@
  }
  .sales-home .sales-home-calendar-card .sales-calendar-inline
  .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots{
-  left:2px!important;right:2px!important;bottom:2px!important;
-  width:calc(100% - 4px)!important;max-width:none!important;
-  flex-wrap:nowrap!important;justify-content:center!important;overflow:hidden!important;
+  left:auto!important;right:3px!important;bottom:3px!important;
+  width:auto!important;max-width:calc(100% - 6px)!important;
+  flex-wrap:nowrap!important;justify-content:flex-end!important;overflow:hidden!important;
  }
  .sales-home .sales-home-calendar-card .sales-calendar-inline
  .sales-calendar-popover.is-inline.is-week .sales-calendar-day .home-calendar-custom-dots :is(i,button){
@@ -139,4 +140,15 @@
  .sales-calendar-popover.is-inline.is-week .sales-calendar-agenda{
   max-height:320px!important;min-height:150px!important;overflow-y:auto!important;
  }
+}
+
+/* 7-day view only: give every date the same bordered cell treatment as
+   Month, while keeping the selected/today accent and badges right-aligned. */
+.sales-home .sales-calendar-popover.is-inline.is-week .sales-calendar-day.is-selected{
+ border-color:var(--ss-theme-accent)!important;
+ background:var(--ss-theme-tint)!important;
+}
+.sales-home .sales-calendar-popover.is-inline.is-week
+ .sales-calendar-day.is-today:not(.is-selected){
+ border-color:var(--ss-theme-accent)!important;
 }
