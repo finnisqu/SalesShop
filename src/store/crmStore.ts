@@ -587,7 +587,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
     const hasDeadlineEdit=Object.prototype.hasOwnProperty.call(patch,'dueDate');
     const deadlineChanged=hasDeadlineEdit&&(patch.dueDate??undefined)!==(current.dueDate??undefined);
     const originalDueDate=current.originalDueDate??(current.dueDate||patch.dueDate||undefined);
-    const dueDateHistory=deadlineChanged?
+    const dueDateHistory=deadlineChanged&&Boolean(current.dueDate)?
       [...(current.dueDateHistory??[]),{
         from:current.dueDate,to:patch.dueDate,at:timestamp,
         responsibility:patch.dueDateResponsibility??'neutral',
