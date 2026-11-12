@@ -539,7 +539,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      aria-label={'Items for '+dateLabel(selected)}
      onClickCapture={()=>{if(activeFocus)setBadgeFocus(null);}}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
-      <div><span>{eventsForDay.length+' remaining'}</span>
+      <div><span aria-label={eventsForDay.length+' pending items'}>{'Pending · '+eventsForDay.length}</span>
        {embedded&&<div className="sales-calendar-add-wrap">
         <button ref={addButtonRef} type="button" className="sales-calendar-add" aria-haspopup="menu"
          aria-expanded={addOpen} aria-label={'Add to '+dateLabel(selected)}

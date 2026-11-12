@@ -31,6 +31,9 @@ describe('bid submission Task confirmation boundary',()=>{
   for(const view of [modal,workspace]){
    expect(view).toContain('isProtectedBidTask(');
    expect(view).toContain('Record external quote');
+   expect(view).toContain('Open linked Deal ↗');
+   expect(view).toContain('Open linked Quote ↗');
+   expect(view).toContain('<TaskPreviewDueControls');
    expect(view).toContain('Complete · quote required');
    expect(view).toContain('initialDealId={externalDealId}');
    expect(view).toContain('<PencilIcon/> Edit');

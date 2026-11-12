@@ -3,6 +3,7 @@ import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssoc
  isProtectedBidTask,bidTaskDealId} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
+import {TaskPreviewDueControls} from './TaskPreviewDueControls';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
@@ -275,6 +276,7 @@ export function TasksWorkspace(){
   const reopen=usePersonalTaskStore(s=>s.reopen),remove=usePersonalTaskStore(s=>s.remove);
   const [queueFilter,setQueueFilter]=useState('all');
   const nav=useNavigationStore();
+  const quotes=useQuoteStore(s=>s.quotes);
   const [editing,setEditing]=useState<PersonalTask|TaskPromotion|null>(null);
   const [taskNotice,setTaskNotice]=useState<RecordFormNotice|null>(null);
   const [viewingId,setViewingId]=useState<string|null>(null);
@@ -308,6 +310,12 @@ export function TasksWorkspace(){
   const own=(!rolePreview&&scope&&storedScope===scope)?tasks.filter(t=>!t.deletedAt):[];
   const queues=Array.from(new Set(ownQueueNames(own))).sort();
   const viewing=own.find(task=>task.id===viewingId)??null;
+  const viewingDealId=viewing?(bidTaskDealId(viewing)??
+    normalizedTaskAssociations(viewing).find(link=>link.type==='project')?.id??null):null;
+  const viewingQuote=viewing?quotes.find(quote=>!quote.archivedAt&&
+    (mode!=='cloud'||quote.ownerUserId===userId)&&
+    (quote.projectId===viewingDealId||
+      normalizedTaskAssociations(viewing).some(link=>link.type==='quote'&&link.id===quote.id))):undefined;
   const previewRef=useDismissibleLayer<HTMLElement>(Boolean(viewing),()=>setViewingId(null));
   // Reopen an in-progress editor after the browser discards and restores its tab.
   useEffect(()=>{
@@ -605,6 +613,7 @@ export function TasksWorkspace(){
          <div><dt>Due</dt><dd>{viewing.dueDate?formatDate(viewing.dueDate)+(viewing.dueTime?' · '+viewing.dueTime:''):'No due date'}</dd></div>
          {viewing.startDate&&<div><dt>Start</dt><dd>{formatDate(viewing.startDate)}</dd></div>}
         </dl>
+        <TaskPreviewDueControls task={viewing} onUpdate={update}/>
         {viewing.notes&&<p className="tasks-preview-notes">{viewing.notes}</p>}
         {normalizedSubtasks(viewing.subtasks).length>0&&<section className="tasks-preview-subtasks" aria-label="Subtasks">
          <strong>Checklist · {subtaskProgress(viewing).done}/{subtaskProgress(viewing).total}</strong>
@@ -634,6 +643,12 @@ export function TasksWorkspace(){
         </div>
         <div className="tasks-preview-actions-right">
          {isProtectedBidTask(viewing)&&!viewing.submissionConfirmedAt?<>
+          {viewingDealId&&<button type="button" onClick={()=>{
+            setViewingId(null);nav.openProject(viewingDealId);
+          }}>Open linked Deal ↗</button>}
+          {viewingQuote&&<button type="button" onClick={()=>{
+            setViewingId(null);nav.openQuote(viewingQuote.id);
+          }}>Open linked Quote ↗</button>}
           {canLog&&<button type="button" className="tasks-flow-action"
            onClick={()=>{setViewingId(null);setExternalDealId(bidTaskDealId(viewing));}}>
            Record external quote</button>}
@@ -641,6 +656,9 @@ export function TasksWorkspace(){
            title="Completion requires confirmed customer delivery or a recorded external submission">
            Complete · quote required</button>
          </>:<>
+          {viewingQuote&&<button type="button" onClick={()=>{
+            setViewingId(null);nav.openQuote(viewingQuote.id);
+          }}>Open linked Quote ↗</button>}
           <button type="button" disabled={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0}
            title={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0?'Complete the checklist first':undefined}
            onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>

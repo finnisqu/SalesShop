@@ -78,7 +78,7 @@ describe('Home selected-day record navigation',()=>{
   ]};
   expect(group(data,'activities')?.entries.map(x=>x.id)).toEqual(['call','email']);
   expect(group(data,'quotes-sent')?.entries[0]).toMatchObject({
-   kind:'deal',id:'deal-1',detail:'Sent outside SalesShop',
+   kind:'activity',id:'sent',detail:'Sent outside SalesShop',
   });
   expect(group(data,'quotes-sent','2026-11-07')).toBeUndefined();
  });
