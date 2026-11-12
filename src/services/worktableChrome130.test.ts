@@ -125,6 +125,10 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(styles).toContain('.ss-worktable-surface table thead{\n position:sticky;top:0;z-index:3;\n background:var(--ss-theme-card)');
   expect(styles).toContain('isolation:isolate');
   expect(styles).toContain('.ss-worktable-surface table thead th{\n position:relative;top:auto;z-index:auto;');
+  // The rounded corner cutouts must show the page canvas, not the cream
+  // card backing that looked like body cells leaking through in WARM.
+  expect(styles).toContain('.ss-worktable-surface.connections-table-scroll table thead{\n background:var(--ss-theme-canvas);');
+  expect(styles).not.toContain('.ss-worktable-surface table thead th::before');
   expect(styles).toContain('.connections-grid-shell>.connections-grid-toolbar');
   expect(styles).toContain('position:relative;z-index:5');
  });
