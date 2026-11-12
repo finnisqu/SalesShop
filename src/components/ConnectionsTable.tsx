@@ -37,6 +37,14 @@ interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tas
  bulkActions?:(selected:ConnectionTableRow[],clear:()=>void)=>ReactNode;
  /** Catalog Tags pagination shares Materials' controls; other directories remain unchanged. */
  catalogPagination?:boolean;catalogPaginationKey?:string;}
+/* The auxiliary Records sections live behind More in the header. Repeat
+ * their identity in the shared table toolbar so the destination is clear. */
+const MORE_DIRECTORY_TITLES:Partial<Record<Props['tableKey'],string>>={
+ suppliers:'Suppliers',
+ pages:'Notebook Pages',
+ activity:'Activity History',
+ organization:'Our Organization',
+};
 const PAGE_SIZE=DEFAULT_CATALOG_PAGE_SIZE;
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
@@ -124,7 +132,11 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  const toolbar=(
    <div className="connections-grid-toolbar">
      {catalogPagination?(chosen.length>0?<span>{chosen.length} selected</span>:null):
-       <span>{rows.length} records · {chosen.length} selected</span>}
+       <span className="connections-grid-caption">
+         {MORE_DIRECTORY_TITLES[tableKey]&&<strong className="connections-grid-title">
+           {MORE_DIRECTORY_TITLES[tableKey]}</strong>}
+         <span className="connections-grid-meta">{rows.length} records · {chosen.length} selected</span>
+       </span>}
      {chosen.length>0&&<>
        {bulkActions?.(chosen,()=>setSelected([]))}
        {onBulkEdit&&['companies','people','deals'].includes(tableKey)&&<button type="button"
