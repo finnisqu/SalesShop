@@ -164,7 +164,7 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
     page={pagination.page} pageSize={pagination.pageSize}
     onPageChange={next=>{pagination.setPage(next);setExpanded(null);}}
     onPageSizeChange={size=>{pagination.setPageSize(size);setExpanded(null);}}/>
-   <div className="rates-reference-table-wrap catalog-product-scroll">
+   <div className="rates-reference-table-wrap catalog-product-scroll ss-worktable-surface">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr><th>Category</th><th>Item</th><th>Brand / supplier</th>
       <th>Unit</th><th>Default cost</th><th>Customer price</th><th>Variants</th></tr></thead>
