@@ -11,10 +11,12 @@ describe('Batch #118 — Records navigation and Home deadline integrity',()=>{
   expect(app).toContain(">Records</button>");
   expect(app).not.toContain(">Connections</button>");
   expect(app).not.toContain(">Tasks</button>");
-  expect(app).toContain("['home','dashboard','quotes','catalog','notebook']");
+  expect(app).toContain("['home','dashboard','catalog','notebook']");
   expect(mobile).toContain("{ view: 'dashboard', label: 'Records', short: 'Records' }");
-  expect(records).toContain("{ id: 'tasks', label: 'Tasks'");
-  expect(records).toContain("{ id: 'activity', label: 'Activities'");
+  const nav=file('components/RecordsSectionNav.tsx');
+  expect(nav).toContain("id:'tasks',label:'Tasks'");
+  expect(nav).toContain("id:'activity',label:'Activity'");
+  expect(nav).toContain("id:'quotes',label:'Quotes'");
   expect(records).toContain("label:'Our Organization'");
   expect(records).toContain("label:'Pages · Notebook'");
   expect(records).toContain("title=\"Records\"");
