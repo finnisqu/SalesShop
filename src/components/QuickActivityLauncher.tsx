@@ -18,6 +18,8 @@ import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
 import {completedTaskActivityId,taskActivityMethod,type ActivityComposerRequest}
  from '../services/taskActivityWorkflow';
 import {localDateKey} from '../services/salesCalendar';
+import {activityRelationsWithContext,primaryActivityRelations,type ActivityRelation}
+ from '../services/activityRelations';
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
 import './sales-calendar.css';
 
@@ -188,10 +190,20 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   if(workflowTaskId&&(!workflowTask||taskState.scope!==privateScope||
     workflowTask.status==='completed'||workflowTask.status==='canceled'))
    return setError('The linked task has changed. Reopen its Quick View and try again.');
-  const find=(kind:TaskLink['type'])=>links.find(link=>link.type===kind)?.id;
-  const personId=find('contact'),dealId=find('project'),quoteId=find('quote');
-  const contact=contacts.find(c=>c.id===personId),deal=projects.find(d=>d.id===dealId);
-  const quote=quotes.find(q=>q.id===quoteId);
+  const relations=activityRelationsWithContext(
+    links.filter(link=>link.type!=='notebook').map(link=>({
+      type:link.type as ActivityRelation['type'],id:link.id,label:link.label,
+    })),contacts,projects,quotes);
+  const primary=primaryActivityRelations(relations);
+  const taskRelations:TaskAssociation[]=relations.map(link=>({
+    ...link,label:link.label??(link.type==='contact'
+      ?'Person · '+(contacts.find(x=>x.id===link.id)?.name??'Person')
+      :link.type==='company'
+      ?'Company · '+(companies.find(x=>x.id===link.id)?.name??'Company')
+      :link.type==='project'
+      ?'Deal · '+(projects.find(x=>x.id===link.id)?.name??'Deal')
+      :'Quote · '+(quotes.find(x=>x.id===link.id)?.title??'Quote')),
+  }));
   const activityId=workflowTaskId
    ?completedTaskActivityId(workflowTaskId,privateScope??'local:user'):undefined;
   const existing=activityId?useCrmStore.getState().activities.find(a=>a.id===activityId):undefined;
@@ -201,13 +213,10 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   try{
   const loggedId=existing?.id??record({id:activityId,
    type:'manual-touchpoint',summary:fallback+' with '+(person||'related record'),
-   companyId:find('company')||contact?.companyId||deal?.companyId||quote?.companyId,
-   contactId:personId,projectId:dealId||quote?.projectId,quoteId,
+   ...primary,
    occurredAt:timestamp.toISOString(),
    metadata:{source:'manual',interactionMethod:method,
-    relatedRecords:links.filter(link=>link.type!=='notebook').map(link=>({
-     type:link.type as 'contact'|'company'|'project'|'quote',id:link.id,label:link.label,
-    })),
+    relatedRecords:relations,
     notes:notes.trim().slice(0,5000)||undefined}});
   if(createFollowUp){
    const already=usePersonalTaskStore.getState().tasks.some(t=>
@@ -215,7 +224,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
    if(!already){
    const created=addTask('Follow up · '+(person||'related record'),{
     type:'follow-up',dueDate:followUpDate,priority:'normal',status:'open',
-    queue:'Follow-ups',associations:links,
+    queue:'Follow-ups',associations:taskRelations,
     sourceObjectId:'activity-followup:'+loggedId,
     notes:'Follow-up from '+fallback.toLowerCase()+' on '+localDateKey(timestamp)+
      (notes.trim()?' · '+notes.trim().slice(0,300):''),
