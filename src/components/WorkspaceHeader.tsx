@@ -97,11 +97,17 @@ export interface WorkspaceMoreItem{
  /** Optional visually separated category for mixed navigation, views and actions. */
  section?:string;
 }
-export function WorkspaceMoreMenu({items,label='More',compact=false}:{items:readonly WorkspaceMoreItem[];label?:string;compact?:boolean}){
+export function WorkspaceMoreMenu({items,label='More',compact=false,asTab=false}:{
+ items:readonly WorkspaceMoreItem[];label?:string;compact?:boolean;
+ /** Render More as an integrated navigation tab, not a standalone action button. */
+ asTab?:boolean;
+}){
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
- return <details className={'ss-workspace-more'+(compact?' is-compact':'')} ref={ref}>
-  <summary aria-label={label+' menu'}>{!compact&&<span>More</span>} <WorkspaceChromeIcon name="more"/></summary>
+ return <details className={'ss-workspace-more'+(compact?' is-compact':'')+(asTab?' is-tab':'')} ref={ref}>
+  <summary aria-label={label+' menu'} aria-haspopup="true">
+   {!compact&&<span>More</span>} <WorkspaceChromeIcon name={asTab?'chevron-down':'more'}/>
+  </summary>
   <div className="ss-workspace-more__menu" role="group" aria-label={label+' options'}>
    {items.map((item,index)=><div className="ss-workspace-more__entry" key={index}>
     {item.section&&(index===0||items[index-1]?.section!==item.section)&&
