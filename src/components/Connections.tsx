@@ -39,7 +39,8 @@ import {useAuthStore} from '../store/authStore';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry,dedupeExternalQuoteActivities} from '../services/salesQuoteRegistry';
-import {DEAL_PIPELINES,dealPipelineLabel,type DealPipeline,type ProjectStage} from '../types/crm';
+import {DEAL_PIPELINES,dealPipelineLabel,matchesDealPipeline,
+ type DealPipeline,type DealPipelineFilter,type ProjectStage} from '../types/crm';
 import {companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,isOurCompany,visibleCompanyAliases,type CompanyRelationship,
  type EditableCompanyRelationship} from '../services/companyRelationship';
@@ -65,6 +66,15 @@ const TAB_KEY = 'salesshop-connections-tab-v1';
 const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
 const SEARCH_KEY=scopedStorageKey('salesshop-connections-tab-search-v1');
 const COMPANY_FILTER_KEY=scopedStorageKey('salesshop-connections-company-filter-v1');
+const PIPELINE_FILTER_KEY='salesshop-board-pipeline-v1';
+function initialDealPipeline():DealPipelineFilter{
+  try{
+    const saved=localStorage.getItem(PIPELINE_FILTER_KEY);
+    if(saved==='all'||saved==='unassigned'||DEAL_PIPELINES.some(item=>item.id===saved))
+      return saved as DealPipelineFilter;
+  }catch{/* best effort */}
+  return 'all';
+}
 const SCROLL_KEY=scopedStorageKey('salesshop-connections-scroll-v1');
 type DirectoryScroll={main?:number;tableTop?:number;tableLeft?:number;boardLeft?:number};
 function initialDirectoryScrolls():Record<string,DirectoryScroll>{
@@ -241,6 +251,11 @@ export function Connections() {
     try{sessionStorage.setItem(SCROLL_KEY,JSON.stringify(scrollPositions.current));}
     catch{/* best effort */}
   },[]);
+  const [pipelineFilter,setPipelineFilter]=useState<DealPipelineFilter>(initialDealPipeline);
+  const choosePipelineFilter=(filter:DealPipelineFilter)=>{
+    setPipelineFilter(filter);
+    try{localStorage.setItem(PIPELINE_FILTER_KEY,filter);}catch{/* best effort */}
+  };
   const [companyFilter, setCompanyFilter] = useState<CompanyFilter>(initialCompanyFilter);
   const chooseCompanyFilter=(filter:CompanyFilter)=>{
     setCompanyFilter(filter);
@@ -359,8 +374,9 @@ export function Connections() {
     .sort((a, b) => a.name.localeCompare(b.name)), [contacts, companiesById,
       companies,needle,peopleAttention,lastContactByPerson,followUpByPerson,todayKey]);
   const projectRows = useMemo(() => projects
+    .filter(project=>matchesDealPipeline(project,pipelineFilter))
     .filter((project) => findText(project.name, project.companyName, project.stage, project.nextAction, dealPipelineLabel(project.pipeline)).includes(needle))
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle]);
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), [projects, needle,pipelineFilter]);
   const quoteRegistry=useMemo(()=>buildSalesQuoteRegistry(quotes,activities,projects),
     [quotes,activities,projects]);
   const personalQuoteRecords=useMemo(()=>mySalesQuoteRegistry(
@@ -568,6 +584,15 @@ export function Connections() {
   const openQuoteMetadata=(id:string)=>{
     setPreview(null);setQuoteRecordId(id);setTab('quotes');
   };
+  const dealPipelineControl=<label className="connections-filter connections-inline-type-filter">
+    Pipeline
+    <select aria-label="Filter Deals by pipeline" value={pipelineFilter}
+      onChange={event=>choosePipelineFilter(event.target.value as DealPipelineFilter)}>
+      <option value="all">All pipelines</option>
+      {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+      <option value="unassigned">Unassigned</option>
+    </select>
+  </label>;
   const companyFilterControl=<label className="connections-filter connections-inline-type-filter">
     Type
     <select aria-label="Filter Companies by type" value={companyFilter}
@@ -779,7 +804,9 @@ export function Connections() {
           {tab==='deals'&&layouts.deals==='board'&&
             <div className="connections-board-host" aria-label="Deal board layout">
               <Board embeddedMode="projects" searchQuery={query}
-                allowedDealIds={allowedDealIds} onOpenQuoteMetadata={openQuoteMetadata}/>
+                allowedDealIds={allowedDealIds} pipelineFilter={pipelineFilter}
+                onPipelineFilterChange={choosePipelineFilter}
+                onOpenQuoteMetadata={openQuoteMetadata}/>
             </div>}
           {tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled&&dealsView==='timeline'&&
             <DealTimelineBetaOverview projects={projectRows} onOpen={openProject}/>}
@@ -793,6 +820,7 @@ export function Connections() {
             </div>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
+              toolbarControls={dealPipelineControl}
                onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
