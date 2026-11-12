@@ -8,9 +8,9 @@ import '../sales-documents.css';
 const symbols:Record<SalesDocumentTemplateChoice,string>={
   'quick-quote':'▤','builder-rates':'≡','community-pricing':'▦','spreadsheet':'▥','multifamily':'▧',
 };
-export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
+export function NewSalesDocumentPicker({quotes,onClose,onCreate,onRecordExternal,stockRateCount,
   stockLevelReady,stockMaterialCount,stockLevelCount,unassignedStockCount}:{
-  quotes:Quote[];onClose:()=>void;
+  quotes:Quote[];onClose:()=>void;onRecordExternal?:()=>void;
   onCreate:(template:Exclude<SalesDocumentTemplateChoice,'multifamily'>,
     start:SalesTemplateStart,sourceQuoteId:string|undefined,title:string)=>void;
   stockRateCount:number;
@@ -54,6 +54,15 @@ export function NewSalesDocumentPicker({quotes,onClose,onCreate,stockRateCount,
             <small>{item.subtitle}</small><span>{item.description}</span></span>
           {!item.available&&<span className="sales-document-coming-soon">Coming later</span>}
         </button>)}
+        {onRecordExternal&&<button type="button" className="sales-document-template-card"
+          onClick={onRecordExternal}>
+          <span className="sales-document-template-symbol" aria-hidden="true">↗</span>
+          <span className="sales-document-template-copy">
+            <strong>Record external quote</strong>
+            <small>Builder platform, email or outside bidding system</small>
+            <span>Record a submitted quote and link its Deal, Company and People without creating a duplicate SalesShop draft.</span>
+          </span>
+        </button>}
       </div>:<div className="sales-document-start">
         <button type="button" className="sales-document-picker-back" onClick={()=>setSelected(null)}>← All templates</button>
         {selected==='multifamily'?<div className="sales-document-placeholder">
