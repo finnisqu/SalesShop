@@ -91,6 +91,8 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
     assignedUserId: deal?.assignedUserId ?? '',
     amount: deal?.amount?.toString() ?? '',
     dueDate: deal?.dueDate ?? '',
+    dueDateResponsibility:deal?.dueDateResponsibility??'neutral' as 'internal'|'external'|'neutral',
+    dueDateChangeReason:deal?.dueDateChangeReason??'',
     nextAction: deal?.nextAction ?? '',
     lastTouchpoint: deal?.lastTouchpoint ?? '',
   });
@@ -108,6 +110,8 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
       pipeline: (deal.pipeline ?? '') as DealPipeline | '', companyId: deal.companyId ?? '',
       assignedUserId: deal.assignedUserId ?? '',
       amount: deal.amount?.toString() ?? '', dueDate: deal.dueDate ?? '',
+       dueDateResponsibility:deal.dueDateResponsibility??'neutral',
+       dueDateChangeReason:deal.dueDateChangeReason??'',
       nextAction: deal.nextAction ?? '', lastTouchpoint: deal.lastTouchpoint ?? '',
       });
     }
@@ -163,6 +167,8 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
     updateDeal(deal.id, {
       name: draft.name.trim(), stage: draft.stage, pipeline: draft.pipeline || undefined, amount,
       dueDate: draft.dueDate || undefined,
+      dueDateResponsibility:draft.dueDateResponsibility,
+      dueDateChangeReason:draft.dueDateChangeReason.trim()||undefined,
       nextAction: draft.nextAction.trim() || undefined,
       lastTouchpoint: draft.lastTouchpoint || undefined,
     });
@@ -229,7 +235,24 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
             {control=><input {...control} type="number" min="0" step="0.01" value={draft.amount}
               onChange={event=>setDraft({...draft,amount:event.target.value})}/>}
           </RecordEditField>
-          <label>Bid due date<input type="date" value={draft.dueDate} onChange={event => setDraft({...draft,dueDate:event.target.value})} /></label>
+          <label>Current bid due date<input type="date" value={draft.dueDate}
+            onChange={event => setDraft({...draft,dueDate:event.target.value})}/></label>
+          <RecordProperty label="Original bid due date">
+            {deal.originalDueDate?displayDate(deal.originalDueDate):
+             deal.dueDate?'Not previously tracked (current date becomes baseline on reschedule)':'Set with first deadline'}
+          </RecordProperty>
+          <label>Reason for deadline change
+            <input type="text" maxLength={500} value={draft.dueDateChangeReason}
+              placeholder="Optional explanation" onChange={event=>setDraft({...draft,dueDateChangeReason:event.target.value})}/>
+          </label>
+          <label>Who controls the delay?
+            <select value={draft.dueDateResponsibility}
+              onChange={event=>setDraft({...draft,dueDateResponsibility:event.target.value as 'internal'|'external'|'neutral'})}>
+              <option value="neutral">Not determined / no team fault</option>
+              <option value="external">Builder / client / external dependency</option>
+              <option value="internal">Our team</option>
+            </select>
+          </label>
           <label>Assigned salesperson<DealAssigneeSelect value={draft.assignedUserId}
             onChange={value=>setDraft({...draft,assignedUserId:value})} disabled={saving}/></label>
           <div className="ss-record-association-field" role="group" aria-label="Deal Company">
@@ -287,9 +310,22 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
               const e=nonnegativeFieldError(value,'Deal amount');if(e)throw new Error(e);
               updateDeal(deal.id,{amount:value.trim()?Number(value):undefined});
             }}/>
-          <RecordInlineProperty label="Bid due date" type="date" value={deal.dueDate??''}
+          <RecordInlineProperty label="Current bid due date" type="date" value={deal.dueDate??''}
             display={displayDate(deal.dueDate)} disabled={!canEditCrm}
             onSave={value=>updateDeal(deal.id,{dueDate:value||undefined})}/>
+          <RecordProperty label="Original bid due date">{deal.originalDueDate
+            ?displayDate(deal.originalDueDate):deal.dueDate?'Not recorded for this older deal':'Not set'}</RecordProperty>
+          {Boolean(deal.dueDateHistory?.length)&&<RecordProperty label="Deadline revisions">
+            <details className="record-deadline-history">
+              <summary>{deal.dueDateHistory?.length} change{deal.dueDateHistory?.length===1?'':'s'}</summary>
+              <ol>{deal.dueDateHistory?.map((change,index)=><li key={index}>
+                {displayDate(change.from)} → {displayDate(change.to)}
+                {' · '}{change.responsibility==='external'?'External dependency':
+                  change.responsibility==='internal'?'Our team':'No fault assigned'}
+                {change.reason?' · '+change.reason:''}
+              </li>)}</ol>
+            </details>
+          </RecordProperty>
           {outsideQuotes.length>0&&<RecordProperty label="External bid sent">{displayDate(outsideQuotes[0].metadata?.bidSentDate||outsideQuotes[0].occurredAt)}</RecordProperty>}
           <RecordProperty label="Assigned salesperson">{dealAssigneeLabel(deal.assignedUserId,assignees)}</RecordProperty>
           <RecordInlineProperty label="Next action" value={deal.nextAction??''}
