@@ -126,6 +126,17 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(styles).toContain('.connections-grid-shell>.connections-grid-toolbar');
   expect(styles).toContain('position:relative;z-index:5');
  });
+ it('places Records top spacing outside the scroll viewport so rows cannot leak into the header gap',()=>{
+  const shell=src('workspace-scroll-shell-parity.css');
+  const surface=src('workspace-surface-parity.css');
+  expect(shell).toContain('margin-top:var(--ss-workspace-content-top,14px)');
+  expect(shell).toContain('padding-top:0!important');
+  expect(shell).toContain('padding:0 0 32px');
+  expect(surface).toContain('--ss-workspace-content-top:14px');
+  // Never mask the table heading upward: that previously obscured Filters
+  // and other toolbar controls.
+  expect(src('worktable-chrome.css')).not.toContain('table thead th::before');
+ });
  it('keeps paging in the top toolbar while preserving mobile worktable behavior',()=>{
   const table=src('components/ConnectionsTable.tsx');
   const css=src('worktable-chrome.css');
