@@ -60,6 +60,11 @@ type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
 export const CONNECTIONS_TABS=RECORDS_MAIN_TABS;
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
+const ACTIVITY_COLUMNS:ConnectionColumn[]=[
+ {key:'name',label:'Activity'},{key:'method',label:'Method'},
+ {key:'related',label:'Related records'},{key:'type',label:'Record type'},
+ {key:'occurred',label:'Date'},
+];
 const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
 const SEARCH_KEY=scopedStorageKey('salesshop-connections-tab-search-v1');
 const COMPANY_FILTER_KEY=scopedStorageKey('salesshop-connections-company-filter-v1');
@@ -394,6 +399,16 @@ export function Connections() {
     .slice(0, 150), [activities, companiesById, projectsById,internalCompanyIds,
       activityFilters,companies,contacts,projects,visibleQuotes,needle]);
 
+  const activityTableRows=useMemo<ConnectionTableRow[]>(()=>activityRows.map(activity=>({
+    id:activity.id,name:activity.summary,values:{
+      name:activity.summary,
+      method:activity.metadata?.interactionMethod?.replaceAll('-',' ')??'—',
+      related:[companiesById.get(activity.companyId??'')?.name,
+        projectsById.get(activity.projectId??'')?.name].filter(Boolean).join(' · ')||'—',
+      type:activity.type.replaceAll('-',' '),
+      occurred:timeLabel(activity.occurredAt),
+    },sortValues:{occurred:activity.occurredAt},
+  })),[activityRows,companiesById,projectsById]);
   const companyTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='companies'?companyRows.map(c=>({
     id:c.id,name:c.name,isSelfCompany:isOurCompany(c),
     association:{type:'company',id:c.id,label:'Company · '+c.name},
@@ -864,8 +879,11 @@ export function Connections() {
           {tab==='suppliers'&&<div className="connections-suppliers-host">
             <SuppliersWorkspace externalQuery={query} embeddedInConnections/>
           </div>}
-          {tab==='activity'&&<section className="connections-activity-filters" aria-label="Filter Activity history">
-            <label>Method
+          {tab==='activity'&&<section className="connections-directory records-activity-directory" aria-label="Activity history">
+            <ConnectionsTable tableKey="activity" columns={ACTIVITY_COLUMNS} rows={activityTableRows}
+              onOpen={id=>{const activity=activityRows.find(a=>a.id===id);if(activity)openActivity(activity);}}
+              toolbarControls={<div className="connections-activity-filters" aria-label="Filter Activity history">
+                <label>Method
               <select value={activityFilters.method} onChange={e=>setActivityFilters(f=>({
                 ...f,method:e.target.value as ActivityLogFilters['method']}))}>
                <option value="all">Any method</option>
@@ -908,23 +926,7 @@ export function Connections() {
             <button type="button" disabled={JSON.stringify(activityFilters)===
               JSON.stringify(DEFAULT_ACTIVITY_LOG_FILTERS)}
               onClick={()=>setActivityFilters(DEFAULT_ACTIVITY_LOG_FILTERS)}>Clear filters</button>
-           </section>}
-          {tab === 'activity' && <section className="connections-directory" aria-label="Activity history">
-            <p className="connections-count">{activityRows.length} recorded events. Logged interactions and automatic CRM history, not a follow-up checklist.</p>
-            <div className="connections-activity-list">
-              {activityRows.map((activity) => {
-                return <button type="button" key={activity.id} onClick={() => openActivity(activity)}>
-                  <span><strong>{activity.summary}</strong><small>{[
-                   activity.metadata?.interactionMethod?.replaceAll('-',' '),
-                   companiesById.get(activity.companyId ?? '')?.name,
-                   projectsById.get(activity.projectId ?? '')?.name,
-                   activity.metadata?.notes?.slice(0,120)
-                  ].filter(Boolean).join(' · ')}</small></span>
-                  <time>{timeLabel(activity.occurredAt)}</time>
-                </button>;
-              })}
-              {!activityRows.length && <StatusText state="empty" className="connections-empty">No recorded history is available.</StatusText>}
-            </div>
+              </div>}/>
           </section>}
       </div>
       {externalQuotePickerOpen&&<ExternalQuoteBackfillDialog
