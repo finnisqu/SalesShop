@@ -311,6 +311,6 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        <span>Page {currentPage} of {pages}</span>
        <button type="button" disabled={currentPage>=pages} onClick={()=>setPage(currentPage+1)}>Next →</button>
      </div>
-   </footer>
+   </footer>}
  </section>;
 }
