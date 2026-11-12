@@ -18,11 +18,11 @@ export function RecordsPagesDirectory({query=''}:{query?:string}){
  const navigate=useNavigationStore(s=>s.openNotebookPage);
  const [selected,setSelected]=useState<string[]>([]);
  const [destination,setDestination]=useState('');
- const rows=useMemo(()=>entries.filter(e=>!e.isPostItInbox)
+ const rows=useMemo(()=>entries.filter(e=>!e.isPostItInbox&&!e.isCalendarInbox)
   .filter(e=>(e.title+' '+(e.dailyDate??'')+' '+(folders.find(f=>f.id===e.folderId)?.name??''))
    .toLocaleLowerCase().includes(query.toLocaleLowerCase().trim()))
   .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[entries,folders,query]);
- const active=new Set(selected.filter(id=>entries.some(e=>e.id===id&&!e.isPostItInbox)));
+ const active=new Set(selected.filter(id=>entries.some(e=>e.id===id&&!e.isPostItInbox&&!e.isCalendarInbox)));
  const shown=rows.filter(row=>active.has(row.id));
  const selectAll=rows.length>0&&rows.every(row=>active.has(row.id));
  const apply=(field:'favorite'|'hidden'|'deletionLocked',value:boolean)=>{
