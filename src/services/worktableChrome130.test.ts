@@ -67,7 +67,12 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(nav).toContain('records-section-nav ss-header-tab-pill');
   expect(nav).toContain('items={additional} asTab');
   expect(catalog).toContain('catalog-foundation-tabs ss-header-tab-pill');
-  expect(css).toContain('background:color-mix(in srgb,var(--ss-theme-tint) 86%,white 14%)!important');
+  expect(css).toContain('--ss-header-pill-shell:color-mix(in srgb,var(--ss-theme-card) 94%,white 6%)');
+  expect(css).toContain('--ss-header-pill-tab:color-mix(in srgb,var(--ss-theme-tint) 92%,black 8%)');
+  expect(css).toContain('--ss-header-pill-active:color-mix(in srgb,var(--ss-theme-tint) 80%,black 20%)');
+  expect(css).toContain('background:var(--ss-header-pill-shell)!important');
+  expect(css).toContain('background:var(--ss-header-pill-tab)!important');
+  expect(css).toContain('background:var(--ss-header-pill-active)!important');
   expect(css).toContain('font:750 11px/1.2');
   expect(css).toContain('border-left:0!important');
   expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
@@ -92,6 +97,23 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(chrome).toContain('.ss-worktable-filter-menu:not([open])>.ss-worktable-filter-panel');
   expect(chrome).toContain('.qmb-library-mobile-filters .ss-worktable-filter-panel');
   expect(chrome).toContain('.ss-worktable-surface.connections-table-scroll');
+ });
+ it('labels the auxiliary Records directories inside the shared toolbar',()=>{
+  const table=src('components/ConnectionsTable.tsx');
+  const styles=src('worktable-chrome.css');
+  for(const label of ['Suppliers','Notebook Pages','Activity History','Our Organization']){
+   expect(table).toContain("'"+label+"'");
+  }
+  expect(table).toContain('MORE_DIRECTORY_TITLES[tableKey]');
+  expect(table).toContain('connections-grid-title');
+  expect(styles).toContain('.connections-grid-title');
+ });
+ it('masks the gap above frozen headers instead of showing scrolling rows',()=>{
+  const styles=src('worktable-chrome.css');
+  expect(styles).toContain('.ss-worktable-surface table thead th::before');
+  expect(styles).toContain('bottom:100%;height:48px');
+  expect(styles).toContain('background:var(--ss-theme-card);pointer-events:none');
+  expect(styles).toContain('position:sticky;top:0;z-index:3');
  });
  it('keeps paging in the top toolbar while preserving mobile worktable behavior',()=>{
   const table=src('components/ConnectionsTable.tsx');
