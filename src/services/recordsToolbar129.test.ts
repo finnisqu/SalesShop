@@ -24,7 +24,7 @@ describe('Batch 129 — compact Records toolbar consistency',()=>{
   const records=source('components/Connections.tsx');
   const quotes=source('components/QuotesMobileBeta.tsx');
   const picker=source('components/NewSalesDocumentPicker.tsx');
-  expect(records).toContain('toolbarControls={<>{dealPipelineControl}</>}');
+  expect(records).toContain('toolbarFilters={dealPipelineControl}');
   expect(records).not.toContain('connections-deals-capture-bar is-mobile');
   expect(quotes).toContain('onRecordExternal={canRecordExternal?()=>');
   expect(quotes).not.toContain("section:'Actions',label:'Record external quote'");
@@ -34,12 +34,15 @@ describe('Batch 129 — compact Records toolbar consistency',()=>{
  it('groups Activity filters into a dismissible, keyboard-friendly menu',()=>{
   const records=source('components/Connections.tsx');
   const css=source('records-toolbar-consistency.css');
-  expect(records).toContain('useDismissibleDetails(activityFilterMenuRef)');
-  expect(records).toContain('records-activity-filter-menu');
-  expect(records).toContain('records-activity-filter-popover');
+  const table=source('components/ConnectionsTable.tsx');
+  const chrome=source('components/WorktableChrome.tsx');
+  const sharedStyles=source('worktable-chrome.css');
+  expect(records).toContain('toolbarFilters={<div className="connections-activity-filters"');
   expect(records).toContain('activeActivityFilters');
-  expect(css).toContain('grid-template-columns:repeat(2,minmax(0,1fr))');
-  expect(css).toContain('max-height:min(75dvh,480px)');
+  expect(table).toContain('<WorktableFilterMenu activeCount={filterCount}');
+  expect(chrome).toContain('useDismissibleDetails(ref)');
+  expect(sharedStyles).toContain('grid-template-columns:repeat(2,minmax(0,1fr))');
+  expect(sharedStyles).toContain('max-height:min(70dvh,540px)');
  });
  it('shares compact quote control sizing without altering the actual Quote editor',()=>{
   const app=source('App.tsx');
