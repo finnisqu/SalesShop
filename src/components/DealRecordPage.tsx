@@ -324,7 +324,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
                 :'Extended · Responsibility not assigned'
               :deal.dueDate<deal.originalDueDate
               ?'Earlier than the original deadline':'On the original deadline'}
-          </RecordProperty>
+          </RecordProperty>}
           {Boolean(deal.dueDateHistory?.length)&&<RecordProperty label="Deadline revisions">
             <details className="record-deadline-history">
               <summary>{deal.dueDateHistory?.length} change{deal.dueDateHistory?.length===1?'':'s'}</summary>
@@ -335,7 +335,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
                 {change.reason?' · '+change.reason:''}
               </li>)}</ol>
             </details>
-          </RecordProperty>
+          </RecordProperty>}
           {outsideQuotes.length>0&&<RecordProperty label="External bid sent">{displayDate(outsideQuotes[0].metadata?.bidSentDate||outsideQuotes[0].occurredAt)}</RecordProperty>}
           <RecordProperty label="Assigned salesperson">{dealAssigneeLabel(deal.assignedUserId,assignees)}</RecordProperty>
           <RecordInlineProperty label="Next action" value={deal.nextAction??''}
