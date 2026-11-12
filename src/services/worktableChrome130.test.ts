@@ -75,6 +75,13 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(css).not.toContain('--ss-header-pill-tab:');
   expect(css).toContain('height:36px!important;min-height:36px!important');
   expect(css).toContain('padding:7px 9px!important');
+  // Records needs an explicit selected selector; the generic idle-tab
+  // selector also matches More, increasing :is() specificity.
+  expect(css).toContain('.records-section-nav-tabs.ss-section-tabs>.ss-section-tab.active');
+  expect(css).toContain('box-shadow:inset 0 -2px var(--ss-theme-accent)!important');
+  // No custom hover styling; default controls remain unchanged.
+  expect(css).not.toContain('.ss-section-tab:not(.active):hover');
+  expect(css).not.toContain('.ss-workspace-more.is-tab:not([open])>summary:hover');
   expect(css).toContain('font:750 11px/1.2');
   expect(css).toContain('border-left:0!important');
   expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
