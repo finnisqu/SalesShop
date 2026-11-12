@@ -243,3 +243,419 @@
   padding:6px 8px;
  }
 }
+
+
+/*
+ * Batch 115 — Materials is the canonical Catalog visual language.
+ * Sinks / Other / Rates / Tags previously inherited incompatible legacy card,
+ * table and variant styles.  Scope the parity layer to those four sections:
+ * Materials' established styles, pricing state and global CRM tables stay intact.
+ */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+){
+ --ss-materials-bg:var(--ss-theme-base);
+ --ss-materials-card:var(--ss-theme-card);
+ --ss-materials-tint:var(--ss-theme-tint);
+ --ss-materials-ink:var(--ss-theme-ink);
+ --ss-materials-muted:var(--ss-theme-muted);
+ --ss-materials-border:var(--ss-theme-border);
+ --ss-materials-accent:var(--ss-theme-accent);
+ color:var(--ss-theme-ink);
+}
+
+/* All four catalog sections use the Materials card's border and surface. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) :is(.catalog-product-card,.catalog-tags-card,.rates-reference-host>.rates-reference-card){
+ box-sizing:border-box;
+ min-width:0;width:100%;max-width:none;
+ margin:0 0 18px;
+ border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-md,10px);
+ background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);
+ box-shadow:var(--ss-shadow-raised,0 4px 14px rgba(0,0,0,.05));
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-header{
+ box-sizing:border-box;
+ display:flex;align-items:center;justify-content:space-between;
+ min-height:54px;gap:10px 14px;padding:9px 12px;
+ border-bottom:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-md,10px) var(--ss-radius-md,10px) 0 0;
+ background:var(--ss-theme-base);
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-header>div:first-child>strong{
+ color:var(--ss-theme-ink);font:750 12px/1.35 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-header>div:first-child>small{
+ color:var(--ss-theme-muted);font:500 9px/1.4 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-actions{
+ display:flex;align-items:center;justify-content:flex-end;
+ gap:7px;flex-wrap:wrap;margin-left:auto;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) :is(.catalog-card-filter>summary,.catalog-card-sort>select,
+      .catalog-card-category>select,.catalog-card-edit){
+ box-sizing:border-box;min-height:35px;height:35px;
+ border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-sm,7px);
+ background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);
+ font:700 11px/1.3 var(--ss-font-body,system-ui,sans-serif);
+ box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-edit{
+ background:var(--ss-theme-accent);border-color:var(--ss-theme-accent);
+ color:var(--ss-theme-contrast);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) :is(.catalog-card-filter>summary,.catalog-card-sort>select,.catalog-card-category>select):hover{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) :is(.catalog-card-filter>summary,.catalog-card-sort>select,.catalog-card-category>select,
+     .catalog-card-edit,.catalog-product-table button,.catalog-product-property input,
+     .catalog-product-property select,.catalog-product-property textarea):focus-visible{
+ outline:2px solid var(--ss-theme-accent);
+ outline-offset:2px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-filter-panel{
+ border:1px solid var(--ss-theme-border);background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);border-radius:var(--ss-radius-md,10px);
+ box-shadow:var(--ss-shadow-overlay,0 12px 28px rgba(0,0,0,.12));
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-filter-panel :is(label,span){color:var(--ss-theme-muted);}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-filter-panel :is(input,select){
+ color:var(--ss-theme-ink);border-color:var(--ss-theme-border);
+ background:var(--ss-theme-card);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+) .catalog-card-filter-panel input::placeholder{color:var(--ss-theme-muted);opacity:1;}
+
+/* Match Materials' 32px table headings, 9px row padding and muted sublabels. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates
+) .rates-reference-table{
+ border-collapse:separate;border-spacing:0;
+ width:100%;color:var(--ss-theme-ink);font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates
+) .rates-reference-table thead th{
+ height:32px;padding:0 10px;vertical-align:middle;
+ border-right:1px solid var(--ss-theme-border);
+ border-bottom:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-base);
+ color:var(--ss-theme-muted);
+ font:850 8.5px/1.4 var(--ss-font-body,system-ui,sans-serif);
+ letter-spacing:.05em;text-transform:uppercase;text-align:left;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates
+) .rates-reference-table tbody td{
+ height:auto;min-height:45px;padding:9px 10px;vertical-align:middle;
+ border-right:1px solid var(--ss-theme-border);
+ border-bottom:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates
+) .rates-reference-table tbody tr:not(.materials-variant-expanded-row):nth-child(even)>td{
+ background:var(--ss-theme-base);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates
+) .rates-reference-table tbody tr:not(.materials-variant-expanded-row):hover>td{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates
+) .rates-reference-table tbody tr.is-expanded:not(.materials-variant-expanded-row)>td{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates
+) .rates-reference-table :is(.rates-reference-item strong,.rates-reference-sell strong,
+ .materials-name-toggle strong){
+ color:var(--ss-theme-ink);font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other,.catalog-section-rates
+) .rates-reference-table :is(.rates-reference-item small,.rates-reference-sell small,
+ .materials-name-toggle small,.materials-cell-note){
+ color:var(--ss-theme-muted);font-size:8px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-table .rates-reference-item>.materials-name-toggle{
+ display:block;max-width:100%;padding:0;margin:0;
+ border:0;background:transparent;color:var(--ss-theme-ink);
+ text-align:left;font-weight:750;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-table tbody td:last-child>button{
+ min-height:31px;padding:5px 9px;
+ border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-sm,7px);
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:800 9px/1.3 var(--ss-font-body,system-ui,sans-serif);
+ white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-table tbody td:last-child>button:is(:hover,.active){
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint);
+}
+
+/* Critical: old .materials-variant-line sets 6 grid columns and min-width:930px.
+   Sinks/Other use that class for semantic parity, but each variant is a card. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-sink-variant.materials-variant-line{
+ display:grid;grid-template-columns:minmax(0,1fr);
+ min-width:0;width:100%;min-height:0;gap:10px;padding:11px;
+ border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-sm,7px);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ box-shadow:none;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .rates-reference-table .materials-variant-expanded-row>td{
+ padding:0!important;background:var(--ss-theme-base)!important;
+ border-bottom:1px solid var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-detail{
+ gap:11px;padding:12px;background:var(--ss-theme-base);
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-variant-heading :is(strong,small){
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-variant-heading small,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) :is(.catalog-product-facts dt,.catalog-product-property>span){
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) :is(.catalog-product-facts dd,.catalog-product-detail-head strong){
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-property :is(input:not([type=checkbox]),select,textarea){
+ box-sizing:border-box;min-height:36px;border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-sm,7px);background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);font:500 12px/1.35 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) :is(.catalog-product-detail-head button,.catalog-product-variant-operations button,
+ .catalog-product-pin-actions button,.materials-pin-button){
+ border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-sm,7px);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font-size:10px;font-weight:750;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .materials-pin-button.is-pinned{
+ border-color:var(--ss-theme-accent);
+ background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-variant-operations .is-danger{color:var(--ss-danger,#ae433b);}
+
+/* The Sinks/Other pin strips currently inherit fixed ivory/brown values. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-pin-board{
+ border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-md,10px);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ box-shadow:var(--ss-shadow-raised,0 4px 14px rgba(0,0,0,.05));
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-pin-board>header{
+ border-bottom:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-base);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-pin-board>header :is(strong,button){
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-pin-board>header small{
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-pin-board .materials-comparison-card{
+ border:1px solid var(--ss-theme-border);
+ border-top:3px solid var(--ss-theme-accent);
+ border-radius:var(--ss-radius-sm,7px);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-pin-board .materials-comparison-card :is(strong,b,dd){
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-pin-board .materials-comparison-card :is(span,dt,small){
+ color:var(--ss-theme-muted);
+}
+
+/* Rates: keep rate-specific functionality, but use Materials' card/text scale. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-rates
+ .rates-reference-card :is(.rates-reference-item strong,.rates-reference-sell strong){
+ color:var(--ss-theme-ink);font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-rates
+ .rates-reference-card :is(.rates-reference-item small,.rates-reference-sell small){
+ color:var(--ss-theme-muted);font-size:8px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-rates
+ .rates-reference-card .rates-material-pricing-footer{
+ background:var(--ss-theme-base);
+ border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-rates
+ .rates-reference-card .rates-material-pricing-footer :is(strong,span){
+ color:var(--ss-theme-ink);
+}
+
+/* Tags uses ConnectionsTable for its features; visually it is still a Catalog table. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-grid-shell{
+ display:grid;gap:0;width:100%;max-width:none;
+ margin:0;border:0;border-radius:0;background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-grid-toolbar{
+ min-height:47px;gap:8px;padding:7px 12px;
+ border:0;border-bottom:1px solid var(--ss-theme-border);
+ border-radius:0;background:var(--ss-theme-base);
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-grid-toolbar>span{
+ color:var(--ss-theme-muted);font-size:10px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-table-scroll{
+ border:0;border-radius:0;background:var(--ss-theme-card);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-data-table thead th{
+ height:32px;padding:0 10px;
+ border-right:1px solid var(--ss-theme-border);
+ border-bottom:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-base);color:var(--ss-theme-muted);
+ font:850 8.5px/1.4 var(--ss-font-body,system-ui,sans-serif);
+ letter-spacing:.05em;text-transform:uppercase;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-data-table thead th>button{
+ min-height:32px;background:transparent;border:0;
+ color:var(--ss-theme-muted);font:850 8.5px/1.4 var(--ss-font-body,system-ui,sans-serif);
+ letter-spacing:.05em;text-transform:uppercase;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-data-table tbody td{
+ min-height:45px;padding:9px 10px;
+ border-right:1px solid var(--ss-theme-border);
+ border-bottom:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-data-table tbody tr:nth-child(even)>td{
+ background:var(--ss-theme-base);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-data-table tbody tr:is(:hover,.is-selected)>td{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-data-table .connections-table-open{
+ color:var(--ss-theme-ink);
+ font:750 11px/1.35 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ .connections-grid-pagination{
+ margin:0;padding:8px 12px;
+ background:var(--ss-theme-base);
+ border-top:1px solid var(--ss-theme-border);
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+ :is(.connections-columns-menu summary,.connections-grid-pagination button){
+ border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-sm,7px);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font-size:10px;font-weight:750;
+}
+
+@media(max-width:820px){
+ /* Tags should not go blank when Connections' phone card mode hides its grid. */
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+  .connections-grid-shell{display:grid;}
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+  .connections-table-scroll{overflow-x:auto;}
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+  .catalog-section-sinks,.catalog-section-other,.catalog-section-rates,.catalog-section-tags
+ ) .catalog-card-header{
+  min-height:54px;padding:9px 10px;gap:8px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+  .catalog-section-sinks,.catalog-section-other
+ ) .catalog-product-detail{padding:10px;gap:8px;}
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+  .catalog-section-sinks,.catalog-section-other
+ ) .catalog-product-property :is(input:not([type=checkbox]),select,textarea){
+  min-height:42px;font-size:16px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-tags .catalog-tags-card
+  .connections-data-table{min-width:650px;}
+}
