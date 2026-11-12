@@ -34,10 +34,10 @@ export function MobileWorkspaceTabs({title,items,value,onChange}:{
 
 /** One shared desktop header; on phone the title lives in the global app bar.
  * The local header is exactly: selected tab | More | Search | Add. */
-export function WorkspaceHeader({title,help,tabs,more,search,primary,className='',
- mobileTabs,mobileTabValue,onMobileTabChange}:{
- title:string;help?:ReactNode;tabs?:ReactNode;more?:ReactNode;search?:ReactNode;primary?:ReactNode;className?:string;
- mobileTabs?:readonly MobileWorkspaceTab[];mobileTabValue?:string;onMobileTabChange?:(value:string)=>void;
+export function WorkspaceHeader({title,help,afterTitle,tabs,more,search,primary,className='',
+ mobileTabs,mobileBeforeTabs,mobileTabValue,onMobileTabChange}:{
+ title:string;help?:ReactNode;afterTitle?:ReactNode;tabs?:ReactNode;more?:ReactNode;search?:ReactNode;primary?:ReactNode;className?:string;
+ mobileTabs?:readonly MobileWorkspaceTab[];mobileBeforeTabs?:ReactNode;mobileTabValue?:string;onMobileTabChange?:(value:string)=>void;
 }){
  const [searchOpen,setSearchOpen]=useState(false);
  const searchPanelRef=useRef<HTMLDivElement>(null);
@@ -66,9 +66,11 @@ export function WorkspaceHeader({title,help,tabs,more,search,primary,className='
  return <header className={'ss-workspace-header '+className}>
   <div className="ss-workspace-header__intro"><h1>{title}</h1>
    {help&&<div className="ss-workspace-header__help">{help}</div>}
+   {afterTitle&&<div className="ss-workspace-header__after-title">{afterTitle}</div>}
   </div>
   <div className="ss-workspace-header__tabs">{tabs}</div>
   {mobileTabs&&mobileTabs.length>0&&<div className="ss-workspace-header__mobile-nav">
+   {mobileBeforeTabs&&<div className="ss-workspace-header__mobile-leading">{mobileBeforeTabs}</div>}
    <MobileWorkspaceTabs title={title} items={mobileTabs} value={mobileTabValue??mobileTabs[0].value}
     onChange={onMobileTabChange}/>
   </div>}
