@@ -47,6 +47,8 @@ export interface NotebookEntry {
   folderId?: string;
   /** Stable marker for the private global Post-it collection page. */
   isPostItInbox?: boolean;
+  /** Internal, hidden owner for Home calendar entries created without a Notebook page. */
+  isCalendarInbox?: boolean;
   /** YYYY-MM-DD only for Daily Notes, absent on normal pages and Post-it inbox. */
   dailyDate?: string;
   /** Separately positioned linked schedule, unaffected by the canvas geometry. */
