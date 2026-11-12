@@ -1,6 +1,8 @@
 import {Fragment,useEffect,useMemo,useState} from 'react';
 import {useOtherCatalogStore,type OtherCatalogItem,type OtherCatalogVariant} from '../store/otherCatalogStore';
 import {scopedStorageKey} from '../lib/developerPlayground';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-other-pins-v1');
@@ -30,6 +32,10 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
  const addVariant=useOtherCatalogStore(s=>s.addVariant),updateVariant=useOtherCatalogStore(s=>s.updateVariant);
  const duplicateVariant=useOtherCatalogStore(s=>s.duplicateVariant);
  const removeVariant=useOtherCatalogStore(s=>s.removeVariant);
+ const authMode=useAuthStore(state=>state.mode);
+ const role=useAuthStore(state=>state.teamRole);
+ const previewRole=useRolePerspectiveStore(state=>state.activePerspective);
+ const canEdit=!previewRole&&(authMode==='local'||role==='owner'||role==='admin');
  const [editing,setEditing]=useState(false),[expanded,setExpanded]=useState<string|null>(null);
  const [query,setQuery]=useState(''),[category,setCategory]=useState('all');
  const [showInactive,setShowInactive]=useState(false);
@@ -38,10 +44,10 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
  useEffect(()=>{void hydrate();},[hydrate]);
  useEffect(()=>{try{localStorage.setItem(PIN_KEY,JSON.stringify(pins));}catch{/* best effort */}},[pins]);
  useEffect(()=>{
-  const create=()=>{const id=addItem();setEditing(true);setExpanded(id);};
+  const create=()=>{if(!canEdit)return;const id=addItem();setEditing(true);setExpanded(id);};
   window.addEventListener('sales-shop:catalog-create',create);
   return()=>window.removeEventListener('sales-shop:catalog-create',create);
- },[addItem]);
+ },[addItem,canEdit]);
  const categories=useMemo(()=>[...new Set(items.map(item=>item.category))].sort(),[items]);
  const filtered=useMemo(()=>{
   const needle=[query,externalQuery].filter(Boolean).join(' ').toLowerCase().trim();
@@ -93,8 +99,8 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
     <input type="checkbox" checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/>Inactive
    </label>}
    <small className="catalog-product-save" role="status">{error?'Sync issue: '+error:saving?'Saving…':''}</small>
-   <button type="button" className="catalog-product-edit" onClick={()=>setEditing(e=>!e)}>
-    {editing?'Done editing':'Edit items'}</button>
+   {canEdit&&<button type="button" className="catalog-product-edit" onClick={()=>setEditing(e=>!e)}>
+    {editing?'Done editing':'Edit items'}</button>}
   </div>
   {!!selectedPins.length&&<section className="materials-comparison-board has-pins catalog-product-pin-board"
    aria-label="Pinned other catalog comparison">
