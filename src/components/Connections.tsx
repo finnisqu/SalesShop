@@ -62,7 +62,7 @@ const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD
 const TAB_KEY = 'salesshop-connections-tab-v1';
 const ACTIVITY_COLUMNS:ConnectionColumn[]=[
  {key:'name',label:'Activity'},{key:'method',label:'Method'},
- {key:'related',label:'Related records'},{key:'type',label:'Record type'},
+ {key:'related',label:'Related records'},{key:'notes',label:'Notes'},{key:'type',label:'Record type'},
  {key:'occurred',label:'Date'},
 ];
 const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
@@ -395,8 +395,7 @@ export function Connections() {
     .filter((activity) => findText(activity.summary, activity.type,
       companiesById.get(activity.companyId ?? '')?.name,
       projectsById.get(activity.projectId ?? '')?.name).includes(needle))
-    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
-    .slice(0, 150), [activities, companiesById, projectsById,internalCompanyIds,
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)), [activities, companiesById, projectsById,internalCompanyIds,
       activityFilters,companies,contacts,projects,visibleQuotes,needle]);
 
   const activityTableRows=useMemo<ConnectionTableRow[]>(()=>activityRows.map(activity=>({
@@ -405,6 +404,7 @@ export function Connections() {
       method:activity.metadata?.interactionMethod?.replaceAll('-',' ')??'—',
       related:[companiesById.get(activity.companyId??'')?.name,
         projectsById.get(activity.projectId??'')?.name].filter(Boolean).join(' · ')||'—',
+      notes:activity.metadata?.notes?.slice(0,120)??'—',
       type:activity.type.replaceAll('-',' '),
       occurred:timeLabel(activity.occurredAt),
     },sortValues:{occurred:activity.occurredAt},
