@@ -721,8 +721,10 @@ export function Connections() {
 
 
           {notice && <p className="connections-notice" role="status">{notice}</p>}
-          {tab==='tasks'&&<TasksWorkspace embedded externalQuery={query}/>}
-          {tab==='pages'&&<RecordsPagesDirectory query={query}/>}
+          {tab==='tasks'&&<section className="connections-directory records-tasks-directory"
+            aria-label="Tasks directory"><TasksWorkspace embedded externalQuery={query}/></section>}
+          {tab==='pages'&&<section className="connections-directory records-pages-host"
+            aria-label="Notebook pages"><RecordsPagesDirectory query={query}/></section>}
           {tab==='companies'&&layouts.companies==='board'&&
             <div className="connections-board-host" aria-label="Company board layout">
               <Board embeddedMode="accounts" searchQuery={query}
@@ -833,18 +835,9 @@ export function Connections() {
             <DealTimelineBetaOverview projects={projectRows} onOpen={openProject}/>}
           {tab === 'deals' && layouts.deals==='table' && (!timelineBetaEnabled||dealsView==='list') && <section className="connections-directory" aria-label="Deals directory">
             
-            <div className="connections-deals-capture-bar is-mobile">
-              <span className="connections-deals-capture-title">Deals</span>
-              <button type="button" disabled={!canBulkEdit} onClick={()=>setExternalQuotePickerOpen(true)}>
-               <span aria-hidden="true">+</span> Record external quote
-              </button>
-            </div>
-            <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
+             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
-              toolbarControls={<>{dealPipelineControl}
-               <button type="button" disabled={!canBulkEdit}
-                onClick={()=>setExternalQuotePickerOpen(true)}>+ Record external quote</button>
-              </>}
+              toolbarControls={<>{dealPipelineControl}</>}
                onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
