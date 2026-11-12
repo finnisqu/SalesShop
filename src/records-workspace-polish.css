@@ -72,3 +72,14 @@
  .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-tabs button{flex:1}
  .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-toolbar-slot{width:100%}
 }
+
+/* The desktop Tasks table is hidden on phones; keep the status selector reachable. */
+.sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-mobile-tabs{display:none}
+@media(max-width:820px){
+ .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-mobile-tabs{
+  display:flex;width:100%;box-sizing:border-box;margin:0 0 9px;
+ }
+ .sales-app.view-dashboard .tasks-workspace.is-records-embedded .tasks-records-mobile-tabs button{
+  flex:1;min-height:40px;
+ }
+}
