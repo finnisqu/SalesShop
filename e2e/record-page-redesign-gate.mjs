@@ -47,6 +47,8 @@ assert(contains(connections,[
   'const allowedDealIds=useMemo(',
   'allowedCompanyIds={allowedCompanyIds}',
   'allowedDealIds={allowedDealIds}',
+  'pipelineFilter={pipelineFilter}',
+  'toolbarControls={dealPipelineControl}',
   'toolbarControls={companyFilterControl}',
   'companyToolbarControl={companyFilterControl}',
   'onGoToQuotePage={openQuoteMetadata}',
@@ -56,6 +58,8 @@ assert(contains(connections,[
 ]),'Connections search, relationship navigation or scroll restoration regressed');
 assert(contains(board,[
   'allowedDealIds?allowedDealIds.has(project.id)',
+  'const pipelineView=pipelineFilter??localPipelineView',
+  'onPipelineFilterChange?.(next)',
   'onClick={onOpen}',
   'onGoToQuotePage={onOpenQuoteMetadata}',
 ]),'Embedded Deal Board and Table record parity regressed');
