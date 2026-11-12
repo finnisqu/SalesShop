@@ -1289,8 +1289,6 @@ export function QuotesMobileBeta() {
           {label:'Community Plan Pricing',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('community-pricing');},active:!followUpsTab&&documentFilter==='community-pricing'},
           {label:'Custom Spreadsheet',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('spreadsheet');},active:!followUpsTab&&documentFilter==='spreadsheet'},
           {section:'Workspaces',label:'Follow-ups',onClick:()=>setFollowUpsTab(true),active:followUpsTab},
-          {section:'Actions',label:'Record external quote',disabled:!canRecordExternal,
-            onClick:()=>setRecordExternalOpen(true)},
           {section:'Status filters',label:'Active documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('active');},active:statusFilter==='active'},
           {label:'Draft documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('drafts');},active:statusFilter==='drafts'},
           {label:'Issued documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('issued');},active:statusFilter==='issued'},
@@ -1639,7 +1637,11 @@ export function QuotesMobileBeta() {
       stockMaterialCount={stockLevelPreview.summary.stockCount}
       stockLevelCount={stockLevelPreview.summary.levelCount}
       unassignedStockCount={stockLevelPreview.summary.unassigned.length}
-      onClose={()=>{clearQuoteCreateAssociation();setShowNewDocument(false);}} onCreate={createFromTemplate}/>}
+      onClose={()=>{clearQuoteCreateAssociation();setShowNewDocument(false);}}
+      onCreate={createFromTemplate}
+      onRecordExternal={canRecordExternal?()=>{
+        clearQuoteCreateAssociation();setShowNewDocument(false);setRecordExternalOpen(true);
+      }:undefined}/>}
     {copyRequest&&createPortal(<div className="qmb qmb-area-manager-backdrop"
       onPointerDown={e=>{if(e.currentTarget===e.target)setCopyRequest(null);}}>
       <section className="qmb-area-manager qmb-document-confirm-dialog" role="dialog"
