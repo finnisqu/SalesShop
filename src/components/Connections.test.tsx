@@ -2,25 +2,25 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { Connections, CONNECTIONS_TABS, resolveConnectionsLandingTab } from './Connections';
 
-describe('Privacy-first Connections navigation', () => {
-  it('makes Companies, People and Deals the only prominent sections', () => {
-    expect(CONNECTIONS_TABS.map((tab) => tab.id)).toEqual(['companies', 'people', 'deals']);
+describe('Privacy-first Records navigation', () => {
+  it('puts Tasks first and Activities alongside CRM Records', () => {
+    expect(CONNECTIONS_TABS.map((tab) => tab.id)).toEqual(['tasks', 'companies', 'people', 'deals', 'activity', 'suppliers']);
     expect(new Set(CONNECTIONS_TABS.map((tab) => tab.id)).size).toBe(CONNECTIONS_TABS.length);
   });
 
-  it('migrates old dashboard/activity session selections to Companies', () => {
-    expect(resolveConnectionsLandingTab('overview')).toBe('companies');
-    expect(resolveConnectionsLandingTab('activity')).toBe('companies');
-    expect(resolveConnectionsLandingTab('unknown')).toBe('companies');
-    expect(resolveConnectionsLandingTab(null)).toBe('companies');
+  it('resolves existing views while defaulting new Records sessions to Tasks', () => {
+    expect(resolveConnectionsLandingTab('overview')).toBe('tasks');
+    expect(resolveConnectionsLandingTab('activity')).toBe('activity');
+    expect(resolveConnectionsLandingTab('unknown')).toBe('tasks');
+    expect(resolveConnectionsLandingTab(null)).toBe('tasks');
     expect(resolveConnectionsLandingTab('people')).toBe('people');
     expect(resolveConnectionsLandingTab('deals')).toBe('deals');
-    expect(resolveConnectionsLandingTab('projects')).toBe('companies');
+    expect(resolveConnectionsLandingTab('projects')).toBe('tasks');
   });
 
-  it('does not render the cross-company Sales Dashboard or activity as a top tab', () => {
+  it('renders the Records chrome without bringing back the old dashboard', () => {
     const html = renderToStaticMarkup(<Connections />);
-    expect(html).toContain('Connections');
+    expect(html).toContain('Records');
     expect(html).toContain('Companies');
     expect(html).toContain('People');
     expect(html).toContain('Deals');
@@ -29,7 +29,7 @@ describe('Privacy-first Connections navigation', () => {
     expect(html).not.toContain('Reporting view');
     expect(html).not.toContain('leadership-dashboard');
     expect(html).not.toContain('connections-overview');
-    expect(html).not.toContain('Activity history');
+    expect(html).toContain('Activities');
     expect(html).not.toContain('connections-workspace-summary');
   });
 });
