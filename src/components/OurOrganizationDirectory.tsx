@@ -176,15 +176,16 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
    <div className="our-org-form-actions"><button type="submit">Save person</button></div>
   </form>}
   <ConnectionsTable tableKey="organization" onOpen={onOpenPerson}
-   toolbarControls={<div className="our-org-table-controls">
+   toolbarControls={ownCompany&&<button type="button" className="our-org-self-company-link"
+     onClick={()=>openCompany(ownCompany.id)}>View SELF company ↗</button>}
+   toolbarFilters={<div className="our-org-table-controls">
   <div className="our-org-tabs" role="group" aria-label="Internal people type">
    {OUR_ORG_GROUPS.map(item=><button type="button" key={item.id}
     aria-pressed={group===item.id} onClick={()=>{setGroup(item.id);setShowEditor(false);setError('');}}>
     {item.title} <span>{count(item.id)}</span></button>)}
   </div>
-    {ownCompany&&<button type="button" className="our-org-self-company-link"
-       onClick={()=>openCompany(ownCompany.id)}>View SELF company ↗</button>}
    </div>}
+   filterCount={Number(group!=='employees')}
    onRecordEdit={editable?beginEdit:undefined}
    columns={[
     {key:'name',label:'Person'},{key:'role',label:'Role / trade'},

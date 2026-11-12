@@ -19,6 +19,7 @@ import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogTool
 import { RateBook } from './RateBook';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
+import {WorktableFilterMenu} from './WorktableChrome';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 type ReferenceCategory = 'all' | RateBookCategory;
@@ -188,8 +189,8 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
       </select>
     </label>
     {!showingMaterialPricing&&<>
-      <details className="rates-filter-menu catalog-card-filter">
-        <summary>Filter{activeReferenceFilters?' · '+activeReferenceFilters:''}</summary>
+      <WorktableFilterMenu className="catalog-card-filter"
+       activeCount={activeReferenceFilters+Number(rateSort!=='category')}>
         <div className="rates-filter-popover rates-foundation-filter-popover catalog-card-filter-panel">
           <RatesFilterFields idPrefix="rates-table"
             behaviorFilter={behaviorFilter} unitFilter={unitFilter} overrideFilter={overrideFilter}
@@ -197,18 +198,18 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
             onBehaviorChange={setBehaviorFilter} onUnitChange={setUnitFilter}
             onOverrideChange={setOverrideFilter} onClear={clearReferenceFilters} />
         </div>
-      </details>
-      <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
-        <select value={rateSort} onChange={event=>setRateSort(event.target.value as RateSort)}
-          aria-label="Sort rate reference">
-          <option value="category">Category / item</option>
-          <option value="name">Item A–Z</option>
-          <option value="sell-asc">Suggested sell · low first</option>
-          <option value="sell-desc">Suggested sell · high first</option>
-          <option value="cost-asc">Cost · low first</option>
-          <option value="effective-desc">Effective · newest</option>
-        </select>
-      </label>
+        <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
+          <select value={rateSort} onChange={event=>setRateSort(event.target.value as RateSort)}
+           aria-label="Sort rate reference">
+            <option value="category">Category / item</option>
+            <option value="name">Item A–Z</option>
+            <option value="sell-asc">Suggested sell · low first</option>
+            <option value="sell-desc">Suggested sell · high first</option>
+            <option value="cost-asc">Cost · low first</option>
+            <option value="effective-desc">Effective · newest</option>
+          </select>
+        </label>
+      </WorktableFilterMenu>
     </>}
     <button type="button" className="catalog-card-edit" onClick={()=>{
       syncEditorCategory(category);setEditing(true);
@@ -378,7 +379,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                 );
               })}
             </MobileCatalogReferenceList>
-            <div className="rates-reference-table-wrap">
+            <div className="rates-reference-table-wrap ss-worktable-surface">
               <table className="rates-reference-table">
                 <thead><tr><th>Item</th><th>Category</th><th>Cost</th><th>Suggested sell</th><th>Unit</th><th>Margin</th><th>Effective</th></tr></thead>
                 <tbody>
@@ -439,7 +440,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                 );
               })}
             </MobileCatalogReferenceList>
-            <div className="rates-reference-table-wrap">
+            <div className="rates-reference-table-wrap ss-worktable-surface">
               <table className="rates-reference-table rates-material-pricing-table">
                 <thead><tr><th>Level</th><th>Material cost ceiling</th><th>Standard customer price</th><th>Meaning</th></tr></thead>
                 <tbody>

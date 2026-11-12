@@ -6,7 +6,7 @@ describe('Batch 126 — shared compact Records/Catalog worktables',()=>{
  it('reuses Catalog paging choices, column controls, selection and pins across Records tables',()=>{
   const table=src('components/ConnectionsTable.tsx');
   for(const text of ['CATALOG_PAGE_SIZES','catalogPageRange','catalogPagination',
-   "tableKey+' per page'",'Select pinned','bulkActions?.(chosen','connections-columns-menu']){
+   'WorktablePagination','Select pinned','bulkActions?.(chosen','connections-columns-menu']){
    expect(table).toContain(text);
   }
   expect(table).toContain("const PAGE_SIZE=DEFAULT_CATALOG_PAGE_SIZE;");
@@ -21,7 +21,7 @@ describe('Batch 126 — shared compact Records/Catalog worktables',()=>{
   expect(pages).toContain('isCalendarInbox');
   expect(pages).not.toContain('<table>');
   expect(records).toContain('<ConnectionsTable tableKey="activity"');
-  expect(records).toContain('toolbarControls={<details className="records-activity-filter-menu"');
+  expect(records).toContain('toolbarFilters={<div className="connections-activity-filters"');
   expect(records).not.toContain('<div className="connections-activity-list">');
   expect(records).toContain('records-activity-directory');
  });
@@ -31,17 +31,17 @@ describe('Batch 126 — shared compact Records/Catalog worktables',()=>{
   expect(records).toContain('connections-people-attention-filters is-mobile');
   expect(records).toContain('records-tasks-directory');
   expect(records).not.toContain('connections-deals-capture-bar is-mobile');
-  expect(records).toContain('toolbarControls={<>{dealPipelineControl}');
+  expect(records).toContain('toolbarFilters={dealPipelineControl}');
   expect(organization).toContain('our-org-unified-toolbar is-mobile');
   expect(organization).toContain('our-org-table-controls');
-  expect(organization).toContain('toolbarControls={<div className="our-org-table-controls">');
+  expect(organization).toContain('toolbarFilters={<div className="our-org-table-controls">');
  });
  it('keeps Quotes in the existing full workspace, with a single table toolbar and compact action menu',()=>{
   const quotes=src('components/QuotesMobileBeta.tsx');
   const header=src('components/WorkspaceHeader.tsx');
   expect(quotes).toContain('<WorkspaceHeader title="Records"');
   expect(quotes).toContain('const documentTypeControl');
-  expect(quotes).toContain('toolbarControls={<>{documentTypeControl}{sharedLibraryControls}</>}');
+  expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
   expect(quotes).not.toContain('qmb-library-directory-caption');
   expect(quotes).toContain('compact label="Quote actions"');
   expect(header).toContain('compact=false');

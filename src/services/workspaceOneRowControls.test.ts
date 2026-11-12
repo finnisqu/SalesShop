@@ -16,7 +16,7 @@ describe('Connections-style Tasks and Quotes directory rows',()=>{
   expect(intro).toContain('ref={setTaskToolbarHost}');
   expect(tasks).toContain('toolbarTarget={embedded?undefined:taskToolbarHost}');
   expect(tasks).toContain('toolbarControls={<>');
-  expect(tasks).toContain('tasks-overview-menu');
+  expect(tasks).toContain('toolbarFilters={<div className="tasks-worktable-filter-options">');
   expect(tasks).toContain('tasks-records-tabs');
   expect(tasks).toContain('className="tasks-queue-filter"');
   expect(tasks).toContain('WorkspaceHelp page="tasks"');
@@ -33,7 +33,7 @@ describe('Connections-style Tasks and Quotes directory rows',()=>{
   expect(intro).toContain('qmb-library-toolbar-slot');
   expect(intro).toContain('ref={setDocumentToolbarHost}');
   expect(quotes).toContain('toolbarTarget={documentToolbarHost}');
-  expect(quotes).toContain('toolbarControls={<>{documentTypeControl}{sharedLibraryControls}</>}');
+  expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
   expect(css).toContain('.qmb-library-toolbar-slot>.connections-grid-toolbar');
   expect(quotes).toContain('onDocumentArchive=');
   expect(quotes).toContain('onDocumentRestore=');
@@ -41,9 +41,12 @@ describe('Connections-style Tasks and Quotes directory rows',()=>{
  it('slots filters without duplicating selection or column management state',()=>{
   expect(table).toContain('toolbarTarget?:HTMLElement|null;');
   expect(table).toContain('toolbarControls?:ReactNode;');
+  expect(table).toContain('toolbarFilters?:ReactNode;');
   expect(table).toContain('createPortal(toolbar,toolbarTarget)');
   expect(table).toContain('toolbarTarget===undefined?toolbar:toolbarTarget?');
   expect(table).toContain('connections-toolbar-controls');
+  expect(table).toContain('<WorktablePagination');
+  expect(table).toContain('<WorktableFilterMenu');
   expect((table.match(/className="connections-grid-toolbar"/g)||[])).toHaveLength(1);
   expect(table).toContain('onBulkTaskProperty');
   expect(table).toContain('connections-columns-menu');

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {createPortal} from 'react-dom';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {WorktableFilterMenu} from './WorktableChrome';
 import {RecordsSectionNav,RECORDS_SECTIONS,RECORDS_QUOTES_LIBRARY_KEY,rememberRecordsSection,
  type RecordsSection} from './RecordsSectionNav';
 import {WorkspaceHelp} from './WorkspaceHelp';
@@ -891,6 +892,10 @@ export function QuotesMobileBeta() {
     documentSort!=='recent'||libraryFilters.source!=='all'||libraryFilters.owner!=='all'||
     Boolean(libraryFilters.from||libraryFilters.to);
   const resetLibraryFilters=()=>updateLibraryFilters({...DEFAULT_QUOTE_LIBRARY_FILTERS});
+  const activeDocumentFilterCount=Number(documentFilter!=='all')+
+    Number(statusFilter!=='active')+Number(documentSort!=='recent')+
+    Number(libraryFilters.source!=='all')+Number(libraryFilters.owner!=='all')+
+    Number(Boolean(libraryFilters.from))+Number(Boolean(libraryFilters.to));
   const sharedLibraryControls=<QuoteLibraryFilterControls filters={libraryFilters} counts={counts}
     externalCount={externalQuoteRecords.length} canFilterOwner={authMode==='cloud'}
     onChange={updateLibraryFilters} onClear={resetLibraryFilters}/>;
@@ -1310,12 +1315,17 @@ export function QuotesMobileBeta() {
            :<>
          <div className="qmb-library-directory-controls" aria-label="Document directory controls">
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
-           <div className="qmb-library-mobile-filters">{documentTypeControl}{sharedLibraryControls}</div>
+           <div className="qmb-library-mobile-filters">
+             <WorktableFilterMenu activeCount={activeDocumentFilterCount}>
+              {documentTypeControl}{sharedLibraryControls}
+             </WorktableFilterMenu>
+            </div>
          </div>
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
              toolbarTarget={documentToolbarHost}
-             toolbarControls={<>{documentTypeControl}{sharedLibraryControls}</>}
+             toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}
+             filterCount={activeDocumentFilterCount}
              onOpen={id=>id.startsWith('external:')
                 ?setExternalQuotePreviewId(id.slice('external:'.length))
                 :setDocumentPreviewId(id)}

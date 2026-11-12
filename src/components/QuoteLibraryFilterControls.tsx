@@ -13,7 +13,6 @@ type Props={
 };
 export function QuoteLibraryFilterControls({filters,counts,externalCount,
  canFilterOwner,onChange,onClear}:Props){
- const extraCount=Number(filters.owner!=='all')+Number(Boolean(filters.from))+Number(Boolean(filters.to));
  return <div className="qmb-library-tools qmb-library-filters-v112" aria-label="Quote library filters">
   <label><span>Show</span>
    <select value={filters.status} aria-label="Document status"
@@ -41,9 +40,7 @@ export function QuoteLibraryFilterControls({filters,counts,externalCount,
     <option value="oldest">Oldest updated</option>
    </select>
   </label>
-  <details className="qmb-library-extra-filters">
-   <summary>More filters{extraCount?' · '+extraCount:''}</summary>
-   <div className="qmb-library-extra-filters-content">
+  <div className="qmb-library-extra-filters-content">
     {canFilterOwner&&<label><span>Ownership</span>
      <select value={filters.owner} aria-label="Quote ownership"
       onChange={e=>onChange({owner:e.target.value as QuoteLibraryOwner})}>
@@ -61,6 +58,5 @@ export function QuoteLibraryFilterControls({filters,counts,externalCount,
     <p>The date is the sent date for submitted quotes, or last updated date for drafts.</p>
     <button type="button" onClick={onClear}>Clear all filters</button>
    </div>
-  </details>
  </div>;
 }
