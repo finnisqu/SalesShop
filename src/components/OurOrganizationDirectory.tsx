@@ -122,7 +122,7 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
   }catch(e){setError(e instanceof Error?e.message:'Could not add role.');}
  };
  return <section className="our-org-directory">
-  <div className="our-org-unified-toolbar">
+  <div className="our-org-unified-toolbar is-mobile">
   <div className="our-org-heading">
    <div><h2>Our Organization</h2>
     <p>Employees and subcontractors. Separate from customer and partner contacts; not a Team login directory.</p>
@@ -176,6 +176,15 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
    <div className="our-org-form-actions"><button type="submit">Save person</button></div>
   </form>}
   <ConnectionsTable tableKey="organization" onOpen={onOpenPerson}
+   toolbarControls={<div className="our-org-table-controls">
+  <div className="our-org-tabs" role="group" aria-label="Internal people type">
+   {OUR_ORG_GROUPS.map(item=><button type="button" key={item.id}
+    aria-pressed={group===item.id} onClick={()=>{setGroup(item.id);setShowEditor(false);setError('');}}>
+    {item.title} <span>{count(item.id)}</span></button>)}
+  </div>
+    {ownCompany&&<button type="button" className="our-org-self-company-link"
+       onClick={()=>openCompany(ownCompany.id)}>View SELF company ↗</button>}
+   </div>}
    onRecordEdit={editable?beginEdit:undefined}
    columns={[
     {key:'name',label:'Person'},{key:'role',label:'Role / trade'},

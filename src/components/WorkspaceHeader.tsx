@@ -97,11 +97,11 @@ export interface WorkspaceMoreItem{
  /** Optional visually separated category for mixed navigation, views and actions. */
  section?:string;
 }
-export function WorkspaceMoreMenu({items,label='More'}:{items:readonly WorkspaceMoreItem[];label?:string}){
+export function WorkspaceMoreMenu({items,label='More',compact=false}:{items:readonly WorkspaceMoreItem[];label?:string;compact?:boolean}){
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
- return <details className="ss-workspace-more" ref={ref}>
-  <summary aria-label={label+' menu'}><span>More</span> <WorkspaceChromeIcon name="more"/></summary>
+ return <details className={'ss-workspace-more'+(compact?' is-compact':'')} ref={ref}>
+  <summary aria-label={label+' menu'}>{!compact&&<span>More</span>} <WorkspaceChromeIcon name="more"/></summary>
   <div className="ss-workspace-more__menu" role="group" aria-label={label+' options'}>
    {items.map((item,index)=><div className="ss-workspace-more__entry" key={index}>
     {item.section&&(index===0||items[index-1]?.section!==item.section)&&

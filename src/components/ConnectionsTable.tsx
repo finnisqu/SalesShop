@@ -11,10 +11,10 @@ import {useWorkbookTableDensity} from '../services/workbookTableDensity';
 import {useDismissibleDetails} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
-import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE} from './CatalogPagination';
+import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE,CATALOG_PAGE_SIZES,catalogPageRange} from './CatalogPagination';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;readOnly?:boolean;isSelfCompany?:boolean;}
-interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization';columns:ConnectionColumn[];rows:ConnectionTableRow[];
+interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization'|'pages'|'activity';columns:ConnectionColumn[];rows:ConnectionTableRow[];
  onOpen:(id:string)=>void;onRecordEdit?:(id:string)=>void;onBulkTask?:(records:ConnectionTableRow[])=>void;
  onBulkEdit?:(records:ConnectionTableRow[],change:BulkEditChange)=>Promise<void>;
  bulkEditCompanies?:readonly Company[];
@@ -29,9 +29,11 @@ interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tas
  toolbarTarget?:HTMLElement|null;
  /** Filters/overview controls slotted before Columns, sharing the same toolbar and selection state. */
  toolbarControls?:ReactNode;
+ /** Contextual actions for selected records (e.g. page properties). */
+ bulkActions?:(selected:ConnectionTableRow[],clear:()=>void)=>ReactNode;
  /** Catalog Tags pagination shares Materials' controls; other directories remain unchanged. */
  catalogPagination?:boolean;catalogPaginationKey?:string;}
-const PAGE_SIZE=25;
+const PAGE_SIZE=DEFAULT_CATALOG_PAGE_SIZE;
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
  try{const data=JSON.parse(localStorage.getItem(key)??'[]') as unknown;
@@ -39,7 +41,7 @@ function read(key:string):string[]{
  catch{return[];}
 }
 export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,onTaskDelete,onBulkTaskDelete,
- onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls,catalogPagination=false,catalogPaginationKey=''}:Props){
+ onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls,bulkActions,catalogPagination=false,catalogPaginationKey=''}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
@@ -49,12 +51,20 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  const [bulkTaskEditing,setBulkTaskEditing]=useState(false);
  const [mobileBulkMode,setMobileBulkMode]=useState(false);
  const [sort,setSort]=useState({
-   key:tableKey==='documents'?'updated':tableKey==='tasks'?'due':'name',
-   reverse:tableKey==='documents',
+   key:tableKey==='activity'?'occurred':
+     tableKey==='documents'||tableKey==='pages'?'updated':
+     tableKey==='tasks'?'due':'name',
+   reverse:tableKey==='documents'||tableKey==='pages'||tableKey==='activity',
  });
  const [page,setPage]=useState(1);
- const [pageSize,setPageSize]=useState(catalogPagination?DEFAULT_CATALOG_PAGE_SIZE:PAGE_SIZE);
+ const [pageSize,setPageSize]=useState<number>(()=>{
+  if(catalogPagination)return DEFAULT_CATALOG_PAGE_SIZE;
+  try{const saved=Number(localStorage.getItem(storage(tableKey,'pageSize')));
+   return CATALOG_PAGE_SIZES.includes(saved as typeof CATALOG_PAGE_SIZES[number])?saved:PAGE_SIZE;}
+  catch{return PAGE_SIZE;}
+ });
  useEffect(()=>{if(catalogPagination)setPage(1);},[catalogPagination,catalogPaginationKey]);
+ useEffect(()=>{if(!catalogPagination)try{localStorage.setItem(storage(tableKey,'pageSize'),String(pageSize));}catch{/* optional */}},[tableKey,pageSize,catalogPagination]);
  const columnsMenuRef=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(columnsMenuRef);
  // Preserve selections across pages, but never act on records removed by a new filter.
@@ -81,8 +91,9 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
      compareConnectionSortValues(a.sortValues?.priority,b.sortValues?.priority):0;
    return (sort.reverse?-diff:diff)||priority||compareConnectionSortValues(a.name,b.name);
  }),[rows,sort]);
- const pages=Math.max(1,Math.ceil(sorted.length/pageSize));
- const currentPage=Math.min(page,pages);
+ const pageRange=catalogPageRange(sorted.length,page,pageSize);
+ const pages=pageRange.pageCount;
+ const currentPage=pageRange.page;
  const display=sorted.slice((currentPage-1)*pageSize,currentPage*pageSize);
  const selection=useMemo(()=>new Set(selected),[selected]);
  const chosen=useMemo(()=>rows.filter(row=>selection.has(row.id)),[rows,selection]);
@@ -111,6 +122,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
      {catalogPagination?(chosen.length>0?<span>{chosen.length} selected</span>:null):
        <span>{rows.length} records · {chosen.length} selected</span>}
      {chosen.length>0&&<>
+       {bulkActions?.(chosen,()=>setSelected([]))}
        {onBulkEdit&&['companies','people','deals'].includes(tableKey)&&<button type="button"
          className="connections-bulk-edit-action" onClick={()=>setBulkEditing(true)}>Bulk edit ({chosen.length})</button>}
        {onBulkTaskProperty&&tableKey==='tasks'&&<button type="button" className="connections-bulk-edit-action"
@@ -185,7 +197,11 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
      onPageSizeChange={size=>{setPageSize(size);setPage(1);}} extraActions={toolbar}/>
     :toolbarTarget===undefined?toolbar:toolbarTarget?createPortal(toolbar,toolbarTarget):null}
    {pins.length>0&&<div className="connections-pin-tray" aria-label="Pinned comparisons">
-     <header><strong><WorkspaceChromeIcon name="pin"/> Pinned ({pins.length})</strong><button type="button" onClick={()=>setPinned([])}>Clear pins</button></header>
+     <header><strong><WorkspaceChromeIcon name="pin"/> Pinned ({pins.length})</strong>
+       <div className="connections-pin-actions">
+        <button type="button" onClick={()=>setSelected(old=>[...new Set([...old,...pins.map(row=>row.id)])])}>Select pinned</button>
+        <button type="button" onClick={()=>setPinned([])}>Clear pins</button>
+       </div></header>
      <div className="connections-pin-items">{pins.map(item=><div key={item.id}>
        <button type="button" onClick={()=>onOpen(item.id)}>
          <strong>{item.name}</strong>
@@ -283,10 +299,18 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        setBulkTaskEditing(false);setMobileBulkMode(false);setSelected([]);
      }}/>} 
    {!catalogPagination&&<footer className="connections-grid-pagination">
-     <span>{sorted.length?String((currentPage-1)*PAGE_SIZE+1)+'–'+String(Math.min(currentPage*PAGE_SIZE,sorted.length)):'0'} of {sorted.length}</span>
-     <button type="button" disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>← Previous</button>
-     <span>Page {currentPage} of {pages}</span>
-     <button type="button" disabled={currentPage>=pages} onClick={()=>setPage(currentPage+1)}>Next →</button>
-   </footer>}
+     <span>{'Showing '+pageRange.first+'–'+pageRange.last+' of '+sorted.length}</span>
+     <label className="connections-page-size">Show
+       <select aria-label={tableKey+' per page'} value={pageSize}
+        onChange={event=>{setPageSize(Number(event.target.value));setPage(1);}}>
+        {CATALOG_PAGE_SIZES.map(size=><option key={size} value={size}>{size} per page</option>)}
+       </select>
+     </label>
+     <div className="connections-page-navigation">
+       <button type="button" disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>← Previous</button>
+       <span>Page {currentPage} of {pages}</span>
+       <button type="button" disabled={currentPage>=pages} onClick={()=>setPage(currentPage+1)}>Next →</button>
+     </div>
+   </footer>
  </section>;
 }
