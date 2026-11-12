@@ -34,9 +34,9 @@ export function externalQuoteActivities(activities:readonly Activity[]):Activity
 }
 
 export function buildSalesQuoteRegistry(quotes:readonly Quote[],activities:readonly Activity[],
- deals:readonly DealSummary[]):SalesQuoteRecord[]{
+ deals:readonly DealSummary[],options?:{includeArchived?:boolean}):SalesQuoteRecord[]{
  const dealMap=new Map(deals.map(deal=>[deal.id,deal]));
- const native:SalesQuoteRecord[]=quotes.filter(q=>!q.archivedAt).map(q=>({
+ const native:SalesQuoteRecord[]=quotes.filter(q=>options?.includeArchived||!q.archivedAt).map(q=>({
   id:'native:'+q.id,source:'salesshop',sourceId:q.id,
   name:q.title?.trim()||displayQuoteNumber(q),
   number:displayQuoteNumber(q),
@@ -46,12 +46,13 @@ export function buildSalesQuoteRegistry(quotes:readonly Quote[],activities:reado
   projectId:q.projectId,dealName:dealMap.get(q.projectId??'')?.name,
   status:q.status,value:quoteTotal(q),
   sentDate:q.sentAt?.slice(0,10),updatedAt:q.updatedAt,
-  ownerUserId:q.ownerUserId,
+  ownerUserId:q.ownerUserId,archived:Boolean(q.archivedAt),
  }));
  const external:SalesQuoteRecord[]=externalQuoteActivities(activities).map(a=>{
   const deal=dealMap.get(a.projectId??'');
   const amount=a.metadata?.amount;
   const recordedAt=a.metadata?.recordedAt;
+  const editedAt=a.metadata?.editedAt;
   const date=a.metadata?.bidSentDate;
   return {
    id:'external:'+a.id,source:'external' as const,sourceId:a.id,
@@ -63,7 +64,8 @@ export function buildSalesQuoteRegistry(quotes:readonly Quote[],activities:reado
    status:'Sent',
    value:typeof amount==='number'&&Number.isFinite(amount)?amount:undefined,
    sentDate:date&&/^\d{4}-\d{2}-\d{2}$/.test(date)?date:a.occurredAt.slice(0,10),
-   updatedAt:recordedAt&&Number.isFinite(Date.parse(recordedAt))?recordedAt:a.occurredAt,
+   updatedAt:editedAt&&Number.isFinite(Date.parse(editedAt))?editedAt:
+    recordedAt&&Number.isFinite(Date.parse(recordedAt))?recordedAt:a.occurredAt,
    ownerUserId:a.metadata?.recordedByUserId,
   };
  });
