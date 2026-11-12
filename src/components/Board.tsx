@@ -346,10 +346,11 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
 }
 
 export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds,
-  companyToolbarControl,onOpenQuoteMetadata}:{
+  companyToolbarControl,onOpenQuoteMetadata,pipelineFilter,onPipelineFilterChange}:{
   embeddedMode?:'projects'|'accounts';searchQuery?:string;
   allowedDealIds?:ReadonlySet<string>;allowedCompanyIds?:ReadonlySet<string>;
   companyToolbarControl?:ReactNode;onOpenQuoteMetadata?:(id:string)=>void;
+  pipelineFilter?:DealPipelineFilter;onPipelineFilterChange?:(value:DealPipelineFilter)=>void;
 }={}) {
   const hydrate = useCrmStore((state) => state.hydrate);
   const hydrated = useCrmStore((state) => state.hydrated);
@@ -418,7 +419,12 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
   const [boardSearch,setBoardSearch]=useState('');
   const activeMode=embeddedMode??boardMode;
   const effectiveSearch=embeddedMode?searchQuery??'':boardSearch;
-  const [pipelineView,setPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
+  const [localPipelineView,setLocalPipelineView]=useState<DealPipelineFilter>(initialPipelineView);
+  const pipelineView=pipelineFilter??localPipelineView;
+  const setPipelineView=(next:DealPipelineFilter)=>{
+    setLocalPipelineView(next);
+    onPipelineFilterChange?.(next);
+  };
   const [compactCards,setCompactCards]=useState(()=>{
     try{return window.localStorage.getItem(BOARD_COMPACT_KEY)==='true';}
     catch{return false;}
