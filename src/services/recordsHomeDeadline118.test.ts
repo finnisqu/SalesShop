@@ -66,7 +66,10 @@ describe('Batch #118 — Records navigation and Home deadline integrity',()=>{
   expect(layout).toContain('height:470px!important;min-height:470px!important;max-height:470px!important');
   expect(home).toContain('.sales-home-top-actions .sales-log-launcher');
   expect(home).toContain('background:var(--ss-theme-card);border:1px solid var(--ss-theme-border)');
-  expect(file('components/HomeWorkspace.tsx')).toContain('Outstanding');
-  expect(file('components/HomeWorkspace.tsx')).toContain('Overdue');
+  const recent=file('components/SalesCalendarLauncher.tsx');
+  expect(recent).toContain('>Outstanding</button>');
+  expect(recent).toContain('homeOutstandingTasks(ownTasks)');
+  expect(recent).toContain('outstandingDueLabel(task,today)');
+  expect(file('components/HomeWorkspace.tsx')).not.toContain('sales-home-task-focus');
  });
 });
