@@ -47,12 +47,12 @@ export function RecordsSectionNav({selected,onSelect,extraMore=[]}:{
   })),
   ...extraMore,
  ];
- return <div className="records-section-nav" role="group" aria-label="Records sections">
+ return <div className="records-section-nav ss-header-tab-pill" role="group" aria-label="Records sections">
   <SectionTabs className="connections-tabs records-section-nav-tabs"
    aria-label="Records sections" items={RECORDS_MAIN_TABS}
    selected={selected} onSelect={onSelect}/>
   <div className={"records-section-more"+(RECORDS_MORE_TABS.some(item=>item.id===selected)?" is-active":"")}>
-   <WorkspaceMoreMenu label="Records sections" items={additional}/>
+   <WorkspaceMoreMenu label="Records sections" items={additional} asTab/>
   </div>
  </div>;
 }
