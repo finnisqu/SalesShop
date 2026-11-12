@@ -761,7 +761,7 @@ export function Connections() {
             <section className="connections-directory" aria-label="People directory">
               
               
-              <div className="connections-people-attention-filters" role="group" aria-label="People follow-up filters">
+              <div className="connections-people-attention-filters is-mobile" role="group" aria-label="People follow-up filters">
                {([
                  ['all','All'],['never','Never contacted'],
                  ['stale','Inactive 30+ days'],['overdue','Follow-up overdue'],
@@ -771,6 +771,16 @@ export function Connections() {
               </div>
               <ConnectionsTable key="people" tableKey="people" columns={peopleColumns}
                 rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}
+                toolbarControls={<>
+              <div className="connections-people-attention-filters" role="group" aria-label="People follow-up filters">
+               {([
+                 ['all','All'],['never','Never contacted'],
+                 ['stale','Inactive 30+ days'],['overdue','Follow-up overdue'],
+                ] as const).map(([value,label])=><button type="button" key={value}
+                aria-pressed={peopleAttention===value} onClick={()=>setPeopleAttention(value)}>
+                {label}</button>)}
+              </div>
+                </>}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {peopleRows.map((person) => <div key={person.id} className="connections-mobile-record-group">
@@ -823,7 +833,7 @@ export function Connections() {
             <DealTimelineBetaOverview projects={projectRows} onOpen={openProject}/>}
           {tab === 'deals' && layouts.deals==='table' && (!timelineBetaEnabled||dealsView==='list') && <section className="connections-directory" aria-label="Deals directory">
             
-            <div className="connections-deals-capture-bar">
+            <div className="connections-deals-capture-bar is-mobile">
               <span className="connections-deals-capture-title">Deals</span>
               <button type="button" disabled={!canBulkEdit} onClick={()=>setExternalQuotePickerOpen(true)}>
                <span aria-hidden="true">+</span> Record external quote
@@ -831,7 +841,10 @@ export function Connections() {
             </div>
             <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
-              toolbarControls={dealPipelineControl}
+              toolbarControls={<>{dealPipelineControl}
+               <button type="button" disabled={!canBulkEdit}
+                onClick={()=>setExternalQuotePickerOpen(true)}>+ Record external quote</button>
+              </>}
                onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
