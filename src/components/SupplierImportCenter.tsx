@@ -616,17 +616,23 @@ function SupplierImportCenter({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function SupplierImportLauncher({ placement = 'floating' }: { placement?: 'floating' | 'toolbar' }) {
+export function SupplierImportLauncher({ placement = 'floating' }: { placement?: 'floating' | 'toolbar' | 'hidden' }) {
   const [open, setOpen] = useState(false);
   const toolbar = placement === 'toolbar';
+  useEffect(() => {
+    if (placement !== 'hidden') return;
+    const show = () => setOpen(true);
+    window.addEventListener('sales-shop:open-supplier-import', show);
+    return () => window.removeEventListener('sales-shop:open-supplier-import', show);
+  }, [placement]);
   return (
     <>
-      <button
+      {placement !== 'hidden' && <button
         type="button"
         className={`supplier-import-launcher ${toolbar ? 'is-toolbar' : ''}`}
         onClick={() => setOpen(true)}
         title="Open the management supplier-price staging area"
-      >{toolbar ? 'Supplier Import' : 'Supplier imports'}</button>
+      >{toolbar ? 'Supplier Import' : 'Supplier imports'}</button>}
       {open && <SupplierImportCenter onClose={() => setOpen(false)} />}
     </>
   );
