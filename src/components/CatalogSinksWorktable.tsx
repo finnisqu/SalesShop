@@ -4,6 +4,8 @@ import {SINK_CATEGORIES,SINK_CATEGORY_LABELS,SINK_CONFIGURATIONS,SINK_CONFIGURAT
  type SinkCategory,type SinkModel,type SinkVariant,type SinkMountType} from '../types/sink';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import {scopedStorageKey} from '../lib/developerPlayground';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-sink-pins-v1');
@@ -46,6 +48,10 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
  const updateVariant=useSinkCatalogStore(s=>s.updateVariant);
  const duplicateVariant=useSinkCatalogStore(s=>s.duplicateVariant);
  const deleteVariant=useSinkCatalogStore(s=>s.deleteVariant);
+ const authMode=useAuthStore(state=>state.mode);
+ const role=useAuthStore(state=>state.teamRole);
+ const previewRole=useRolePerspectiveStore(state=>state.activePerspective);
+ const canEdit=!previewRole&&(authMode==='local'||role==='owner'||role==='admin');
  const [editing,setEditing]=useState(false);
  const [expanded,setExpanded]=useState<string|null>(null);
  const [query,setQuery]=useState('');
@@ -58,12 +64,13 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
  useEffect(()=>{try{localStorage.setItem(PIN_KEY,JSON.stringify(pins));}catch{/* optional */}},[pins]);
  useEffect(()=>{
   const create=()=>{
+   if(!canEdit)return;
    const id=addModel(category==='all'?'kitchen':category);
    setExpanded(id);setEditing(true);
   };
   window.addEventListener('sales-shop:catalog-create',create);
   return()=>window.removeEventListener('sales-shop:catalog-create',create);
- },[addModel,category]);
+ },[addModel,category,canEdit]);
  const togglePin=(modelId:string,variantId:string)=>{
   const key=modelId+':'+variantId;
   setPins(current=>current.includes(key)?current.filter(item=>item!==key):[...current,key]);
@@ -116,8 +123,8 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
    {editing&&<label className="catalog-product-show-inactive"><input type="checkbox"
     checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/>Inactive</label>}
    <span className="catalog-product-save" role="status">{error?'Cloud issue: '+error:saving?'Saving…':''}</span>
-   <button type="button" className="catalog-product-edit" onClick={()=>setEditing(x=>!x)}>
-    {editing?'Done editing':'Edit sinks'}</button>
+   {canEdit&&<button type="button" className="catalog-product-edit" onClick={()=>setEditing(x=>!x)}>
+    {editing?'Done editing':'Edit sinks'}</button>}
   </div>
   {pinRows.length>0&&<section className="materials-comparison-board has-pins catalog-product-pin-board"
     aria-label="Pinned sink comparison">
