@@ -68,6 +68,7 @@ export function CatalogWorkspace() {
   },[section]);
   const sectionScrollRef = useRef<HTMLElement>(null);
   const [catalogSearch,setCatalogSearch]=useState('');
+  const [materialHeaderTarget,setMaterialHeaderTarget]=useState<HTMLDivElement|null>(null);
   const [tableDensity,setTableDensity]=useWorkbookTableDensity();
   const authMode=useAuthStore(state=>state.mode);
   const role=useAuthStore(state=>state.teamRole);
@@ -92,6 +93,9 @@ export function CatalogWorkspace() {
   return (
     <main className="catalog-workspace">
       <WorkspaceHeader title="Catalog" help={<WorkspaceHelp page="catalog" section={section}/>} className="catalog-header catalog-foundation-heading"
+        afterTitle={section==='materials'?
+          <div ref={setMaterialHeaderTarget} className="catalog-materials-header-slot"
+           aria-label="Material catalog actions"/>:null}
         mobileTabs={CATALOG_SECTIONS.map(({id,label})=>({value:id,label}))}
         mobileTabValue={section}
         onMobileTabChange={value=>{setCatalogSearch('');setSection(value as typeof section);}}
@@ -115,7 +119,8 @@ export function CatalogWorkspace() {
 
       <section ref={sectionScrollRef} className={`catalog-section-host catalog-section-${section}`}>
         {section === 'materials' ? (
-          <MaterialsWorkspace embedded externalQuery={catalogSearch} />
+          <MaterialsWorkspace embedded externalQuery={catalogSearch}
+           headerTarget={materialHeaderTarget}/>
         ) : section === 'sinks' ? (
           <CatalogSinksWorktable externalQuery={catalogSearch} />
         ) : section === 'other' ? (
