@@ -18,8 +18,10 @@ import { PersonRecordPage } from './PersonRecordPage';
 import { DealRecordPage } from './DealRecordPage';
 import {DealTimelineBetaOverview} from './DealTimelineBeta';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
-import { Button, SectionTabs, StatusText } from '../design-system/components';
-import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import { Button, StatusText } from '../design-system/components';
+import {WorkspaceHeader} from './WorkspaceHeader';
+import {RecordsSectionNav,RECORDS_MAIN_TABS,RECORDS_SECTIONS,rememberRecordsSection,requestRecordsQuotesLibrary,
+ type RecordsSection} from './RecordsSectionNav';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -55,14 +57,7 @@ type CompanyFilter = CompanyRelationship | 'self' | 'all';
 type DirectoryLayout='board'|'table';
 type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
 
-export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
-  { id: 'tasks', label: 'Tasks', description: 'My work and deadlines' },
-  { id: 'companies', label: 'Companies', description: 'Companies & partners' },
-  { id: 'people', label: 'People', description: 'Contacts' },
-  { id: 'deals', label: 'Deals', description: 'Opportunities & jobs' },
-  { id: 'activity', label: 'Activities', description: 'Calls, meetings and record history' },
-  { id: 'suppliers', label: 'Suppliers', description: 'Vendors, sourcing & imports' },
-];
+export const CONNECTIONS_TABS=RECORDS_MAIN_TABS;
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
 const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
@@ -129,11 +124,12 @@ const quoteColumns:ConnectionColumn[]=[
 
 /** Historical Overview/Activity selections must not revive hidden dashboard/log tabs. */
 export function resolveConnectionsLandingTab(stored: string | null): ConnectionsTab {
-  return (CONNECTIONS_TABS.some(item=>item.id===stored)||stored==='organization'||stored==='quotes'||stored==='pages')?stored as ConnectionsTab:'tasks';
+  return (RECORDS_SECTIONS.some(item=>item.id===stored)&&stored!=='quotes')
+    ?stored as ConnectionsTab:'companies';
 }
 
 function initialTab(): ConnectionsTab {
-  if (typeof window === 'undefined') return 'tasks';
+  if (typeof window === 'undefined') return 'companies';
   try{
    if(window.sessionStorage.getItem('salesshop-connections-open-suppliers-v1')==='1'){
     window.sessionStorage.removeItem('salesshop-connections-open-suppliers-v1');
@@ -145,7 +141,7 @@ function initialTab(): ConnectionsTab {
    }
   }catch{/* best effort */}
   try { return resolveConnectionsLandingTab(window.sessionStorage.getItem(TAB_KEY)); }
-  catch { return 'tasks'; }
+  catch { return 'companies'; }
 }
 
 function timeLabel(value?: string) {
@@ -344,13 +340,13 @@ export function Connections() {
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
+    // Quotes owns a full document library and builder. Records navigation
+    // opens that existing route instead of the older metadata-only directory.
+    if(next==='quotes'){requestRecordsQuotesLibrary();setView('quotes');return;}
     setPreview(null);setActivityPreview(null);setQuoteRecordId(null);
     setTab(next);setNotice('');setPeopleAttention('all');
     setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
-    // Activity history is an on-demand utility, never the default landing page.
-    if (CONNECTIONS_TABS.some((item) => item.id === next)) {
-      try { window.sessionStorage.setItem(TAB_KEY, next); } catch { /* best effort */ }
-    }
+    rememberRecordsSection(next as RecordsSection);
   };
 
   const companiesById = useMemo(() => new Map(companies.map((company) => [company.id, company])), [companies]);
@@ -644,21 +640,13 @@ export function Connections() {
                  <path d="M9 4v16M15 4v16"/>
                </svg>}
           </button>}
-        mobileTabs={CONNECTIONS_TABS.map(item=>({value:item.id,label:item.label}))}
+        mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
         mobileTabValue={tab} onMobileTabChange={value=>chooseTab(value as ConnectionsTab)}
-        tabs={<SectionTabs className="connections-tabs" aria-label="Records sections"
-          items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
-        more={<WorkspaceMoreMenu label="Records More" items={[
-          {section:'Directories',label:'Our Organization',active:tab==='organization',onClick:()=>chooseTab('organization')},
-          {label:'Pages · Notebook',active:tab==='pages',onClick:()=>chooseTab('pages')},
-          {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
-          {section:'Actions',label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
-          
-          ...(tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled?[
+        tabs={<RecordsSectionNav selected={tab as RecordsSection} onSelect={chooseTab}
+          extraMore={tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled?[
             {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
-          ]:[]),
-        ]}/>}
+          ]:[]}/>}
         search={<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':

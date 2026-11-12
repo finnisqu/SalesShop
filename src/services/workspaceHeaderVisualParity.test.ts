@@ -41,17 +41,16 @@ describe('Connections-style workspace header visual parity',()=>{
   expect(board).toContain('Search Board deals');
   expect(accounts).toContain('Search Board accounts');
  });
- it('limits Quotes top nav to three items without losing less-common templates',()=>{
-  expect(quotes).toContain("id:'all',title:'All'");
-  expect(quotes).toContain("id:'quick-quote',title:'Quick Quote'");
-  expect(quotes).toContain("id:'builder-rates',title:'Builder Rate Schedule'");
+ it('keeps the complete Quotes library inside the Records navigation without hiding document filters',()=>{
+  const nav=read('components/RecordsSectionNav.tsx');
+  expect(quotes).toContain('<RecordsSectionNav selected="quotes"');
+  expect(nav).toContain("id:'quotes',label:'Quotes'");
   for(const name of ['Community Plan Pricing','Custom Spreadsheet','Follow-ups']){
    expect(quotes).toContain("label:'"+name+"'");
   }
-  expect(quotes).toContain('documentFilter===item.id');
+  expect(quotes).toContain('Filter quote document type');
   expect(quotes).not.toContain('qmb-library-heading-actions');
   expect(parity).toContain('flex-wrap:nowrap!important');
-  expect(parity).toContain('.qmb-library-filter-row');
  });
  it('gives Tasks and Notebook the same compact tab frame',()=>{
   expect(notebook).toContain('WorkspaceHeader title="Notebook"');

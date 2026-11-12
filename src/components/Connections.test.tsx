@@ -3,19 +3,19 @@ import { describe, expect, it } from 'vitest';
 import { Connections, CONNECTIONS_TABS, resolveConnectionsLandingTab } from './Connections';
 
 describe('Privacy-first Records navigation', () => {
-  it('puts Tasks first and Activities alongside CRM Records', () => {
-    expect(CONNECTIONS_TABS.map((tab) => tab.id)).toEqual(['tasks', 'companies', 'people', 'deals', 'activity', 'suppliers']);
+  it('uses five everyday Records tabs in requested order', () => {
+    expect(CONNECTIONS_TABS.map((tab) => tab.id)).toEqual(['companies', 'people', 'deals', 'quotes', 'tasks']);
     expect(new Set(CONNECTIONS_TABS.map((tab) => tab.id)).size).toBe(CONNECTIONS_TABS.length);
   });
 
-  it('resolves existing views while defaulting new Records sessions to Tasks', () => {
-    expect(resolveConnectionsLandingTab('overview')).toBe('tasks');
+  it('resolves existing views while defaulting new Records sessions to Companies', () => {
+    expect(resolveConnectionsLandingTab('overview')).toBe('companies');
     expect(resolveConnectionsLandingTab('activity')).toBe('activity');
-    expect(resolveConnectionsLandingTab('unknown')).toBe('tasks');
-    expect(resolveConnectionsLandingTab(null)).toBe('tasks');
+    expect(resolveConnectionsLandingTab('unknown')).toBe('companies');
+    expect(resolveConnectionsLandingTab(null)).toBe('companies');
     expect(resolveConnectionsLandingTab('people')).toBe('people');
     expect(resolveConnectionsLandingTab('deals')).toBe('deals');
-    expect(resolveConnectionsLandingTab('projects')).toBe('tasks');
+    expect(resolveConnectionsLandingTab('projects')).toBe('companies');
   });
 
   it('renders the Records chrome without bringing back the old dashboard', () => {
@@ -29,7 +29,7 @@ describe('Privacy-first Records navigation', () => {
     expect(html).not.toContain('Reporting view');
     expect(html).not.toContain('leadership-dashboard');
     expect(html).not.toContain('connections-overview');
-    expect(html).toContain('Activities');
+    expect(html).toContain('Activity');
     expect(html).not.toContain('connections-workspace-summary');
   });
 });

@@ -1351,13 +1351,12 @@ export function Quotes() {
       onRecorded={()=>setHistoricalQuoteOpen(false)}/>}
   </main>;
 
+  // Detailed Editor is an opt-in Quote workflow, not a fifth app destination.
   const appDestinations: Array<{ view: AppView; label: string }> = [
-    { view: 'notebook', label: 'Notebook' },
-    { view: 'board', label: 'Board' },
-    { view: 'quotes', label: 'Quotes' },
+    { view: 'home', label: 'Home' },
+    { view: 'dashboard', label: 'Records' },
     { view: 'catalog', label: 'Catalog' },
-    { view: 'dashboard', label: 'Dashboard' },
-    { view: 'settings', label: 'Settings' },
+    { view: 'notebook', label: 'Notebook' },
   ];
 
   return <main className="quotes-view">

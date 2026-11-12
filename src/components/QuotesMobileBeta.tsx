@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {createPortal} from 'react-dom';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
+import {RecordsSectionNav,RECORDS_SECTIONS,RECORDS_QUOTES_LIBRARY_KEY,rememberRecordsSection,
+ type RecordsSection} from './RecordsSectionNav';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
 import { useQuoteStore } from '../store/quoteStore';
@@ -568,6 +570,10 @@ export function QuotesMobileBeta() {
   const libraryMode=useQuoteLibraryStore(s=>s.mode);
   const setLibraryMode=useQuoteLibraryStore(s=>s.setMode);
   const setView=useNavigationStore(s=>s.setView);
+  const selectRecordsSection=(next:RecordsSection)=>{
+    if(next==='quotes')return;
+    rememberRecordsSection(next);setView('dashboard');
+  };
   const openRoutedQuote=useNavigationStore(s=>s.openQuote);
   const routeQuoteId=useNavigationStore(s=>s.focusedQuoteId);
   const consumedRoute=useRef<string|null>(null);
@@ -578,7 +584,16 @@ export function QuotesMobileBeta() {
   const setLocation=useQuotesMobileBetaStore(s=>s.setLocation);
   const contextActions=useAppContextMenu();
   const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
-  const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
+  const [page,setPage]=useState<Page>(()=>{
+    // Selecting Records > Quotes means the document library, never a stale
+    // previously edited quote. Explicit quote deep links bypass this flag.
+    let requested=false;
+    try{
+      requested=sessionStorage.getItem(RECORDS_QUOTES_LIBRARY_KEY)==='1';
+      if(requested)sessionStorage.removeItem(RECORDS_QUOTES_LIBRARY_KEY);
+    }catch{/* session storage optional */}
+    return requested?'library':restoredLocation.current.page;
+  });
   const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
@@ -1200,6 +1215,10 @@ export function QuotesMobileBeta() {
     :null;
   if(!hydrated)return <main className="qmb"><p className="qmb-loading">Opening sales documents…</p></main>;
   if(canBrowseTeam&&libraryMode==='team')return <main className="quotes-view qmb-team">
+    <WorkspaceHeader title="Records" help={<WorkspaceHelp page="quotes" section="library"/>}
+      mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
+      mobileTabValue="quotes" onMobileTabChange={value=>selectRecordsSection(value as RecordsSection)}
+      tabs={<RecordsSectionNav selected="quotes" onSelect={selectRecordsSection}/>}/>
     <div className="qmb-team-back"><button type="button" onClick={()=>setLibraryMode('mine')}>‹ My Quotes</button></div>
     {signedShopOutcomesEnabled
       ? <ShopOutcomesWorkspace onShowMine={()=>setLibraryMode('mine')}/>
@@ -1244,36 +1263,10 @@ export function QuotesMobileBeta() {
         </div>}
       {page==='area'&&quoteProgress}
     {page==='library'?<>
-      <WorkspaceHeader title="Quotes" help={<WorkspaceHelp page="quotes" section={followUpsTab?'follow-ups':documentFilter}/>} className="qmb-library-workspace-header"
-        mobileTabs={[
-          {value:'all',label:'All'},{value:'quick-quote',label:'Quick Quote'},
-          {value:'builder-rates',label:'Builder Rate Schedule'},
-          {value:'community-pricing',label:'Community Plan Pricing'},
-          {value:'spreadsheet',label:'Custom Spreadsheet'},
-          {value:'follow-ups',label:'Follow-ups'},
-        ]}
-        mobileTabValue={followUpsTab?'follow-ups':documentFilter}
-        onMobileTabChange={value=>{
-          if(value==='follow-ups')setFollowUpsTab(true);
-          else{setFollowUpsTab(false);setDocumentFilter(value as SalesDocumentTemplate|'all');}
-        }}
-        tabs={<nav className="qmb-library-filter-row" aria-label="Document library sections">
-          {([
-            {id:'all',title:'All'},
-            {id:'quick-quote',title:'Quick Quote'},
-            followUpsTab?{id:'follow-ups',title:'Follow-ups'}:
-              documentFilter==='community-pricing'?{id:'community-pricing',title:'Community Plan Pricing'}:
-              documentFilter==='spreadsheet'?{id:'spreadsheet',title:'Custom Spreadsheet'}:
-              {id:'builder-rates',title:'Builder Rate Schedule'},
-          ] as Array<{id:'all'|SalesDocumentTemplate|'follow-ups';title:string}>).map(item=>
-            <button key={item.id} type="button"
-              className={(item.id==='follow-ups'?followUpsTab:!followUpsTab&&documentFilter===item.id)?'active':''}
-              aria-pressed={item.id==='follow-ups'?followUpsTab:!followUpsTab&&documentFilter===item.id}
-              onClick={()=>{
-                if(item.id==='follow-ups')setFollowUpsTab(true);
-                else{setFollowUpsTab(false);setDocumentFilter(item.id);}
-              }}>{item.title}</button>)}
-        </nav>}
+      <WorkspaceHeader title="Records" help={<WorkspaceHelp page="quotes" section={followUpsTab?'follow-ups':documentFilter}/>} className="qmb-library-workspace-header"
+        mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
+        mobileTabValue="quotes" onMobileTabChange={value=>selectRecordsSection(value as RecordsSection)}
+        tabs={<RecordsSectionNav selected="quotes" onSelect={selectRecordsSection}/>}
         more={<WorkspaceMoreMenu items={[
           {section:'Document types',label:'Builder Rate Schedule',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('builder-rates');},active:!followUpsTab&&documentFilter==='builder-rates'},
           {label:'Community Plan Pricing',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('community-pricing');},active:!followUpsTab&&documentFilter==='community-pricing'},
@@ -1304,6 +1297,21 @@ export function QuotesMobileBeta() {
            <p className="qmb-library-results-head qmb-library-directory-caption">
              {statusFilter==='archived'?'Archived documents':'My documents'} · {documentTableRows.length} {documentTableRows.length===1?'record':'records'} · click a name to preview its record
            </p>
+           <label className="qmb-records-document-type">Document type
+             <select aria-label="Filter quote document type" value={followUpsTab?'follow-ups':documentFilter}
+              onChange={event=>{
+               const value=event.target.value;
+               if(value==='follow-ups')setFollowUpsTab(true);
+               else{setFollowUpsTab(false);setDocumentFilter(value as SalesDocumentTemplate|'all');}
+              }}>
+               <option value="all">All documents</option>
+               <option value="quick-quote">Quick Quotes</option>
+               <option value="builder-rates">Builder Rate Schedules</option>
+               <option value="community-pricing">Community Plan Pricing</option>
+               <option value="spreadsheet">Custom Spreadsheets</option>
+               <option value="follow-ups">Follow-ups</option>
+             </select>
+           </label>
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
            <div className="qmb-library-mobile-filters">{sharedLibraryControls}</div>
          </div>

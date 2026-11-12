@@ -22,7 +22,6 @@ import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'home', label: 'Home', short: 'Home' },
   { view: 'dashboard', label: 'Records', short: 'Records' },
-  { view: 'quotes', label: 'Quotes', short: 'Quotes' },
   { view: 'catalog', label: 'Catalog', short: 'Catalog' },
   { view: 'notebook', label: 'Notebook', short: 'Notebook' },
 ];
@@ -32,7 +31,7 @@ const CATALOG_LABELS:Partial<Record<CatalogSection,string>>={
  suppliers:'Suppliers',
 };
 function viewLabel(view:AppView){
- return view==='tasks'?'Records':APP_DESTINATIONS.find(item=>item.view===view)?.label??'SalesShop';
+ return view==='quotes'?'Quotes':view==='tasks'?'Records':APP_DESTINATIONS.find(item=>item.view===view)?.label??'SalesShop';
 }
 function catalogLabel(section:CatalogSection){
  return CATALOG_LABELS[section]??'Catalog';
@@ -266,8 +265,8 @@ export function MobileAppChrome() {
 
           <nav className="mobile-app-drawer-nav" aria-label="SalesShop sections">
              {APP_DESTINATIONS.map(item=><button type="button" key={item.view}
-               className={view===item.view?'active':''}
-               aria-current={view===item.view?'page':undefined}
+               className={view===item.view||(item.view==='dashboard'&&view==='quotes')?'active':''}
+               aria-current={view===item.view||(item.view==='dashboard'&&view==='quotes')?'page':undefined}
                onClick={()=>chooseView(item.view)}>
                <span className="mobile-app-drawer-nav-icon"><MobileDestinationIcon view={item.view}/></span>
                <span className="mobile-app-drawer-nav-label">{item.label}</span>
