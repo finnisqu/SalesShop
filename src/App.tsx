@@ -96,7 +96,7 @@ import { useNotebookStore } from './store/notebookStore';
 import {notebookPageNavigationLabel} from './services/notebookPageNavigationLabel';
 import {useQuoteStore} from './store/quoteStore';
 
-const PRIMARY_NAV_DESTINATIONS=['home','tasks','dashboard','quotes','catalog','notebook'] as const;
+const PRIMARY_NAV_DESTINATIONS=['home','dashboard','quotes','catalog','notebook'] as const;
 
 function App() {
   const view = useNavigationStore((state) => state.view);
@@ -316,11 +316,10 @@ function App() {
         <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
         <nav className="app-tabs" aria-label="SalesShop sections">
           <button className={`app-tab ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')} title="Shift+1">Home</button>
-          <button className={`app-tab ${view === 'tasks' ? 'active' : ''}`} onClick={() => setView('tasks')} title="Shift+2">Tasks</button>
-          <button className={`app-tab ${view === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')} title="Shift+3">Connections</button>
-          <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')} title="Shift+4">Quotes</button>
-          <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')} title="Shift+5">Catalog</button>
-          <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')} title="Shift+6">Notebook</button>
+          <button className={`app-tab ${view === 'dashboard'||view==='tasks' ? 'active' : ''}`} onClick={() => setView('dashboard')} title="Shift+2">Records</button>
+          <button className={`app-tab ${view === 'quotes' ? 'active' : ''}`} onClick={() => setView('quotes')} title="Shift+3">Quotes</button>
+          <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')} title="Shift+4">Catalog</button>
+          <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')} title="Shift+5">Notebook</button>
         </nav>
         <div className="app-primary-actions" role="group" aria-label="Calendar, search, create and notebook tools">
           <WorkspaceHelp page={view==='dashboard'?'connections':view}/>
