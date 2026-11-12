@@ -8,6 +8,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
+import {WorktableFilterMenu} from './WorktableChrome';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-sink-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -164,8 +165,8 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
     <div><strong>Sink models</strong><small>{filtered.length} matching model{filtered.length===1?'':'s'}</small></div>
     <div className="catalog-card-actions">
      <span className="catalog-card-hint">Expand models to compare sink dimensions and variants.</span>
-     <details className="catalog-card-filter">
-      <summary>Filter{category!=='all'||query.trim()?' · '+(Number(category!=='all')+Number(!!query.trim())):''}</summary>
+     <WorktableFilterMenu className="catalog-card-filter"
+      activeCount={Number(category!=='all')+Number(Boolean(query.trim()))+Number(sort!=='brand')}>
       <div className="catalog-card-filter-panel">
        <label>Find models<input type="search" aria-label="Find sink models" placeholder="Model, finish or SKU…"
         value={query} onChange={event=>setQuery(event.target.value)}/></label>
@@ -177,13 +178,13 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
        {editing&&<label className="catalog-card-checkbox"><input type="checkbox"
         checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Show inactive</label>}
       </div>
-     </details>
      <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
       <select aria-label="Sort sinks" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
        <option value="brand">Brand / name</option><option value="name">Name A–Z</option>
        <option value="category">Category</option><option value="cost">Cost · low first</option>
       </select>
      </label>
+     </WorktableFilterMenu>
      {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Cloud issue: '+error:'Saving…'}</small>}
      {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(x=>!x)}>
       {editing?'Done editing':'Edit sinks'}</button>}
