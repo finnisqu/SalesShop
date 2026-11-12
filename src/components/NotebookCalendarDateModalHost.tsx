@@ -31,7 +31,7 @@ export function NotebookCalendarDateModalHost(){
    const item=page?.agendaItems?.find(a=>a.id===detail.itemId&&a.kind==='calendar-date');
    submitting.current=false;
    setRequest({...detail,standalone:detail.standalone||page?.isCalendarInbox===true});
-   setTitle(item?.title??agendaTitle(detail.selectedText??''));
+   setTitle(item?.title??(detail.standalone?'':agendaTitle(detail.selectedText??'')));
    setDate(item?.date??detail.date??notebookToday());
    setTime(item?.time??'');setAnnual(item?.annual??false);setError('');
   };
