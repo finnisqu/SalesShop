@@ -24,6 +24,7 @@ import { SupplierImportLauncher } from './SupplierImportCenter';
 import { SuppliersWorkspace } from './SuppliersWorkspace';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
+import { CatalogPagination } from './CatalogPagination';
 import { restoreScrollAnchor } from '../lib/scrollAnchor';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -211,18 +212,10 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
   useEffect(()=>{setPage(1);setExpandedMaterialId(null);},[
    query,programFilter,materialFamilyFilter,materialTypeFilter,brandFilter,
    collectionFilter,tagFilter,finishFilter,thicknessFilter,sort,pageSize]);
-  const pagination=<nav className="materials-page-controls" aria-label="Material results pagination">
-   <span>Showing {materials.length?firstRow+1:0}–{Math.min(firstRow+pageSize,materials.length)} of {materials.length}</span>
-   <label>Show <select aria-label="Materials per page" value={pageSize}
-    onChange={event=>setPageSize(Number(event.target.value))}>
-    {[25,50,100].map(count=><option key={count} value={count}>{count} per page</option>)}
-   </select></label>
-   <div className="materials-page-actions">
-    <button type="button" disabled={currentPage<=1} onClick={()=>{setPage(p=>Math.max(1,p-1));setExpandedMaterialId(null);}}>‹ Previous</button>
-    <span>Page {currentPage} of {pageCount}</span>
-    <button type="button" disabled={currentPage>=pageCount} onClick={()=>{setPage(p=>Math.min(pageCount,p+1));setExpandedMaterialId(null);}}>Next ›</button>
-   </div>
-  </nav>;
+  const pagination=<CatalogPagination label="Materials" total={materials.length}
+    page={currentPage} pageSize={pageSize}
+    onPageChange={next=>{setPage(next);setExpandedMaterialId(null);}}
+    onPageSizeChange={size=>{setPageSize(size);setPage(1);setExpandedMaterialId(null);}}/>;
 
   const pinnedKeySet = useMemo(() => new Set(pinnedKeys), [pinnedKeys]);
 
