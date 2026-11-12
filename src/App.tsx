@@ -98,6 +98,7 @@ import {useQuoteStore} from './store/quoteStore';
 import './worktable-parity.css';
 import './records-toolbar-consistency.css';
 import './worktable-chrome.css';
+import './workspace-tab-nav.css';
 
 const PRIMARY_NAV_DESTINATIONS=['home','dashboard','catalog','notebook'] as const;
 
