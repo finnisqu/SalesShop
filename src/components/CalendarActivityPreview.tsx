@@ -14,7 +14,6 @@ import {activityRelations,primaryActivityRelations,activityMethodSummary,
  type ActivityRelation} from '../services/activityRelations';
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
 import {localDateKey} from '../services/salesCalendar';
-import {isExternalQuoteActivity} from '../services/salesQuoteRegistry';
 import type {ActivityMetadata} from '../types/crm';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
@@ -35,17 +34,13 @@ const localTimestamp=(timestamp:string)=>{
   ?localDateKey(date)+'T'+[date.getHours(),date.getMinutes()].map(v=>String(v).padStart(2,'0')).join(':')
   :'';
 };
-interface EditDraft{
- method:Method;occurred:string;notes:string;links:TaskAssociation[];
- sentDate?:string;amount?:string;platform?:string;
-}
+interface EditDraft{method:Method;occurred:string;notes:string;links:TaskAssociation[];}
 
 export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  activityId:string;onClose:()=>void;onSelect:(kind:PreviewRecord['kind'],id:string)=>void;
 }){
  const activity=useCrmStore(s=>s.activities.find(a=>a.id===activityId));
  const saveActivity=useCrmStore(s=>s.updateActivity);
- const correctExternalQuote=useCrmStore(s=>s.correctExternalQuoteSent);
  const people=useCrmStore(s=>s.contacts);
  const companies=useCrmStore(s=>s.companies);
  const deals=useCrmStore(s=>s.projects);
@@ -58,17 +53,13 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   (!activity?.metadata?.recordedByUserId||
     activity.metadata.recordedByUserId===userId||role==='owner'||role==='admin');
  const loggedInteraction=activity?.type==='manual-touchpoint'||activity?.type==='notebook-touchpoint';
- const externalQuote=Boolean(activity&&isExternalQuoteActivity(activity));
- const canEdit=allowed&&(loggedInteraction||externalQuote);
+ const canEdit=allowed&&loggedInteraction;
  const scopeKey=draftStorageKey('activity-edit:'+activityId,mode,orgId,userId);
  const [editing,setEditing]=useState(false);
  const [method,setMethod]=useState<Method>('call');
  const [occurred,setOccurred]=useState('');
  const [notes,setNotes]=useState('');
  const [links,setLinks]=useState<TaskAssociation[]>([]);
- const [sentDate,setSentDate]=useState('');
- const [externalAmount,setExternalAmount]=useState('');
- const [externalPlatform,setExternalPlatform]=useState('');
  const [saving,setSaving]=useState(false);
  const [error,setError]=useState('');
  useModalScrollLock(Boolean(activity));
@@ -100,18 +91,12 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   setOccurred(restored?.occurred??localTimestamp(activity.occurredAt));
   setNotes(restored?.notes??activity.metadata?.notes??'');
   setLinks(restored?.links??relationList);
-  if(externalQuote){
-    setSentDate(restored?.sentDate??activity.metadata?.bidSentDate??localDateKey(new Date(activity.occurredAt)));
-    setExternalAmount(restored?.amount??String(activity.metadata?.amount??''));
-    setExternalPlatform(restored?.platform??activity.metadata?.externalQuoteFormat??'');
-  }
   setError('');setEditing(true);
  };
  useEffect(()=>{
   if(!editing||!scopeKey)return;
-  writeSavedDraft(scopeKey,{method,occurred,notes,links,
-    ...(externalQuote?{sentDate,amount:externalAmount,platform:externalPlatform}:{})});
- },[editing,scopeKey,method,occurred,notes,links,externalQuote,sentDate,externalAmount,externalPlatform]);
+  writeSavedDraft(scopeKey,{method,occurred,notes,links});
+ },[editing,scopeKey,method,occurred,notes,links]);
  useEffect(()=>{setEditing(false);setError('');},[activityId,scopeKey]);
  if(!activity)return null;
  const close=()=>{if(!saving)onClose();};
@@ -121,23 +106,6 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  const submit=async(event:FormEvent)=>{
   event.preventDefault();
   if(!activity||!canEdit||saving)return;
-  if(externalQuote){
-    const amount=Number(externalAmount);
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(sentDate)||sentDate>localDateKey(new Date())||
-      !externalAmount.trim()||!Number.isFinite(amount)||amount<0){
-      setError('Enter a valid date already sent and a nonnegative quote amount.');return;
-    }
-    setSaving(true);setError('');
-    try{
-      await correctExternalQuote(activityId,{
-        bidSentDate:sentDate,amount,format:externalPlatform,notes,
-      });
-      clearSavedDraft(scopeKey);setEditing(false);
-    }catch(e){
-      setError(e instanceof Error?e.message:'External quote correction was not confirmed.');
-    }finally{setSaving(false);}
-    return;
-  }
   const when=new Date(occurred);
   if(!Number.isFinite(when.getTime())||when.getTime()>Date.now()+60000){
    setError('Choose a valid date and time for a completed interaction.');return;
@@ -165,44 +133,18 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   onPointerDown={event=>{if(event.target===event.currentTarget)close();}}>
   <section ref={previewRef}
    className="tasks-preview-card record-preview-panel activity-preview-panel activity-quick-card ss-mobile-sheet"
-   role="dialog" aria-modal="true"
-    aria-label={editing?(externalQuote?'Correct external quote':'Edit Activity'):'Activity preview'}>
+   role="dialog" aria-modal="true" aria-label={editing?'Edit Activity':'Activity preview'}>
    <MobileSheetHandle onClose={close} disabled={saving}/>
    <header className="activity-preview-header ss-unified-preview-header">
     <PreviewPanelHeading eyebrow={activity.metadata?.externalQuoteSent?'CRM · EXTERNAL QUOTE SENT':
       loggedInteraction?'CRM · LOGGED INTERACTION':'CRM · ACTIVITY DETAILS'}
-      title={editing?(externalQuote?'Correct external quote':'Edit activity'):activity.summary}
-      detail={editing?(externalQuote
-        ?'Correct the submitted date, value or platform on this existing quote. No new submission is created.'
-        :'Correct the date, time, notes or participants in this Activity.'):undefined}/>
+      title={editing?'Edit activity':activity.summary}
+      detail={editing?'Correct the date, time, notes or participants in this Activity.':undefined}/>
     <PreviewPanelClose onClose={close} label="Close activity preview"
       className="editor-close" disabled={saving}/>
    </header>
    <div className="tasks-preview-body record-preview-body activity-preview-body ss-mobile-sheet-body">
     {editing?<form id="activity-preview-edit" className="activity-preview-edit" onSubmit={submit}>
-      {externalQuote?<div className="activity-preview-external-edit">
-        <div className="activity-preview-fields">
-          <label>Date sent
-            <input type="date" required value={sentDate} max={localDateKey(new Date())}
-              onChange={event=>setSentDate(event.target.value)}/>
-          </label>
-          <label>Submitted value ($)
-            <input type="number" required min="0" step="0.01" inputMode="decimal"
-              value={externalAmount} onChange={event=>setExternalAmount(event.target.value)}/>
-          </label>
-        </div>
-        <label>External platform or tool
-          <input maxLength={120} value={externalPlatform} placeholder="Builder platform, spreadsheet, PDF…"
-            onChange={event=>setExternalPlatform(event.target.value)}/>
-        </label>
-        <label>Notes
-          <textarea rows={4} maxLength={5000} value={notes}
-            placeholder="Corrections or submission details…"
-            onChange={event=>setNotes(event.target.value)}/>
-        </label>
-        <p className="activity-preview-hint">This corrects the existing external quote in place.
-          Its linked Deal, original recording time and bid-submission proof are preserved.</p>
-      </div>:<>
       <div className="activity-preview-fields">
        <label>Method<select value={method} onChange={e=>setMethod(e.target.value as Method)}>
         {methods.map(m=><option key={m} value={m}>{methodLabel(m)}</option>)}
@@ -218,7 +160,6 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       <ActivityRelatedQuickCreate disabled={saving}
        onCreated={link=>setLinks(previous=>previous.some(item=>
          item.type===link.type&&item.id===link.id)?previous:[...previous,link])}/>
-      </>}
       <p className="activity-preview-hint">Changes are saved to your CRM activity. Unsubmitted edits remain on this device if you close the panel.</p>
       {error&&<p className="activity-preview-error" role="alert">{error}</p>}
      </form>:<>
@@ -260,11 +201,11 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       <button type="button" onClick={discard} disabled={saving}>Discard changes</button>
       <button type="button" onClick={()=>setEditing(false)} disabled={saving}>Back to preview</button>
       <button type="submit" form="activity-preview-edit" className="activity-preview-primary"
-       disabled={saving}>{saving?'Saving…':externalQuote?'Save correction':'Save changes'}</button>
+       disabled={saving}>{saving?'Saving…':'Save changes'}</button>
      </>:<>
       <button type="button" onClick={close}>Close</button>
       {canEdit&&<button type="button" className="activity-preview-primary" onClick={openEditor}>
-       {externalQuote?'Correct quote details':'Edit activity'}</button>}
+       Edit activity</button>}
      </>}
    </PreviewPanelActions>
   </section>
