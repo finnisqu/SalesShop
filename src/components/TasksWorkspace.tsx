@@ -506,8 +506,9 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
              <button type="button" key={key} aria-pressed={filter===key} className={filter===key?'active':''}
               onClick={()=>setFilter(key)}>{label}</button>)}
           </nav>}
-          <details className="tasks-overview-menu">
-            <summary>Overview <WorkspaceChromeIcon name="chevron-down"/></summary>
+          <SalesCalendarLauncher compact/>
+        </>}
+        toolbarFilters={<div className="tasks-worktable-filter-options">
             <div className="tasks-summary" aria-label="Task counts">
               {([['active','All open'],['today','Today'],['upcoming','Upcoming'],['overdue','Overdue'],['scheduled','Start later'],['completed','Completed']] as const).map(([key,label])=>
               <button key={key} type="button" onClick={event=>{
@@ -516,15 +517,15 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
                 <strong>{counts[key]}</strong><span>{label}</span>
               </button>)}
             </div>
-          </details>
-          <SalesCalendarLauncher compact/>
           <label className="tasks-queue-filter">Queue
             <select aria-label="Filter task queue" value={queueFilter} onChange={e=>setQueueFilter(e.target.value)}>
               <option value="all">All queues</option>
               {queues.map(q=><option key={q} value={q}>{q}</option>)}
             </select>
           </label>
-        </>}
+        </div>}
+        filterCount={Number(queueFilter!=='all')+
+          Number(!['active','completed'].includes(filter))}
         onOpen={id=>{const selected=visible.find(task=>task.id===id);if(selected)setViewingId(selected.id);}}
         onTaskDelete={id=>{
           if(!own.some(item=>item.id===id))return;
