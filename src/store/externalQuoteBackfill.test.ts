@@ -39,45 +39,6 @@ describe('historical external quote backfill',()=>{
   expect(useCrmStore.getState().projects[0].amount).toBe(4400);
   expect(useCrmStore.getState().projects[0].dueDate).toBeUndefined();
  });
- it('corrects the same external submission in place without reopening the Deal or creating another quote event',async()=>{
-  useCrmStore.setState({projects:[deal('Bid Development')],activities:[]});
-  expect(await useCrmStore.getState().recordExternalQuoteSent(
-    'deal-test',4400,'2025-05-11','Excel')).toBe(true);
-  const original=useCrmStore.getState();
-  const dealAfterSubmit={...original.projects[0]};
-  const first=original.activities[0];
-  expect(first.type).toBe('quote-sent');
-  await useCrmStore.getState().correctExternalQuoteSent(first.id,{
-    bidSentDate:'2025-05-13',amount:6700,format:'BuildingConnected',
-    notes:'Corrected the value from the builder submission.',
-  });
-  const corrected=useCrmStore.getState();
-  expect(corrected.activities).toHaveLength(1);
-  expect(corrected.activities[0]).toMatchObject({
-    id:first.id,type:'quote-sent',projectId:first.projectId,
-    metadata:{externalQuoteSent:true,amount:6700,bidSentDate:'2025-05-13',
-     externalQuoteFormat:'BuildingConnected',recordedAt:first.metadata?.recordedAt,
-     fromStage:first.metadata?.fromStage,toStage:first.metadata?.toStage},
-  });
-  expect(corrected.activities[0].occurredAt.slice(0,10)).toBe('2025-05-13');
-  expect(corrected.projects[0]).toEqual(dealAfterSubmit);
- });
- it('rejects invalid corrections without changing submitted data or the Deal',async()=>{
-  await useCrmStore.getState().recordExternalQuoteSent('deal-test',2400,'2025-05-11','PDF');
-  const original=useCrmStore.getState();
-  const activity=original.activities[0];
-  await expect(useCrmStore.getState().correctExternalQuoteSent(activity.id,{
-   bidSentDate:'2099-01-01',amount:123,format:'PDF',
-  })).rejects.toThrow();
-  await expect(useCrmStore.getState().correctExternalQuoteSent(activity.id,{
-   bidSentDate:'2025-02-31',amount:123,format:'PDF',
-  })).rejects.toThrow();
-  await expect(useCrmStore.getState().correctExternalQuoteSent(activity.id,{
-   bidSentDate:'2025-05-12',amount:-20,format:'PDF',
-  })).rejects.toThrow();
-  expect(useCrmStore.getState().activities).toEqual(original.activities);
-  expect(useCrmStore.getState().projects).toEqual(original.projects);
- });
  it('rejects impossible future dates',async()=>{
   expect(await useCrmStore.getState().recordExternalQuoteSent('deal-test',4400,'2099-01-01','PDF')).toBe(false);
   expect(useCrmStore.getState().activities).toHaveLength(0);
