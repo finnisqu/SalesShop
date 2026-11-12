@@ -59,14 +59,19 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
    expect(src('components/'+name+'.tsx')).toContain('ss-worktable-surface');
   }
  });
- it('restores filled, bordered Records tabs including an integrated More tab',()=>{
+ it('shares the same light tab capsule and label scale across Records and Catalog',()=>{
   const nav=src('components/RecordsSectionNav.tsx');
-  const css=src('components/records-section-nav.css');
-  expect(nav).toContain('records-section-more');
-  expect(css).toContain('.records-section-nav{');
-  expect(css).toContain('border:1px solid var(--ss-theme-border)');
-  expect(css).toContain('.records-section-more .ss-workspace-more>summary');
-  expect(css).toContain('background:var(--ss-theme-tint)');
+  const catalog=src('components/CatalogWorkspace.tsx');
+  const css=src('workspace-tab-nav.css');
+  const app=src('App.tsx');
+  expect(nav).toContain('records-section-nav ss-header-tab-pill');
+  expect(nav).toContain('items={additional} asTab');
+  expect(catalog).toContain('catalog-foundation-tabs ss-header-tab-pill');
+  expect(css).toContain('background:var(--ss-theme-card)!important');
+  expect(css).toContain('font:750 11px/1.2');
+  expect(css).toContain('border-left:0!important');
+  expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
+  expect(app).toContain("import './workspace-tab-nav.css'");
  });
  it('keeps Suppliers on the same Catalog and Records chrome',()=>{
   const suppliers=src('components/SuppliersWorkspace.tsx');
