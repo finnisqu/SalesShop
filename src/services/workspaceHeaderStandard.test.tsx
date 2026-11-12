@@ -29,7 +29,7 @@ describe('Six-workspace standardized header',()=>{
    ['components/Board.tsx','ss-workspace-header'],
    ['components/AccountsBoard.tsx','ss-workspace-header'],
    ['components/Connections.tsx','ss-workspace-header'],
-   ['components/QuotesMobileBeta.tsx','WorkspaceHeader title="Quotes"'],
+   ['components/QuotesMobileBeta.tsx','WorkspaceHeader title="Records"'],
    ['components/TasksWorkspace.tsx','WorkspaceHeader title="Tasks"'],
    ['components/CatalogWorkspace.tsx','WorkspaceHeader title="Catalog"'],
    ['App.tsx','WorkspaceHeader title="Notebook"'],
