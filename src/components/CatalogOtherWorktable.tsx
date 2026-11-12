@@ -4,6 +4,7 @@ import {scopedStorageKey} from '../lib/developerPlayground';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
+import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-other-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -60,6 +61,16 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
     sort==='brand'?(a.brand??'').localeCompare(b.brand??'')||a.name.localeCompare(b.name):
     a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
  },[items,category,query,externalQuery,showInactive,sort]);
+ const pagination=useCatalogPagination(filtered.length,
+  JSON.stringify([query,externalQuery,category,showInactive,sort]));
+ const pagedItems=filtered.slice(pagination.start,pagination.end);
+ // After creating a record, navigate to its page in the sorted catalog.
+ useEffect(()=>{
+  if(!expanded)return;
+  const index=filtered.findIndex(row=>row.id===expanded);
+  if(index>=0)pagination.setPage(Math.floor(index/pagination.pageSize)+1);
+ },[expanded,filtered,pagination.pageSize]);
+
  const selectedPins=useMemo(()=>pins.flatMap(key=>{
   const [itemId,variantId]=key.split(':');
   const item=items.find(value=>value.id===itemId);
@@ -149,11 +160,15 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
       {editing?'Done editing':'Edit items'}</button>}
     </div>
    </header>
+   <CatalogPagination label="Other" total={filtered.length}
+    page={pagination.page} pageSize={pagination.pageSize}
+    onPageChange={next=>{pagination.setPage(next);setExpanded(null);}}
+    onPageSizeChange={size=>{pagination.setPageSize(size);setExpanded(null);}}/>
    <div className="rates-reference-table-wrap catalog-product-scroll">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr><th>Category</th><th>Item</th><th>Brand / supplier</th>
       <th>Unit</th><th>Default cost</th><th>Customer price</th><th>Variants</th></tr></thead>
-     <tbody>{filtered.map(item=>{
+     <tbody>{pagedItems.map(item=>{
       const open=expanded===item.id,defaultVariant=item.variants.find(v=>v.default)||item.variants[0];
       return <Fragment key={item.id}>
        <tr className={open?'is-expanded':''}>
