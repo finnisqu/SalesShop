@@ -261,7 +261,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
   </div>;
 }
 
-export function TasksWorkspace(){
+export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:boolean;externalQuery?:string}={}){
   const mode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),orgId=useAuthStore(s=>s.organizationId);
   const teamRole=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
   const rolePreview=useRolePerspectiveStore(s=>s.activePerspective);
@@ -290,6 +290,7 @@ export function TasksWorkspace(){
   },[scope]);
   const [filter,setFilter]=useState<Filter>('active');
   const [search,setSearch]=useState('');
+  const searchTerm=embedded?externalQuery:search;
   const [taskToolbarHost,setTaskToolbarHost]=useState<HTMLDivElement|null>(null);
   const today=localDay();
   useEffect(()=>{
@@ -350,14 +351,14 @@ export function TasksWorkspace(){
     if(filter==='completed'&&!finished)return false;
     if(queueFilter!=='all'&&(t.queue??'')!==queueFilter)return false;
     return (t.title+' '+(t.notes??'')+' '+(t.sourceLabel??'')+' '+
-      (t.associations??[]).map(x=>x.label??'').join(' ')+' '+(t.queue??'')).toLowerCase().includes(search.trim().toLowerCase());
+      (t.associations??[]).map(x=>x.label??'').join(' ')+' '+(t.queue??'')).toLowerCase().includes(searchTerm.trim().toLowerCase());
   }).sort((a,b)=>{
     const aDone=taskComplete(a),bDone=taskComplete(b);
     if(aDone!==bDone)return aDone?1:-1;
     const weight=(p?:TaskPriority)=>({urgent:0,high:1,normal:2,low:3})[p??'normal'];
     return (a.dueDate??'9999').localeCompare(b.dueDate??'9999')||
       weight(a.priority)-weight(b.priority)||b.updatedAt.localeCompare(a.updatedAt);
-  }),[own,filter,search,queueFilter,today]);
+  }),[own,filter,searchTerm,queueFilter,today]);
   // Calendar navigation is preview-first, with editing explicitly chosen from the preview.
   useEffect(()=>{
    const show=()=>{
@@ -411,8 +412,8 @@ export function TasksWorkspace(){
     setTaskNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
   };
   if(rolePreview)return <main className="tasks-workspace"><h1>Tasks</h1><p>Personal tasks are not shown in role preview.</p></main>;
-  return <main className="tasks-workspace" aria-label="SalesShop tasks">
-    <WorkspaceHeader title="Tasks" help={<WorkspaceHelp page="tasks" section={filter}/>} className="tasks-header"
+  return <main className={"tasks-workspace"+(embedded?" is-records-embedded":"")} aria-label="SalesShop tasks">
+    {!embedded&&<WorkspaceHeader title="Tasks" help={<WorkspaceHelp page="tasks" section={filter}/>} className="tasks-header"
       mobileTabs={[
        {value:'active',label:'Open'},{value:'completed',label:'Completed'},
       ]} mobileTabValue={filter} onMobileTabChange={value=>setFilter(value as typeof filter)}
@@ -436,10 +437,15 @@ export function TasksWorkspace(){
         value={search} onChange={event=>setSearch(event.target.value)}/>}
       primary={<button type="button" className="tasks-primary" onClick={()=>setEditing({title:''})}
         disabled={!scope}>+ Task</button>}
-    />
+    />}
     <div className="tasks-directory-content">
     <RecordFormFeedback notice={taskNotice} className="tasks-save-feedback"/>
     <section className="tasks-directory-controls" aria-label="Task directory controls">
+      {embedded&&<nav className="tasks-records-tabs" aria-label="Task status">
+        {([['active','Open'],['completed','Completed']] as const).map(([key,label])=>
+         <button type="button" key={key} aria-pressed={filter===key} className={filter===key?'active':''}
+          onClick={()=>setFilter(key)}>{label}</button>)}
+      </nav>}
       <p className="tasks-directory-caption">{visible.length} {visible.length===1?'task':'tasks'} · {counts.active} open · {counts.today} due today · {counts.overdue} overdue</p>
       <div className="tasks-toolbar-slot" ref={setTaskToolbarHost}/>
       <div className="tasks-mobile-controls">
