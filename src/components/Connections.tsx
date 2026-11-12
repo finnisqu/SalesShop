@@ -37,7 +37,6 @@ import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {PreviewPanelClose} from './PreviewPanelChrome';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
-import {useDismissibleDetails} from './useDismissibleDetails';
 import {QuoteRecordMetadataPage} from './QuoteRecordMetadataPage';
 import {useAuthStore} from '../store/authStore';
 import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
@@ -227,8 +226,6 @@ export function Connections() {
   };
   const [peopleAttention,setPeopleAttention]=useState<PeopleAttentionFilter>('all');
   const [activityFilters,setActivityFilters]=useState<ActivityLogFilters>(DEFAULT_ACTIVITY_LOG_FILTERS);
-  const activityFilterMenuRef=useRef<HTMLDetailsElement>(null);
-  useDismissibleDetails(activityFilterMenuRef);
   const activeActivityFilters=Object.values(activityFilters).filter(value=>value!=='all').length;
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
   const [activityPreview,setActivityPreview]=useState<string|null>(null);
@@ -741,7 +738,7 @@ export function Connections() {
               
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
-                toolbarControls={companyFilterControl}
+                toolbarFilters={companyFilterControl} filterCount={Number(companyFilter!=='all')}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
@@ -777,7 +774,7 @@ export function Connections() {
               </div>
               <ConnectionsTable key="people" tableKey="people" columns={peopleColumns}
                 rows={peopleTableRows} onOpen={id=>previewRecord('person',id)} onBulkTask={bulkTask}
-                toolbarControls={<>
+                toolbarFilters={<>
               <div className="connections-people-attention-filters" role="group" aria-label="People follow-up filters">
                {([
                  ['all','All'],['never','Never contacted'],
@@ -786,7 +783,7 @@ export function Connections() {
                 aria-pressed={peopleAttention===value} onClick={()=>setPeopleAttention(value)}>
                 {label}</button>)}
               </div>
-                </>}
+                </>} filterCount={Number(peopleAttention!=='all')}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {peopleRows.map((person) => <div key={person.id} className="connections-mobile-record-group">
@@ -841,7 +838,7 @@ export function Connections() {
             
              <ConnectionsTable key="deals" tableKey="deals" columns={dealColumns}
               rows={dealTableRows} onOpen={id=>previewRecord('deal',id)} onBulkTask={bulkTask}
-              toolbarControls={<>{dealPipelineControl}</>}
+              toolbarFilters={dealPipelineControl} filterCount={Number(pipelineFilter!=='all')}
                onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
             <div className="connections-card-grid connections-legacy-cards">
               {projectRows.map((project) => {
@@ -892,12 +889,7 @@ export function Connections() {
           {tab==='activity'&&<section className="connections-directory records-activity-directory" aria-label="Activity history">
             <ConnectionsTable tableKey="activity" columns={ACTIVITY_COLUMNS} rows={activityTableRows}
               onOpen={id=>{const activity=activityRows.find(a=>a.id===id);if(activity)openActivity(activity);}}
-              toolbarControls={<details className="records-activity-filter-menu" ref={activityFilterMenuRef}>
-                <summary aria-label={'Activity filters'+(activeActivityFilters?' · '+activeActivityFilters+' active':'')}>
-                  Filters{activeActivityFilters>0&&<span className="records-filter-active-count">{activeActivityFilters}</span>}
-                </summary>
-                <div className="records-activity-filter-popover">
-                 <div className="connections-activity-filters" aria-label="Filter Activity history">
+              toolbarFilters={<div className="connections-activity-filters" aria-label="Filter Activity history">
                 <label>Method
               <select value={activityFilters.method} onChange={e=>setActivityFilters(f=>({
                 ...f,method:e.target.value as ActivityLogFilters['method']}))}>
@@ -941,9 +933,7 @@ export function Connections() {
             <button type="button" disabled={JSON.stringify(activityFilters)===
               JSON.stringify(DEFAULT_ACTIVITY_LOG_FILTERS)}
               onClick={()=>setActivityFilters(DEFAULT_ACTIVITY_LOG_FILTERS)}>Clear filters</button>
-                 </div>
-                </div>
-              </details>}/>
+              </div>} filterCount={activeActivityFilters}/>
           </section>}
       </div>
       {externalQuotePickerOpen&&<ExternalQuoteBackfillDialog
