@@ -36,7 +36,7 @@ function normalize(raw:unknown):OtherCatalogItem[]{
   if(!item||typeof item!=='object')return [];
   const obj=item as Partial<OtherCatalogItem>;
   if(!obj.id||!obj.name)return [];
-  const variants=Array.isArray(obj.variants)?obj.variants.flatMap(v=>{
+  const variants:OtherCatalogVariant[]=Array.isArray(obj.variants)?obj.variants.flatMap(v=>{
    if(!v||typeof v!=='object')return [];
    const variant=v as Partial<OtherCatalogVariant>;
    return [{id:variant.id||uid('other_variant'),label:variant.label||'Standard',
