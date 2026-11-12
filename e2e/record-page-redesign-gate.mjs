@@ -7,7 +7,7 @@ const contains = (text, pieces) => pieces.every(piece=>text.includes(piece));
 const app=source('src/App.tsx');
 const start=app.indexOf('<nav className="app-tabs"');
 const tabs=app.slice(start,app.indexOf('</nav>',start));
-const names=['Home','Tasks','Connections','Quotes','Catalog','Notebook'];
+const names=['Home','Records','Quotes','Catalog','Notebook'];
 const positions=names.map(name=>tabs.indexOf('>'+name+'</button>'));
 assert(positions.every(position=>position>=0),'Missing desktop navigation item');
 assert.deepEqual(positions,[...positions].sort((a,b)=>a-b),'Incorrect desktop navigation order');
@@ -35,9 +35,15 @@ assert(contains(board,[
   'if(companyId)setProjectCompany(id,companyId)'
 ]),'Board Deal relationship persistence changed');
 
-// Batch #110: an embedded Board and the Table directory must share the
-// same Connections search/filter results and one record-preview workflow.
+// Records retains the Board and Table directory's shared search/filter results,
+// record-preview workflow, and consolidated Tasks and Activities navigation.
 const connections=source('src/components/Connections.tsx');
+assert(contains(connections,[
+  '<WorkspaceHeader title="Records"',
+  "{ id: 'tasks', label: 'Tasks'",
+  "{ id: 'activity', label: 'Activities'",
+  '<TasksWorkspace embedded externalQuery={query}/>',
+]),'Records navigation lost its Tasks or Activities tabs');
 const companiesBoard=source('src/components/AccountsBoard.tsx');
 const recordShell=source('src/components/RecordPageLayout.tsx');
 assert(contains(connections,[
@@ -55,7 +61,7 @@ assert(contains(connections,[
   'const previousRelated=',
   'if(focusedDealId&&relatedBack(focusedDealId))return',
   'onScrollCapture={rememberScroll}',
-]),'Connections search, relationship navigation or scroll restoration regressed');
+]),'Records search, relationship navigation or scroll restoration regressed');
 assert(contains(board,[
   'allowedDealIds?allowedDealIds.has(project.id)',
   'const pipelineView=pipelineFilter??localPipelineView',
@@ -69,7 +75,7 @@ assert(contains(companiesBoard,[
   'onGoToQuotePage={onOpenQuoteMetadata}',
 ]),'Embedded Company Board and Table record parity regressed');
 assert(contains(recordShell,[
-  "backLabel='Connections'",
+  "backLabel='Records'",
   '← {backLabel}',
 ]),'Record breadcrumb context regressed');
 
