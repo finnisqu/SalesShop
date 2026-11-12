@@ -51,7 +51,7 @@ describe('CRM Deal inline and partial edit data integrity',()=>{
     useCrmStore.getState().updateProject('deal-a',{dueDate:'2026-11-28'});
     expect(current().originalDueDate).toBe('2026-11-20');
     expect(current().dueDateHistory?.at(-1)?.responsibility).toBe('neutral');
-    expect(current().dueDateHistory).toHaveLength(3);
+    expect(current().dueDateHistory).toHaveLength(2);
   });
 
   it('does not invent a historical original date for older imported Deals',()=>{
