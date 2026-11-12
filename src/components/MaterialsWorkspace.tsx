@@ -676,7 +676,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
                 })}
               </MobileCatalogReferenceList>
             ) : (
-            <div className="rates-reference-table-wrap">
+            <div className="rates-reference-table-wrap ss-worktable-surface">
               <table className="rates-reference-table materials-reference-table">
                 <thead><tr><th>Brand</th><th>Name</th><th>Type</th><th>Program</th><th>Default cost</th><th>Default spec</th><th>Product</th><th>Variants</th></tr></thead>
                 <tbody>
