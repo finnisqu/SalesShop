@@ -11,6 +11,7 @@ import {useWorkbookTableDensity} from '../services/workbookTableDensity';
 import {useDismissibleDetails} from './useDismissibleDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
+import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE} from './CatalogPagination';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;readOnly?:boolean;isSelfCompany?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization';columns:ConnectionColumn[];rows:ConnectionTableRow[];
@@ -27,7 +28,9 @@ interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tas
  /** Optional host for rendering the existing selection/column controls in the page's single toolbar row. */
  toolbarTarget?:HTMLElement|null;
  /** Filters/overview controls slotted before Columns, sharing the same toolbar and selection state. */
- toolbarControls?:ReactNode;}
+ toolbarControls?:ReactNode;
+ /** Catalog Tags pagination shares Materials' controls; other directories remain unchanged. */
+ catalogPagination?:boolean;catalogPaginationKey?:string;}
 const PAGE_SIZE=25;
 const storage=(tab:string,suffix:string)=>'salesshop-connections-grid-v1:'+tab+':'+suffix;
 function read(key:string):string[]{
@@ -36,7 +39,7 @@ function read(key:string):string[]{
  catch{return[];}
 }
 export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,onTaskDelete,onBulkTaskDelete,
- onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls}:Props){
+ onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls,catalogPagination=false,catalogPaginationKey=''}:Props){
  const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
@@ -50,6 +53,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
    reverse:tableKey==='documents',
  });
  const [page,setPage]=useState(1);
+ const [pageSize,setPageSize]=useState(catalogPagination?DEFAULT_CATALOG_PAGE_SIZE:PAGE_SIZE);
+ useEffect(()=>{if(catalogPagination)setPage(1);},[catalogPagination,catalogPaginationKey]);
  const columnsMenuRef=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(columnsMenuRef);
  // Preserve selections across pages, but never act on records removed by a new filter.
@@ -76,9 +81,9 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
      compareConnectionSortValues(a.sortValues?.priority,b.sortValues?.priority):0;
    return (sort.reverse?-diff:diff)||priority||compareConnectionSortValues(a.name,b.name);
  }),[rows,sort]);
- const pages=Math.max(1,Math.ceil(sorted.length/PAGE_SIZE));
+ const pages=Math.max(1,Math.ceil(sorted.length/pageSize));
  const currentPage=Math.min(page,pages);
- const display=sorted.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
+ const display=sorted.slice((currentPage-1)*pageSize,currentPage*pageSize);
  const selection=useMemo(()=>new Set(selected),[selected]);
  const chosen=useMemo(()=>rows.filter(row=>selection.has(row.id)),[rows,selection]);
  const allOnPage=display.length>0&&display.every(x=>selection.has(x.id));
@@ -103,7 +108,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  });
  const toolbar=(
    <div className="connections-grid-toolbar">
-     <span>{rows.length} records · {chosen.length} selected</span>
+     {catalogPagination?(chosen.length>0?<span>{chosen.length} selected</span>:null):
+       <span>{rows.length} records · {chosen.length} selected</span>}
      {chosen.length>0&&<>
        {onBulkEdit&&['companies','people','deals'].includes(tableKey)&&<button type="button"
          className="connections-bulk-edit-action" onClick={()=>setBulkEditing(true)}>Bulk edit ({chosen.length})</button>}
@@ -174,7 +180,10 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        </div>
      </div>}
     </div>}
-   {toolbarTarget===undefined?toolbar:toolbarTarget?createPortal(toolbar,toolbarTarget):null}
+   {catalogPagination?<CatalogPagination label="Tags" total={sorted.length}
+     page={currentPage} pageSize={pageSize} onPageChange={setPage}
+     onPageSizeChange={size=>{setPageSize(size);setPage(1);}} extraActions={toolbar}/>
+    :toolbarTarget===undefined?toolbar:toolbarTarget?createPortal(toolbar,toolbarTarget):null}
    {pins.length>0&&<div className="connections-pin-tray" aria-label="Pinned comparisons">
      <header><strong><WorkspaceChromeIcon name="pin"/> Pinned ({pins.length})</strong><button type="button" onClick={()=>setPinned([])}>Clear pins</button></header>
      <div className="connections-pin-items">{pins.map(item=><div key={item.id}>
@@ -273,11 +282,11 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        await onBulkTaskProperty(chosen,change);
        setBulkTaskEditing(false);setMobileBulkMode(false);setSelected([]);
      }}/>} 
-   <footer className="connections-grid-pagination">
+   {!catalogPagination&&<footer className="connections-grid-pagination">
      <span>{sorted.length?String((currentPage-1)*PAGE_SIZE+1)+'–'+String(Math.min(currentPage*PAGE_SIZE,sorted.length)):'0'} of {sorted.length}</span>
      <button type="button" disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>← Previous</button>
      <span>Page {currentPage} of {pages}</span>
      <button type="button" disabled={currentPage>=pages} onClick={()=>setPage(currentPage+1)}>Next →</button>
-   </footer>
+   </footer>}
  </section>;
 }
