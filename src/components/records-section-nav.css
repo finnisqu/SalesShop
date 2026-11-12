@@ -32,3 +32,25 @@
  .qmb-records-document-type{max-width:100%;flex:1 1 185px}
  .qmb-records-document-type select{max-width:100%;min-width:0;flex:1}
 }
+
+/* Five compact Records destinations fit the shared centered header band. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+  .ss-workspace-header .records-section-nav .records-section-nav-tabs{
+   flex:0 0 auto;min-width:0;max-width:none;overflow:visible!important;
+   gap:2px;padding:0;border:0;border-radius:0;background:transparent;
+ }
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+  .ss-workspace-header .records-section-nav-tabs>button{
+   box-sizing:border-box;flex:0 0 auto;min-width:0!important;
+   min-height:36px!important;height:36px!important;
+   padding:7px 8px!important;text-align:center;justify-items:center;
+ }
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+  .ss-workspace-header .records-section-nav-tabs>button small{display:none}
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+  .ss-workspace-header .records-section-more .ss-workspace-more>summary{
+   width:66px;min-width:66px;min-height:36px;height:36px;
+   padding:6px 7px;
+ }
+}
