@@ -805,6 +805,16 @@
  :is(.rates-reference-table,.connections-data-table) tbody tr:not(.materials-variant-expanded-row):hover>td{
  background:var(--ss-theme-tint);
 }
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ .rates-reference-table tbody tr.is-expanded:not(.materials-variant-expanded-row)>td,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
+ .materials-reference-table tbody tr.has-pinned-variant:not(.materials-variant-expanded-row)>td{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-materials
+ .materials-reference-table tbody tr.has-pinned-variant>td:first-child{
+ box-shadow:inset 3px 0 var(--ss-theme-accent);
+}
 
 /* Tags uses a ConnectionsTable internally. Keep its selection/pin cells
    distinct, centered and wide enough for real touch targets (no clipped dots). */
@@ -894,5 +904,21 @@
  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
  :is(.rates-reference-table,.connections-data-table) thead th{
   height:40px;min-height:40px;padding:0 8px;
+ }
+}
+
+
+/* A rotated touch phone may be wider than 700px; it still uses the mobile
+   Catalog toolbar and must not inherit the desktop 64px page gutter. */
+@media (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout:is(
+  .catalog-section-materials,.catalog-section-sinks,.catalog-section-other,
+  .catalog-section-rates,.catalog-section-tags
+ ){
+  box-sizing:border-box;
+  padding:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  scrollbar-gutter:auto;
  }
 }
