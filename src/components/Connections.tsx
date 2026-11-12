@@ -63,6 +63,27 @@ export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; descri
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const TAB_KEY = 'salesshop-connections-tab-v1';
 const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
+const SEARCH_KEY=scopedStorageKey('salesshop-connections-tab-search-v1');
+const COMPANY_FILTER_KEY=scopedStorageKey('salesshop-connections-company-filter-v1');
+function initialTabSearches():Partial<Record<ConnectionsTab,string>>{
+  try{
+    const raw=JSON.parse(sessionStorage.getItem(SEARCH_KEY)??'{}') as Record<string,unknown>;
+    if(!raw||typeof raw!=='object')return {};
+    const saved:Partial<Record<ConnectionsTab,string>>={};
+    for(const tab of ['companies','people','deals','organization','suppliers','quotes','activity'] as ConnectionsTab[]){
+      if(typeof raw[tab]==='string')saved[tab]=(raw[tab] as string).slice(0,300);
+    }
+    return saved;
+  }catch{return {};}
+}
+function initialCompanyFilter():CompanyFilter{
+  try{
+    const saved=sessionStorage.getItem(COMPANY_FILTER_KEY);
+    return ['all','prospect','customer','unclassified','partner','self'].includes(saved??'')
+      ?saved as CompanyFilter:'all';
+  }catch{return 'all';}
+}
+
 function initialLayouts():DirectoryLayouts{
   try{
     const raw=JSON.parse(localStorage.getItem(LAYOUT_KEY)??'{}') as Partial<DirectoryLayouts>;
@@ -171,7 +192,17 @@ export function Connections() {
    window.addEventListener('salesshop:open-suppliers',show);
    return()=>window.removeEventListener('salesshop:open-suppliers',show);
   },[]);
-  const [query, setQuery] = useState('');
+  // Keep each directory's search while switching tabs, views and record pages.
+  // Session scope avoids carrying private CRM search terms into another session.
+  const [tabSearches,setTabSearches]=useState<Partial<Record<ConnectionsTab,string>>>(initialTabSearches);
+  const query=tabSearches[tab]??'';
+  const setQuery=(value:string)=>{
+    setTabSearches(previous=>{
+      const next={...previous,[tab]:value};
+      try{sessionStorage.setItem(SEARCH_KEY,JSON.stringify(next));}catch{/* best effort */}
+      return next;
+    });
+  };
   const [peopleAttention,setPeopleAttention]=useState<PeopleAttentionFilter>('all');
   const [activityFilters,setActivityFilters]=useState<ActivityLogFilters>(DEFAULT_ACTIVITY_LOG_FILTERS);
   const [preview,setPreview]=useState<PreviewRecord|null>(null);
@@ -182,7 +213,11 @@ export function Connections() {
     const id=consumeQuoteMetadataRequest();
     if(id){setQuoteRecordId(id);setTab('quotes');}
   },[]);
-  const [companyFilter, setCompanyFilter] = useState<CompanyFilter>('all');
+  const [companyFilter, setCompanyFilter] = useState<CompanyFilter>(initialCompanyFilter);
+  const chooseCompanyFilter=(filter:CompanyFilter)=>{
+    setCompanyFilter(filter);
+    try{sessionStorage.setItem(COMPANY_FILTER_KEY,filter);}catch{/* best effort */}
+  };
   const [companyCreating, setCompanyCreating] = useState(false);
   const [newCompany, setNewCompany] = useState('');
   const [newCompanyRelationship, setNewCompanyRelationship] = useState<EditableCompanyRelationship>('prospect');
@@ -248,7 +283,7 @@ export function Connections() {
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
   const chooseTab = (next: ConnectionsTab) => {
     setPreview(null);setActivityPreview(null);setQuoteRecordId(null);
-    setTab(next); setQuery(''); setNotice('');setPeopleAttention('all');
+    setTab(next);setNotice('');setPeopleAttention('all');
     setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
     // Activity history is an on-demand utility, never the default landing page.
     if (CONNECTIONS_TABS.some((item) => item.id === next)) {
@@ -321,6 +356,8 @@ export function Connections() {
       pipeline:dealPipelineLabel(d.pipeline),stage:d.stage,due:d.dueDate?timeLabel(d.dueDate):'',amount:d.amount===undefined?'':money.format(d.amount),
       next:d.nextAction??'',updated:timeLabel(d.updatedAt)},
     sortValues:{amount:d.amount??0,due:d.dueDate??'9999-12-31',updated:d.updatedAt}})):[],[tab,projectRows,companiesById]);
+  const allowedCompanyIds=useMemo(()=>new Set(companyRows.map(company=>company.id)),[companyRows]);
+  const allowedDealIds=useMemo(()=>new Set(projectRows.map(deal=>deal.id)),[projectRows]);
   const quoteTableRows=useMemo<ConnectionTableRow[]>(()=>tab==='quotes'?quoteRows.map(q=>({
     id:q.id,name:q.name,
     association:q.source==='external'&&q.projectId
@@ -462,6 +499,21 @@ export function Connections() {
     }} onPreview={()=>{setQuoteRecordId(null);setPreview({kind:'quote',id:quoteRecordId});}}/>
   </main>;
   const previewRecord=(kind:PreviewRecord['kind'],id:string)=>setPreview({kind,id});
+  const openQuoteMetadata=(id:string)=>{
+    setPreview(null);setQuoteRecordId(id);setTab('quotes');
+  };
+  const companyFilterControl=<label className="connections-filter connections-inline-type-filter">
+    Type
+    <select aria-label="Filter Companies by type" value={companyFilter}
+      onChange={event=>chooseCompanyFilter(event.target.value as CompanyFilter)}>
+      <option value="all">All</option>
+      <option value="prospect">Prospects</option>
+      <option value="customer">Customers</option>
+      <option value="unclassified">Not classified</option>
+      <option value="partner">Partners / other</option>
+      <option value="self">Our Company (SELF)</option>
+    </select>
+  </label>;
   const openRegistryQuote=(id:string)=>{
     if(id.startsWith('external:')){setActivityPreview(id.slice('external:'.length));return;}
     const nativeId=id.startsWith('native:')?id.slice('native:'.length):id;
@@ -570,7 +622,9 @@ export function Connections() {
           {notice && <p className="connections-notice" role="status">{notice}</p>}
           {tab==='companies'&&layouts.companies==='board'&&
             <div className="connections-board-host" aria-label="Company board layout">
-              <Board embeddedMode="accounts" searchQuery={query}/>
+              <Board embeddedMode="accounts" searchQuery={query}
+                allowedCompanyIds={allowedCompanyIds} companyToolbarControl={companyFilterControl}
+                onOpenQuoteMetadata={openQuoteMetadata}/>
             </div>}
           {tab === 'companies' && layouts.companies==='table' && (
             <section className="connections-directory" aria-label="Company directory">
@@ -578,18 +632,7 @@ export function Connections() {
               <p className="connections-count">{companyRows.length} companies · preview or open full details</p>
               <ConnectionsTable key="companies" tableKey="companies" columns={companyColumns}
                 rows={companyTableRows} onOpen={id=>previewRecord('company',id)} onBulkTask={bulkTask}
-                toolbarControls={<label className="connections-filter connections-inline-type-filter">
-                  Type
-                  <select aria-label="Filter Companies by type" value={companyFilter}
-                    onChange={e=>setCompanyFilter(e.target.value as CompanyFilter)}>
-                    <option value="all">All</option>
-                    <option value="prospect">Prospects</option>
-                    <option value="customer">Customers</option>
-                    <option value="unclassified">Not classified</option>
-                    <option value="partner">Partners / other</option>
-                    <option value="self">Our Company (SELF)</option>
-                  </select>
-                </label>}
+                toolbarControls={companyFilterControl}
                  onBulkEdit={canBulkEdit?bulkEdit:undefined} bulkEditCompanies={companies}/>
               <div className="connections-card-grid connections-legacy-cards">
                 {companyRows.map((company) => {
@@ -668,7 +711,8 @@ export function Connections() {
           )}
           {tab==='deals'&&layouts.deals==='board'&&
             <div className="connections-board-host" aria-label="Deal board layout">
-              <Board embeddedMode="projects" searchQuery={query}/>
+              <Board embeddedMode="projects" searchQuery={query}
+                allowedDealIds={allowedDealIds} onOpenQuoteMetadata={openQuoteMetadata}/>
             </div>}
           {tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled&&dealsView==='timeline'&&
             <DealTimelineBetaOverview projects={projectRows} onOpen={openProject}/>}
@@ -801,7 +845,7 @@ export function Connections() {
         onSelect={(kind,id)=>{setActivityPreview(null);setPreview({kind,id});}}/>}
       {preview&&<RecordPreviewDrawer record={preview}
         onClose={()=>setPreview(null)} onSelect={setPreview}
-        onGoToQuotePage={id=>{setPreview(null);setQuoteRecordId(id);setTab('quotes');}}/>}
+        onGoToQuotePage={openQuoteMetadata}/>}
       {(companyCreating||personCreating||dealCreating)&&createPortal(
         <div className="connections-create-backdrop" onPointerDown={event=>{
           if(event.target===event.currentTarget)closeNewRecord();
