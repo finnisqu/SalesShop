@@ -551,6 +551,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
             <rect x="3.5" y="3.5" width="17" height="17" rx="3"/>
             <path d="m7.5 12 3 3 6-6"/>
            </svg> New task</button>
+          <button type="button" role="menuitem" onClick={()=>{
+           setAddOpen(false);openNotebookCalendarDate({standalone:true,date:selected});
+          }}><svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+            strokeLinejoin="round" aria-hidden="true">
+             <rect x="3" y="5" width="18" height="16" rx="2"/>
+             <path d="M7 3v4M17 3v4M3 10h18M8 15h8"/>
+           </svg> Calendar entry</button>
           {selected<=today&&<button type="button" role="menuitem" onClick={()=>{
           setAddOpen(false);
           window.dispatchEvent(new CustomEvent('salesshop:open-activity',
