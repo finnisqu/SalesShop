@@ -894,6 +894,23 @@ export function QuotesMobileBeta() {
   const sharedLibraryControls=<QuoteLibraryFilterControls filters={libraryFilters} counts={counts}
     externalCount={externalQuoteRecords.length} canFilterOwner={authMode==='cloud'}
     onChange={updateLibraryFilters} onClear={resetLibraryFilters}/>;
+  const documentTypeControl=<>
+   <label className="qmb-records-document-type">Document type
+     <select aria-label="Filter quote document type" value={followUpsTab?'follow-ups':documentFilter}
+      onChange={event=>{
+       const value=event.target.value;
+       if(value==='follow-ups')setFollowUpsTab(true);
+       else{setFollowUpsTab(false);setDocumentFilter(value as SalesDocumentTemplate|'all');}
+      }}>
+       <option value="all">All documents</option>
+       <option value="quick-quote">Quick Quotes</option>
+       <option value="builder-rates">Builder Rate Schedules</option>
+       <option value="community-pricing">Community Plan Pricing</option>
+       <option value="spreadsheet">Custom Spreadsheets</option>
+       <option value="follow-ups">Follow-ups</option>
+     </select>
+   </label>
+  </>;
   const openQuote=(id:string,initialTab:QuoteTab='build')=>{
     if(initialTab==='details')newQuoteDetailsRef.current=id;
     openRoutedQuote(id);setQuoteTab(initialTab);setPage('quote');setAreaId(null);
@@ -1267,7 +1284,7 @@ export function QuotesMobileBeta() {
         mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
         mobileTabValue="quotes" onMobileTabChange={value=>selectRecordsSection(value as RecordsSection)}
         tabs={<RecordsSectionNav selected="quotes" onSelect={selectRecordsSection}/>}
-        more={<WorkspaceMoreMenu items={[
+        more={<WorkspaceMoreMenu compact label="Quote actions" items={[
           {section:'Document types',label:'Builder Rate Schedule',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('builder-rates');},active:!followUpsTab&&documentFilter==='builder-rates'},
           {label:'Community Plan Pricing',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('community-pricing');},active:!followUpsTab&&documentFilter==='community-pricing'},
           {label:'Custom Spreadsheet',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('spreadsheet');},active:!followUpsTab&&documentFilter==='spreadsheet'},
@@ -1294,31 +1311,13 @@ export function QuotesMobileBeta() {
            ?<QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>
            :<>
          <div className="qmb-library-directory-controls" aria-label="Document directory controls">
-           <p className="qmb-library-results-head qmb-library-directory-caption">
-             {statusFilter==='archived'?'Archived documents':'My documents'} · {documentTableRows.length} {documentTableRows.length===1?'record':'records'} · click a name to preview its record
-           </p>
-           <label className="qmb-records-document-type">Document type
-             <select aria-label="Filter quote document type" value={followUpsTab?'follow-ups':documentFilter}
-              onChange={event=>{
-               const value=event.target.value;
-               if(value==='follow-ups')setFollowUpsTab(true);
-               else{setFollowUpsTab(false);setDocumentFilter(value as SalesDocumentTemplate|'all');}
-              }}>
-               <option value="all">All documents</option>
-               <option value="quick-quote">Quick Quotes</option>
-               <option value="builder-rates">Builder Rate Schedules</option>
-               <option value="community-pricing">Community Plan Pricing</option>
-               <option value="spreadsheet">Custom Spreadsheets</option>
-               <option value="follow-ups">Follow-ups</option>
-             </select>
-           </label>
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
-           <div className="qmb-library-mobile-filters">{sharedLibraryControls}</div>
+           <div className="qmb-library-mobile-filters">{documentTypeControl}{sharedLibraryControls}</div>
          </div>
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
              toolbarTarget={documentToolbarHost}
-             toolbarControls={sharedLibraryControls}
+             toolbarControls={<>{documentTypeControl}{sharedLibraryControls}</>}
              onOpen={id=>id.startsWith('external:')
                 ?setExternalQuotePreviewId(id.slice('external:'.length))
                 :setDocumentPreviewId(id)}
