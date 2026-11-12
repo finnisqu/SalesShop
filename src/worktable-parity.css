@@ -305,3 +305,55 @@
  :root[data-sales-theme] .sales-app.view-dashboard
   .records-activity-directory .connections-mobile-bulk{display:none}
 }
+
+
+/* People, Deals and Our Organization — their special filters and links
+ * join the record count/selection line. Mobile retains its accessible
+ * standalone controls because the wide table is replaced by cards. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-people-attention-filters.is-mobile,
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-deals-capture-bar.is-mobile,
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .our-org-unified-toolbar.is-mobile{
+  display:none!important;
+ }
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-grid-toolbar .connections-people-attention-filters{
+ display:inline-flex;align-items:center;gap:4px;
+ flex-wrap:nowrap;border:0;border-radius:0;
+ background:transparent;padding:0;margin:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-grid-toolbar .connections-people-attention-filters button{
+ min-height:34px;height:34px;padding:6px 9px;border-radius:7px;
+ font-size:11px;white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-grid-toolbar .connections-toolbar-controls>button{
+ min-height:36px;padding:6px 10px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font-size:11px;font-weight:650;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .our-org-table-controls{
+ display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .our-org-table-controls .our-org-tabs{
+ display:inline-flex;align-items:center;gap:4px;margin:0;padding:0;
+ border:0;background:transparent;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .our-org-table-controls .our-org-tabs button{
+ min-height:36px;padding:6px 10px;border-radius:7px;
+ white-space:nowrap;font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .our-org-table-controls .our-org-self-company-link{
+ min-height:36px;padding:6px 10px;max-width:220px;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ font-size:11px;
+}
