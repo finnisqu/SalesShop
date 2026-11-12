@@ -168,11 +168,46 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
     ...(!showingMaterialPricing && overrideFilter !== 'all' ? [{ key: 'overrides', label: overrideFilter === 'has' ? 'Division overrides' : 'Base rates', onRemove: () => setOverrideFilter('all') }] : []),
   ];
 
+  const catalogReferenceActions=embedded?<div className="catalog-card-actions catalog-rates-actions">
+    <span className="catalog-card-hint">{showingMaterialPricing?'Standard material pricing levels.':'Browse labor, service and add-on rates.'}</span>
+    <label className="catalog-card-category"><span className="catalog-control-label">Category</span>
+      <select aria-label="Rate category" value={category} onChange={event=>selectCategory(event.target.value as ReferenceCategory)}>
+        {CATEGORY_TABS.map(([key,label])=><option key={key} value={key}>{label}</option>)}
+      </select>
+    </label>
+    {!showingMaterialPricing&&<>
+      <details className="rates-filter-menu catalog-card-filter">
+        <summary>Filter{activeReferenceFilters?' · '+activeReferenceFilters:''}</summary>
+        <div className="rates-filter-popover rates-foundation-filter-popover catalog-card-filter-panel">
+          <RatesFilterFields idPrefix="rates-table"
+            behaviorFilter={behaviorFilter} unitFilter={unitFilter} overrideFilter={overrideFilter}
+            availableUnits={availableUnits} activeFilterCount={activeReferenceFilters}
+            onBehaviorChange={setBehaviorFilter} onUnitChange={setUnitFilter}
+            onOverrideChange={setOverrideFilter} onClear={clearReferenceFilters} />
+        </div>
+      </details>
+      <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
+        <select value={rateSort} onChange={event=>setRateSort(event.target.value as RateSort)}
+          aria-label="Sort rate reference">
+          <option value="category">Category / item</option>
+          <option value="name">Item A–Z</option>
+          <option value="sell-asc">Suggested sell · low first</option>
+          <option value="sell-desc">Suggested sell · high first</option>
+          <option value="cost-asc">Cost · low first</option>
+          <option value="effective-desc">Effective · newest</option>
+        </select>
+      </label>
+    </>}
+    <button type="button" className="catalog-card-edit" onClick={()=>{
+      syncEditorCategory(category);setEditing(true);
+    }}>Edit pricing</button>
+  </div>:null;
+
   if (!hydrated) return <WorkspaceLoadingState title="Opening Rates" detail="Loading labor, service, and material pricing…" />;
 
   return (
     <main className={`rates-workspace ${embedded ? 'is-catalog-embedded' : ''} ${editing ? 'is-editing' : 'is-reference'}`}>
-      <PageHeader className="rates-workspace-header rates-foundation-heading"
+      {!embedded&&<PageHeader className="rates-workspace-header rates-foundation-heading"
         eyebrow="Company pricing reference" title="Rates"
         description={editing
           ? showingMaterialPricing
@@ -191,7 +226,11 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
             setEditing((value) => !value);
           }}>{editing ? 'Done editing' : 'Edit pricing'}</Button>
         </div>}
-      />
+      />}
+      {embedded&&editing&&<div className="catalog-embedded-edit-row">
+        <strong>Editing company rates</strong>
+        <button type="button" onClick={()=>setEditing(false)}>Done editing</button>
+      </div>}
       <section className="rates-reference-controls rates-shared-controls">
         <div className="rates-reference-tabs" role="group" aria-label="Filter rate category">
           {CATEGORY_TABS.map(([tab, label]) => (
@@ -289,7 +328,10 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
       <div className={`rates-reference-host ${editing ? 'is-hidden' : ''}`}>
         {!showingMaterialPricing ? (
           <section className="rates-reference-card">
-            <header><div><strong>Current company rates</strong><small>{rateRows.length} active reference{rateRows.length === 1 ? '' : 's'} shown</small></div><span>Click Edit pricing when you want to make changes.</span></header>
+            <header className="catalog-card-header">
+              <div><strong>Current company rates</strong><small>{rateRows.length} active reference{rateRows.length===1?'':'s'}</small></div>
+              {catalogReferenceActions??<span>Click Edit pricing when you want to make changes.</span>}
+             </header>
             <MobileCatalogReferenceList
               label="Company rate reference"
               empty={!rateRows.length}
@@ -348,10 +390,10 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
             {guideSyncError&&<div role="alert" className="rates-reference-empty">
               Shared Builder Levels could not sync: {guideSyncError}. Changes on this device may not be available to teammates.
             </div>}
-            <header>
-              <div><strong>Standard material pricing</strong><small>{materialPricingRows.length} active pricing level{materialPricingRows.length === 1 ? '' : 's'}</small></div>
-              <span>Supplier colors and slab variants now live in Materials. This page only owns the pricing policy.</span>
-            </header>
+            <header className="catalog-card-header">
+               <div><strong>Standard material pricing</strong><small>{materialPricingRows.length} active pricing level{materialPricingRows.length === 1 ? '' : 's'}</small></div>
+               {catalogReferenceActions??<span>Supplier colors and slab variants live in Materials.</span>}
+             </header>
             <MobileCatalogReferenceList
               label="Standard material price levels"
               empty={!materialPricingRows.length}

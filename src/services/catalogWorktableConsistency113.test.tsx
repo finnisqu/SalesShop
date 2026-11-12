@@ -22,7 +22,9 @@ describe('Batch #113 — Catalog worktable and shared interaction parity',()=>{
   const otherStore=src('store/otherCatalogStore.ts');
   expect(catalog).toContain('<CatalogSinksWorktable externalQuery={catalogSearch}');
   expect(catalog).toContain('<CatalogOtherWorktable externalQuery={catalogSearch}');
-  expect(catalog).toContain('headerTarget={materialHeaderTarget}');
+  expect(catalog).not.toContain('headerTarget={materialHeaderTarget}');
+  expect(catalog).toContain('sales-shop:open-supplier-import');
+  expect(src('components/MaterialsWorkspace.tsx')).toContain('catalog-card-actions');
   expect(catalog).not.toContain('OtherCatalogComingSoon');
   for(const field of ['cornerRadiusIn','bowlWidthIn','bowlLengthIn','bowlHeightIn',
    'totalWidthIn','totalLengthIn','totalHeightIn','availableColors','finish']){

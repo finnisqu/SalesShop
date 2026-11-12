@@ -82,26 +82,6 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
   updateVariant(item.id,variant.id,{[field]:value});
  if(!hydrated)return <section className="catalog-product-worktable" role="status">Loading Other catalog…</section>;
  return <section className="catalog-product-worktable catalog-other-worktable">
-  <div className="catalog-product-toolbar">
-   <strong className="catalog-product-toolbar-title">Other products</strong>
-   <input type="search" placeholder="Find accessories, consumables, SKUs…" aria-label="Find Other catalog items"
-    value={query} onChange={event=>setQuery(event.target.value)}/>
-   <select aria-label="Other category" value={category}
-    onChange={event=>setCategory(event.target.value)}>
-    <option value="all">All categories</option>
-    {categories.map(value=><option key={value} value={value}>{value}</option>)}
-   </select>
-   <select aria-label="Sort other items" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
-    <option value="category">Category / name</option><option value="name">Name A–Z</option>
-    <option value="brand">Brand / supplier</option>
-   </select>
-   {editing&&<label className="catalog-product-show-inactive">
-    <input type="checkbox" checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/>Inactive
-   </label>}
-   <small className="catalog-product-save" role="status">{error?'Sync issue: '+error:saving?'Saving…':''}</small>
-   {canEdit&&<button type="button" className="catalog-product-edit" onClick={()=>setEditing(e=>!e)}>
-    {editing?'Done editing':'Edit items'}</button>}
-  </div>
   {!!selectedPins.length&&<section className="materials-comparison-board has-pins catalog-product-pin-board"
    aria-label="Pinned other catalog comparison">
    <header><div><span className="board-eyebrow">Comparison board</span>
@@ -140,8 +120,35 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
    </div>
   </section>}
   <section className="rates-reference-card catalog-product-card">
-   <header><div><strong>Accessories and shop supplies</strong><small>{filtered.length} matching items</small></div>
-    <span>Open a row to manage versions, specifications and notes.</span></header>
+   <header className="catalog-card-header">
+    <div><strong>Other products</strong><small>{filtered.length} matching item{filtered.length===1?'':'s'}</small></div>
+    <div className="catalog-card-actions">
+     <span className="catalog-card-hint">Open a row for variants, costs and specifications.</span>
+     <details className="catalog-card-filter">
+      <summary>Filter{category!=='all'||query.trim()?' · '+(Number(category!=='all')+Number(!!query.trim())):''}</summary>
+      <div className="catalog-card-filter-panel">
+       <label>Find items<input type="search" placeholder="Accessories, SKUs, suppliers…" aria-label="Find Other catalog items"
+        value={query} onChange={event=>setQuery(event.target.value)}/></label>
+       <label>Category<select aria-label="Other category" value={category}
+        onChange={event=>setCategory(event.target.value)}>
+        <option value="all">All categories</option>
+        {categories.map(value=><option key={value} value={value}>{value}</option>)}
+       </select></label>
+       {editing&&<label className="catalog-card-checkbox"><input type="checkbox"
+        checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Show inactive</label>}
+      </div>
+     </details>
+     <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
+      <select aria-label="Sort other items" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
+       <option value="category">Category / name</option><option value="name">Name A–Z</option>
+       <option value="brand">Brand / supplier</option>
+      </select>
+     </label>
+     {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Sync issue: '+error:'Saving…'}</small>}
+     {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(e=>!e)}>
+      {editing?'Done editing':'Edit items'}</button>}
+    </div>
+   </header>
    <div className="rates-reference-table-wrap catalog-product-scroll">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr><th>Category</th><th>Item</th><th>Brand / supplier</th>

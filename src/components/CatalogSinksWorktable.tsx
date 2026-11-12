@@ -107,25 +107,6 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
   updateVariant(model.id,variant.id,{[key]:value});
  if(!hydrated)return <WorkspaceLoadingState title="Opening Sinks" detail="Loading sink models, variants and supplier costs…"/>;
  return <section className="catalog-product-worktable sinks-product-worktable">
-  <div className="catalog-product-toolbar">
-   <span className="catalog-product-toolbar-title">Sink catalog</span>
-   <input type="search" aria-label="Find sink models" placeholder="Find models, sizes, finishes…"
-    value={query} onChange={event=>setQuery(event.target.value)}/>
-   <select aria-label="Filter sink category" value={category}
-    onChange={event=>setCategory(event.target.value as typeof category)}>
-    <option value="all">All sink types</option>
-    {SINK_CATEGORIES.map(key=><option key={key} value={key}>{SINK_CATEGORY_LABELS[key]}</option>)}
-   </select>
-   <select aria-label="Sort sinks" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
-    <option value="brand">Brand / name</option><option value="name">Name A–Z</option>
-    <option value="category">Category</option><option value="cost">Cost · low first</option>
-   </select>
-   {editing&&<label className="catalog-product-show-inactive"><input type="checkbox"
-    checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/>Inactive</label>}
-   <span className="catalog-product-save" role="status">{error?'Cloud issue: '+error:saving?'Saving…':''}</span>
-   {canEdit&&<button type="button" className="catalog-product-edit" onClick={()=>setEditing(x=>!x)}>
-    {editing?'Done editing':'Edit sinks'}</button>}
-  </div>
   {pinRows.length>0&&<section className="materials-comparison-board has-pins catalog-product-pin-board"
     aria-label="Pinned sink comparison">
    <header><div><span className="board-eyebrow">Comparison board</span>
@@ -168,8 +149,35 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
    </div>
   </section>}
   <section className="rates-reference-card catalog-product-card">
-   <header><div><strong>Sink models</strong><small>{filtered.length} matching models</small></div>
-    <span>Open a row to see variants and physical dimensions.</span></header>
+   <header className="catalog-card-header">
+    <div><strong>Sink models</strong><small>{filtered.length} matching model{filtered.length===1?'':'s'}</small></div>
+    <div className="catalog-card-actions">
+     <span className="catalog-card-hint">Expand models to compare sink dimensions and variants.</span>
+     <details className="catalog-card-filter">
+      <summary>Filter{category!=='all'||query.trim()?' · '+(Number(category!=='all')+Number(!!query.trim())):''}</summary>
+      <div className="catalog-card-filter-panel">
+       <label>Find models<input type="search" aria-label="Find sink models" placeholder="Model, finish or SKU…"
+        value={query} onChange={event=>setQuery(event.target.value)}/></label>
+       <label>Sink type<select aria-label="Filter sink category" value={category}
+        onChange={event=>setCategory(event.target.value as typeof category)}>
+        <option value="all">All sink types</option>
+        {SINK_CATEGORIES.map(key=><option key={key} value={key}>{SINK_CATEGORY_LABELS[key]}</option>)}
+       </select></label>
+       {editing&&<label className="catalog-card-checkbox"><input type="checkbox"
+        checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Show inactive</label>}
+      </div>
+     </details>
+     <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
+      <select aria-label="Sort sinks" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
+       <option value="brand">Brand / name</option><option value="name">Name A–Z</option>
+       <option value="category">Category</option><option value="cost">Cost · low first</option>
+      </select>
+     </label>
+     {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Cloud issue: '+error:'Saving…'}</small>}
+     {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(x=>!x)}>
+      {editing?'Done editing':'Edit sinks'}</button>}
+    </div>
+   </header>
    <div className="rates-reference-table-wrap catalog-product-scroll">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr><th>Brand</th><th>Model</th><th>Category</th><th>Material</th><th>Mount</th>

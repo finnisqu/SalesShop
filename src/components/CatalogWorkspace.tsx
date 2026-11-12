@@ -4,6 +4,8 @@ import { RatesWorkspace } from './RatesWorkspace';
 import { CatalogSinksWorktable } from './CatalogSinksWorktable';
 import { CatalogOtherWorktable } from './CatalogOtherWorktable';
 import { CatalogTagsWorkspace } from './CatalogTagsWorkspace';
+import { SupplierImportLauncher } from './SupplierImportCenter';
+import '../catalog-product-worktable.css';
 import { useNavigationStore, type CatalogSection } from '../store/navigationStore';
 import { SectionTabs } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
@@ -68,7 +70,6 @@ export function CatalogWorkspace() {
   },[section]);
   const sectionScrollRef = useRef<HTMLElement>(null);
   const [catalogSearch,setCatalogSearch]=useState('');
-  const [materialHeaderTarget,setMaterialHeaderTarget]=useState<HTMLDivElement|null>(null);
   const [tableDensity,setTableDensity]=useWorkbookTableDensity();
   const authMode=useAuthStore(state=>state.mode);
   const role=useAuthStore(state=>state.teamRole);
@@ -93,9 +94,6 @@ export function CatalogWorkspace() {
   return (
     <main className="catalog-workspace">
       <WorkspaceHeader title="Catalog" help={<WorkspaceHelp page="catalog" section={section}/>} className="catalog-header catalog-foundation-heading"
-        afterTitle={section==='materials'?
-          <div ref={setMaterialHeaderTarget} className="catalog-materials-header-slot"
-           aria-label="Material catalog actions"/>:null}
         mobileTabs={CATALOG_SECTIONS.map(({id,label})=>({value:id,label}))}
         mobileTabValue={section}
         onMobileTabChange={value=>{setCatalogSearch('');setSection(value as typeof section);}}
@@ -103,12 +101,16 @@ export function CatalogWorkspace() {
           aria-label="Catalog sections" items={CATALOG_SECTIONS.map(({ id, label }) => ({ id, label }))}
           selected={section} onSelect={next=>{setCatalogSearch('');setSection(next);}} />}
         more={<WorkspaceMoreMenu items={[
-          {section:'Navigation',label:'Builder material levels',onClick:openBuilderRates},
-          {section:'Search & filters',label:'Clear catalog search',
-  onClick:()=>setCatalogSearch(''),disabled:!catalogSearch.trim()},
+          ...(section==='materials'?[
+            {section:'Catalog tools',label:'Builder material levels',onClick:openBuilderRates},
+            {section:'Catalog tools',label:'Supplier Import',onClick:()=>
+              window.dispatchEvent(new Event('sales-shop:open-supplier-import'))},
+          ]:[]),
           {section:'Navigation',label:'Suppliers · Connections',onClick:openSuppliers},
           {section:'View',label:tableDensity==='compact'?'Use comfortable table rows':'Use compact table rows',
             onClick:()=>setTableDensity(tableDensity==='compact'?'comfortable':'compact'),active:tableDensity==='compact'},
+          {section:'Search & filters',label:'Clear catalog search',onClick:()=>setCatalogSearch(''),
+            disabled:!catalogSearch.trim()},
         ]}/>}
         search={<input type="search" aria-label="Search Catalog" placeholder={'Search '+section+'…'}
           value={catalogSearch}
@@ -117,10 +119,10 @@ export function CatalogWorkspace() {
           onClick={requestCatalogAdd}>{addLabels[section]}</button>}
       />
 
+      {section==='materials'&&<SupplierImportLauncher placement="hidden"/>}
       <section ref={sectionScrollRef} className={`catalog-section-host catalog-section-${section}`}>
         {section === 'materials' ? (
-          <MaterialsWorkspace embedded externalQuery={catalogSearch}
-           headerTarget={materialHeaderTarget}/>
+          <MaterialsWorkspace embedded externalQuery={catalogSearch}/>
         ) : section === 'sinks' ? (
           <CatalogSinksWorktable externalQuery={catalogSearch} />
         ) : section === 'other' ? (
