@@ -126,6 +126,9 @@
  white-space:nowrap;
 }
 :root[data-sales-theme] .sales-app.view-dashboard .tasks-overview-menu>summary::-webkit-details-marker{display:none}
+:root[data-sales-theme] .sales-app.view-dashboard .tasks-overview-menu:not([open])>.tasks-summary{
+ display:none!important;
+}
 :root[data-sales-theme] .sales-app.view-dashboard .tasks-overview-menu>.tasks-summary{
  position:absolute;top:calc(100% + 6px);right:0;z-index:65;
  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
