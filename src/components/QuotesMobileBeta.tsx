@@ -11,7 +11,7 @@ import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
 import {openDetailedQuoteEditor} from '../services/quoteEditorNavigation';
 import { useNavigationStore } from '../store/navigationStore';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
-import { canIssueTeamQuote } from '../services/teamDepartments';
+import { canIssueTeamQuote,canEditTeamArea } from '../services/teamDepartments';
 import {quoteIsCommerciallyEditable,canPermanentlyDeleteQuote} from '../services/quoteIntegrity';
 import {
   parseInches, newTakeoffPiece, takeoffCustomerSpecs,
@@ -72,6 +72,7 @@ import {useAppContextMenu,type AppContextAction} from './AppContextMenu';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
 import {RecordPreviewDrawer} from './RecordPreviewDrawer';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
 import {QuoteLibraryFilterControls} from './QuoteLibraryFilterControls';
 import {matchesQuoteLibraryRecord,compareQuoteLibraryRecords,restoreQuoteLibraryFilters,
@@ -630,6 +631,7 @@ export function QuotesMobileBeta() {
   },[layoutScope]);
   const [documentPreviewId,setDocumentPreviewId]=useState<string|null>(null);
   const [externalQuotePreviewId,setExternalQuotePreviewId]=useState<string|null>(null);
+  const [recordExternalOpen,setRecordExternalOpen]=useState(false);
   const [customerQuickOpen,setCustomerQuickOpen]=useState(false);
   // Template selection is part of the same saved library filter state above.
   // Keep the new-document library first; follow-ups are a secondary destination.
@@ -795,6 +797,8 @@ export function QuotesMobileBeta() {
   const canBrowseTeam=authMode==='cloud'&&(teamRole==='owner'||teamRole==='admin')&&!previewRole;
   const canIssue=authMode!=='cloud'||canIssueTeamQuote(teamRole,department);
   const canManageLibrary=authMode!=='cloud'||(!previewRole&&canIssueTeamQuote(teamRole,department));
+  const canRecordExternal=authMode==='local'||(!previewRole&&
+    Boolean(organizationId&&userId&&canEditTeamArea(teamRole,department,'crm')));
   // Quick Create opens the template workflow, never a blank quote or just the Quotes index.
   useEffect(()=>{
     const launch=()=>{
@@ -1275,6 +1279,8 @@ export function QuotesMobileBeta() {
           {label:'Community Plan Pricing',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('community-pricing');},active:!followUpsTab&&documentFilter==='community-pricing'},
           {label:'Custom Spreadsheet',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('spreadsheet');},active:!followUpsTab&&documentFilter==='spreadsheet'},
           {label:'Follow-ups',onClick:()=>setFollowUpsTab(true),active:followUpsTab},
+          {label:'Record external quote',disabled:!canRecordExternal,
+            onClick:()=>setRecordExternalOpen(true)},
           {label:'Active documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('active');},active:statusFilter==='active'},
           {label:'Draft documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('drafts');},active:statusFilter==='drafts'},
           {label:'Issued documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('issued');},active:statusFilter==='issued'},
@@ -1586,6 +1592,9 @@ export function QuotesMobileBeta() {
         setDocumentPreviewId(null);
         requestQuoteMetadataPage(id,()=>setView('dashboard'));
       }}/>}
+    {recordExternalOpen&&<ExternalQuoteBackfillDialog
+      onClose={()=>setRecordExternalOpen(false)}
+      onRecorded={()=>setRecordExternalOpen(false)}/>}
     {externalQuotePreviewId&&<CalendarActivityPreview activityId={externalQuotePreviewId}
       onClose={()=>setExternalQuotePreviewId(null)}
       onSelect={(kind,id)=>{
