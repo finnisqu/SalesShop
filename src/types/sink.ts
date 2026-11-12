@@ -44,6 +44,16 @@ export interface SinkVariant {
   internalCost?: number;
   sellPrice?: number;
   effectiveDate?: string;
+  /** Physical specifications are variant-specific when bowl geometry changes. */
+  finish?: string;
+  cornerRadiusIn?: number;
+  bowlWidthIn?: number;
+  bowlLengthIn?: number;
+  bowlHeightIn?: number;
+  totalWidthIn?: number;
+  totalLengthIn?: number;
+  totalHeightIn?: number;
+  availableColors?: string[];
   notes?: string;
   history: SinkPriceVersion[];
 }
@@ -57,6 +67,8 @@ export interface SinkModel {
   category: SinkCategory;
   widthIn?: number;
   depthIn?: number;
+  heightIn?: number;
+  availableColors?: string[];
   mountType?: SinkMountType;
   material?: string;
   notes?: string;
