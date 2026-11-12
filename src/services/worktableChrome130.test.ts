@@ -67,7 +67,7 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(nav).toContain('records-section-nav ss-header-tab-pill');
   expect(nav).toContain('items={additional} asTab');
   expect(catalog).toContain('catalog-foundation-tabs ss-header-tab-pill');
-  expect(css).toContain('background:var(--ss-theme-card)!important');
+  expect(css).toContain('background:color-mix(in srgb,var(--ss-theme-tint) 86%,white 14%)!important');
   expect(css).toContain('font:750 11px/1.2');
   expect(css).toContain('border-left:0!important');
   expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
