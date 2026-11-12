@@ -236,7 +236,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
               onChange={event=>setDraft({...draft,amount:event.target.value})}/>}
           </RecordEditField>
           <label>Current bid due date<input type="date" value={draft.dueDate}
-            onChange={event => setDraft({...draft,dueDate:event.target.value})}/></label>
+            onChange={event => setDraft({...draft,dueDate:event.target.value,dueDateResponsibility:'neutral',dueDateChangeReason:''})}/></label>
           <RecordProperty label="Original bid due date">
             {deal.originalDueDate?displayDate(deal.originalDueDate):
              deal.dueDate?'Not previously tracked (current date becomes baseline on reschedule)':'Set with first deadline'}
