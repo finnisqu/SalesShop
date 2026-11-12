@@ -1221,6 +1221,8 @@ export function QuotesMobileBeta() {
           {label:'Draft documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('drafts');},active:statusFilter==='drafts'},
           {label:'Issued documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('issued');},active:statusFilter==='issued'},
           {label:'Archived documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('archived');},active:statusFilter==='archived'},
+          ...(canBrowseTeam?[{label:signedShopOutcomesEnabled?'Shop Outcomes':'Team Quotes',
+            onClick:()=>setLibraryMode('team')}]:[]),
           {label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
           {label:'Clear search and filters',onClick:resetLibraryFilters,disabled:!hasLibraryFilters},
         ]}/>}
@@ -1340,7 +1342,6 @@ export function QuotesMobileBeta() {
             Clear filters
           </button>}
         </div>}
-        {canBrowseTeam&&<button type="button" className="qmb-outline qmb-block" onClick={()=>setLibraryMode('team')}>{signedShopOutcomesEnabled ? 'Shop Outcomes ›' : 'Team Quotes ›'}</button>}
          </>}
         </div>
       </div>

@@ -791,10 +791,6 @@ export function Connections() {
               {!activityRows.length && <StatusText state="empty" className="connections-empty">No recorded history is available.</StatusText>}
             </div>
           </section>}
-      <footer className="connections-footer">
-        <span>People and sales records are managed here. Team accounts, permissions, and invitations belong in Settings.</span>
-        <button type="button" onClick={() => setView('settings')}>Open team settings →</button>
-      </footer>
       </div>
       {externalQuotePickerOpen&&<ExternalQuoteBackfillDialog
         onClose={()=>setExternalQuotePickerOpen(false)}
