@@ -43,7 +43,7 @@ const beta=source('src/components/QuotesMobileBeta.tsx');
 assert(contains(connections,[
   '<WorkspaceHeader title="Records"',
   '<RecordsSectionNav selected={tab as RecordsSection}',
-  "if(next==='quotes'){setView('quotes');return;}",
+  "if(next==='quotes'){requestRecordsQuotesLibrary();setView('quotes');return;}",
   '<TasksWorkspace embedded externalQuery={query}/>',
 ]),'Records navigation must open the real Quotes workspace, preserving Tasks');
 assert(contains(recordsNav,[
