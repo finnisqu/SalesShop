@@ -1,0 +1,81 @@
+import {describe,expect,it} from 'vitest';
+import {readFileSync} from 'node:fs';
+import {worktablePageRange,WORKTABLE_PAGE_SIZES,DEFAULT_WORKTABLE_PAGE_SIZE}
+ from '../components/WorktableChrome';
+
+const src=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+
+describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
+ it('shares pagination math and 25/50/100 page sizes across Catalog and Records',()=>{
+  expect(WORKTABLE_PAGE_SIZES).toEqual([25,50,100]);
+  expect(DEFAULT_WORKTABLE_PAGE_SIZE).toBe(50);
+  expect(worktablePageRange(0,1,50)).toEqual({
+   page:1,pageCount:1,start:0,end:0,first:0,last:0,
+  });
+  expect(worktablePageRange(83,2,50)).toEqual({
+   page:2,pageCount:2,start:50,end:83,first:51,last:83,
+  });
+  expect(worktablePageRange(83,999,50).page).toBe(2);
+  const catalog=src('components/CatalogPagination.tsx');
+  expect(catalog).toContain('const catalogPageRange=worktablePageRange');
+  expect(catalog).toContain('<WorktablePagination');
+  const records=src('components/ConnectionsTable.tsx');
+  expect(records).toContain('!catalogPagination&&<WorktablePagination');
+  expect(records).not.toContain('<footer className="connections-grid-pagination">');
+ });
+ it('groups all Records and Quotes filters in shared dismissible menus',()=>{
+  const records=src('components/Connections.tsx');
+  const table=src('components/ConnectionsTable.tsx');
+  const quotes=src('components/QuotesMobileBeta.tsx');
+  const quoteFilters=src('components/QuoteLibraryFilterControls.tsx');
+  expect(table).toContain('toolbarFilters?:ReactNode;');
+  expect(table).toContain('<WorktableFilterMenu activeCount={filterCount}');
+  expect(records).toContain('toolbarFilters={companyFilterControl}');
+  expect(records).toContain('toolbarFilters={dealPipelineControl}');
+  expect(records).toContain('toolbarFilters={<div className="connections-activity-filters"');
+  expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
+  expect(quoteFilters).not.toContain('<details className="qmb-library-extra-filters">');
+  const chrome=src('components/WorktableChrome.tsx');
+  expect(chrome).toContain('useDismissibleDetails(ref)');
+ });
+ it('shares the same filter trigger across all five Catalog tabs',()=>{
+  for(const name of ['MaterialsWorkspace','CatalogSinksWorktable',
+   'CatalogOtherWorktable','RatesWorkspace','CatalogTagsWorkspace']){
+   expect(src('components/'+name+'.tsx')).toContain('<WorktableFilterMenu');
+  }
+  const styles=src('worktable-chrome.css');
+  expect(styles).toContain('.ss-worktable-filter-panel');
+  expect(styles).toContain('position:static!important');
+  expect(styles).toContain('max-height:min(70dvh,540px)');
+ });
+ it('applies the same rounded, darker-header surface to Quotes, Records and Catalog',()=>{
+  const table=src('components/ConnectionsTable.tsx');
+  const styles=src('worktable-chrome.css');
+  expect(table).toContain('<WorktableSurface className="connections-table-scroll"');
+  expect(styles).toContain('--ss-worktable-corner:12px');
+  expect(styles).toContain('--ss-worktable-head-fill:');
+  for(const name of ['MaterialsWorkspace','RatesWorkspace',
+   'CatalogSinksWorktable','CatalogOtherWorktable']){
+   expect(src('components/'+name+'.tsx')).toContain('ss-worktable-surface');
+  }
+ });
+ it('restores filled, bordered Records tabs including an integrated More tab',()=>{
+  const nav=src('components/RecordsSectionNav.tsx');
+  const css=src('components/records-section-nav.css');
+  expect(nav).toContain('records-section-more');
+  expect(css).toContain('.records-section-nav{');
+  expect(css).toContain('border:1px solid var(--ss-theme-border)');
+  expect(css).toContain('.records-section-more .ss-workspace-more>summary');
+  expect(css).toContain('background:var(--ss-theme-tint)');
+ });
+ it('keeps paging in the top toolbar while preserving mobile worktable behavior',()=>{
+  const table=src('components/ConnectionsTable.tsx');
+  const css=src('worktable-chrome.css');
+  const app=src('App.tsx');
+  expect(table).toContain('const toolbar=(');
+  expect(table.indexOf('<WorktablePagination')).toBeLessThan(table.indexOf('<WorktableSurface'));
+  expect(table).toContain('connections-mobile-bulk-pages');
+  expect(css).toContain('.catalog-section-host.catalog-reference-layout .catalog-pagination.materials-page-controls');
+  expect(app).toContain("import './worktable-chrome.css'");
+ });
+});
