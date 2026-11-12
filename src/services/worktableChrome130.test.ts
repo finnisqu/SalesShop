@@ -87,6 +87,20 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
   expect(app).toContain("import './workspace-tab-nav.css'");
  });
+ it('centers Quotes navigation independently of the secondary action More on wide desktop',()=>{
+  const quote=src('components/QuotesMobileBeta.tsx');
+  const header=src('workspace-header-parity.css');
+  expect(quote).toContain('className="qmb-library-workspace-header"');
+  expect(quote).toContain('more={<WorkspaceMoreMenu compact label="Quote actions"');
+  expect(header).toContain('@media(min-width:1400px)');
+  expect(header).toContain('.qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tabs');
+  expect(header).toContain('position:absolute!important');
+  expect(header).toContain('left:50%!important');
+  expect(header).toContain('transform:translate(-50%,-50%)!important');
+  expect(header).toContain('width:min(440px,calc(100% - 36px))!important');
+  // Do not alter the common Records/Catalog header or the narrower two-row layout.
+  expect(header).toContain('@media(min-width:761px) and (max-width:1399px)');
+ });
  it('keeps the global account dropdown above page headers without elevating the idle bar',()=>{
   const styles=src('account-menu.css');
   const app=src('App.tsx');
