@@ -71,6 +71,11 @@ interface CrmState {
   recordActivity: (activity: ActivityInput) => string;
   updateActivity: (id:string,patch:Pick<Activity,'summary'|'occurredAt'|'metadata'|
    'contactId'|'companyId'|'projectId'|'quoteId'>)=>Promise<void>;
+  /** Correct an existing external Quote Sent record without inserting another
+   * submission event, changing Deal stage, or recreating bid completion proof. */
+  correctExternalQuoteSent:(activityId:string,correction:{
+    bidSentDate:string;amount:number;format?:string;notes?:string;
+  })=>Promise<void>;
 }
 
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
@@ -408,6 +413,67 @@ export const useCrmStore = create<CrmState>((set, get) => ({
         throw new Error('Account or workspace changed while saving. Reopen the activity in the current account.');
     }
     const activities=get().activities.map(item=>item.id===activityId?next:item);
+    persist(get().companies,get().contacts,get().projects,activities);
+    set({activities});
+  },
+
+  correctExternalQuoteSent:async(activityId,correction)=>{
+    const source=get().activities.find(activity=>activity.id===activityId);
+    if(!source||source.type!=='quote-sent'||source.metadata?.externalQuoteSent!==true||
+      !source.projectId||source.quoteId)
+      throw new Error('This is not an editable external quote submission.');
+    const auth=useAuthStore.getState();
+    if(useRolePerspectiveStore.getState().activePerspective)
+      throw new Error('Quote corrections are unavailable in role preview.');
+    if(auth.mode==='cloud'&&(!auth.organizationId||!auth.user?.id||!supabase||
+      !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')))
+      throw new Error('Your role cannot correct this CRM quote.');
+    if(auth.mode==='cloud'&&source.metadata?.recordedByUserId&&
+      source.metadata.recordedByUserId!==auth.user?.id&&
+      auth.teamRole!=='owner'&&auth.teamRole!=='admin')
+      throw new Error('Only the recorder or a company administrator can correct this submission.');
+    const {bidSentDate,amount,format,notes}=correction;
+    const day=new Date(bidSentDate+'T12:00:00');
+    const dayKey=[day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),
+      String(day.getDate()).padStart(2,'0')].join('-');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(bidSentDate)||!Number.isFinite(day.getTime())||
+      dayKey!==bidSentDate||day.getTime()>Date.now()||
+      !Number.isFinite(amount)||amount<0)
+      throw new Error('Enter a valid past sent date and nonnegative quote amount.');
+    const timestamp=now();
+    const deal=get().projects.find(project=>project.id===source.projectId);
+    const summary='External quote sent · '+new Intl.NumberFormat('en-US',{
+      style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2,
+    }).format(amount)+' · '+(deal?.name??'Linked Deal');
+    const metadata:Activity['metadata']={
+      ...source.metadata,
+      bidSentDate,amount,
+      externalQuoteFormat:format?.trim().slice(0,120)||undefined,
+      notes:notes?.trim().slice(0,5000)||undefined,
+      editedAt:timestamp,editedByUserId:auth.user?.id,
+    };
+    const corrected:Activity={...source,summary,occurredAt:day.toISOString(),metadata};
+    const organizationId=auth.mode==='cloud'?auth.organizationId:null;
+    if(organizationId&&supabase){
+      const {data,error}=await supabase.from('activities').update({
+        summary:corrected.summary,occurred_at:corrected.occurredAt,
+        metadata:corrected.metadata,
+      }).eq('organization_id',organizationId).eq('id',activityId)
+        .eq('type','quote-sent').select('id,metadata');
+      if(error)throw error;
+      if(!data?.length)throw new Error('The external quote correction was not confirmed. Please retry.');
+      const persisted=data[0].metadata as Activity['metadata'];
+      if(persisted?.externalQuoteSent!==true||
+        persisted?.bidSentDate!==bidSentDate||Number(persisted?.amount)!==amount)
+        throw new Error('The server did not return the expected correction. Reopen this record.');
+      const afterAuth=useAuthStore.getState();
+      if(afterAuth.mode!=='cloud'||afterAuth.organizationId!==organizationId||
+        afterAuth.user?.id!==auth.user?.id)
+        throw new Error('Workspace changed during quote correction. Reopen the record.');
+    }
+    // This is an in-place correction of ONE historical Activity. Do not
+    // re-trigger quote delivery, task completion, or project stage transitions.
+    const activities=get().activities.map(activity=>activity.id===activityId?corrected:activity);
     persist(get().companies,get().contacts,get().projects,activities);
     set({activities});
   },
