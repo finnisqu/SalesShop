@@ -104,4 +104,17 @@
  .ss-workspace-more.is-tab>.ss-workspace-more__menu{
   right:0;top:calc(100% + 7px);z-index:120;
  }
+ /* Catalog still has a legacy active-tab rule with higher specificity.
+  * Both styles must follow the same shared variables, not silently diverge. */
+ :root[data-sales-theme] .sales-app.view-catalog .ss-workspace-header
+ .ss-header-tab-pill.catalog-section-nav.catalog-foundation-tabs.ss-section-tabs>.ss-section-tab{
+  background:var(--ss-header-pill-tab)!important;
+  box-shadow:none!important;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .ss-workspace-header
+ .ss-header-tab-pill.catalog-section-nav.catalog-foundation-tabs.ss-section-tabs>.ss-section-tab.active{
+  background:var(--ss-header-pill-active)!important;
+  box-shadow:inset 0 -2px var(--ss-theme-accent)!important;
+ }
+
 }
