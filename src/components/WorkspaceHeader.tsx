@@ -92,21 +92,29 @@ export function WorkspaceHeader({title,help,afterTitle,tabs,more,search,primary,
   </div>
  </header>;
 }
-export interface WorkspaceMoreItem{label:string;onClick:()=>void;active?:boolean;disabled?:boolean}
+export interface WorkspaceMoreItem{
+ label:string;onClick:()=>void;active?:boolean;disabled?:boolean;
+ /** Optional visually separated category for mixed navigation, views and actions. */
+ section?:string;
+}
 export function WorkspaceMoreMenu({items,label='More'}:{items:readonly WorkspaceMoreItem[];label?:string}){
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
  return <details className="ss-workspace-more" ref={ref}>
   <summary aria-label={label+' menu'}><span>More</span> <WorkspaceChromeIcon name="more"/></summary>
   <div className="ss-workspace-more__menu" role="group" aria-label={label+' options'}>
-   {items.map((item,index)=><button type="button" key={index} disabled={item.disabled}
+   {items.map((item,index)=><div className="ss-workspace-more__entry" key={index}>
+    {item.section&&(index===0||items[index-1]?.section!==item.section)&&
+      <div className="ss-workspace-more__section" role="presentation">{item.section}</div>}
+    <button type="button" disabled={item.disabled}
     aria-pressed={item.active===undefined?undefined:item.active}
     onClick={()=>{ref.current?.removeAttribute('open');
      ref.current?.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
      item.onClick();}}>
      <span>{item.label}</span>
      {item.active&&<span className="ss-workspace-more__selected" aria-hidden="true">✓</span>}
-    </button>)}
+    </button>
+   </div>)}
   </div>
  </details>;
 }
