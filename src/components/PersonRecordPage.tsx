@@ -31,7 +31,7 @@ const dateLabel = (value: string) => {
   });
 };
 
-export function PersonRecordPage({ contactId, onBack }: { contactId: string; onBack: () => void }) {
+export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: string; onBack: () => void; backLabel?: string }) {
   const hydrated = useCrmStore((state) => state.hydrated);
   const people = useCrmStore((state) => state.contacts);
   const companies = useCrmStore((state) => state.companies);
@@ -135,7 +135,7 @@ export function PersonRecordPage({ contactId, onBack }: { contactId: string; onB
   const ownCompany=companies.find(isOurCompany);
   const associatedOwnCompany=isInternal?ownCompany:undefined;
 
-  return <><RecordPageLayout entityType="person" title={displayName} onBack={onBack}
+  return <><RecordPageLayout entityType="person" title={displayName} onBack={onBack} backLabel={backLabel}
     subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
     actions={<>
