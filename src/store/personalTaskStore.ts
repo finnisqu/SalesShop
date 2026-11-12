@@ -183,7 +183,7 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     const originalDueDate=original.originalDueDate??(original.dueDate||patch.dueDate);
     const dueDateHistory=dueChanged?[...(original.dueDateHistory??[]),{
       from:original.dueDate,to:patch.dueDate,at:now,
-      responsibility:patch.dueDateResponsibility??original.dueDateResponsibility??'neutral',
+      responsibility:patch.dueDateResponsibility??'neutral',
       reason:patch.dueDateChangeReason?.trim()||undefined,
     }]:original.dueDateHistory;
     // Do not allow changing the protected identity or marking a submission task
@@ -191,6 +191,8 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
     if(isProtectedBidTask(original)){
       delete patch.sourceObjectId;
       delete patch.submissionConfirmedAt;
+      // The linked Deal, not Task shortcuts, owns the bid deadline.
+      delete patch.dueDate;delete patch.dueDateResponsibility;delete patch.dueDateChangeReason;
       if(patch.status==='completed'&&!original.submissionConfirmedAt)
         patch.status=original.status==='completed'?'completed':'open';
     }
@@ -201,7 +203,9 @@ export const usePersonalTaskStore=create<TaskState>((set,get)=>({
       const status=isProtectedBidTask(task)&&!task.submissionConfirmedAt&&
         task.status!=='completed'&&proposed==='completed'?'open':proposed;
       return {...task,...patch,
-        ...(dueChanged?{originalDueDate,dueDateHistory}:{}),
+        ...(dueChanged?{originalDueDate,dueDateHistory,
+          dueDateResponsibility:patch.dueDateResponsibility??'neutral',
+          dueDateChangeReason:patch.dueDateChangeReason??undefined}:{}),
         title:patch.title||task.title,
         completedAt:status==='completed'?(task.completedAt??now):undefined,
         status,updatedAt:now};
