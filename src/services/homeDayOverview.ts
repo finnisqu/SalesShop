@@ -94,8 +94,12 @@ export function homeDayOverview(day:string,data:HomeDaySources):HomeDayGroup[]{
  append('quotes-sent','Quotes sent',[
   ...sentActivities.map(activity=>({
    key:'quote-sent:'+activity.id,
-   kind:activity.quoteId?'quote' as const:activity.projectId?'deal' as const:'activity' as const,
-   id:activity.quoteId??activity.projectId??activity.id,
+   // External quotes ARE their saved CRM Activity, not a proxy Deal link.
+   // Opening that Activity preserves its original amount, date and platform.
+   kind:activity.metadata?.externalQuoteSent?'activity' as const:
+     activity.quoteId?'quote' as const:activity.projectId?'deal' as const:'activity' as const,
+   id:activity.metadata?.externalQuoteSent?activity.id:
+     activity.quoteId??activity.projectId??activity.id,
    title:trim(activity.summary,'Quote sent'),
    detail:activity.metadata?.externalQuoteSent?'Sent outside SalesShop':'SalesShop quote sent',
   })),
