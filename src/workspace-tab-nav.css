@@ -2,7 +2,9 @@
  * Keep this style in one place instead of independently correcting each view. */
 @media(min-width:761px){
  :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes,.view-catalog)
- .ss-workspace-header .ss-workspace-header__tabs>.ss-header-tab-pill{
+ .ss-workspace-header .ss-workspace-header__tabs>
+ :is(.ss-header-tab-pill.catalog-section-nav.catalog-foundation-tabs.ss-section-tabs,
+     .ss-header-tab-pill.records-section-nav){
   display:inline-flex!important;
   flex:0 0 auto!important;align-items:center!important;justify-content:center!important;
   width:max-content!important;min-width:0!important;max-width:100%!important;
