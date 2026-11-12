@@ -662,7 +662,7 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
             change.responsibility==='internal'?'Our team':'No fault assigned'}
           {change.reason?' · '+change.reason:''}
          </li>)}</ul>
-        </details>
+        </details>}
         {viewing.notes&&<p className="tasks-preview-notes">{viewing.notes}</p>}
         {normalizedSubtasks(viewing.subtasks).length>0&&<section className="tasks-preview-subtasks" aria-label="Subtasks">
          <strong>Checklist · {subtaskProgress(viewing).done}/{subtaskProgress(viewing).total}</strong>
