@@ -201,12 +201,12 @@ function App() {
   },[crmHydrated,tasksScope,loadedTaskScope,inRolePreview,mode,personalSyncStatus,
     teamRole,activities,completeDealSubmissionTasks]);
 
-  // Six main tabs: Shift+1 through Shift+6. Ignore typing, modal dialogs,
+  // Five main tabs: Shift+1 through Shift+5. Ignore typing, modal dialogs,
   // and OS/browser modified chords; physical Digit codes work on US layouts.
   useEffect(()=>{
     const navigateShortcut=(event:KeyboardEvent)=>{
       if(!event.shiftKey||event.ctrlKey||event.altKey||event.metaKey||event.repeat)return;
-      const match=/^Digit([1-6])$/.exec(event.code);
+      const match=/^Digit([1-5])$/.exec(event.code);
       if(!match)return;
       const target=event.target;
       if(target instanceof HTMLElement &&
