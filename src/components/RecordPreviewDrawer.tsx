@@ -137,11 +137,6 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
  const person=record.kind==='person'?people.find(x=>x.id===record.id):undefined;
  const deal=record.kind==='deal'?deals.find(x=>x.id===record.id):undefined;
  const quote=record.kind==='quote'?quotes.find(x=>x.id===record.id):undefined;
- const quoteContactId=quote?.contactId;
- const linkedQuotePerson=quoteContactId?people.find(p=>p.id===quoteContactId):undefined;
- const quoteIdForHistory=quote?.id;
- const quoteActivities=quoteIdForHistory?activities.filter(a=>a.quoteId===quoteIdForHistory)
-   .slice().sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)).slice(0,8):[];
  const externalQuotes=deal?activities.filter(a=>a.projectId===deal.id&&isExternalQuoteActivity(a))
    .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt)):[];
  const personActivities=person?activities.filter(a=>a.contactId===person.id||
@@ -386,7 +381,6 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
            <div><dt>Number</dt><dd>{displayQuoteNumber(quote)}</dd></div>
            <div><dt>Value</dt><dd>{money.format(quoteTotal(quote))}</dd></div>
            <div><dt>Updated</dt><dd>{shortDate(quote.updatedAt)}</dd></div>
-           {quote.sentAt&&<div><dt>Sent</dt><dd>{shortDate(quote.sentAt)}</dd></div>}
          </dl>
          <div className="tasks-preview-related record-preview-quote-links">
            <strong>Related records</strong>
@@ -397,22 +391,10 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
              <button type="button" onClick={()=>open('deal',quote.projectId!)}>
                Deal · {deals.find(x=>x.id===quote.projectId)!.name} ↗
              </button>}
-           {linkedQuotePerson?<button type="button" onClick={()=>open('person',linkedQuotePerson.id)}>
-             Person · {linkedQuotePerson.name} ↗</button>
-             :quote.contactName&&<span className="record-preview-quote-unlinked">
-               Person · {quote.contactName}</span>}
-           {!linkedCompany&&!quote.companyName&&!linkedQuotePerson&&!quote.contactName&&
+           {!linkedCompany&&!quote.companyName&&
             !(quote.projectId&&deals.some(x=>x.id===quote.projectId))&&
-            <p className="record-preview-empty">No linked company, deal or person.</p>}
+            <p className="record-preview-empty">No linked company or deal.</p>}
          </div>
-         {quoteActivities.length>0&&<section className="record-preview-quote-history">
-           <h3>Quote activity <span>{quoteActivities.length}</span></h3>
-           {quoteActivities.map(activity=><button type="button" className="record-preview-related"
-             key={activity.id} onClick={()=>setActivityPreviewId(activity.id)}>
-             <strong>{activity.summary}</strong>
-             <small>{shortDate(activity.occurredAt)}</small>
-           </button>)}
-         </section>
        </>}
        </>}
      </div>
