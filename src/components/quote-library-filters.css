@@ -1,0 +1,19 @@
+/* Batch 112: dense library controls across desktop and phone */
+.qmb-library-filters-v112{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;}
+.qmb-library-filters-v112>label{display:flex;align-items:center;gap:5px;min-width:0;font-size:11px;white-space:nowrap;}
+.qmb-library-filters-v112>label>select{min-width:105px;max-width:175px;}
+.qmb-library-extra-filters{position:relative;flex:0 0 auto;font-size:11px;}
+.qmb-library-extra-filters>summary{cursor:pointer;list-style:none;min-height:34px;display:flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid var(--ss-theme-border);border-radius:8px;background:var(--ss-theme-card);color:var(--ss-theme-ink);font-weight:680;}
+.qmb-library-extra-filters>summary::-webkit-details-marker{display:none;}
+.qmb-library-extra-filters[open]>summary{border-color:var(--ss-theme-accent);}
+.qmb-library-extra-filters-content{position:absolute;right:0;top:calc(100% + 6px);z-index:100;display:grid;gap:10px;min-width:240px;width:min(320px,calc(100vw - 32px));padding:12px;border:1px solid var(--ss-theme-border);border-radius:10px;background:var(--ss-theme-card);color:var(--ss-theme-ink);box-shadow:0 12px 32px #0003;}
+.qmb-library-extra-filters-content label{display:grid;gap:5px;min-width:0;font-size:11px;}
+.qmb-library-extra-filters-content :is(input,select){box-sizing:border-box;max-width:100%;width:100%;min-height:38px;padding:7px;border:1px solid var(--ss-theme-border);border-radius:7px;background:var(--ss-theme-base);color:var(--ss-theme-ink);font-size:12px;}
+.qmb-library-extra-filters-content p{margin:0;color:var(--ss-theme-muted);font-size:11px;line-height:1.45;}
+.qmb-library-extra-filters-content button{min-height:36px;border:1px solid var(--ss-theme-border);border-radius:7px;background:var(--ss-theme-card);color:var(--ss-theme-ink);}
+@media(max-width:760px){
+ .qmb-library-filters-v112>label{flex:1 1 110px;}
+ .qmb-library-filters-v112>label>select{min-width:0;width:100%;max-width:none;min-height:42px;}
+ .qmb-library-extra-filters>summary{min-height:42px;}
+ .qmb-library-extra-filters-content{right:0;max-width:calc(100vw - 32px);}
+}
