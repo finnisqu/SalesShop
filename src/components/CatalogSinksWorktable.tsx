@@ -94,9 +94,9 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
      sort==='cost'?(a.variants[0]?.internalCost??Infinity)-(b.variants[0]?.internalCost??Infinity):
      (a.brand??a.supplier??'').localeCompare(b.brand??b.supplier??'')||a.name.localeCompare(b.name));
  },[models,showInactive,category,query,externalQuery,sort]);
- const update=<T extends keyof SinkModel>(model:SinkModel,key:T,value:SinkModel[T])=>
+ const update=<T extends keyof SinkModel,>(model:SinkModel,key:T,value:SinkModel[T])=>
   updateModel(model.id,{[key]:value});
- const updateV=<T extends keyof SinkVariant>(model:SinkModel,variant:SinkVariant,key:T,value:SinkVariant[T])=>
+ const updateV=<T extends keyof SinkVariant,>(model:SinkModel,variant:SinkVariant,key:T,value:SinkVariant[T])=>
   updateVariant(model.id,variant.id,{[key]:value});
  if(!hydrated)return <WorkspaceLoadingState title="Opening Sinks" detail="Loading sink models, variants and supplier costs…"/>;
  return <section className="catalog-product-worktable sinks-product-worktable">
