@@ -21,8 +21,7 @@ import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 
 const APP_DESTINATIONS: Array<{ view: AppView; label: string; short: string }> = [
   { view: 'home', label: 'Home', short: 'Home' },
-  { view: 'tasks', label: 'Tasks', short: 'Tasks' },
-  { view: 'dashboard', label: 'Connections', short: 'Connections' },
+  { view: 'dashboard', label: 'Records', short: 'Records' },
   { view: 'quotes', label: 'Quotes', short: 'Quotes' },
   { view: 'catalog', label: 'Catalog', short: 'Catalog' },
   { view: 'notebook', label: 'Notebook', short: 'Notebook' },
