@@ -1,120 +1,101 @@
-/* One tab pill for Records (including its overflow More tab) and Catalog.
- * Keep this style in one place instead of independently correcting each view. */
+/* Shared Records/Catalog navigation — restored compact segmented treatment.
+ * Source: the original Catalog tab styling (before Batches #134–139).
+ * One light capsule, quiet/transparent inactive tabs, and only the active
+ * destination receives a filled inset. More is an ordinary dropdown tab. */
 @media(min-width:761px){
  :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes,.view-catalog)
  .ss-workspace-header .ss-workspace-header__tabs>
  :is(.ss-header-tab-pill.catalog-section-nav.catalog-foundation-tabs.ss-section-tabs,
      .ss-header-tab-pill.records-section-nav){
-  display:inline-flex!important;
-  flex:0 0 auto!important;align-items:center!important;justify-content:center!important;
-  width:max-content!important;min-width:0!important;max-width:100%!important;
-  gap:3px!important;padding:4px!important;margin:0!important;
-  border:1px solid var(--ss-theme-border)!important;
-  border-radius:11px!important;
-  /* A lighter shell with inset darker tabs, including Dark. Tint alone is
-   * lighter than Card in some dark palettes, so give all tab states their
-   * own shared fill rather than relying on reversed theme luminance. */
-  --ss-header-pill-shell:color-mix(in srgb,var(--ss-theme-card) 94%,white 6%);
-  --ss-header-pill-tab:color-mix(in srgb,var(--ss-theme-tint) 92%,black 8%);
-  --ss-header-pill-active:color-mix(in srgb,var(--ss-theme-tint) 80%,black 20%);
-  background:var(--ss-header-pill-shell)!important;
-  overflow:visible!important;
-  box-sizing:border-box;
- }
- /* Records has an inner SectionTabs nav; Catalog's SectionTabs is the pill.
-  * The inner nav must not become a second colored capsule. */
- :root[data-sales-theme] .sales-app
- .ss-header-tab-pill>.records-section-nav-tabs.ss-section-tabs{
-  display:inline-flex!important;align-items:center!important;gap:3px!important;
-  width:auto!important;min-width:0!important;max-width:none!important;
-  padding:0!important;margin:0!important;border:0!important;
-  border-radius:0!important;background:transparent!important;
-  overflow:visible!important;
- }
- :root[data-sales-theme] .sales-app .ss-workspace-header
- .ss-header-tab-pill .ss-section-tab{
   display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  box-sizing:border-box;flex:0 0 auto!important;min-width:0!important;
+  flex:0 0 auto!important;width:max-content!important;min-width:0!important;
+  max-width:100%!important;box-sizing:border-box;
+  gap:3px!important;margin:0!important;padding:4px!important;
+  border:1px solid var(--ss-theme-border)!important;border-radius:10px!important;
+  background:var(--ss-theme-card)!important;overflow:visible!important;
+ }
+ /* Records nests a SectionTabs nav within its capsule; do not create a
+  * second capsule, nor a second set of spacing rules. */
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+ .ss-header-tab-pill>.records-section-nav-tabs.ss-section-tabs{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 1 auto!important;width:auto!important;min-width:0!important;
+  max-width:none!important;gap:3px!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  overflow:visible!important;
+ }
+ /* Same small text and geometry for Catalog, Records, and their selected tabs. */
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+ .ss-header-tab-pill :is(.ss-section-tab,.records-section-more .ss-workspace-more.is-tab>summary){
+  box-sizing:border-box;display:inline-flex!important;align-items:center!important;
+  justify-content:center!important;flex:0 0 auto!important;
+  width:auto!important;min-width:0!important;max-width:none!important;
   height:36px!important;min-height:36px!important;max-height:36px!important;
-  padding:7px 10px!important;margin:0!important;
-  border:1px solid transparent!important;border-radius:8px!important;
-  background:var(--ss-header-pill-tab)!important;box-shadow:none!important;
-  color:var(--ss-theme-ink)!important;white-space:nowrap!important;
+  margin:0!important;padding:7px 9px!important;gap:4px!important;
+  border:1px solid transparent!important;border-radius:7px!important;
+  background:transparent!important;box-shadow:none!important;
+  color:var(--ss-theme-ink)!important;
   font:750 11px/1.2 var(--ss-font-body,system-ui,sans-serif)!important;
-  letter-spacing:normal!important;
+  letter-spacing:normal!important;white-space:nowrap!important;
  }
  :root[data-sales-theme] .sales-app .ss-workspace-header
  .ss-header-tab-pill .ss-section-tab strong{
   font:inherit!important;letter-spacing:inherit!important;
+  white-space:nowrap!important;
  }
  :root[data-sales-theme] .sales-app .ss-workspace-header
  .ss-header-tab-pill .ss-section-tab small{display:none!important}
- /* More is a true tab, with no separate outline, separator or ellipsis. */
- :root[data-sales-theme] .sales-app .ss-workspace-header
- .ss-header-tab-pill .records-section-more{
-  display:inline-flex;align-items:center;flex:0 0 auto;
-  border:0!important;border-left:0!important;
-  margin:0!important;padding:0!important;
- }
- :root[data-sales-theme] .sales-app .ss-workspace-header
- .ss-header-tab-pill .ss-workspace-more.is-tab{
-  position:relative;display:inline-flex;align-items:center;flex:0 0 auto;
- }
- :root[data-sales-theme] .sales-app .ss-workspace-header
- .ss-header-tab-pill .ss-workspace-more.is-tab>summary{
-  box-sizing:border-box;display:inline-flex!important;align-items:center;justify-content:center;
-  width:auto!important;min-width:58px!important;
-  height:36px!important;min-height:36px!important;max-height:36px!important;
-  gap:5px!important;padding:7px 10px!important;margin:0!important;
-  border:1px solid transparent!important;border-radius:8px!important;
-  background:var(--ss-header-pill-tab)!important;box-shadow:none!important;
-  color:var(--ss-theme-ink)!important;cursor:pointer;
-  font:750 11px/1.2 var(--ss-font-body,system-ui,sans-serif)!important;
-  letter-spacing:normal!important;
-  list-style:none;
- }
- :root[data-sales-theme] .sales-app .ss-header-tab-pill
- .ss-workspace-more.is-tab>summary::-webkit-details-marker{display:none}
- :root[data-sales-theme] .sales-app .ss-header-tab-pill
- .ss-workspace-more.is-tab>summary .ss-chrome-icon-chevron-down{
-  width:13px;height:13px;flex-basis:13px;opacity:.75;
- }
+ /* Selected destination: subtle inset and the original slim accent line. */
  :root[data-sales-theme] .sales-app .ss-workspace-header
  .ss-header-tab-pill .ss-section-tab.active,
  :root[data-sales-theme] .sales-app .ss-workspace-header
- .ss-header-tab-pill .records-section-more.is-active
- .ss-workspace-more.is-tab>summary,
+ .ss-header-tab-pill .records-section-more.is-active .ss-workspace-more.is-tab>summary,
  :root[data-sales-theme] .sales-app .ss-workspace-header
  .ss-header-tab-pill .ss-workspace-more.is-tab[open]>summary{
-  background:var(--ss-header-pill-active)!important;
   border-color:var(--ss-theme-border)!important;
+  background:var(--ss-theme-tint)!important;
   box-shadow:inset 0 -2px var(--ss-theme-accent)!important;
  }
  :root[data-sales-theme] .sales-app .ss-workspace-header
  .ss-header-tab-pill .ss-section-tab:not(.active):hover,
  :root[data-sales-theme] .sales-app .ss-workspace-header
  .ss-header-tab-pill .ss-workspace-more.is-tab:not([open])>summary:hover{
-  background:color-mix(in srgb,var(--ss-header-pill-tab) 70%,var(--ss-header-pill-active) 30%)!important;
+  background:color-mix(in srgb,var(--ss-theme-tint) 45%,transparent)!important;
+ }
+ /* More belongs to the capsule, with no divider, separate button border,
+  * or ellipsis. Only its small chevron communicates the dropdown. */
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+ .ss-header-tab-pill .records-section-more{
+  display:inline-flex!important;align-items:center!important;flex:0 0 auto!important;
+  margin:0!important;padding:0!important;border:0!important;
+  border-left:0!important;
  }
  :root[data-sales-theme] .sales-app .ss-header-tab-pill
- .ss-workspace-more.is-tab:not([open])>.ss-workspace-more__menu{
-  display:none!important;
+ .ss-workspace-more.is-tab{display:inline-flex;position:relative;align-items:center}
+ :root[data-sales-theme] .sales-app .ss-header-tab-pill
+ .ss-workspace-more.is-tab>summary{cursor:pointer;list-style:none}
+ :root[data-sales-theme] .sales-app .ss-header-tab-pill
+ .ss-workspace-more.is-tab>summary::-webkit-details-marker{display:none}
+ :root[data-sales-theme] .sales-app .ss-header-tab-pill
+ .ss-workspace-more.is-tab>summary .ss-chrome-icon-chevron-down{
+  width:12px;height:12px;flex-basis:12px;opacity:.75;
  }
+ :root[data-sales-theme] .sales-app .ss-header-tab-pill
+ .ss-workspace-more.is-tab:not([open])>.ss-workspace-more__menu{display:none!important}
  :root[data-sales-theme] .sales-app .ss-header-tab-pill
  .ss-workspace-more.is-tab>.ss-workspace-more__menu{
   right:0;top:calc(100% + 7px);z-index:120;
  }
- /* Catalog still has a legacy active-tab rule with higher specificity.
-  * Both styles must follow the same shared variables, not silently diverge. */
+ /* The preexisting Catalog selectors were more specific than the generic
+  * shared rules. Ensure Catalog inherits the same transparent/selected
+  * surface rather than retaining the recently added solid button fill. */
  :root[data-sales-theme] .sales-app.view-catalog .ss-workspace-header
  .ss-header-tab-pill.catalog-section-nav.catalog-foundation-tabs.ss-section-tabs>.ss-section-tab{
-  background:var(--ss-header-pill-tab)!important;
-  box-shadow:none!important;
+  background:transparent!important;box-shadow:none!important;
  }
  :root[data-sales-theme] .sales-app.view-catalog .ss-workspace-header
  .ss-header-tab-pill.catalog-section-nav.catalog-foundation-tabs.ss-section-tabs>.ss-section-tab.active{
-  background:var(--ss-header-pill-active)!important;
+  background:var(--ss-theme-tint)!important;
   box-shadow:inset 0 -2px var(--ss-theme-accent)!important;
  }
-
 }
