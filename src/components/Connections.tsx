@@ -278,6 +278,8 @@ export function Connections() {
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const setView = useNavigationStore((state) => state.setView);
+  const navigationHistory=useNavigationStore(state=>state.history);
+  const goBack=useNavigationStore(state=>state.goBack);
   const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
 
   useEffect(() => { crmHydrate(); quoteHydrate(); }, [crmHydrate, quoteHydrate]);
@@ -470,27 +472,48 @@ export function Connections() {
   const isCreateOpen=companyCreating||personCreating||dealCreating;
   const newRecordRef=useDismissibleLayer<HTMLElement>(isCreateOpen,closeNewRecord);
   useModalScrollLock(isCreateOpen);
+  // A Company → Deal → Person journey should return to its immediate related
+  // record. Direct navigation and records opened from a directory still use
+  // the ordinary Connections breadcrumb instead.
+  const previousLocation=navigationHistory[navigationHistory.length-1];
+  const previousRelated=previousLocation?.view==='dashboard'?
+    previousLocation.focusedCompanyId?{id:previousLocation.focusedCompanyId,label:'Company'}:
+    previousLocation.focusedProjectId?{id:previousLocation.focusedProjectId,label:'Deal'}:
+    previousLocation.focusedContactId?{id:previousLocation.focusedContactId,label:'Person'}:null:null;
+  const relatedBack=(currentId:string)=>{
+    if(!previousRelated||previousRelated.id===currentId)return false;
+    goBack();
+    return true;
+  };
+  const recordBackLabel=(currentId:string)=>previousRelated&&previousRelated.id!==currentId
+    ?'Back to '+previousRelated.label:'Connections';
   const backToDeals = () => {
+    if(focusedDealId&&relatedBack(focusedDealId))return;
     chooseTab('deals');
     setView('dashboard');
   };
   const backToPeople = () => {
+    if(focusedContactId&&relatedBack(focusedContactId))return;
     const person=contacts.find(c=>c.id===focusedContactId);
     chooseTab(person&&isOurOrgContact(person,companies)?'organization':'people');
     setView('dashboard');
   };
   const backToCompanies = () => {
+    if(focusedCompanyId&&relatedBack(focusedCompanyId))return;
     chooseTab('companies');
     setView('dashboard');
   };
   if (focusedDealId) return <main className="connections-workspace">
-    <DealRecordPage dealId={focusedDealId} onBack={backToDeals} />
+    <DealRecordPage dealId={focusedDealId} onBack={backToDeals}
+      backLabel={recordBackLabel(focusedDealId)}/>
   </main>;
   if (focusedContactId) return <main className="connections-workspace">
-    <PersonRecordPage contactId={focusedContactId} onBack={backToPeople} />
+    <PersonRecordPage contactId={focusedContactId} onBack={backToPeople}
+      backLabel={recordBackLabel(focusedContactId)}/>
   </main>;
   if (focusedCompanyId) return <main className="connections-workspace">
-    <CompanyRecordPage companyId={focusedCompanyId} onBack={backToCompanies} />
+    <CompanyRecordPage companyId={focusedCompanyId} onBack={backToCompanies}
+      backLabel={recordBackLabel(focusedCompanyId)}/>
   </main>;
 
   if(quoteRecordId)return <main className="connections-workspace">
