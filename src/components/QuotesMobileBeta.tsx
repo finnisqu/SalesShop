@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {createPortal} from 'react-dom';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
-import {RecordsSectionNav,RECORDS_SECTIONS,rememberRecordsSection,
+import {RecordsSectionNav,RECORDS_SECTIONS,RECORDS_QUOTES_LIBRARY_KEY,rememberRecordsSection,
  type RecordsSection} from './RecordsSectionNav';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import { PHONE_LAYOUT_QUERY } from '../lib/mobileViewport';
@@ -584,7 +584,16 @@ export function QuotesMobileBeta() {
   const setLocation=useQuotesMobileBetaStore(s=>s.setLocation);
   const contextActions=useAppContextMenu();
   const beginTaskPromotion=usePersonalTaskStore(state=>state.beginPromotion);
-  const [page,setPage]=useState<Page>(()=>restoredLocation.current.page);
+  const [page,setPage]=useState<Page>(()=>{
+    // Selecting Records > Quotes means the document library, never a stale
+    // previously edited quote. Explicit quote deep links bypass this flag.
+    let requested=false;
+    try{
+      requested=sessionStorage.getItem(RECORDS_QUOTES_LIBRARY_KEY)==='1';
+      if(requested)sessionStorage.removeItem(RECORDS_QUOTES_LIBRARY_KEY);
+    }catch{/* session storage optional */}
+    return requested?'library':restoredLocation.current.page;
+  });
   const [quoteTab,setQuoteTab]=useState<QuoteTab>(()=>restoredLocation.current.quoteTab);
   const [areaTab,setAreaTab]=useState<AreaTab>(()=>restoredLocation.current.areaTab);
   const [areaId,setAreaId]=useState<string|null>(()=>restoredLocation.current.areaId);
