@@ -72,7 +72,7 @@ assert(contains(connections,[
   'allowedCompanyIds={allowedCompanyIds}',
   'allowedDealIds={allowedDealIds}',
   'pipelineFilter={pipelineFilter}',
-  'toolbarControls={dealPipelineControl}',
+  'toolbarControls={<>{dealPipelineControl}',
   'toolbarControls={companyFilterControl}',
   'companyToolbarControl={companyFilterControl}',
   'onGoToQuotePage={openQuoteMetadata}',
