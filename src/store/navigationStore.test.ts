@@ -48,6 +48,20 @@ describe('bounded in-app navigation history',()=>{
     store.getState().goBack();
     expect(store.getState()).toMatchObject({view:'dashboard',focusedCompanyId:'builder-123',focusedContactId:null});
   });
+  it('returns through a linked Company → Deal → Person chain without losing record context',()=>{
+    const store=useNavigationStore;
+    store.getState().openCompany('customer-chain');
+    store.getState().openProject('bid-chain');
+    store.getState().openPerson('contact-chain');
+    expect(store.getState()).toMatchObject({view:'dashboard',focusedContactId:'contact-chain'});
+    expect(store.getState().history.at(-1)).toMatchObject({
+      view:'dashboard',focusedProjectId:'bid-chain',
+    });
+    store.getState().goBack();
+    expect(store.getState()).toMatchObject({view:'dashboard',focusedProjectId:'bid-chain'});
+    store.getState().goBack();
+    expect(store.getState()).toMatchObject({view:'dashboard',focusedCompanyId:'customer-chain'});
+  });
   it('opens Deals on Connections while preserving the old Board project URL parser',()=>{
     const store=useNavigationStore;
     store.getState().openProject('project-old');
