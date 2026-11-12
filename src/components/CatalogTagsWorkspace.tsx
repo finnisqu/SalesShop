@@ -5,6 +5,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {ConnectionsTable,type ConnectionTableRow,type ConnectionColumn} from './ConnectionsTable';
+import {WorktableFilterMenu} from './WorktableChrome';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
 import type {StockMaterial} from '../types/settings';
 import '../catalog-tags-workspace.css';
@@ -120,8 +121,7 @@ export function CatalogTagsWorkspace({externalQuery}:{externalQuery?:string}={})
     <div><strong>Material tags</strong><small>{filtered.length} matching tag{filtered.length===1?'':'s'}</small></div>
     <div className="catalog-card-actions">
      <span className="catalog-card-hint">Counts include inactive materials. Select a tag to inspect it.</span>
-     <details className="catalog-card-filter">
-      <summary>Filter{usage!=='all'?' · 1':''}</summary>
+     <WorktableFilterMenu className="catalog-card-filter" activeCount={Number(usage!=='all')}>
       <div className="catalog-card-filter-panel">
        <label>Usage<select value={usage} onChange={event=>setUsage(event.target.value as typeof usage)}
          aria-label="Filter tags by usage">
@@ -130,7 +130,7 @@ export function CatalogTagsWorkspace({externalQuery}:{externalQuery?:string}={})
          <option value="unused">Unused tags</option>
        </select></label>
       </div>
-     </details>
+     </WorktableFilterMenu>
     </div>
    </header>
    {hydrated?<ConnectionsTable tableKey="tags" columns={columns} rows={rows}
