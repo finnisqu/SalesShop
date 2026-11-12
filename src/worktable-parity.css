@@ -357,3 +357,25 @@
  border:1px solid var(--ss-theme-border);border-radius:7px;
  font-size:11px;
 }
+
+
+/* Catalog retains its specialized material/sink data editors but adopts the
+ * same card-based toolbar dimensions, colors and button height as Records. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-reference-layout
+  .catalog-pagination.materials-page-controls{
+  min-height:var(--ss-worktable-tool-height);
+  padding:9px 12px;gap:10px;
+  background:var(--ss-theme-card);color:var(--ss-theme-muted);
+ }
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-reference-layout
+  .catalog-pagination :is(.catalog-pagination-size select,.catalog-pagination-actions>button){
+  height:36px;min-height:36px;border-radius:7px;font-size:11px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-reference-layout .catalog-pagination-count{
+  font-size:11px;
+ }
+}
