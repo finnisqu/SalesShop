@@ -1,0 +1,34 @@
+/* Records / Pages keeps Notebook's data but adopts the Records worktable visual language. */
+.sales-app.view-dashboard .records-pages-directory{
+ display:grid;gap:0;min-width:0;margin:0 0 18px;
+ border:1px solid var(--ss-theme-border);
+ border-radius:var(--ss-radius-md,10px);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ overflow:hidden;
+}
+.records-pages-header{display:flex;align-items:center;justify-content:space-between;gap:15px;
+ min-height:70px;padding:12px 15px;border-bottom:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-base)}
+.records-pages-header>div{display:grid;gap:5px}
+.records-pages-header strong{font-size:13px}
+.records-pages-header small,.records-pages-header>span{font-size:11px;color:var(--ss-theme-muted)}
+.records-pages-tools{display:flex;gap:7px;align-items:center;flex-wrap:wrap;
+ padding:9px 12px;border-bottom:1px solid var(--ss-theme-border);background:var(--ss-theme-tint)}
+.records-pages-tools label{display:inline-flex;align-items:center;gap:6px;font-size:11px}
+.records-pages-tools select,.records-pages-tools button{min-height:34px;padding:6px 9px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);font-weight:650;font-size:11px}
+.records-pages-tools button:disabled{opacity:.4;cursor:not-allowed}
+.records-pages-scroll{overflow-x:auto;min-width:0;max-width:100%}
+.records-pages-scroll table{width:100%;border-collapse:collapse;text-align:left;min-width:720px}
+.records-pages-scroll th{height:44px;padding:8px 11px;background:var(--ss-theme-base);
+ color:var(--ss-theme-muted);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--ss-theme-border)}
+.records-pages-scroll td{height:53px;padding:8px 11px;border-bottom:1px solid var(--ss-theme-border);
+ font-size:11px;color:var(--ss-theme-ink)}
+.records-pages-scroll tbody tr:nth-child(even){background:var(--ss-theme-base)}
+.records-pages-open{text-align:left;border:0;background:transparent;font-size:12px;
+ font-weight:750;color:var(--ss-theme-ink);cursor:pointer}
+.records-pages-open:hover{text-decoration:underline}
+.records-pages-empty{padding:20px;text-align:center;color:var(--ss-theme-muted);font-size:12px}
+@media(max-width:760px){.records-pages-header{align-items:flex-start;flex-direction:column;gap:4px}
+ .records-pages-tools{padding:8px}}
