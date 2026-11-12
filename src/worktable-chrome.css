@@ -47,6 +47,14 @@
  position:relative;top:auto;z-index:auto;
  background:var(--ss-worktable-head-fill)!important;
 }
+/* Records: the sticky header's backing shows through the two rounded
+ * corner cutouts. It must match the page canvas, NOT the cream card or
+ * alternating body row (particularly noticeable in WARM theme).
+ * Keep the backing confined to the header row: no upward masking. */
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-worktable-surface.connections-table-scroll table thead{
+ background:var(--ss-theme-canvas);
+}
 /* The toolbar is a sibling, not part of the table's clipping region.
  * Keep menus, buttons and page controls above the scrolling surface. */
 :root[data-sales-theme] .sales-app .connections-grid-shell>.connections-grid-toolbar{
