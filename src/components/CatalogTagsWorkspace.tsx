@@ -55,6 +55,7 @@ export function CatalogTagsWorkspace({externalQuery}:{externalQuery?:string}={})
  const setSection=useNavigationStore(s=>s.setCatalogSection);
  const canEdit=!perspective&&(mode==='local'||role==='owner'||role==='admin');
  const [query,setQuery]=useState('');
+ const [usage,setUsage]=useState<'all'|'used'|'unused'>('all');
  useEffect(()=>{if(externalQuery!==undefined)setQuery(externalQuery);},[externalQuery]);
  const [selected,setSelected]=useState<string|null>(null);
  const [name,setName]=useState('');
@@ -64,7 +65,8 @@ export function CatalogTagsWorkspace({externalQuery}:{externalQuery?:string}={})
  const stats=useMemo(()=>tagStats(settings.stockMaterials,definitions),
   [settings.stockMaterials,definitions]);
  const selectedInfo=stats.find(tag=>tag.name===selected);
- const filtered=stats.filter(tag=>(tag.name+' '+tag.description).toLowerCase().includes(query.trim().toLowerCase()));
+ const filtered=stats.filter(tag=>(tag.name+' '+tag.description).toLowerCase().includes(query.trim().toLowerCase())
+  &&(usage==='all'||(usage==='used'?tag.materials>0||tag.variants>0:tag.materials===0&&tag.variants===0)));
  const rows:ConnectionTableRow[]=filtered.map(tag=>({
   id:tag.name,name:tag.name,
   values:{name:tag.name,materials:String(tag.materials),variants:String(tag.variants),
@@ -112,23 +114,29 @@ export function CatalogTagsWorkspace({externalQuery}:{externalQuery?:string}={})
   setSelected(clean);setName(clean);setError('');
  };
  const inspect=selected!==null;
- return <main className="catalog-tags-workspace" aria-label="Catalog tags">
-  <header className="catalog-tags-heading">
-   <div><small>CATALOG · TAGS</small><h2>Tags</h2>
-    <p>Explore features and classification tags across materials and slab variants.</p></div>
-   {canEdit&&<button type="button" onClick={startNew}>+ New tag</button>}
-  </header>
-  <div className="catalog-tags-summary"><strong>{stats.length} tags</strong>
-   <span>Counts reflect unique materials and their variants, including inactive products.</span>
-  </div>
-  <div className="catalog-tags-search">
-   <input type="search" value={query} onChange={e=>setQuery(e.target.value)}
-    aria-label="Search catalog tags" placeholder="Search tag or description…"/>
-   <span>{filtered.length} shown</span>
-  </div>
-  {hydrated?<ConnectionsTable tableKey="tags" columns={columns} rows={rows}
-   onOpen={open}/>:<p className="catalog-tags-empty">Loading catalog tags…</p>}
-  {inspect&&createPortal(<div className="catalog-tags-backdrop" onMouseDown={event=>{
+ return <main className="catalog-tags-workspace catalog-product-worktable" aria-label="Catalog tags">
+  <section className="rates-reference-card catalog-product-card catalog-tags-card">
+   <header className="catalog-card-header">
+    <div><strong>Material tags</strong><small>{filtered.length} matching tag{filtered.length===1?'':'s'}</small></div>
+    <div className="catalog-card-actions">
+     <span className="catalog-card-hint">Counts include inactive materials. Select a tag to inspect it.</span>
+     <details className="catalog-card-filter">
+      <summary>Filter{usage!=='all'?' · 1':''}</summary>
+      <div className="catalog-card-filter-panel">
+       <label>Usage<select value={usage} onChange={event=>setUsage(event.target.value as typeof usage)}
+         aria-label="Filter tags by usage">
+         <option value="all">All tags</option>
+         <option value="used">Used tags</option>
+         <option value="unused">Unused tags</option>
+       </select></label>
+      </div>
+     </details>
+    </div>
+   </header>
+   {hydrated?<ConnectionsTable tableKey="tags" columns={columns} rows={rows}
+    onOpen={open}/>:<p className="catalog-tags-empty">Loading catalog tags…</p>}
+  </section>
+ {inspect&&createPortal(<div className="catalog-tags-backdrop" onMouseDown={event=>{
    if(event.target===event.currentTarget)close();
   }}>
    <aside className="catalog-tags-drawer" role="dialog" aria-modal="true"
