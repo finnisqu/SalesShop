@@ -73,6 +73,15 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
   expect(app).toContain("import './workspace-tab-nav.css'");
  });
+ it('keeps the global account dropdown above page headers without elevating the idle bar',()=>{
+  const styles=src('account-menu.css');
+  const app=src('App.tsx');
+  expect(styles).toContain('.sales-app>.app-header:has(.app-profile-trigger[aria-expanded="true"])');
+  expect(styles).toContain('z-index:240!important');
+  expect(styles).toContain('overflow:visible!important');
+  expect(app).toContain('<AccountMenu />');
+  expect(app).toContain('<WorkspaceHeader title="Notebook"');
+ });
  it('keeps Suppliers on the same Catalog and Records chrome',()=>{
   const suppliers=src('components/SuppliersWorkspace.tsx');
   expect(suppliers).toContain('toolbarFilters={<label className="supplier-status-filter">');
