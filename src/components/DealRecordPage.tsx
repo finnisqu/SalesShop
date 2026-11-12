@@ -315,6 +315,16 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
             onSave={value=>updateDeal(deal.id,{dueDate:value||undefined})}/>
           <RecordProperty label="Original bid due date">{deal.originalDueDate
             ?displayDate(deal.originalDueDate):deal.dueDate?'Not recorded for this older deal':'Not set'}</RecordProperty>
+          {deal.originalDueDate&&deal.dueDate&&<RecordProperty label="Deadline movement">
+            {deal.dueDate>deal.originalDueDate
+              ?deal.dueDateResponsibility==='external'
+                ?'Extended · External dependency (not a team delay)'
+                :deal.dueDateResponsibility==='internal'
+                ?'Extended · Team reschedule'
+                :'Extended · Responsibility not assigned'
+              :deal.dueDate<deal.originalDueDate
+              ?'Earlier than the original deadline':'On the original deadline'}
+          </RecordProperty>
           {Boolean(deal.dueDateHistory?.length)&&<RecordProperty label="Deadline revisions">
             <details className="record-deadline-history">
               <summary>{deal.dueDateHistory?.length} change{deal.dueDateHistory?.length===1?'':'s'}</summary>
