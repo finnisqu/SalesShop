@@ -8,3 +8,27 @@
  .records-section-nav{max-width:100%;gap:4px}
  .records-section-more{display:none}
 }
+
+/* Popovers attached to Records More must escape the horizontal tab strip. */
+@media(min-width:821px){
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+  .ss-workspace-header .ss-workspace-header__tabs,
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+  .ss-workspace-header .ss-workspace-header__tabs>.records-section-nav{
+  overflow:visible!important;
+ }
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+  .ss-workspace-header{position:relative;z-index:20;}
+}
+.records-section-nav .records-section-more .ss-workspace-more__menu{
+ z-index:90;
+}
+.qmb-records-document-type{display:inline-flex;align-items:center;gap:7px;
+ font-size:11px;font-weight:750;color:var(--ss-theme-muted);white-space:nowrap}
+.qmb-records-document-type select{box-sizing:border-box;height:36px;max-width:205px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);font-size:11px;padding:6px 8px}
+@media(max-width:820px){
+ .qmb-records-document-type{max-width:100%;flex:1 1 185px}
+ .qmb-records-document-type select{max-width:100%;min-width:0;flex:1}
+}
