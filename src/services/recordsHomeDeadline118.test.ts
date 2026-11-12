@@ -17,8 +17,8 @@ describe('Batch #118 — Records navigation and Home deadline integrity',()=>{
   expect(nav).toContain("id:'tasks',label:'Tasks'");
   expect(nav).toContain("id:'activity',label:'Activity'");
   expect(nav).toContain("id:'quotes',label:'Quotes'");
-  expect(records).toContain("label:'Our Organization'");
-  expect(records).toContain("label:'Pages · Notebook'");
+  expect(nav).toContain("id:'organization',label:'Our Organization'");
+  expect(nav).toContain("id:'pages',label:'Pages'");
   expect(records).toContain("title=\"Records\"");
   expect(records).not.toContain("label:'Activity history',active:tab==='activity'");
   expect(records).toContain('connections-pipeline-dropdown');
