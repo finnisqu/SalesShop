@@ -63,6 +63,7 @@ describe('fast mobile Task edits and private cloud merge',()=>{
     const current=usePersonalTaskStore.getState().tasks[0];
     expect(current.dueDate).toBe('2026-11-15');
     expect(current.originalDueDate).toBe('2026-11-10');
+    expect(current.dueDateHistory??[]).toHaveLength(0);
   });
 
   it('does not mutate a deleted task or cross-scope record',()=>{
