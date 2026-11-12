@@ -18,8 +18,6 @@ import { RatesFilterFields } from './RatesFilterFields';
 import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogToolsSheet, type MobileCatalogFilterChip } from './MobileCatalogTools';
 import { RateBook } from './RateBook';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
-import { CatalogAddToQuoteButton, CatalogQuoteInsert } from './CatalogQuoteInsert';
-import type { CatalogQuoteSource } from '../services/catalogQuoteInsertion';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 type ReferenceCategory = 'all' | RateBookCategory;
@@ -70,7 +68,6 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
   const editorHostRef = useRef<HTMLDivElement | null>(null);
   const [editing, setEditing] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
-  const [quoteSource, setQuoteSource] = useState<CatalogQuoteSource | null>(null);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [expandedRateId, setExpandedRateId] = useState<string | null>(null);
   const [expandedLevelId, setExpandedLevelId] = useState<string | null>(null);
@@ -320,7 +317,6 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                         <div><span>Effective date</span><strong>{item.effectiveDate || '—'}</strong></div>
                         <div><span>Division overrides</span><strong>{item.divisionOverrides.length || '—'}</strong></div>
                         {item.notes && <p>{item.notes}</p>}
-                        <CatalogAddToQuoteButton onClick={() => setQuoteSource({ kind: 'rate', item })} />
                       </div>
                     }
                   />
@@ -333,7 +329,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                 <tbody>
                   {rateRows.map((item) => (
                     <tr key={item.id}>
-                      <td className="rates-reference-item"><strong>{item.name}</strong><small>{item.code || 'No code'}</small><CatalogAddToQuoteButton onClick={() => setQuoteSource({ kind: 'rate', item })} /></td>
+                      <td className="rates-reference-item"><strong>{item.name}</strong><small>{item.code || 'No code'}</small></td>
                       <td>{RATE_BOOK_CATEGORY_LABELS[item.category]}</td>
                       <td className="number">{moneyLabel(item.internalCost)}</td>
                       <td className="rates-reference-sell"><strong>{moneyLabel(item.sellRate)}</strong><small>{RATE_BOOK_PRICING_BEHAVIOR_LABELS[item.pricingBehavior]}</small></td>
@@ -410,7 +406,6 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
           </section>
         )}
       </div>
-    {quoteSource && <CatalogQuoteInsert source={quoteSource} onClose={() => setQuoteSource(null)} />}
     </main>
   );
 }
