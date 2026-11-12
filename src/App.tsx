@@ -96,6 +96,7 @@ import { useNotebookStore } from './store/notebookStore';
 import {notebookPageNavigationLabel} from './services/notebookPageNavigationLabel';
 import {useQuoteStore} from './store/quoteStore';
 import './worktable-parity.css';
+import './records-toolbar-consistency.css';
 
 const PRIMARY_NAV_DESTINATIONS=['home','dashboard','catalog','notebook'] as const;
 

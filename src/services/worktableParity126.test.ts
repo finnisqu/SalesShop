@@ -21,7 +21,7 @@ describe('Batch 126 — shared compact Records/Catalog worktables',()=>{
   expect(pages).toContain('isCalendarInbox');
   expect(pages).not.toContain('<table>');
   expect(records).toContain('<ConnectionsTable tableKey="activity"');
-  expect(records).toContain('toolbarControls={<div className="connections-activity-filters"');
+  expect(records).toContain('toolbarControls={<details className="records-activity-filter-menu"');
   expect(records).not.toContain('<div className="connections-activity-list">');
   expect(records).toContain('records-activity-directory');
  });
@@ -29,7 +29,8 @@ describe('Batch 126 — shared compact Records/Catalog worktables',()=>{
   const records=src('components/Connections.tsx');
   const organization=src('components/OurOrganizationDirectory.tsx');
   expect(records).toContain('connections-people-attention-filters is-mobile');
-  expect(records).toContain('connections-deals-capture-bar is-mobile');
+  expect(records).toContain('records-tasks-directory');
+  expect(records).not.toContain('connections-deals-capture-bar is-mobile');
   expect(records).toContain('toolbarControls={<>{dealPipelineControl}');
   expect(organization).toContain('our-org-unified-toolbar is-mobile');
   expect(organization).toContain('our-org-table-controls');
