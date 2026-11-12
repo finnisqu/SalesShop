@@ -8,6 +8,8 @@ import './connections-board-toggle.css';
 import {QuickActivityLauncher} from './QuickActivityLauncher';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
+import {TasksWorkspace} from './TasksWorkspace';
+import {RecordsPagesDirectory} from './RecordsPagesDirectory';
 import {SuppliersWorkspace} from './SuppliersWorkspace';
 import '../suppliers-connections.css';
 import {isOurOrgCompany,ourOrgCompanyIds,isOurOrgContact} from '../services/ourOrganizationDirectory';
@@ -49,16 +51,17 @@ import {personLastContactIndex} from '../services/personLastContact';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from '../services/activityLogFilters';
 
-type ConnectionsTab = 'companies' | 'people' | 'deals' | 'organization' | 'suppliers' | 'quotes' | 'activity';
+type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages';
 type CompanyFilter = CompanyRelationship | 'self' | 'all';
 type DirectoryLayout='board'|'table';
 type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
 
 export const CONNECTIONS_TABS: Array<{ id: ConnectionsTab; label: string; description: string }> = [
+  { id: 'tasks', label: 'Tasks', description: 'My work and deadlines' },
   { id: 'companies', label: 'Companies', description: 'Companies & partners' },
   { id: 'people', label: 'People', description: 'Contacts' },
   { id: 'deals', label: 'Deals', description: 'Opportunities & jobs' },
-  { id: 'organization', label: 'Our Organization', description: 'Employees & subcontractors' },
+  { id: 'activity', label: 'Activities', description: 'Calls, meetings and record history' },
   { id: 'suppliers', label: 'Suppliers', description: 'Vendors, sourcing & imports' },
 ];
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -88,7 +91,7 @@ function initialTabSearches():Partial<Record<ConnectionsTab,string>>{
     const raw=JSON.parse(sessionStorage.getItem(SEARCH_KEY)??'{}') as Record<string,unknown>;
     if(!raw||typeof raw!=='object')return {};
     const saved:Partial<Record<ConnectionsTab,string>>={};
-    for(const tab of ['companies','people','deals','organization','suppliers','quotes','activity'] as ConnectionsTab[]){
+    for(const tab of ['tasks','companies','people','deals','activity','organization','suppliers','quotes','pages'] as ConnectionsTab[]){
       if(typeof raw[tab]==='string')saved[tab]=(raw[tab] as string).slice(0,300);
     }
     return saved;
@@ -127,11 +130,11 @@ const quoteColumns:ConnectionColumn[]=[
 
 /** Historical Overview/Activity selections must not revive hidden dashboard/log tabs. */
 export function resolveConnectionsLandingTab(stored: string | null): ConnectionsTab {
-  return CONNECTIONS_TABS.find((item) => item.id === stored)?.id ?? 'companies';
+  return (CONNECTIONS_TABS.some(item=>item.id===stored)||stored==='organization'||stored==='quotes'||stored==='pages')?stored as ConnectionsTab:'tasks';
 }
 
 function initialTab(): ConnectionsTab {
-  if (typeof window === 'undefined') return 'companies';
+  if (typeof window === 'undefined') return 'tasks';
   try{
    if(window.sessionStorage.getItem('salesshop-connections-open-suppliers-v1')==='1'){
     window.sessionStorage.removeItem('salesshop-connections-open-suppliers-v1');
@@ -143,7 +146,7 @@ function initialTab(): ConnectionsTab {
    }
   }catch{/* best effort */}
   try { return resolveConnectionsLandingTab(window.sessionStorage.getItem(TAB_KEY)); }
-  catch { return 'companies'; }
+  catch { return 'tasks'; }
 }
 
 function timeLabel(value?: string) {
@@ -545,7 +548,7 @@ export function Connections() {
     return true;
   };
   const recordBackLabel=(currentId:string)=>previousRelated&&previousRelated.id!==currentId
-    ?'Back to '+previousRelated.label:'Connections';
+    ?'Back to '+previousRelated.label:'Records';
   const backToDeals = () => {
     if(focusedDealId&&relatedBack(focusedDealId))return;
     chooseTab('deals');
@@ -584,8 +587,7 @@ export function Connections() {
   const openQuoteMetadata=(id:string)=>{
     setPreview(null);setQuoteRecordId(id);setTab('quotes');
   };
-  const dealPipelineControl=<label className="connections-filter connections-inline-type-filter">
-    Pipeline
+  const dealPipelineControl=<label className="connections-filter connections-inline-type-filter connections-pipeline-dropdown">
     <select aria-label="Filter Deals by pipeline" value={pipelineFilter}
       onChange={event=>choosePipelineFilter(event.target.value as DealPipelineFilter)}>
       <option value="all">All pipelines</option>
@@ -613,7 +615,7 @@ export function Connections() {
   return (
     <main ref={directoryRef} onScrollCapture={rememberScroll}
       className="connections-workspace connections-directory-layout">
-      <WorkspaceHeader title="Connections" help={<WorkspaceHelp page="connections" section={tab}/>} 
+      <WorkspaceHeader title="Records" help={<WorkspaceHelp page="connections" section={tab}/>} 
         className="connections-heading connections-foundation-heading"
         afterTitle={(tab==='companies'||tab==='deals')&&
           <div className="connections-layout-toggle" role="group"
@@ -643,16 +645,16 @@ export function Connections() {
                  <path d="M9 4v16M15 4v16"/>
                </svg>}
           </button>}
-        mobileTabs={[...CONNECTIONS_TABS.map(item=>({value:item.id,label:item.label})),
-          {value:'quotes',label:'Quotes'},{value:'activity',label:'Activity history'}]}
+        mobileTabs={CONNECTIONS_TABS.map(item=>({value:item.id,label:item.label}))}
         mobileTabValue={tab} onMobileTabChange={value=>chooseTab(value as ConnectionsTab)}
-        tabs={<SectionTabs className="connections-tabs" aria-label="Connections sections"
+        tabs={<SectionTabs className="connections-tabs" aria-label="Records sections"
           items={CONNECTIONS_TABS} selected={tab} onSelect={chooseTab}/>}
-        more={<WorkspaceMoreMenu label="Connections More" items={[
-          {section:'Directories',label:'Activity history',active:tab==='activity',onClick:()=>chooseTab('activity')},
-          {label:'Suppliers',active:tab==='suppliers',onClick:()=>chooseTab('suppliers')},
+        more={<WorkspaceMoreMenu label="Records More" items={[
+          {section:'Directories',label:'Our Organization',active:tab==='organization',onClick:()=>chooseTab('organization')},
+          {label:'Pages · Notebook',active:tab==='pages',onClick:()=>chooseTab('pages')},
+          {label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
           {section:'Actions',label:'Record external quote',disabled:!canBulkEdit,onClick:()=>setExternalQuotePickerOpen(true)},
-          {section:'Directories',label:'Quotes · metadata',active:tab==='quotes',onClick:()=>chooseTab('quotes')},
+          
           ...(tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled?[
             {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
@@ -663,7 +665,7 @@ export function Connections() {
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
             tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':
             tab==='suppliers'?'Search suppliers and brands…':
-            tab==='quotes'?'Search quotes…':'Search activities…'}/>}
+            tab==='quotes'?'Search quotes…':tab==='tasks'?'Search tasks…':tab==='pages'?'Search pages…':'Search activities…'}/>}
         primary={<>
           {tab==='companies'&&layouts.companies==='table'&&<Button variant="primary" className="connections-add"
             onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
@@ -685,8 +687,12 @@ export function Connections() {
           </div>}
           {tab==='deals'&&layouts.deals==='table'&&<Button variant="primary" className="connections-add"
             onClick={()=>setDealCreating(value=>!value)}>+ Deal</Button>}
-          {tab==='activity'&&<Button variant="primary" className="connections-add"
-            onClick={()=>openActivityComposer({})}>+ Activity</Button>}
+          $1
+          {tab==='tasks'&&<Button variant="primary" className="connections-add"
+            onClick={()=>{
+              try{sessionStorage.setItem('salesshop-create-task-v1','1');}catch{}
+              window.dispatchEvent(new Event('salesshop:create-task'));
+            }}>+ Task</Button>}
           {tab==='quotes'&&<Button variant="primary" className="connections-add"
             onClick={()=>{
               const launch=document.querySelector<HTMLButtonElement>('.mobile-app-hidden-launchers .quick-create-launcher')
@@ -695,24 +701,26 @@ export function Connections() {
             }}>+ Quote</Button>}
         </>}
       />
-      {!recordsReady&&<WorkspaceLoadingState title="Loading Connections"
+      {!recordsReady&&<WorkspaceLoadingState title="Loading Records"
         detail="Opening companies, people, deals and quote links…" />}
       <div className="connections-directory-content"
         style={!recordsReady?{display:'none'}:undefined}>
-      {(tab === 'activity'||tab==='quotes') && <div className="connections-history-heading">
+      {tab==='quotes' && <div className="connections-history-heading">
         <div><strong>{tab==='quotes'?'Quotes · metadata':'Activity history'}</strong>
           <p>{tab==='quotes'?'Document records and relationships. Open quote to work on pricing.':'A reference log of existing record events.'}</p></div>
         <div className="connections-activity-tools">
          {tab==='quotes'&&canBulkEdit&&<button type="button" onClick={()=>setExternalQuotePickerOpen(true)}>
            Record external quote</button>}
-         {tab==='activity'&&<><SalesCalendarLauncher compact /><QuickActivityLauncher label="Log Activity" compact /></>}
+         
          <button type="button" onClick={() => chooseTab('companies')}>← Back to Companies</button>
         </div>
       </div>}
 
 
           {notice && <p className="connections-notice" role="status">{notice}</p>}
-          {tab==='companies'&&layouts.companies==='board'&&
+          {tab==='tasks'&&<TasksWorkspace embedded externalQuery={query}/>}
+          {tab==='pages'&&<RecordsPagesDirectory query={query}/>}
+          $1
             <div className="connections-board-host" aria-label="Company board layout">
               <Board embeddedMode="accounts" searchQuery={query}
                 allowedCompanyIds={allowedCompanyIds} companyToolbarControl={companyFilterControl}
@@ -948,7 +956,7 @@ export function Connections() {
           <section ref={newRecordRef} className="connections-create-dialog" role="dialog" aria-modal="true"
             aria-label={companyCreating?'New company':personCreating?'New person':'New deal'}>
             <header className="connections-create-heading">
-              <div><small>CONNECTIONS · CREATE</small>
+              <div><small>RECORDS · CREATE</small>
                 <h2>{companyCreating?'New company':personCreating?'New person':'New deal'}</h2>
               </div>
               <PreviewPanelClose onClose={closeNewRecord} label="Close new record" initialFocus={false}/>
