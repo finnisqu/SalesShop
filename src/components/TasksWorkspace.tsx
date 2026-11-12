@@ -306,7 +306,16 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
    previousScope.current=scope;
    setEditing(null);setViewingId(null);setExternalDealId(null);setTaskNotice(null);
   },[scope]);
-  const [filter,setFilter]=useState<Filter>('active');
+  const [filter,setFilter]=useState<Filter>(()=>{
+  try{
+   const target=sessionStorage.getItem('salesshop-records-task-filter-v1');
+   if(target==='overdue'||target==='active'){
+    sessionStorage.removeItem('salesshop-records-task-filter-v1');
+    return target;
+   }
+  }catch{/* optional browser storage */}
+  return 'active';
+ });
   const [search,setSearch]=useState('');
   const searchTerm=embedded?externalQuery:search;
   const [taskToolbarHost,setTaskToolbarHost]=useState<HTMLDivElement|null>(null);
