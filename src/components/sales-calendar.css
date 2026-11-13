@@ -1085,3 +1085,34 @@
   min-height:52px;padding:9px 10px;
  }
 }
+
+/* Selected-day badge drilldown stays active until explicitly cleared.
+ * Keep the active badge unmistakable even when its colored pill is small. */
+.sales-calendar-day .home-calendar-custom-dots .home-calendar-badge-action[aria-pressed="true"]{
+ outline:2px solid var(--ss-theme-ink,#302d27);
+ outline-offset:2px;
+ box-shadow:0 0 0 3px var(--ss-theme-card,#fffaf0);
+}
+.sales-calendar-preview-heading .home-calendar-active-badge{
+ display:inline-flex;align-items:center;gap:5px;min-width:0;
+}
+.sales-calendar-preview-heading .home-calendar-active-badge>span{
+ max-width:min(200px,26vw);overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;color:var(--ss-theme-ink);
+ font-weight:700;
+}
+.sales-calendar-preview-heading .home-calendar-active-badge>button{
+ min-height:28px;padding:3px 7px;border:1px solid var(--ss-theme-border);
+ border-radius:6px;background:var(--ss-theme-card);
+ color:var(--ss-theme-accent);font:750 10px/1.2 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;
+}
+.sales-calendar-preview-heading .home-calendar-active-badge>button:hover{
+ background:var(--ss-theme-tint);
+}
+@media(max-width:760px){
+ .sales-calendar-preview-heading{align-items:start;flex-wrap:wrap}
+ .sales-calendar-preview-heading .home-calendar-active-badge>span{
+  max-width:150px;
+ }
+}
