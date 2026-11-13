@@ -12,7 +12,9 @@ import {
 } from '../services/quoteRateSnapshot';
 import { useQuoteStore } from '../store/quoteStore';
 import { useRateBookStore } from '../store/rateBookStore';
-import {rateCatalogSelectionPatch,catalogSellingOverride} from '../services/quoteCatalogLineEditing';
+import {
+  catalogSellingOverride,quoteRateSourcePatch,quoteRateCatalogPricePatch,
+} from '../services/quoteCatalogLineEditing';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const allowedCategories: RateBookCategory[] = ['fabrication-install', 'sink', 'add-on'];
@@ -42,6 +44,7 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
   const snapshot = line.rateReference?.snapshot;
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(false);
+  const [sourceError,setSourceError]=useState('');
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { hydrate(); }, [hydrate]);
@@ -92,11 +95,25 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
   }, [activeItems, search]);
 
   const apply = (item: RateBookItem) => {
-    const nextSnapshot = createQuoteRateSnapshot(item, quote.pricingDivision);
-    const patch=rateCatalogSelectionPatch(line,nextSnapshot);
-    updateLine(quote.id,line.id,patch);
-    setSearching(false);
-    setSearch('');
+    try {
+      if(!item.active||!allowedCategories.includes(item.category))
+        throw new Error('Choose an active Rate Book item.');
+      const nextSnapshot = createQuoteRateSnapshot(item, quote.pricingDivision);
+      updateLine(quote.id,line.id,quoteRateSourcePatch(line,nextSnapshot));
+      setSourceError('');
+      setSearching(false);
+      setSearch('');
+    }catch(error){
+      setSourceError(error instanceof Error?error.message:'Unable to change Rate Book source.');
+    }
+  };
+  const applyCatalogPrice = () => {
+    try {
+      updateLine(quote.id,line.id,quoteRateCatalogPricePatch(line));
+      setSourceError('');
+    }catch(error){
+      setSourceError(error instanceof Error?error.message:'Unable to apply Rate Book selling price.');
+    }
   };
 
   const refresh = () => {
@@ -117,8 +134,11 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
               RATE_BOOK_UNIT_LABELS[snapshot.unit],
             ].filter(Boolean).join(' · ')}</small>
           </div>
-          {comparison?.changed && currentSnapshot && selectedItem && <button type="button" onClick={refresh}>Update snapshot</button>}
+          {comparison?.changed && currentSnapshot && selectedItem && <button type="button" onClick={refresh}>Refresh source · keep quoted price</button>}
         </div>}
+        {snapshot&&<p className="quote-source-status">
+          Changing a Rate Book source preserves the quoted selling price. A different billing unit or cost-only status requires a new charge.
+        </p>}
         <div className="quote-rate-search-row">
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search Rates: fabrication, sink, splash…" aria-label="Search Rate Book" />
           {snapshot && <button type="button" onClick={() => setSearching(false)}>Cancel</button>}
@@ -138,6 +158,7 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
           ))}
           {!results.length && <div className="quote-rate-empty">No matching active Rate Book items.</div>}
         </div>
+        {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>
       </div>
     );
   }
@@ -177,6 +198,13 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
       {snapshot&&catalogSellingOverride(line)&&<span className="quote-source-status">
         Manual selling override · catalog {snapshot.sellRate===undefined?'unpriced':money.format(snapshot.sellRate)}
       </span>}
+      {snapshot&&snapshot.pricingBehavior!=='cost-reference'&&snapshot.sellRate!==undefined&&
+       (line.pricingMode==='quantity-rate'||(line.pricingMode==='direct'&&snapshot.unit==='flat'))&&
+       (line.pricingMode==='direct'?line.amount!==snapshot.sellRate:line.rate!==snapshot.sellRate)&&
+       <button type="button" className="quote-source-apply-price" onClick={applyCatalogPrice}>
+         Use Rate Book selling price {money.format(snapshot.sellRate)}
+       </button>}
+      {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>
       {snapshot && !selectedItem && <span className="quote-source-status is-warning">Source unavailable</span>}
       {snapshot && comparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
     </div>
