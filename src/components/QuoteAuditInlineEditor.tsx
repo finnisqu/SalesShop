@@ -113,7 +113,7 @@ export function QuoteAuditInlineEditor({quote,finding,onClose,onGoTo}:{
       if(n===undefined){setError('Enter a valid non-negative number.');return;}
       if(fix.field==='quantity')updateLine(quote.id,line.id,{quantity:n});
       else if(fix.field==='amount')updateLine(quote.id,line.id,{amount:n});
-      else updateLine(quote.id,line.id,{rate:n,rateReference:undefined});
+      else updateLine(quote.id,line.id,{rate:n}); // Keep quoted Catalog provenance on manual override.
     }else if(fix.kind==='sink'){
       if(!sink||!owner){setError('Sink is no longer on this quote.');return;}
       const n=toNumber(main,0);
