@@ -10,14 +10,15 @@ export function quoteOtherSourcePatch(
 ):Partial<QuoteLine>{
  if(line.kind!=='item'||!line.otherReference)
   throw new Error('This charge is not linked to an OTHER Catalog item.');
- if(!item.active||!variant.active||!item.variants.some(v=>v.id===variant.id&&v.active))
+ const selected=item.variants.find(v=>v.id===variant.id&&v.active);
+ if(!item.active||!selected)
   throw new Error('This Catalog product or variant is inactive. Choose an active selection.');
  const quotedUnit=line.otherReference.snapshot.unit??'each';
  const nextUnit=item.unit??'each';
  if(quotedUnit!==nextUnit)
   throw new Error('The selected product uses a different unit. Add it as a new charge instead.');
  const sameSource=line.otherReference.itemId===item.id&&line.otherReference.variantId===variant.id;
- const next=otherSnapshotLinePatch(createQuoteOtherSnapshot(item,variant));
+ const next=otherSnapshotLinePatch(createQuoteOtherSnapshot(item,selected));
  return {
   description:sameSource?line.description:next.description,
   otherReference:next.otherReference,
