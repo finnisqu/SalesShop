@@ -93,6 +93,20 @@ describe('quote sink snapshots', () => {
     expect(quoted.availableColors).toEqual(['Black','Gray']);
   });
 
+  it('detects supplier, model dimensions and mount changes without repricing',()=>{
+    const oldModel=model();
+    const oldVariant=variant();
+    const quoted=createQuoteSinkSnapshot(oldModel,oldVariant);
+    const changedModel=model({supplier:'New distributor',widthIn:33,
+      mountType:'drop-in',updatedAt:'2026-11-13T12:00:00.000Z'});
+    const current=createQuoteSinkSnapshot(changedModel,oldVariant);
+    expect(compareQuoteSinkSnapshot(quoted,current)).toMatchObject({
+      changed:true,sellPriceChanged:false,internalCostChanged:false,sourceChanged:true,
+    });
+    expect(quoted.supplier).toBe('Shop stock');
+    expect(quoted.sellPrice).toBe(220);
+  });
+
   it('creates a practical each-priced quote line with quantity one', () => {
     const snapshot = createQuoteSinkSnapshot(model(), variant());
 
