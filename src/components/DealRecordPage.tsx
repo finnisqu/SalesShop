@@ -199,15 +199,15 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
     <DealTimelineBeta deal={deal}/>
   </section>;
 
-  return <><RecordPageLayout entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack} backLabel={backLabel}
+  return <><RecordPageLayout entityType="project" recordKey={deal.id} recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack} backLabel={backLabel}
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length+outsideQuotes.length} linked quotes</span></>}
     actions={<>
-      <button type="button" onClick={() => {
+      {canEditCrm&&<button type="button" onClick={() => {
         setNotice(null);setSaveError('');
         if(editing)setNewCompanyName('');
         setEditing(value=>!value);
-      }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>
+      }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>}
       <RecordActionsMenu unlinking={unlinking} disabled={!canEditCrm}
         onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
         onDelete={canEditCrm&&!related.linkedQuotes.length&&!outsideQuotes.length&&!directIds.size
