@@ -52,8 +52,10 @@ export function WorktablePagination({label,total,page,pageSize,onPageChange,onPa
   <div className="ss-worktable-page-steps">
    <button type="button" disabled={range.page<=1} onClick={()=>onPageChange(range.page-1)}
     aria-label={'Previous '+label+' page'} title="Previous page">‹</button>
-   <span aria-live="polite" aria-label={'Page '+range.page+' of '+range.pageCount}>
-    {range.page} / {range.pageCount}</span>
+   <span className="ss-worktable-page-index" aria-live="polite">
+    <span aria-hidden="true">{range.page} / {range.pageCount}</span>
+    <span className="ss-worktable-visually-hidden">Page {range.page} of {range.pageCount}</span>
+   </span>
    <button type="button" disabled={range.page>=range.pageCount} onClick={()=>onPageChange(range.page+1)}
     aria-label={'Next '+label+' page'} title="Next page">›</button>
   </div>
