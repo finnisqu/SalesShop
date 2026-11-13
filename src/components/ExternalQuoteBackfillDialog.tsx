@@ -76,7 +76,8 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,in
        helper="Choose a Deal or create one here, then record the external bid. Creating a new Deal adds it to Connections."/>
      </div>
      {selected&&editable&&<ExternalQuoteSentForm key={selected.id} deal={selected}
-       initialSentDate={initialSentDate} onCancel={onClose} onRecorded={date=>onRecorded?.(selected.name,date)}/>}
+       initialSentDate={initialSentDate} onCancel={onClose}
+       onRecorded={date=>{try{onRecorded?.(selected.name,date);}finally{onClose();}}}/>}
      {!editable&&<p className="external-quote-error">Your current role cannot record shared CRM quotes.</p>}
      {!selected&&<p className="external-quote-picker-empty">Select a Deal to enter its historical bid amount and sent date.</p>}
     </div>

@@ -1,5 +1,6 @@
 import {useRef,useState,type FormEvent} from 'react';
 import type {Project} from '../types/crm';
+import {validExternalQuoteSentDate} from '../services/externalQuoteDate';
 import {useCrmStore} from '../store/crmStore';
 import {usePersonalTaskStore} from '../store/personalTaskStore';
 import '../external-quote.css';
@@ -18,25 +19,27 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
   const completeSubmissionTasks=usePersonalTaskStore(s=>s.completeDealSubmissionTasks);
   const [amount,setAmount]=useState(deal.amount===undefined?'':String(deal.amount));
   const [bidSentDate,setBidSentDate]=useState(()=>
-    initialSentDate&&/^\d{4}-\d{2}-\d{2}$/.test(initialSentDate)&&initialSentDate<=localToday()
+    initialSentDate&&validExternalQuoteSentDate(initialSentDate,localToday())
       ?initialSentDate:localToday());
   const [format,setFormat]=useState('');
   const [error,setError]=useState('');
   const [saving,setSaving]=useState(false);
+  // A ref guards Enter + click before React has rendered the disabled button.
+  const savingRef=useRef(false);
   // Stable across retries, so a lost acknowledgement cannot create two sent events.
   const submissionId=useRef('activity_'+crypto.randomUUID());
   const recordedAt=useRef(new Date().toISOString());
   const submit=async(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
-    if(saving)return;
+    if(savingRef.current)return;
     const total=Number(amount);
     if(!amount.trim()||!Number.isFinite(total)||total<0){
       setError('Enter a valid total contract value.');return;
     }
-    if(!bidSentDate||bidSentDate>localToday()){
+    if(!validExternalQuoteSentDate(bidSentDate,localToday())){
       setError('Select the date the quote was actually sent.');return;
     }
-    setSaving(true);setError('');
+    savingRef.current=true;setSaving(true);setError('');
     try{
       const saved=await recordExternalQuoteSent(deal.id,total,bidSentDate,format,
         submissionId.current,recordedAt.current);
@@ -45,7 +48,7 @@ export function ExternalQuoteSentForm({deal,onCancel,onRecorded,initialSentDate}
       onRecorded?.(bidSentDate);
     }catch(reason){
       setError(reason instanceof Error?reason.message:'Unable to save this external quote.');
-    }finally{setSaving(false);}
+    }finally{savingRef.current=false;setSaving(false);}
   };
   return <form className="external-quote-form" onSubmit={submit}
     aria-label="Record quote sent using another tool" aria-busy={saving}>

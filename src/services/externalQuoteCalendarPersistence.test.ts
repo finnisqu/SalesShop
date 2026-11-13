@@ -7,6 +7,7 @@ import {personalCalendarSources,recentHomeItems} from './salesCalendar';
 import {buildCalendarBadgeIndex,metricCount} from './homeCalendarBadges';
 import {homeRecentQuoteEntries} from './homeOverview';
 import {DEFAULT_HOME_CALENDAR_SETTINGS} from '../store/homeCalendarSettings';
+import {validExternalQuoteSentDate} from './externalQuoteDate';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS} from './activityLogFilters';
 const file=(path:string)=>readFileSync(join(process.cwd(),path),'utf8');
 
@@ -21,6 +22,23 @@ const deal:Project={id:'deal-a',name:'Example Deal',stage:'Bid Sent',assignedUse
  createdAt:'2026-10-01T14:00:00.000Z',updatedAt:'2026-11-10T18:00:00.000Z'};
 
 describe('External Quote Sent: calendar + CRM + Recents',()=>{
+ it('rejects impossible dates and preserves legitimate historical sent dates',()=>{
+  expect(validExternalQuoteSentDate('2026-10-20','2026-11-13')).toBe(true);
+  expect(validExternalQuoteSentDate('2024-02-29','2026-11-13')).toBe(true);
+  expect(validExternalQuoteSentDate('2026-02-29','2026-11-13')).toBe(false);
+  expect(validExternalQuoteSentDate('2026-13-01','2026-11-13')).toBe(false);
+  expect(validExternalQuoteSentDate('2026-11-14','2026-11-13')).toBe(false);
+  expect(validExternalQuoteSentDate('2026-1-1','2026-11-13')).toBe(false);
+ });
+ it('serializes repeated form submissions and closes the chooser after confirmed success',()=>{
+  const form=file('src/components/ExternalQuoteSentForm.tsx');
+  const dialog=file('src/components/ExternalQuoteBackfillDialog.tsx');
+  expect(form).toContain('if(savingRef.current)return');
+  expect(form).toContain('savingRef.current=true;setSaving(true)');
+  expect(form).toContain('finally{savingRef.current=false;setSaving(false)}');
+  expect(form).toContain('validExternalQuoteSentDate(bidSentDate,localToday())');
+  expect(dialog).toContain('finally{onClose();}');
+ });
  it('counts quote sent on the real send date, never the logging date',()=>{
   const personal=personalCalendarSources('cloud','user-a',[],[],[deal],[external]);
   expect(personal.activities.map(a=>a.id)).toEqual(['external-a']);
