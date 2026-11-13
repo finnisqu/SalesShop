@@ -8,9 +8,6 @@
   box-sizing:border-box;width:calc(100% - 36px);max-width:var(--ss-workspace-width,1360px);
   min-width:0;margin:0 auto 8px;padding:14px 0 0;
  }
- :root[data-sales-theme] .sales-app.view-tasks .tasks-directory-controls .tasks-directory-caption{
-  color:var(--ss-theme-muted);font-size:11px;line-height:1.3;margin:0;white-space:normal;
- }
  :root[data-sales-theme] .sales-app.view-tasks .tasks-toolbar-slot{
   width:100%;min-width:0;
  }
