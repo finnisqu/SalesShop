@@ -139,6 +139,9 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     sinkReference: sinkReferenceOrUndefined(row.sink_reference),
     takeoffSinkId: valueOrUndefined(row.takeoff_sink_id),
     rateReference: rateReferenceOrUndefined(row.rate_reference),
+    // OTHER products persist in the existing JSONB rate_reference field;
+    // no new production column or RLS migration is required.
+    otherReference:rateReferenceOrUndefined(row.rate_reference)?.otherCatalog,
     costCategory:rateReferenceOrUndefined(row.rate_reference)?.estimate?.costCategory,
     productCode:rateReferenceOrUndefined(row.rate_reference)?.estimate?.productCode,
     supplierName:rateReferenceOrUndefined(row.rate_reference)?.estimate?.supplierName,
@@ -382,11 +385,16 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     material_reference: line.materialReference ?? null,
     sink_reference: line.sinkReference ?? null,
     takeoff_sink_id: line.takeoffSinkId ?? null,
-    rate_reference:line.costCategory||line.productCode||line.supplierName||line.unitLabel||line.unitCost!==undefined||line.internalOnlyCost
-      ?{...(line.rateReference??{}),estimate:{costCategory:line.costCategory,
-       productCode:line.productCode,supplierName:line.supplierName,unitLabel:line.unitLabel,
-       unitCost:line.unitCost,
-       internalOnlyCost:line.internalOnlyCost}}:line.rateReference??null,
+    rate_reference:line.otherReference||line.costCategory||line.productCode||
+      line.supplierName||line.unitLabel||line.unitCost!==undefined||line.internalOnlyCost
+      ?{...(line.rateReference??{}),
+        ...(line.otherReference?{otherCatalog:line.otherReference}:{}),
+        ...((line.costCategory||line.productCode||line.supplierName||line.unitLabel||
+          line.unitCost!==undefined||line.internalOnlyCost)
+          ?{estimate:{costCategory:line.costCategory,
+            productCode:line.productCode,supplierName:line.supplierName,unitLabel:line.unitLabel,
+            unitCost:line.unitCost,internalOnlyCost:line.internalOnlyCost}}:{})}
+      :line.rateReference??null,
     sort_order: sortOrder,
   })));
 
