@@ -89,6 +89,10 @@ describe('Batch 329 Deal to native/external submission workflow',()=>{
   // Issuing is still a historical event, not a submitted bid.
   const recents=recentHomeItems([],activities,[nativeQuote],null,10);
   expect(recents.map(item=>item.recordId)).toContain(issued.id);
+  expect(recents.find(item=>item.recordId===issued.id)?.detail).toBe('Quote issued');
+  expect(recents.find(item=>item.recordId===delivered.id)?.detail).toBe('Quote delivered');
+  expect(recents.find(item=>item.recordId===outside.id)?.detail)
+   .toContain('External quote · Sent '+sentDay);
  });
  it('records historical builder backfills without completing already closed Deal tasks',()=>{
   const historical:Activity={...outside,id:'backfill',projectId:'deal-closed',

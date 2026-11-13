@@ -224,7 +224,8 @@ export function recentHomeItems(
     activityType:activity.type,
     detail:external?'External quote · Sent '+(sentDay??activity.occurredAt.slice(0,10)):
       (activity.metadata?.interactionMethod??(activity.type==='quote-sent'
-       ?'Quote sent':'System activity')).replaceAll('-',' ')+
+       ?activity.metadata?.deliveryConfirmed===true?'Quote delivered':'Quote issued'
+       :'System activity')).replaceAll('-',' ')+
       (activity.metadata?.notes?' · '+activity.metadata.notes.slice(0,80):''),
     recordId:activity.id,
    };
