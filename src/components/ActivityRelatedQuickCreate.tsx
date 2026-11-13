@@ -4,6 +4,7 @@ import type {TaskAssociation} from '../store/personalTaskStore';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {companyRelationshipPatch} from '../services/companyRelationship';
 import {recordEmailError} from './RecordFormFeedback';
+import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import '../activity-related-create.css';
 
 type Kind='company'|'person'|'deal';
@@ -17,6 +18,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
  const [phone,setPhone]=useState('');
  const [title,setTitle]=useState('');
  const [companyId,setCompanyId]=useState('');
+ const [createdCompanyId,setCreatedCompanyId]=useState<string|null>(null);
  const [error,setError]=useState('');
  const companies=useCrmStore(s=>s.companies);
  const people=useCrmStore(s=>s.contacts);
@@ -29,7 +31,19 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
  const availableCompanies=companies.filter(c=>!isOurOrgCompany(c)).slice()
   .sort((a,b)=>a.name.localeCompare(b.name));
  const choose=(next:Kind)=>{setKind(next);setName('');setEmail('');setPhone('');
-  setTitle('');setCompanyId('');setError('');};
+  setTitle('');setCompanyId('');setCreatedCompanyId(null);setError('');};
+ const createCompanyWhileLogging=(raw:string)=>{
+  const clean=raw.trim();
+  if(!clean)throw new Error('Enter a Company name.');
+  if(useCrmStore.getState().companies.some(c=>c.name.trim().toLowerCase()===clean.toLowerCase()))
+   throw new Error('That Company already exists. Select it from search.');
+  const existingIds=new Set(useCrmStore.getState().companies.map(c=>c.id));
+  const id=resolveCompany(clean,'customer');
+  if(!id||existingIds.has(id))throw new Error('Unable to create a new Company.');
+  const created=useCrmStore.getState().companies.find(c=>c.id===id);
+  if(created)updateCompany(id,companyRelationshipPatch(created,'prospect'));
+  setCompanyId(id);setCreatedCompanyId(id);
+ };
  const submit=()=>{
   // This component lives inside the activity form. Never submit that form.
   if(disabled||!kind)return;
@@ -85,7 +99,8 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
   {kind&&<div className="activity-related-quick-fields" role="group"
     aria-label={'Create new '+kind+' while logging'}
     onKeyDown={event=>{
-      if(event.key==='Enter'&&event.target instanceof HTMLInputElement){
+      if(event.key==='Enter'&&event.target instanceof HTMLInputElement&&
+         !event.target.closest('.ss-unified-record-picker')){
         event.preventDefault();event.stopPropagation();submit();
       }
     }}>
@@ -100,12 +115,26 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
       <label>Phone (optional)<input type="tel" value={phone} disabled={disabled}
        onChange={e=>setPhone(e.target.value)}/></label>
     </>}
-    {kind!=='company'&&<label>Company (optional)
-      <select disabled={disabled} value={companyId} onChange={e=>setCompanyId(e.target.value)}>
-       <option value="">Unassigned</option>
-       {availableCompanies.map(c=><option value={c.id} key={c.id}>{c.name}</option>)}
-      </select>
-     </label>}
+    {kind!=='company'&&<div className="activity-related-company-picker" role="group"
+      aria-label="Company for new record">
+      <strong>Company (optional)</strong>
+      <div className="ss-record-association-current">
+       <span>{companyId
+         ?availableCompanies.find(c=>c.id===companyId)?.name??'Selected company'
+         :'Unassigned'}</span>
+       {companyId&&<button type="button" disabled={disabled}
+        onClick={()=>{setCompanyId('');setCreatedCompanyId(null);}}>Clear</button>}
+      </div>
+      <UnifiedRecordPicker kind="Company" disabled={disabled}
+       triggerLabel={companyId?'Change Company':'Search or create Company'}
+       items={availableCompanies.map(c=>({id:c.id,name:c.name}))}
+       onLink={id=>{setCompanyId(id);setCreatedCompanyId(null);}}
+       onCreate={createCompanyWhileLogging}
+       helper="Find an existing Company or create one without leaving this Activity."/>
+      {createdCompanyId===companyId&&<small className="activity-related-company-created">
+        Company created and selected. It will be linked when this {kind} is saved.
+       </small>}
+     </div>}
     {error&&<p role="alert" className="activity-related-quick-error">{error}</p>}
     <div className="activity-related-quick-buttons">
      <button type="button" onClick={()=>setKind(null)} disabled={disabled}>Cancel</button>
