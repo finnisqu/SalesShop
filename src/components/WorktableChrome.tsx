@@ -7,11 +7,15 @@ export const DEFAULT_WORKTABLE_PAGE_SIZE=50;
 export function worktablePageRange(total:number,requestedPage:number,pageSize:number){
  const safeSize=WORKTABLE_PAGE_SIZES.includes(pageSize as typeof WORKTABLE_PAGE_SIZES[number])
   ?pageSize:DEFAULT_WORKTABLE_PAGE_SIZE;
- const pageCount=Math.max(1,Math.ceil(total/safeSize));
- const page=Math.max(1,Math.min(requestedPage,pageCount));
+ // External filters, deleted rows and persisted state may temporarily supply
+ // stale or invalid totals/page indices. Never produce NaN or fractional slices.
+ const count=Number.isFinite(total)&&total>0?Math.floor(total):0;
+ const requested=Number.isFinite(requestedPage)?Math.floor(requestedPage):1;
+ const pageCount=Math.max(1,Math.ceil(count/safeSize));
+ const page=Math.max(1,Math.min(requested,pageCount));
  const start=(page-1)*safeSize;
- return {page,pageCount,start,end:Math.min(start+safeSize,total),
-  first:total===0?0:start+1,last:Math.min(start+safeSize,total)};
+ return {page,pageCount,start,end:Math.min(start+safeSize,count),
+  first:count===0?0:start+1,last:Math.min(start+safeSize,count)};
 }
 
 /** One accessible pagination control for every Records/Catalog worktable. */

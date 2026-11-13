@@ -6,6 +6,26 @@ import {worktablePageRange,WORKTABLE_PAGE_SIZES,DEFAULT_WORKTABLE_PAGE_SIZE}
 const src=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
+ it('clamps stale, fractional and invalid pagination values to valid table slices',()=>{
+  expect(worktablePageRange(83,0,50).page).toBe(1);
+  expect(worktablePageRange(83,1.9,50).page).toBe(1);
+  expect(worktablePageRange(83,Number.NaN,50)).toMatchObject({
+   page:1,start:0,end:50,
+  });
+  expect(worktablePageRange(-2,5,50)).toMatchObject({
+   page:1,pageCount:1,start:0,end:0,first:0,last:0,
+  });
+  expect(worktablePageRange(83,2,7)).toMatchObject({
+   page:2,start:50,end:83,first:51,last:83,
+  });
+  expect(worktablePageRange(83.7,2,50)).toMatchObject({
+   page:2,end:83,last:83,
+  });
+  const dismiss=src('components/useDismissibleDetails.ts');
+  expect(dismiss).toContain('event.defaultPrevented');
+  expect(dismiss).toContain('menu.contains(event.target as Node)');
+  expect(dismiss).toContain('ref.current?.contains(event.target as Node)');
+ });
  it('shares pagination math and 25/50/100 page sizes across Catalog and Records',()=>{
   expect(WORKTABLE_PAGE_SIZES).toEqual([25,50,100]);
   expect(DEFAULT_WORKTABLE_PAGE_SIZE).toBe(50);

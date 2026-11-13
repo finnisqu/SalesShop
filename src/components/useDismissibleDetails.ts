@@ -13,7 +13,10 @@ export function useDismissibleDetails(ref:RefObject<HTMLDetailsElement|null>){
   };
   const escape=(event:KeyboardEvent)=>{
    const menu=ref.current;
-   if(event.key!=='Escape'||!menu?.open)return;
+   // A menu should only handle Escape from its own focused descendants.
+   // Otherwise one keypress closes every open dropdown on the page.
+   if(event.key!=='Escape'||event.defaultPrevented||!menu?.open||
+     !menu.contains(event.target as Node))return;
    event.preventDefault();
    event.stopPropagation();
    menu.open=false;
@@ -41,7 +44,8 @@ export function useDismissiblePopover(
    if(ref.current&&!ref.current.contains(event.target as Node))latest.current();
   };
   const escape=(event:KeyboardEvent)=>{
-   if(event.key!=='Escape')return;
+   if(event.key!=='Escape'||event.defaultPrevented||
+      !ref.current?.contains(event.target as Node))return;
    event.preventDefault();
    event.stopPropagation();
    latest.current();
