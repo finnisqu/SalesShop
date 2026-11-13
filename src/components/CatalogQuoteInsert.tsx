@@ -70,7 +70,7 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
   const eligible = useMemo(() => quotes.filter((quote) =>
     quoteIsCommerciallyEditable(quote) && quote.documentType !== 'pricing-schedule',
   ), [quotes]);
-  const [targetId, setTargetId] = useState<string>(() => activeQuoteId && eligible.some(quote=>quote.id===activeQuoteId) ? activeQuoteId : TARGET_NEW);
+  const [targetId, setTargetId] = useState<string>(() => activeQuoteId ?? TARGET_NEW);
   const [variantId, setVariantId] = useState(() => source.kind === 'rate' ? '' : source.variantId ?? '');
   const [purchaseOptionId, setPurchaseOptionId] = useState('');
   const [quantityText, setQuantityText] = useState(() => source.kind === 'sink' || source.kind === 'other' ? '1' : source.kind === 'rate' && ['each','slab'].includes(source.item.unit) ? '1' : '');
