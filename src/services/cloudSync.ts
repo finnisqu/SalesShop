@@ -16,7 +16,7 @@ import type {NotebookDocument} from '../types/notebook';
 import {markPendingNotebookSync,readPendingNotebookSync,clearPendingNotebookSync,mergePendingNotebookChanges} from './notebookCloudRecovery';
 import { loadNormalizedCrm, syncNormalizedCrm } from './normalizedCrmSync';
 import { loadNormalizedQuotes, syncNormalizedQuotes } from './normalizedQuoteSync';
-import {markPendingQuoteSync,clearPendingQuoteSync,readPendingQuoteSync,mergePendingQuoteDrafts} from './quoteCloudRecovery';
+import {markPendingQuoteSync,clearPendingQuoteSync,readPendingQuoteSync,mergePendingQuoteDrafts,quoteHasUnsavedContent} from './quoteCloudRecovery';
 import {markPendingCrmSync,clearPendingCrmSync,readPendingCrmSync,mergePendingCrmChanges} from './crmCloudRecovery';
 import {useQuoteCloudStatusStore} from '../store/quoteCloudStatusStore';
 import { loadNormalizedSignatures, syncNormalizedSignatures } from './normalizedSignatureSync';
@@ -279,6 +279,12 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   const setQuoteSaveStatus=useQuoteCloudStatusStore.getState().setStatus;
   setQuoteSaveStatus(canWriteQuotes&&readPendingQuoteSync(scope)?'pending':'saved');
   const schedule=(key:CloudDocumentKey,document:unknown)=>{
+    // Changing only the active quote or refreshing the local view is NOT a
+    // new cloud edit. Do not show Pending or send a whole quote snapshot for
+    // such metadata-only changes. A prior marker or failed write must retry.
+    if(key===QUOTES_DOCUMENT_KEY&&!readPendingQuoteSync(scope)&&
+      !retryableFailures.has(key)&&
+      !quoteHasUnsavedContent(scope,document,baselineQuotes))return;
     const revision=(scheduledRevision.get(key)??0)+1;
     scheduledRevision.set(key,revision);
     const previous=pending.get(key);
