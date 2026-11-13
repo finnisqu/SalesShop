@@ -2,6 +2,8 @@ import {describe,expect,it} from 'vitest';
 import type {OtherCatalogItem,OtherCatalogVariant} from '../store/otherCatalogStore';
 import {createQuoteOtherSnapshot,otherSnapshotLinePatch,compareQuoteOtherSnapshot}
  from './quoteOtherSnapshot';
+import {quoteLineTotal,type QuoteLine} from '../types/quote';
+import {summarizeQuoteInternalPricing} from './quoteInternalPricing';
 
 const variant:OtherCatalogVariant={
  id:'v-black',label:'Matte black',sku:'BK-01',active:true,default:true,
@@ -32,6 +34,15 @@ describe('OTHER catalog quote-time snapshots',()=>{
    otherReference:{itemId:'accessory-1',variantId:'v-black'},
   });
   expect(line.amount).toBeUndefined();
+ });
+ it('uses selling price in customer totals and private cost in internal margins',()=>{
+  const patch=otherSnapshotLinePatch(createQuoteOtherSnapshot(item,variant));
+  const line:QuoteLine={...patch,id:'line-other',kind:'item',quantity:2} as QuoteLine;
+  expect(quoteLineTotal(line)).toBe(190);
+  expect(summarizeQuoteInternalPricing([line])).toMatchObject({
+   customerTotal:190,knownInternalCost:84,grossSpread:106,
+   costedLineCount:1,costRequiredLineCount:1,complete:true,
+  });
  });
  it('copies mutable color arrays into the snapshot',()=>{
   const snapshot=createQuoteOtherSnapshot(item,variant);
