@@ -587,8 +587,15 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
         return <article className={'tasks-row is-'+state} key={task.id}>
           <label className="tasks-complete"><input type="checkbox" checked={isDone}
             aria-label={(isDone?'Reopen ':'Complete ')+task.title}
-            disabled={!isDone&&isProtectedBidTask(task)&&!task.submissionConfirmedAt}
-            onChange={()=>isDone?reopen(task.id):complete(task.id)}/></label>
+            title={!isDone&&taskCompletionBlocker(task)==='bid-submission'
+             ?'Requires confirmed Quote delivery or a recorded external quote':
+             !isDone&&taskCompletionBlocker(task)==='incomplete-checklist'
+             ?'Finish all checklist items first':undefined}
+            disabled={!isDone&&(Boolean(taskCompletionBlocker(task))||task.status==='canceled')}
+            onChange={()=>{
+             if(isDone)reopen(task.id);
+             else if(!taskCompletionBlocker(task)&&task.status!=='canceled')complete(task.id);
+            }}/></label>
           <div className="tasks-row-body">
             <div className="tasks-row-top"><button type="button" className="tasks-row-title"
               onClick={()=>setViewingId(task.id)} aria-label={'Preview task '+task.title}>{task.title}</button>
