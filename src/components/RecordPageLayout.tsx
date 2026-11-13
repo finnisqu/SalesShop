@@ -1,5 +1,10 @@
 import { useRef, type ReactNode } from 'react';
 
+/** Section jump animation respects browser accessibility preferences. */
+export function recordJumpScrollBehavior(reducedMotion:boolean):ScrollBehavior{
+ return reducedMotion?'auto':'smooth';
+}
+
 /** Shared record sections. Company and Person pages use identical chrome and tokens. */
 export function RecordCard({ title, extra, children }: { title: string; extra?: ReactNode; children: ReactNode }) {
   return <section className="connections-record-panel">
@@ -36,7 +41,8 @@ export function RecordPageLayout({
   const jumpTo = (area: 'details' | 'records' | 'related') => {
     const element = area === 'details' ? detailsRef.current : area === 'records' ? recordsRef.current : relatedRef.current;
     if(!element)return;
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+    element.scrollIntoView({ behavior: recordJumpScrollBehavior(reducedMotion), block: 'start' });
     // Give keyboard and screen-reader users the destination, not only a
     // visual scroll. preventScroll preserves the smooth navigation animation.
     element.focus({ preventScroll: true });

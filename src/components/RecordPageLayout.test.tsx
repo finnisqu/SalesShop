@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {readFileSync} from 'node:fs';
-import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
+import { RecordPageLayout, RecordCard, RecordProperty, recordJumpScrollBehavior } from './RecordPageLayout';
 
 describe('Connections record layout parity', () => {
   for (const [entityType, collection, display] of [
@@ -36,10 +36,16 @@ describe('Connections record layout parity', () => {
   it('moves keyboard focus with the three mobile section jumps',()=>{
     const layout=readFileSync(new URL('./RecordPageLayout.tsx',import.meta.url),'utf8');
     expect(layout).toContain('element.focus({ preventScroll: true })');
-    expect(layout).toContain("element.scrollIntoView({ behavior: 'smooth', block: 'start' })");
+    expect(layout).toContain("behavior: recordJumpScrollBehavior(reducedMotion)");
+    expect(layout).toContain("window.matchMedia?.('(prefers-reduced-motion: reduce)')");
     expect(layout).toContain("area === 'details'");
     expect(layout).toContain("area === 'records'");
   });
+  it('honors reduced-motion accessibility preferences for Record jumps',()=>{
+    expect(recordJumpScrollBehavior(false)).toBe('smooth');
+    expect(recordJumpScrollBehavior(true)).toBe('auto');
+  });
+
   it('accepts explicit Deal breadcrumb labels without changing stored entity types', () => {
     const html = renderToStaticMarkup(<RecordPageLayout
       entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title="School Renovation"
