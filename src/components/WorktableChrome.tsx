@@ -1,5 +1,6 @@
 import {useRef,type ReactNode} from 'react';
 import {useDismissibleDetails} from './useDismissibleDetails';
+import {useViewportBoundDetails} from './useViewportBoundDetails';
 
 export const WORKTABLE_PAGE_SIZES=[25,50,100] as const;
 export const DEFAULT_WORKTABLE_PAGE_SIZE=50;
@@ -49,6 +50,7 @@ export function WorktableFilterMenu({children,activeCount=0,label='Filters',clas
 }){
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
+ useViewportBoundDetails(ref);
  return <details className={'ss-worktable-filter-menu '+className} ref={ref}>
   <summary aria-label={label+(activeCount?' · '+activeCount+' active':'')}>
    {label}{activeCount>0&&<span className="ss-worktable-filter-count">{activeCount}</span>}
@@ -69,6 +71,7 @@ export function WorktableActionMenu({label,items}:{
 }){
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
+ useViewportBoundDetails(ref);
  return <details className="ss-worktable-action-menu" ref={ref}>
   <summary aria-label={label+' menu'} aria-haspopup="true">
    {label}<span className="ss-worktable-action-chevron" aria-hidden="true">⌄</span>

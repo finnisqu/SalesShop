@@ -9,6 +9,7 @@ import type {Company} from '../types/crm';
 import {TaskBulkEditDialog,type TaskBulkChange} from './TaskBulkEditDialog';
 import {useWorkbookTableDensity} from '../services/workbookTableDensity';
 import {useDismissibleDetails} from './useDismissibleDetails';
+import {useViewportBoundDetails} from './useViewportBoundDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
 import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE,CATALOG_PAGE_SIZES,catalogPageRange} from './CatalogPagination';
@@ -95,6 +96,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  },[sortState]);
  const columnsMenuRef=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(columnsMenuRef);
+ useViewportBoundDetails(columnsMenuRef);
  // Preserve selections across pages, but never act on records removed by a new filter.
  useEffect(()=>{
    const ids=new Set(rows.map(row=>row.id));
