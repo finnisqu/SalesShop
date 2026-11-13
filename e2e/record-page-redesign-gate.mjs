@@ -129,15 +129,34 @@ for(const page of ['DealRecordPage','PersonRecordPage'])
   assert(source('src/components/'+page+'.tsx').split('right={<>')[1].includes('<RecordCard title="Company"'),
     page+' missing right-column Company');
 
+// #332e moved visual Unlink controls into a single confirmation/busy/error
+// component. Keep the gate focused on the actual safety boundary and callers,
+// not the previous inline button markup.
+const sharedUnlink=source('src/components/RecordUnlinkButton.tsx');
+assert(contains(sharedUnlink,[
+  'className="ss-record-unlink-button"',
+  'window.confirm(confirmation)',
+  'disabled={disabled||busy}',
+  'try{await onUnlink();}',
+  'role="alert"'
+]),'Shared record Unlink confirmation or busy/error behavior changed');
 const tasks=source('src/components/RecordTasksPanel.tsx');
 assert(contains(tasks,[
-  'isProtectedBidTask(task)','normalizedTaskAssociations(task).filter(',
-  'className="ss-record-unlink-button"'
+  'editing&&!preview&&storedScope===scope&&!isProtectedBidTask(task)',
+  'normalizedTaskAssociations(task).filter(',
+  '<RecordUnlinkButton',
+  "confirmation={'Unlink this Task from '+name"
 ]),'Task unlink protections changed');
 const people=source('src/components/DealPersonRelationships.tsx');
 assert(people.includes('const editingThisRole=editingRole===person.id'),'Direct person role edit changed');
-assert.equal((people.match(/className="ss-record-unlink-button"/g)||[]).length,2,
+assert.equal((people.match(/<RecordUnlinkButton /g)||[]).length,2,
   'People unlink control mismatch');
+assert(contains(people,[
+  'editing&&<RecordUnlinkButton disabled={busy}',
+  'editing&&manager.editable&&<RecordUnlinkButton disabled={busy}',
+  'manager.remove(dealId,person.id)',
+  'manager.remove(deal.id,personId)'
+]),'Direct Deal–Person unlink permission or persistence protection changed');
 const menu=source('src/components/RecordActionsMenu.tsx');
 assert(contains(menu,['Unlink connections','Delete record…','window.confirm(']),
   'Record actions delete/unlink protections changed');
