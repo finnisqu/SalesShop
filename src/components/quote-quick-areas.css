@@ -217,3 +217,16 @@
  .sales-app .qmb .qqs-area-name .qqs-pencil{
   opacity:1;pointer-events:auto;}
 }
+
+/* Quote-time Catalog product metadata in the General pricing sheet: private
+ * source data stays distinct from the editable customer selling price. */
+:root[data-sales-theme] .sales-app .qqs-item-card .qqs-catalog-source{
+ display:block;min-width:0;overflow-wrap:anywhere;
+ padding:7px 9px;border:1px solid var(--ss-theme-border);
+ border-radius:7px;background:var(--ss-theme-base);
+ color:var(--ss-theme-muted);font-size:11px;line-height:1.5;
+}
+:root[data-sales-theme] .sales-app .qqs-item-card label>small{
+ display:block;margin-top:3px;
+ color:var(--ss-theme-muted);font-size:10px;line-height:1.4;
+}
