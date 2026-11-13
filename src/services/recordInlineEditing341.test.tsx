@@ -82,6 +82,23 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
   expect(actions).toContain('aria-disabled={disabled}');
   expect(actions).toContain('if(disabled)event.preventDefault()');
  });
+ it('closes full-page CRM editors if rights are withdrawn and rejects a stale Save',()=>{
+  for(const [filename,grant,state,entity] of [
+   ['CompanyRecordPage.tsx','canEditRecord','setEditError','Company'],
+   ['PersonRecordPage.tsx','canEditRecord','setEditError','Person'],
+   ['DealRecordPage.tsx','canEditCrm','setSaveError','Deal'],
+  ]){
+   const code=source('components/'+filename);
+   expect(code).toContain('useEffect(()=>{if(!'+grant+
+    '){setEditing(false);setUnlinking(false);}},['+grant+'])');
+   expect(code).toContain('if(!'+grant+'){'+state+
+    "('You no longer have permission to edit this "+entity+".');return;}");
+   expect(code).toContain('<RecordActionsMenu unlinking={unlinking} disabled={!'+grant+'}');
+  }
+  const css=source('record-page-refinement.css');
+  expect(css).toContain('.ss-record-pencil:disabled');
+  expect(css).toContain('.ss-record-actions-menu>summary[aria-disabled="true"]');
+ });
  it('never removes the last Person identifier via independent inline email editing',()=>{
   const person=source('components/PersonRecordPage.tsx');
   expect(person).toContain("(!value.trim()&&!person.name.trim()?'Enter a name or email.':undefined)");
