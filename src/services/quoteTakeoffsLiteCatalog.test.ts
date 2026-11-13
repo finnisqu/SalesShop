@@ -68,6 +68,59 @@ describe('Takeoffs Lite Catalog integration',()=>{
     expect(notPriced.lines.find(l=>l.takeoffSinkId)).toBeUndefined();
     expect(notPriced.sections[0].scope?.takeoffSinks?.[0]?.sinkReference).toEqual(reference);
   });
+  it('changes an Area Material reference only on a committed selection, preserving its selling rate',()=>{
+    const current=quote();
+    const material:StockMaterial={
+      id:'m-2',name:'Black Quartz',materialType:'Quartz',
+      active:true,stockProgram:true,unit:'sf',variants:[{
+       id:'black',active:true,default:true,thickness:'3cm',
+       purchaseOptions:[{id:'program',active:true,default:true,
+        pricingBasis:'sf',costPerSf:26}],
+      }],
+    };
+    const catalog=resolveStockMaterialCostReference(material,'black','program');
+    const ref:QuoteLineMaterialReference={
+      materialId:'m-2',variantId:'black',purchaseOptionId:'program',
+      stockProgram:true,pricingSource:'manual-line-rate',
+      sourceCostPerSf:catalog.costPerSf,
+      snapshot:createQuoteMaterialCostSnapshot(material,catalog,now),
+    };
+    const selected=patchQuoteTakeoffMaterial(current,'k','Black Quartz',ref);
+    const linked=selected.lines.find(l=>l.id==='sf')!;
+    expect(linked).toMatchObject({kind:'material',rate:55,quantity:20,
+      materialReference:ref});
+    const custom=patchQuoteTakeoffMaterial(selected,'k','Custom Blue Marble');
+    expect(custom.sections[0].scope).toMatchObject({
+      takeoffMaterial:'Custom Blue Marble',
+      takeoffMaterialReference:undefined,
+    });
+    expect(custom.lines.find(l=>l.id==='sf')).toMatchObject({
+      kind:'item',description:'Custom Blue Marble',rate:55,quantity:20,
+      materialReference:undefined,
+    });
+    expect(current.sections[0].scope?.takeoffMaterialReference).toBeUndefined();
+    expect(current.lines.find(l=>l.id==='sf')?.rate).toBe(55);
+  });
+  it('keeps Material and Sink search drafts local until an explicit selection or custom commit',()=>{
+    const picker=read('src/components/TakeoffCatalogPickers.tsx');
+    const material=picker.split('export function TakeoffMaterialCatalog')[1]
+      .split('export function TakeoffSinkCatalog')[0];
+    const sink=picker.split('export function TakeoffSinkCatalog')[1];
+    for(const source of [material,sink]){
+      expect(source).toContain('value={open?searchTerm:value}');
+      expect(source).toContain('onChange={e=>{setSearchTerm(e.target.value)');
+      expect(source).not.toContain('onTextChange(e.target.value)');
+      expect(source).toContain('onTextChange(name)');
+      expect(source).toContain('onFocus={()=>{setSearchTerm(\'\');setOpen(true);}}');
+      expect(source).toContain('qtl-search-preserved');
+      expect(source).toContain('setOpen(false);setSearchTerm(\'\')');
+    }
+    expect(material).toContain('onSelect({');
+    expect(material).toContain('if(resolved.variant?.id!==v.id');
+    expect(material).toContain('onCustomCommit?.()');
+    expect(sink).toContain('onSelect({name:sinkSnapshotDescription(snapshot)');
+    expect(read('src/quote-takeoffs-lite.css')).toContain('max-height:min(29dvh,210px)');
+  });
   it('uses the same catalog stores as Quote line selectors and mobile-safe search controls',()=>{
     const pickers=read('src/components/TakeoffCatalogPickers.tsx');
     const modal=read('src/components/QuoteTakeoffsLite.tsx');
