@@ -77,7 +77,31 @@ export function compareQuoteMaterialSnapshot(
     || !sameMoney(snapshot.slabCost, current.slabCost);
   const sourceChanged = snapshot.sourcePublicationId !== current.sourcePublicationId
     || snapshot.sourceEffectiveDate !== current.sourceEffectiveDate
-    || snapshot.sourcePriceListLabel !== current.sourcePriceListLabel;
+    || snapshot.sourcePriceListLabel !== current.sourcePriceListLabel
+    || snapshot.materialName !== current.materialName
+    || snapshot.brand !== current.brand
+    || snapshot.supplier !== current.supplier
+    || snapshot.materialType !== current.materialType
+    || snapshot.materialFamily !== current.materialFamily
+    || snapshot.stockProgram !== current.stockProgram
+    || snapshot.variantId !== current.variantId
+    || snapshot.variantLabel !== current.variantLabel
+    || snapshot.thickness !== current.thickness
+    || snapshot.finish !== current.finish
+    || snapshot.formatName !== current.formatName
+    || snapshot.formatKind !== current.formatKind
+    || snapshot.lengthIn !== current.lengthIn
+    || snapshot.widthIn !== current.widthIn
+    || snapshot.areaSf !== current.areaSf
+    || snapshot.availability !== current.availability
+    || snapshot.purchaseOptionId !== current.purchaseOptionId
+    || snapshot.purchaseOptionLabel !== current.purchaseOptionLabel
+    || snapshot.purchaseMinQuantity !== current.purchaseMinQuantity
+    || snapshot.pricingBasis !== current.pricingBasis
+    || snapshot.sourceFileName !== current.sourceFileName
+    || snapshot.sourcePageSheet !== current.sourcePageSheet
+    || snapshot.sourceReference !== current.sourceReference
+    || snapshot.sourceProvenance !== current.sourceProvenance;
   return {
     changed: costChanged || sourceChanged,
     costChanged,
