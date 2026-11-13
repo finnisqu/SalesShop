@@ -24,6 +24,24 @@ describe('Unified CRM relationship field and pin polish',()=>{
   expect(external).toContain('<ExternalQuoteSentForm key={selected.id}');
   expect(external).not.toContain('newDealOpen');
  });
+ it('supports in-place Company create/link during Person and Deal creation in Activity',()=>{
+  const activity=source('src/components/ActivityRelatedQuickCreate.tsx');
+  const picker=source('src/components/UnifiedRecordPicker.tsx');
+  const styles=source('src/activity-related-create.css');
+  expect(activity).toContain('<UnifiedRecordPicker kind="Company"');
+  expect(activity).toContain('onCreate={createCompanyWhileLogging}');
+  expect(activity).toContain('onLink={id=>{setCompanyId(id);setCreatedCompanyId(null);}}');
+  expect(activity).toContain("setCreatedCompanyId(id)");
+  expect(activity).toContain("companyId:companyId||undefined");
+  expect(activity).toContain("if(companyId)relinkDealCompany(id,companyId)");
+  expect(activity).toContain("!event.target.closest('.ss-unified-record-picker')");
+  expect(activity).not.toContain('<select disabled={disabled} value={companyId}');
+  expect(styles).toContain('.activity-related-company-picker .ss-unified-picker-panel');
+  expect(picker).toContain('const exactMatch=items.find');
+  expect(picker).toContain('e.preventDefault();e.stopPropagation()');
+  expect(picker).toContain('if(one){void run(()=>onLink(one.id));return;}');
+  expect(picker).toContain('if(!matches.length&&onCreate&&needle)');
+ });
  it('renders a symmetric, readable shared pin used by the worktables and Materials',()=>{
   const icon=renderToStaticMarkup(<WorkspaceChromeIcon name="pin"/>);
   expect(icon).toContain('M9 3h6v6l3 4v2H6v-2l3-4V3Z');
