@@ -49,12 +49,11 @@ function writeStoneTotal(quote:Quote,section:QuoteSection,total:number|undefined
  if(primary.pricingMode==='quantity-rate'&&billed>0){
   store.updateLine(quote.id,primary.id,{
    rate:total===undefined?undefined:Math.round(total/billed*10000)/10000,
-   rateReference:undefined,
   });
  }else{
   // The user explicitly replaced the selling total; make that a manual price.
   store.updateLine(quote.id,primary.id,{
-   pricingMode:'direct',amount:total,rate:undefined,rateReference:undefined,
+   pricingMode:'direct',amount:total,rate:undefined,
    ...(primary.materialReference?{materialReference:{
     ...primary.materialReference,pricingSource:'manual-line-rate' as const}}:{}),
   });
@@ -67,7 +66,6 @@ function writeSingleChargeTotal(quote:Quote,line:QuoteLine,total:number|undefine
  if(line.pricingMode==='quantity-rate'&&(line.quantity??0)>0){
   store.updateLine(quote.id,line.id,{
    rate:total===undefined?undefined:Math.round(total/(line.quantity??1)*10000)/10000,
-   rateReference:undefined,
   });
  }else{
   store.updateLine(quote.id,line.id,{pricingMode:'direct',amount:total,rate:undefined});
