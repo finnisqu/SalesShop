@@ -103,3 +103,41 @@
   box-shadow:inset 0 -2px var(--ss-theme-accent)!important;
  }
 }
+
+
+/* Quotes: center the Records tabs against the ENTIRE desktop header.
+ * The default grid positioning puts the tabs in column 2. Applying
+ * absolute/50% to that grid child previously positioned it relative to
+ * that column, which shifted the tab group to the right.
+ *
+ * A full-grid, non-interactive overlay keeps the *same* visual midpoint
+ * as Companies/Deals while retaining clickability of the tabs and More.
+ * Leave the standard two-row layout and mobile layout untouched. */
+@media(min-width:1400px){
+ :root[data-sales-theme] .sales-app.view-quotes
+ .qmb-library-workspace-header.ss-workspace-header{
+  position:relative;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes
+ .qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tabs{
+  position:absolute!important;
+  grid-column:1 / -1!important;
+  grid-row:1!important;
+  inset:0!important;
+  width:auto!important;
+  max-width:none!important;
+  margin:0!important;
+  transform:none!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  pointer-events:none;
+  overflow:visible!important;
+  z-index:2;
+ }
+ :root[data-sales-theme] .sales-app.view-quotes
+ .qmb-library-workspace-header.ss-workspace-header
+ >.ss-workspace-header__tabs>.records-section-nav{
+  pointer-events:auto;
+ }
+}
