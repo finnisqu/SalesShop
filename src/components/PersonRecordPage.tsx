@@ -204,7 +204,9 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
             disabled={!canEditRecord}
             onSave={value=>updateContact(person.id,{title:value.trim()||undefined})}/>
           <RecordInlineProperty label="Email" type="email" value={person.email??''}
-            disabled={!canEditRecord} validate={recordEmailError}
+            disabled={!canEditRecord}
+             validate={value=>recordEmailError(value)||
+               (!value.trim()&&!person.name.trim()?'Enter a name or email.':undefined)}
             onSave={value=>updateContact(person.id,{email:value.trim()||undefined})}/>
           <RecordInlineProperty label="Phone" value={person.phone??''}
             disabled={!canEditRecord}
