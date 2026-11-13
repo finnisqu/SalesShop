@@ -6,6 +6,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
+import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-other-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -128,6 +129,8 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
       <div><dt>Cost</dt><dd>{variant.internalCost===undefined?'—':money.format(variant.internalCost)}</dd></div>
       <div><dt>Customer price</dt><dd>{variant.sellPrice===undefined?'—':money.format(variant.sellPrice)}</dd></div></dl>
      <small>{variant.notes||item.notes||'No notes'}</small>
+     {item.active&&variant.active&&<CatalogQuoteLauncher
+      source={{kind:'other',item,variantId:variant.id}}/>}
     </article>)}
    </div>
   </section>}
@@ -211,6 +214,8 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
               {variant.default?' · Default':''}{variant.active?'':' · Inactive'}</small></div>
              <button type="button" className={'materials-pin-button'+(pinned?' is-pinned':'')}
               aria-pressed={pinned} onClick={()=>pin(item.id,variant.id)}>{pinned?'Pinned':'Pin'}</button>
+             {item.active&&variant.active&&<CatalogQuoteLauncher
+              source={{kind:'other',item,variantId:variant.id}}/>}
             </div>
             {editing?<div className="catalog-product-properties">
              <Text label="Variant" value={variant.label} change={value=>updateV(item,variant,'label',value)}/>
