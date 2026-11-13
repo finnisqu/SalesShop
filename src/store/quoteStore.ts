@@ -82,7 +82,7 @@ interface QuoteState {
   linkQuoteCompany: (quoteId: string, company: Pick<Company, 'id' | 'name'>) => void;
   linkQuoteContact: (quoteId: string, contact: Pick<Contact, 'id' | 'name' | 'email'>) => void;
   addLine: (quoteId: string, kind?: QuoteLineKind, sectionId?: string) => string;
-  addCatalogLine: (quoteId: string, kind: 'material' | 'sink' | 'rate', patch: Partial<Omit<QuoteLine, 'id'>>) => string;
+  addCatalogLine: (quoteId: string, kind: 'material' | 'sink' | 'rate' | 'item', patch: Partial<Omit<QuoteLine, 'id'>>) => string;
   updateLine: (quoteId: string, lineId: string, patch: Partial<Omit<QuoteLine, 'id'>>) => void;
   deleteLine: (quoteId: string, lineId: string) => void;
   reorderLine: (quoteId: string, lineId: string, direction: -1 | 1) => void;
