@@ -88,9 +88,11 @@ export function TaskModalHost(){
   close();setExternalDealId(dealId);
  };
  const save=(changes:TaskChanges&{title:string})=>{
+  if(!scope||usePersonalTaskStore.getState().scope!==scope)
+   throw new Error('Your Task workspace changed. The unsaved Task draft was preserved.');
   if(request?.mode==='create'){
    const newId=create(changes.title,changes);
-   if(!newId)return; // Never remove a note without a Task.
+   if(!newId)throw new Error('Task could not be saved. Your draft is preserved; retry after Tasks finish loading.');
    if(request.agendaSource){
     const {entryId,sourceText}=request.agendaSource;
     if(useNotebookStore.getState().entries.some(e=>e.id===entryId))
@@ -107,7 +109,12 @@ export function TaskModalHost(){
     if(note?.type==='post-it'&&note.text===request.notes)
      useNotebookStore.getState().deleteObject(entryId,objectId);
    }
-  }else if(request?.id)update(request.id,changes);
+  }else if(request?.id){
+   if(!usePersonalTaskStore.getState().tasks.some(item=>
+    item.id===request.id&&!item.deletedAt&&item.workspaceScope===scope))
+    throw new Error('This Task is no longer available. The unsaved edit draft was preserved.');
+   update(request.id,changes);
+  }else throw new Error('No Task was selected. The unsaved draft was preserved.');
   close();
  };
  const openLink=(link:TaskLink)=>{
