@@ -35,7 +35,7 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   const dialog=file('src/components/ExternalQuoteBackfillDialog.tsx');
   expect(form).toContain('if(savingRef.current)return');
   expect(form).toContain('savingRef.current=true;setSaving(true)');
-  expect(form).toContain('finally{savingRef.current=false;setSaving(false)}');
+  expect(form).toContain('finally{savingRef.current=false;setSaving(false);}');
   expect(form).toContain('validExternalQuoteSentDate(bidSentDate,localToday())');
   expect(dialog).toContain('finally{onClose();}');
  });
