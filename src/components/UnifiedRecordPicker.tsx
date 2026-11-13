@@ -2,6 +2,7 @@ import {useEffect,useRef,useState} from 'react';
 import type {ReactNode} from 'react';
 import '../record-unified-picker.css';
 import {useDismissiblePopover} from './useDismissibleDetails';
+import {recordNameKey} from '../services/recordNameKey';
 
 export interface RecordPickerOption{id:string;name:string;detail?:string;}
 /** Search existing links and create from the same field, like Quote material selection. */
@@ -20,11 +21,11 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
  const pendingRef=useRef(false);
  useDismissiblePopover(rootRef,open,()=>{if(!pendingRef.current){setOpen(false);setQuery('');setError('');}},'.ss-unified-picker-trigger');
  useEffect(()=>{if(open)inputRef.current?.focus();},[open]);
- const needle=query.trim().toLowerCase();
- const matching=items.filter(item=>[item.name,item.detail??''].join(' ')
-  .toLowerCase().includes(needle));
+ const needle=recordNameKey(query);
+ const matching=items.filter(item=>recordNameKey([item.name,item.detail??''].join(' '))
+  .includes(needle));
  const matches=matching.slice(0,12);
- const exactMatch=items.find(item=>item.name.trim().toLowerCase()===needle);
+ const exactMatch=items.find(item=>recordNameKey(item.name)===needle);
  const exact=Boolean(exactMatch);
  const run=async(action:()=>void|Promise<void>)=>{
   // React state updates can be batched: an immediate ref guard prevents

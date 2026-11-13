@@ -3,9 +3,22 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
+import {recordNameKey} from '../services/recordNameKey';
 const source=(path:string)=>readFileSync(join(process.cwd(),path),'utf8');
 
 describe('Unified CRM relationship field and pin polish',()=>{
+ it('treats harmless spacing and case differences as the same record name',()=>{
+  expect(recordNameKey('  ACME   BUILDERS ')).toBe('acme builders');
+  expect(recordNameKey('Acme Builders')).toBe('acme builders');
+  expect(recordNameKey('A\nB\tC')).toBe('a b c');
+  expect(recordNameKey('')).toBe('');
+  const picker=source('src/components/UnifiedRecordPicker.tsx');
+  const quickCreate=source('src/components/ActivityRelatedQuickCreate.tsx');
+  expect(picker).toContain('recordNameKey(item.name)===needle');
+  expect(quickCreate).toContain('recordNameKey(c.name)===recordNameKey(clean)');
+  expect(quickCreate).toContain('recordNameKey(p.name)===recordNameKey(clean)');
+  expect(quickCreate).toContain('recordNameKey(d.name)===recordNameKey(clean)');
+ });
  it('stages a Person Company selection or creation until saving, and discards it on cancel',()=>{
   const person=source('src/components/PersonRecordPage.tsx');
   expect(person).toContain('<UnifiedRecordPicker kind="Company"');

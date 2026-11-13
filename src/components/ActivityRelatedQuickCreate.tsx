@@ -5,6 +5,7 @@ import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {companyRelationshipPatch} from '../services/companyRelationship';
 import {recordEmailError} from './RecordFormFeedback';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
+import {recordNameKey} from '../services/recordNameKey';
 import '../activity-related-create.css';
 
 type Kind='company'|'person'|'deal';
@@ -35,7 +36,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
  const createCompanyWhileLogging=(raw:string)=>{
   const clean=raw.trim();
   if(!clean)throw new Error('Enter a Company name.');
-  if(useCrmStore.getState().companies.some(c=>c.name.trim().toLowerCase()===clean.toLowerCase()))
+  if(useCrmStore.getState().companies.some(c=>recordNameKey(c.name)===recordNameKey(clean)))
    throw new Error('That Company already exists. Select it from search.');
   const existingIds=new Set(useCrmStore.getState().companies.map(c=>c.id));
   const id=resolveCompany(clean,'customer');
@@ -54,7 +55,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
    let id:string|undefined|null;
    let link:TaskAssociation;
    if(kind==='company'){
-    if(companies.some(c=>c.name.trim().toLowerCase()===clean.toLowerCase())){
+    if(companies.some(c=>recordNameKey(c.name)===recordNameKey(clean))){
      setError('That company already exists. Find and link it above.');return;
     }
     const existingIds=new Set(useCrmStore.getState().companies.map(c=>c.id));
@@ -67,7 +68,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
     const emailIssue=recordEmailError(email);
     if(emailIssue){setError(emailIssue);return;}
     if(people.some(p=>(email.trim()&&p.email?.toLowerCase()===email.trim().toLowerCase())||
-      (p.name.toLowerCase()===clean.toLowerCase()&&(p.companyId??'')===companyId))){
+      (recordNameKey(p.name)===recordNameKey(clean)&&(p.companyId??'')===companyId))){
      setError('That person may already exist. Find and link their record above.');return;
     }
     id=createContact({name:clean,email:email.trim(),phone:phone.trim(),title:title.trim(),
@@ -75,7 +76,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
     if(!id)throw new Error('Could not create the person.');
     link={type:'contact',id,label:'Person · '+clean};
    }else{
-    if(deals.some(d=>d.name.trim().toLowerCase()===clean.toLowerCase()&&
+    if(deals.some(d=>recordNameKey(d.name)===recordNameKey(clean)&&
       (d.companyId??'')===companyId)){
      setError('That Deal already exists. Find and link it above.');return;
     }
