@@ -70,6 +70,15 @@ describe('Batch 332e — unified Record inline property editing',()=>{
   expect(source('RecordUnlinkAction.tsx')).toContain("['Draft','Ready'].includes(quote.status)");
   expect(source('RecordTasksPanel.tsx')).toContain('!isProtectedBidTask(task)');
  });
+ it('matches the Record More trigger to the header action height and touch-sized jump buttons',()=>{
+  const chrome=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
+  const record=readFileSync(new URL('../connections-record-pages.css',import.meta.url),'utf8');
+  expect(chrome).toContain('min-width:42px;min-height:42px;cursor:pointer');
+  expect(record).toContain('.connections-record-actions button{\n  min-height:42px;');
+  expect(chrome).toContain('.ss-record-actions-menu>summary{min-height:44px;min-width:44px}');
+  expect(record).toContain('border-radius:6px;min-height:44px;font-size:12px;');
+  expect(chrome).toContain('background:var(--ss-theme-card);color:var(--ss-theme-ink)');
+ });
  it('keeps linked-record navigation separate from compact Unlink buttons in every theme',()=>{
   const css=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
   const entity=readFileSync(new URL('../connections-record-pages.css',import.meta.url),'utf8');
