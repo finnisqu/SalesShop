@@ -123,6 +123,17 @@ describe('quote Rate Book snapshots', () => {
     expect(current.sellRate).toBe(16);
   });
 
+  it('detects Rate Book descriptions, codes and notes changing without automatic repricing',()=>{
+    const quoted=createQuoteRateSnapshot(rateItem({name:'Install',notes:'Old prep'}));
+    const next=createQuoteRateSnapshot(rateItem({name:'Installation labor',code:'INST',
+      notes:'New prep requirement',updatedAt:'2026-11-13'}));
+    expect(compareQuoteRateSnapshot(quoted,next)).toMatchObject({
+      changed:true,sellRateChanged:false,internalCostChanged:false,sourceChanged:true,
+    });
+    expect(quoted.name).toBe('Install');
+    expect(quoted.sellRate).toBe(14.5);
+  });
+
   it('flags a pricing-division change even when the numeric rate happens to match', () => {
     const item = rateItem({
       divisionOverrides: [{ division: 'Commercial', sellRate: 14.5 }],
