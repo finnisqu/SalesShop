@@ -10,6 +10,7 @@ import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
+import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-sink-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -91,14 +92,12 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
   });
  };
  const filtered=useMemo(()=>{
-  const needle=[query,externalQuery].filter(Boolean).join(' ').toLocaleLowerCase().trim();
   return models.filter(model=>(showInactive||model.active)&&
    (category==='all'||model.category===category)&&
-   (!needle||[model.name,model.modelCode,model.brand,model.supplier,
+   matchesCatalogSearch([model.name,model.modelCode,model.brand,model.supplier,
     model.material,model.mountType,model.notes,...(model.availableColors??[]),
     ...model.variants.flatMap(variant=>[variant.label,variant.code,variant.finish,variant.notes,
-      ...(variant.availableColors??[])])]
-    .join(' ').toLocaleLowerCase().includes(needle)))
+      ...(variant.availableColors??[])])],query,externalQuery))
    .sort((a,b)=>sort==='category'?a.category.localeCompare(b.category)||a.name.localeCompare(b.name):
      sort==='name'?a.name.localeCompare(b.name):
      sort==='cost'?(a.variants[0]?.internalCost??Infinity)-(b.variants[0]?.internalCost??Infinity):

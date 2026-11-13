@@ -7,6 +7,7 @@ import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
+import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-other-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -53,12 +54,11 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
  },[addItem,canEdit]);
  const categories=useMemo(()=>[...new Set(items.map(item=>item.category))].sort(),[items]);
  const filtered=useMemo(()=>{
-  const needle=[query,externalQuery].filter(Boolean).join(' ').toLowerCase().trim();
   return items.filter(item=>(showInactive||item.active)&&
     (category==='all'||item.category===category)&&
-    (!needle||[item.name,item.category,item.sku,item.brand,item.supplier,item.unit,item.notes,
+    matchesCatalogSearch([item.name,item.category,item.sku,item.brand,item.supplier,item.unit,item.notes,
      ...item.variants.flatMap(v=>[v.label,v.sku,v.specification,v.material,v.finish,v.notes,
-     ...(v.availableColors??[])])].join(' ').toLowerCase().includes(needle)))
+     ...(v.availableColors??[])])],query,externalQuery))
    .sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):
     sort==='brand'?(a.brand??'').localeCompare(b.brand??'')||a.name.localeCompare(b.name):
     a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
