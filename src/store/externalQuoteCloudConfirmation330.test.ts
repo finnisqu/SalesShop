@@ -3,6 +3,9 @@ import type {Project} from '../types/crm';
 import {localCrmRepository} from '../data/crmRepository';
 import {useAuthStore} from './authStore';
 import {useCrmStore} from './crmStore';
+import {savePendingExternalQuoteSubmission,readPendingExternalQuoteSubmission,
+ clearPendingExternalQuoteSubmission,type PendingExternalQuoteSubmission}
+ from '../services/externalQuotePendingSubmission';
 
 type Row=Record<string,unknown>;
 const cloud=vi.hoisted(()=>({
@@ -118,6 +121,39 @@ describe('Batch 330: external submission remote Deal acknowledgement',()=>{
   expect(cloud.insertCount).toBe(2);
   expect(useCrmStore.getState().activities.map(a=>a.id))
    .toEqual(['submission-stable-id']);
+ });
+ it('recovers an acknowledged Activity across a simulated browser refresh without duplicating it',async()=>{
+  const identity={organizationId:'org-cloud',userId:'rep-1',dealId:'deal-cloud'};
+  const pending:PendingExternalQuoteSubmission={...identity,version:1,
+   id:'submission-stable-id',recordedAt:'2026-11-13T13:00:00.000Z',
+   bidSentDate:'2026-11-12',amount:12000,format:'Builder portal'};
+  const records=new Map<string,string>();
+  const storage={
+   getItem:(key:string)=>records.get(key)??null,
+   setItem:(key:string,value:string)=>{records.set(key,value);},
+   removeItem:(key:string)=>{records.delete(key);},
+  };
+  expect(savePendingExternalQuoteSubmission(pending,storage)).toBe(true);
+  cloud.failProject=true;
+  await expect(submit()).rejects.toThrow('Deal update failed');
+  expect(cloud.activity).not.toBeNull();
+  expect(useCrmStore.getState().activities).toHaveLength(0);
+  // A browser reload restores the same pre-submission CRM snapshot.
+  useCrmStore.setState({projects:[{...deal}],activities:[]});
+  cloud.failProject=false;
+  const recovered=readPendingExternalQuoteSubmission(identity,storage);
+  expect(recovered).toEqual(pending);
+  expect(await useCrmStore.getState().recordExternalQuoteSent(
+   recovered!.dealId,recovered!.amount,recovered!.bidSentDate,
+   recovered!.format,recovered!.id,recovered!.recordedAt)).toBe(true);
+  expect(cloud.insertCount).toBe(2);
+  expect(useCrmStore.getState().activities).toHaveLength(1);
+  expect(useCrmStore.getState().activities[0].id).toBe(pending.id);
+  expect(useCrmStore.getState().projects[0]).toMatchObject({
+   stage:'Bid Sent',amount:12000,dueDate:undefined,
+  });
+  expect(clearPendingExternalQuoteSubmission(recovered!,storage)).toBe(true);
+  expect(readPendingExternalQuoteSubmission(identity,storage)).toBeNull();
  });
  it('recovers from a lost Deal write response by confirming its saved state',async()=>{
   cloud.lostAck=true;

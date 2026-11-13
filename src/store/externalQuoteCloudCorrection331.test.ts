@@ -67,7 +67,8 @@ describe('Batch 331: authenticated external Quote correction',()=>{
   const saved=useCrmStore.getState();
   expect(saved.activities).toHaveLength(1);
   expect(saved.activities[0]).toMatchObject({
-   id:activity.id,projectId:deal.id,occurredAt:'2025-05-13T12:00:00.000Z',
+   id:activity.id,projectId:deal.id,
+   occurredAt:new Date('2025-05-13T12:00:00').toISOString(),
    metadata:{externalQuoteSent:true,amount:5000,bidSentDate:'2025-05-13',
     recordedAt:timestamp,recordedByUserId:'rep-1',
     fromStage:'Bid Development',toStage:'Bid Sent',
