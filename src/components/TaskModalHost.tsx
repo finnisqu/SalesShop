@@ -7,6 +7,7 @@ import {TrashIcon,PencilIcon} from './TrashIcon';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {TaskEditor} from './TasksWorkspace';
 import {TaskPreviewDueControls} from './TaskPreviewDueControls';
+import {taskCompletionBlocker} from '../services/taskCompletionEligibility';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskChanges,type TaskLink,normalizedSubtasks,subtaskProgress,isProtectedBidTask,bidTaskDealId} from '../store/personalTaskStore';
 import type {CalendarTaskRequest} from '../services/taskModalEvents';
@@ -47,11 +48,12 @@ export function TaskModalHost(){
  const [externalDealId,setExternalDealId]=useState<string|null>(null);
  useModalScrollLock(Boolean(request||linkedPreview||externalDealId));
  const previewRef=useDismissibleLayer<HTMLElement>(
-  request?.mode==='preview',()=>setRequest(null));
+  request?.mode==='preview'&&!linkedPreview,()=>setRequest(null));
  useEffect(()=>{
   const receive=(event:Event)=>{
    const detail=(event as CustomEvent<CalendarTaskRequest>).detail;
    if((detail.mode==='preview'||detail.mode==='edit')&&!detail.id)return;
+   setLinkedPreview(null);setExternalDealId(null);
    setRequest(detail);
   };
   window.addEventListener('salesshop:task-modal',receive);
@@ -108,15 +110,16 @@ export function TaskModalHost(){
   close();
  };
  const openLink=(link:TaskLink)=>{
-  close();
-  if(link.type==='notebook'){nav.openNotebookPage(link.id);return;}
+  if(link.type==='notebook'){close();nav.openNotebookPage(link.id);return;}
+  // Keep this Task as the return point. Its dialog stays unmounted while
+  // the linked Record preview owns focus, Escape and mobile interactions.
   setLinkedPreview({kind:link.type==='contact'?'person':
    link.type==='project'?'deal':link.type==='company'?'company':'quote',id:link.id});
  };
  return <>{editTarget?<TaskEditor
   key={(request?.mode??'create')+':'+(request?.id??request?.dueDate??'new')}
   initial={editTarget} onCancel={close} onSave={save}
- />:task?<div className="tasks-dialog-backdrop ss-mobile-sheet-backdrop" onPointerDown={event=>{
+ />:task&&!linkedPreview?<div className="tasks-dialog-backdrop ss-mobile-sheet-backdrop" onPointerDown={event=>{
     if(event.target===event.currentTarget)close();
    }}>
     <section ref={previewRef} className="tasks-preview-card ss-mobile-sheet" role="dialog" aria-modal="true"
@@ -198,13 +201,20 @@ export function TaskModalHost(){
         {relatedQuote&&<button type="button" onClick={()=>{
          close();nav.openQuote(relatedQuote.id);
         }}>Open linked Quote ↗</button>}
-        <button type="button" disabled={task.status!=='completed'&&subtaskProgress(task).remaining>0}
-         title={task.status!=='completed'&&subtaskProgress(task).remaining>0?'Complete the checklist first':undefined}
+        <button type="button"
+         disabled={task.status!=='completed'&&
+          (task.status==='canceled'||Boolean(taskCompletionBlocker(task)))}
+         title={task.status==='canceled'?'Canceled tasks cannot be completed':
+          taskCompletionBlocker(task)==='incomplete-checklist'?'Complete the checklist first':
+          taskCompletionBlocker(task)==='bid-submission'
+           ?'Confirm quote delivery or record an external submission first':undefined}
          onClick={()=>{
-          if(task.status==='completed')reopen(task.id);else complete(task.id);
+          if(task.status==='completed')reopen(task.id);
+          else if(task.status!=='canceled'&&!taskCompletionBlocker(task))complete(task.id);
           close();
          }}>{task.status==='completed'?'Reopen task':'Complete'}</button>
-        {canLog&&task.status!=='completed'&&task.status!=='canceled'&&subtaskProgress(task).remaining===0&&
+        {canLog&&task.status!=='completed'&&task.status!=='canceled'&&
+         !taskCompletionBlocker(task)&&
          <button type="button" className="tasks-flow-action" onClick={()=>{
           close();openActivityComposer({taskId:task.id});
          }}>Complete + Log Activity</button>}
