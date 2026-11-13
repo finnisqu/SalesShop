@@ -66,10 +66,17 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(summary).toContain('line.otherReference&&<QuoteOtherLineFields');
   expect(summary).toContain("Calculated from Catalog");
   expect(summary).not.toContain("rateReference:undefined,");
-  expect(ratePicker).toContain('rateCatalogSelectionPatch(line,nextSnapshot)');
+  expect(ratePicker).toContain('quoteRateSourcePatch(line,nextSnapshot)');
+  expect(ratePicker).toContain('quoteRateCatalogPricePatch(line)');
+  expect(ratePicker).toContain('Refresh source · keep quoted price');
   expect(ratePicker).toContain('Manual selling override');
+  expect(sinkPicker).toContain('quoteSinkSourcePatch(line,nextSnapshot)');
+  expect(sinkPicker).toContain('quoteSinkCatalogPricePatch(line)');
+  expect(sinkPicker).toContain('Refresh source · keep quoted price');
   expect(sinkPicker).toContain('Manual selling override');
   expect(source).toContain('const sameUnit=priorUnit===snapshot.unit');
+  expect(source).toContain('export function quoteSinkSourcePatch(');
+  expect(source).toContain('export function quoteRateSourcePatch(');
   expect(source).toContain('catalogSellingOverride(line:QuoteLine)');
   const other=src('components/QuoteOtherLineFields.tsx');
   const otherPatch=src('services/quoteOtherSelection.ts');
