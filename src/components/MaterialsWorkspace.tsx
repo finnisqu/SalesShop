@@ -26,6 +26,7 @@ import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { CatalogPagination } from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
+import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import { restoreScrollAnchor } from '../lib/scrollAnchor';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -356,11 +357,13 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
                 className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`}
                 onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}
               ><WorkspaceChromeIcon name="pin"/> {isPinned ? 'Pinned' : 'Pin'}</button>
+              <CatalogQuoteLauncher source={{kind:'material',material,variantId:variant.id}}/>
             </article>
           );
         })}
         {!activeVariants.length && <div className="materials-variant-empty">
           <span>This material has no active structured variants yet. You can quote its legacy reference or add slab sizes in Edit materials.</span>
+          <CatalogQuoteLauncher source={{kind:'material',material}}/>
         </div>}
       </div>
     );
@@ -615,6 +618,8 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
                         <div><dt>Slab cost</dt><dd>{slabCost === undefined ? '—' : money.format(slabCost)}</dd></div>
                       </dl>
                       <small>{option?.label || 'No default price program'} · {availabilityLabel(variant.availability)}</small>
+                      {material.active&&variant.active!==false&&<CatalogQuoteLauncher
+                        source={{kind:'material',material,variantId:variant.id}}/>}
                     </article>
                   );
                 })}
