@@ -21,7 +21,7 @@ describe('Batch 333 — Catalog creation remains visible and variant management 
    const content=source('components/'+file+'.tsx');
    expect(content).toContain("disabled={key==='default'&&(!variant.active||variant.default)}");
    expect(content).toContain('catalog-product-default-note');
-   expect(content).toContain('normalizeCatalogVariantDefaults').toBe(false);
+   expect(content).not.toContain('normalizeCatalogVariantDefaults');
   }
  });
  it('uses active default pricing rather than retired first variants',()=>{
