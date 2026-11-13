@@ -8,6 +8,7 @@ import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
 import {TaskEditor} from './TasksWorkspace';
 import {TaskPreviewDueControls} from './TaskPreviewDueControls';
 import {taskCompletionBlocker} from '../services/taskCompletionEligibility';
+import {taskLinkedRecordPreview} from '../services/taskPreviewNavigation';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskChanges,type TaskLink,normalizedSubtasks,subtaskProgress,isProtectedBidTask,bidTaskDealId} from '../store/personalTaskStore';
 import type {CalendarTaskRequest} from '../services/taskModalEvents';
@@ -113,8 +114,8 @@ export function TaskModalHost(){
   if(link.type==='notebook'){close();nav.openNotebookPage(link.id);return;}
   // Keep this Task as the return point. Its dialog stays unmounted while
   // the linked Record preview owns focus, Escape and mobile interactions.
-  setLinkedPreview({kind:link.type==='contact'?'person':
-   link.type==='project'?'deal':link.type==='company'?'company':'quote',id:link.id});
+  const target=taskLinkedRecordPreview(link);
+  if(target)setLinkedPreview(target);
  };
  return <>{editTarget?<TaskEditor
   key={(request?.mode??'create')+':'+(request?.id??request?.dueDate??'new')}
