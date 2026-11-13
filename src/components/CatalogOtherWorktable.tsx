@@ -234,7 +234,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
           </label>
           <label className="catalog-product-property"><span>Active in catalog</span><input type="checkbox"
            checked={item.active} onChange={event=>setItemActive(item,event.target.checked)}/>
-           <small className="catalog-product-default-note">Uncheck to archive; saved quotes keep their original selections.</small></label>
+           <small className="catalog-product-default-note">{item.active?'Uncheck to archive':'Check to restore'}; saved quotes keep their original selections.</small></label>
          </div>}
          <div className="catalog-product-detail-head"><div><strong>Item variants</strong>
            {editing&&<small className="catalog-product-default-note">
@@ -275,12 +275,12 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
               <textarea rows={2} value={variant.notes??''}
                onChange={event=>updateV(item,variant,'notes',event.target.value)}/></label>
              {(['default'] as const).map(key=><label key={key} className="catalog-product-property">
-              <span>{key==='default'?'Default variant':'Active'}</span>
+              <span>Default variant</span>
               <input type="checkbox" checked={variant[key]}
                disabled={key==='default'&&(!variant.active||variant.default)}
                title={key==='default'?variant.active?
                 'Choose another active variant to change the default':
-                'Activate this variant before setting it as default':undefined}
+                'Restore this variant before setting it as default':undefined}
                onChange={event=>updateV(item,variant,key,event.target.checked)}/>
              </label>)}
              <div className="catalog-product-variant-operations">
@@ -288,9 +288,9 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
                 aria-label={(variant.active?'Archive ':'Restore ')+variant.label}
                 onClick={()=>setVariantActive(item,variant,!variant.active)}>
                 {variant.active?'Archive variant':'Restore variant'}</button>
-               <button type="button" onClick={()=>duplicateVariant(item.id,variant.id)}>Duplicate</button>
+               <button type="button" onClick={()=>duplicateVariant(item.id,variant.id)}>Duplicate variant</button>
               <button type="button" className="is-danger" disabled={item.variants.length<=1}
-               onClick={()=>{if(window.confirm('Delete this variant? Saved quotes retain their historical snapshots.'))removeVariant(item.id,variant.id);}}>Delete</button>
+               onClick={()=>{if(window.confirm('Delete this variant? Saved quotes retain their historical snapshots.'))removeVariant(item.id,variant.id);}}>Delete variant</button>
              </div>
             </div>:<dl className="catalog-product-facts">
              <div><dt>Specification</dt><dd>{variant.specification||'—'}</dd></div>
