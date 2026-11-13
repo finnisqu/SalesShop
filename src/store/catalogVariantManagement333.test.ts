@@ -185,7 +185,7 @@ describe('Batch 333 — persisted Sink and OTHER variant management',()=>{
   const second={...sinkModel(),id:'sink-keep',name:'Keep active'};
   useSinkCatalogStore.setState({models:[first,second]});
   const historical=createQuoteSinkSnapshot(first,first.variants[0]);
-  const before=structuredClone(useSinkCatalogStore.getState().models);
+  const before=useSinkCatalogStore.getState().models;
   useSinkCatalogStore.getState().setModelsActive(['sink333','missing','sink333'],false);
   const updated=useSinkCatalogStore.getState().models;
   expect(updated[0].active).toBe(false);
@@ -202,7 +202,7 @@ describe('Batch 333 — persisted Sink and OTHER variant management',()=>{
   const second={...otherItem(),id:'other-keep',name:'Unselected item'};
   useOtherCatalogStore.setState({items:[first,second]});
   const historical=createQuoteOtherSnapshot(first,first.variants[0]);
-  const before=structuredClone(useOtherCatalogStore.getState().items);
+  const before=useOtherCatalogStore.getState().items;
   useOtherCatalogStore.getState().setItemsActive(['other333','missing','other333'],false);
   const updated=useOtherCatalogStore.getState().items;
   expect(updated[0].active).toBe(false);
