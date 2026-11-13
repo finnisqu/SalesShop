@@ -30,7 +30,8 @@ describe('Batch 336 — Catalog page-scoped selection and filter parity',()=>{
    expect(table).toContain('pagination.page,pagination.pageSize,selecting');
    expect(table).toContain('const selecting=canEdit&&editing');
    expect(table).toContain('const selectedIds=pageSelection.selectedPageIds');
-   expect(table).toContain('pageSelection.selectPage(event.target.checked)');
+   expect(table).toContain('onChange={checked=>pageSelection.selectPage(checked)}');
+   expect(table).toContain('<WorktableSelectPageCheckbox');
    expect(table).toContain('pageSelection.selectRow(');
    expect(table).toContain('onArchive={bulkArchive} onRestore={bulkRestore}');
    expect(table).toContain('pageSelection.clear();');
