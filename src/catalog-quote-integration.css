@@ -245,3 +245,18 @@
   grid-column:2;grid-row:1;align-self:start;
  }
 }
+
+/* Sinks and OTHER use compact one-column variant cards. Let their title
+ * and two actions wrap when a phone is too narrow, never overflow the card. */
+:root[data-sales-theme] .sales-app.view-catalog
+ .catalog-sink-variant .catalog-product-variant-heading{
+ flex-wrap:wrap;justify-content:flex-start;gap:7px;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .catalog-sink-variant .catalog-product-variant-heading>div:first-child{
+ flex:1 1 160px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .catalog-sink-variant .catalog-product-variant-heading>.catalog-add-to-quote{
+ margin:0;min-height:32px;
+}
