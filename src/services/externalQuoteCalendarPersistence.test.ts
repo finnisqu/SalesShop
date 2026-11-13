@@ -104,6 +104,8 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   expect(localCommit).toBeGreaterThan(dealAck);
   expect(form).toContain('const saved=await recordExternalQuoteSent(');
   expect(form).toContain('submissionId.current,recordedAt.current');
+  expect(form).toContain('savePendingExternalQuoteSubmission(attempt)');
+  expect(form).toContain('clearPendingExternalQuoteSubmission(attempt)');
   expect(form).toContain('onRecorded?.(bidSentDate)');
   expect(store).toContain("await supabase.from('projects')");
   expect(store).toContain(".eq('stage',current.stage)");
