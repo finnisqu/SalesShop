@@ -20,6 +20,7 @@ interface SinkCatalogState {
   addModel: (category?: SinkCategory) => string;
   duplicateModel: (modelId: string) => string | null;
   updateModel: (id: string, patch: Partial<SinkModel>) => void;
+  setModelsActive: (modelIds: readonly string[], active: boolean) => void;
   addVariant: (modelId: string, seed?: Partial<SinkVariant>) => string;
   updateVariant: (modelId: string, variantId: string, patch: Partial<SinkVariant>) => void;
   duplicateVariant: (modelId: string, variantId: string) => string | null;
@@ -376,6 +377,16 @@ export const useSinkCatalogStore = create<SinkCatalogState>((set, get) => ({
           variants:normalizeCatalogVariantDefaults(patch.variants??model.variants),
           updatedAt: new Date().toISOString() }
       : model));
+  },
+
+  setModelsActive: (modelIds, active) => {
+    const selected = new Set(modelIds);
+    if (!selected.size || !get().models.some(model => selected.has(model.id) && model.active !== active)) return;
+    const now = new Date().toISOString();
+    updateModels(set, get, models => models.map(model =>
+      selected.has(model.id) && model.active !== active
+        ? { ...model, active, updatedAt: now }
+        : model));
   },
 
   addVariant: (modelId, seed = {}) => {
