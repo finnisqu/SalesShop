@@ -33,7 +33,8 @@ import '../tasks-workspace.css';
 
 export type PreviewRecord = {kind:'company'|'person'|'deal'|'quote';id:string};
 type Props={record:PreviewRecord;onClose:()=>void;onSelect?:(record:PreviewRecord)=>void;
-  onGoToQuotePage?:(id:string)=>void;onEditBoard?:(record:PreviewRecord)=>void};
+  onGoToQuotePage?:(id:string)=>void;onEditBoard?:(record:PreviewRecord)=>void;
+  returnToLabel?:string;};
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
 const shortDate=(date?:string)=>date?new Date(date.includes('T')?date:date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
 type PersonQuickMethod='call'|'text'|'email';
@@ -57,7 +58,7 @@ const nextContactDay=()=>{
 
 /** A consistent, nondestructive focus preview across Board and Connections.
  * Full record pages and document editors stay separate from preview clicks. */
-export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard}:Props){
+export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onEditBoard,returnToLabel}:Props){
  const [pendingPersonMethod,setPendingPersonMethod]=useState<PersonQuickMethod|null>(null);
  const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
  const ref=useDismissibleLayer<HTMLElement>(!pendingPersonMethod&&!activityPreviewId,onClose);
@@ -269,8 +270,10 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        (capture?' record-preview-capture-panel':'')+' ss-mobile-sheet'}>
      <MobileSheetHandle onClose={onClose} disabled={capture}/>
      <header className={person?'record-preview-person-header':undefined}>
-       {Boolean(onSelect&&previewTrail.length)&&<button type="button" className="record-preview-back"
-         onClick={backToRelated} aria-label="Back to previous related record">← Back</button>}
+       {Boolean(onSelect&&previewTrail.length)?<button type="button" className="record-preview-back"
+         onClick={backToRelated} aria-label="Back to previous related record">← Back</button>
+        :returnToLabel?<button type="button" className="record-preview-back"
+         onClick={onClose} aria-label={'Back to '+returnToLabel}>← Back to {returnToLabel}</button>:null}
        <PreviewPanelHeading eyebrow={capture?'Deal · Record external quote':center?'QUOTE · QUICK VIEW':label+' · Quick preview'} title={heading}/>
        {person&&<div className="record-preview-person-quick-actions" aria-label="Contact this person">
         {person.phone&&(['call','text'] as const).map(method=><a key={method}
