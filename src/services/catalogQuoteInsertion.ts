@@ -15,9 +15,18 @@ export type CatalogQuoteSource =
   | { kind: 'rate'; item: RateBookItem }
   | { kind: 'other'; item: OtherCatalogItem; variantId?: string };
 
-export function validateCatalogQuoteQuantity(quantity?: number):void{
+/** Physical sinks and EACH accessories cannot be quoted in fractional units.
+ * Other units remain measured quantities (SF, LF, etc.). */
+export function catalogQuoteWholeUnits(source:CatalogQuoteSource):boolean{
+ return source.kind==='sink'||(source.kind==='other'&&
+  (!source.item.unit||source.item.unit==='each'));
+}
+
+export function validateCatalogQuoteQuantity(quantity?: number,source?:CatalogQuoteSource):void{
   if(quantity!==undefined&&(!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000))
     throw new Error('Enter a positive quantity no greater than 1,000,000.');
+  if(quantity!==undefined&&source&&catalogQuoteWholeUnits(source)&&!Number.isInteger(quantity))
+    throw new Error('Enter a whole-number quantity for this Catalog product.');
 }
 
 /** Reject an explicit stale/inactive variant instead of silently quoting a
@@ -55,7 +64,7 @@ export function buildCatalogQuoteLinePatch(
   source: CatalogQuoteSource,
   options: { variantId?: string; purchaseOptionId?: string; quantity?: number; division?: RateBookDivision } = {},
 ): Partial<QuoteLine> {
-  validateCatalogQuoteQuantity(options.quantity);
+  validateCatalogQuoteQuantity(options.quantity,source);
   validateCatalogQuoteSource(source,options.variantId,options.purchaseOptionId);
   if (source.kind === 'material') {
     const reference = resolveStockMaterialCostReference(source.material, options.variantId ?? source.variantId, options.purchaseOptionId);

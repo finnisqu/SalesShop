@@ -33,10 +33,18 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(store).toContain('recentCatalogInsert:{quoteId:quote.id,lineId:line.id}');
   expect(modal).toContain('validateCatalogQuoteSource(source,');
   expect(modal).toContain("source.kind==='other'?'item':source.kind");
-  expect(modal).toContain('disabled={!validQuantity || !validSource}');
+  expect(modal).toContain('disabled={inserting || !validQuantity || !validSource}');
   expect(modal).toContain('const countRequired=source.kind');
-  expect(builder).toContain('validateCatalogQuoteQuantity(options.quantity)');
+  expect(builder).toContain('validateCatalogQuoteQuantity(options.quantity,source)');
   expect(builder).toContain('validateCatalogQuoteSource(source,options.variantId,options.purchaseOptionId)');
+ });
+ it('serializes Catalog-to-Quote creation and avoids duplicate writes after a committed insert',()=>{
+  const modal=src('components/CatalogQuoteInsert.tsx');
+  expect(modal).toContain('if(insertPending.current)return');
+  expect(modal).toContain('insertPending.current=true;setInserting(true)');
+  expect(modal).toContain('committed=true;');
+  expect(modal).toContain('if(!committed){insertPending.current=false;setInserting(false)}');
+  expect(modal).toContain('catalogQuoteWholeUnits(source)');
  });
  it('round-trips private OTHER catalog snapshots using existing rate_reference JSONB',()=>{
   const quote=src('types/quote.ts');

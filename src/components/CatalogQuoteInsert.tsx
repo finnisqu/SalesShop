@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {createPortal} from 'react-dom';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -7,7 +7,7 @@ import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
-import { buildCatalogQuoteLinePatch, validateCatalogQuoteSource, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
+import { buildCatalogQuoteLinePatch, validateCatalogQuoteSource, catalogQuoteWholeUnits, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
 import { catalogQuoteDestinationLabel } from '../services/catalogQuoteDestination';
 import { resolveStockMaterialCostReference, defaultMaterialVariant, defaultMaterialPurchaseOption } from '../types/settings';
 import { defaultSinkVariant } from '../types/sink';
@@ -61,6 +61,8 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const [quantityText, setQuantityText] = useState(() => source.kind === 'sink' || source.kind === 'other' ? '1' : source.kind === 'rate' && ['each','slab'].includes(source.item.unit) ? '1' : '');
   const [newTitle, setNewTitle] = useState('');
   const [error, setError] = useState('');
+  const [inserting,setInserting]=useState(false);
+  const insertPending=useRef(false);
 
   useEffect(() => { hydrate(); }, [hydrate]);
 
@@ -91,7 +93,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const rateValues = source.kind === 'rate' ? resolveRateBookValues(source.item, destination?.pricingDivision) : undefined;
   const quantityValue = quantityText.trim() ? Number(quantityText) : undefined;
   const countRequired=source.kind==='sink'||source.kind==='other';
-  const wholeUnits=source.kind==='sink'||(source.kind==='other'&&(!source.item.unit||source.item.unit==='each'));
+  const wholeUnits=catalogQuoteWholeUnits(source);
   const validQuantity = quantityValue===undefined?!countRequired:
     Number.isFinite(quantityValue)&&quantityValue>0&&quantityValue<=1_000_000&&
     (!wholeUnits||Number.isInteger(quantityValue));
@@ -115,11 +117,17 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
         : (rateValues?.sellRate === undefined ? 'Customer price not set' : `${money.format(rateValues.sellRate)}/${RATE_BOOK_UNIT_LABELS[source.item.unit]} suggested sell`);
 
   const insert = () => {
+    // Immediately serialize rapid taps; the disabled state may not have
+    // rendered when another click event arrives.
+    if(insertPending.current)return;
     setError('');
     if (!validQuantity) { setError(countRequired
       ?'Enter a positive'+(wholeUnits?' whole-number':'')+' quantity for this product.'
       :'Enter a positive quantity, or leave it blank for takeoff later.'); return; }
+    if(!validSource){setError('Choose an active Catalog source.');return;}
+    insertPending.current=true;setInserting(true);
     const finalTarget = eligible.find((quote) => quote.id === targetId);
+    let committed=false;
     try {
       // Validate and capture the exact selection BEFORE creating a quote.
       // A removed variant must not silently become the current default.
@@ -148,10 +156,17 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
         quoteId=createCatalogQuote(newTitle.trim()||`Quote · ${title}`,kind,patch);
         if(!quoteId){setError('Could not create the Catalog quote.');return;}
       }
+      committed=true;
       onClose();
       openQuote(quoteId);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not add this catalog reference.');
+      setError(committed
+        ?'The Catalog item was saved, but navigation failed. Open the Quote from Records instead of adding it again.'
+        :reason instanceof Error ? reason.message : 'Could not add this catalog reference.');
+    }finally{
+      // A committed insert cannot be retried from this dialog: doing so
+      // could create a duplicate line or a second quote.
+      if(!committed){insertPending.current=false;setInserting(false);}
     }
   };
 
@@ -215,7 +230,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
         </div>
         <footer className="catalog-quote-footer">
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="button" className="primary" disabled={!validQuantity || !validSource} onClick={insert}>Add & open quote →</button>
+          <button type="button" className="primary" disabled={inserting || !validQuantity || !validSource} onClick={insert}>Add & open quote →</button>
         </footer>
       </div>
     </div>

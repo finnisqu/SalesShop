@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCatalogQuoteLinePatch, validateCatalogQuoteQuantity,
+import { buildCatalogQuoteLinePatch, validateCatalogQuoteQuantity, catalogQuoteWholeUnits,
  validateCatalogQuoteSource } from './catalogQuoteInsertion';
 import type {OtherCatalogItem} from '../store/otherCatalogStore';
 import type { StockMaterial } from '../types/settings';
@@ -111,6 +111,24 @@ describe('Catalog to Quotes snapshots', () => {
     expect(()=>validateCatalogQuoteQuantity(undefined)).not.toThrow();
     expect(()=>buildCatalogQuoteLinePatch({kind:'sink',model:sink},{quantity:-2}))
       .toThrow(/positive quantity/);
+  });
+
+  it('enforces whole units for sinks and each accessories at the service boundary',()=>{
+    const other:OtherCatalogItem={
+      id:'other1',name:'Accessory',category:'Plumbing',unit:'each',active:true,
+      updatedAt:'2026-11-13',variants:[{id:'standard',label:'Standard',active:true,default:true,sellPrice:10}],
+    };
+    expect(catalogQuoteWholeUnits({kind:'sink',model:sink})).toBe(true);
+    expect(catalogQuoteWholeUnits({kind:'other',item:other})).toBe(true);
+    expect(catalogQuoteWholeUnits({kind:'material',material})).toBe(false);
+    expect(()=>buildCatalogQuoteLinePatch({kind:'sink',model:sink},{quantity:1.5}))
+      .toThrow(/whole-number quantity/);
+    expect(()=>buildCatalogQuoteLinePatch({kind:'other',item:other},{quantity:2.25}))
+      .toThrow(/whole-number quantity/);
+    expect(buildCatalogQuoteLinePatch({kind:'sink',model:sink},{quantity:2}).quantity).toBe(2);
+    const measured={...other,unit:'sf' as const};
+    expect(catalogQuoteWholeUnits({kind:'other',item:measured})).toBe(false);
+    expect(buildCatalogQuoteLinePatch({kind:'other',item:measured},{quantity:2.25}).quantity).toBe(2.25);
   });
 
   it('keeps internal-only rate references out of customer totals', () => {
