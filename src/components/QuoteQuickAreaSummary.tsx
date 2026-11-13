@@ -2,6 +2,7 @@ import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote,QuoteLine,QuoteSection,QuoteTakeoffSink} from '../types/quote';
 import {quoteLineAmount,quoteTotal} from '../types/quote';
+import {catalogSellingOverride} from '../services/quoteCatalogLineEditing';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
@@ -361,6 +362,13 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
      {(detail.kind==='specialty'||!section&&detail.kind==='total')&&<>
       <p>Specialty charges, products, freight and discounts. Each line remains independently editable.</p>
       {extras.map(line=><section key={line.id} className="qqs-item-card">
+       {line.otherReference&&<small className="qqs-catalog-source" aria-label="Saved product catalog reference">
+        Catalog source · {line.otherReference.snapshot.itemName} · {line.otherReference.snapshot.variantLabel}
+        {catalogSellingOverride(line)?' · Manual selling override':''}
+        {' · '}Private unit cost {line.unitCost??line.otherReference.snapshot.internalCost===undefined
+          ?'not recorded':amount(line.unitCost??line.otherReference.snapshot.internalCost??0)}
+        {line.internalCost!==undefined?' · Private total cost overridden':''}
+       </small>}
        <label>Description
         <input type="text" disabled={!editable} value={line.description}
          onChange={e=>changeLine(line,{description:e.target.value})}/>
@@ -382,9 +390,11 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
           value={line.pricingMode==='quantity-rate'?line.rate:line.amount} disabled={!editable}
           onCommit={v=>changeLine(line,line.pricingMode==='quantity-rate'?{rate:v}:{amount:v})}/>
         </label>
-        <label>Private cost
-         <CommitNumber label={'Private cost '+line.description} value={line.internalCost}
+        <label>Private total cost
+         <CommitNumber label={'Private total cost '+line.description} value={line.internalCost}
           disabled={!editable} onCommit={v=>changeLine(line,{internalCost:v})}/>
+         {line.internalCost===undefined&&line.unitCost!==undefined&&line.quantity!==undefined&&
+          <small>Calculated from Catalog · {amount(line.unitCost*line.quantity)}</small>}
         </label>
        </div>
        <div className="qqs-item-total">
