@@ -365,7 +365,7 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
        {line.otherReference&&<small className="qqs-catalog-source" aria-label="Saved product catalog reference">
         Catalog source · {line.otherReference.snapshot.itemName} · {line.otherReference.snapshot.variantLabel}
         {catalogSellingOverride(line)?' · Manual selling override':''}
-        {' · '}Private unit cost {line.unitCost??line.otherReference.snapshot.internalCost===undefined
+        {' · '}Private unit cost {(line.unitCost??line.otherReference.snapshot.internalCost)===undefined
           ?'not recorded':amount(line.unitCost??line.otherReference.snapshot.internalCost??0)}
         {line.internalCost!==undefined?' · Private total cost overridden':''}
        </small>}
