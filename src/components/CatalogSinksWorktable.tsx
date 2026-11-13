@@ -272,7 +272,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
            <TextField label="Model notes" value={model.notes} onChange={value=>update(model,'notes',value)}/>
            <label className="catalog-product-property"><span>Active in catalog</span><input type="checkbox" checked={model.active}
              onChange={event=>setModelActive(model,event.target.checked)}/>
-             <small className="catalog-product-default-note">Uncheck to archive; saved quotes keep their original selections.</small></label>
+             <small className="catalog-product-default-note">{model.active?'Uncheck to archive':'Check to restore'}; saved quotes keep their original selections.</small></label>
           </div>}
           <div className="catalog-product-detail-head"><div><strong>Variants and bowls</strong>
             {editing&&<small className="catalog-product-default-note">
@@ -320,12 +320,12 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
               <NumericField label="Customer price" value={variant.sellPrice} onChange={value=>updateV(model,variant,'sellPrice',value)}/>
               <TextField label="Notes" value={variant.notes} onChange={value=>updateV(model,variant,'notes',value)}/>
               {(['ada','default'] as const).map(key=><label key={key} className="catalog-product-property">
-                <span>{key==='ada'?'ADA':key==='default'?'Default variant':'Available'}</span>
+                <span>{key==='ada'?'ADA':'Default variant'}</span>
                 <input type="checkbox" checked={variant[key]}
                  disabled={key==='default'&&(!variant.active||variant.default)}
                  title={key==='default'?variant.active?
                   'Choose another available variant to change the default':
-                  'Make this variant available before setting it as default':undefined}
+                  'Restore this variant before setting it as default':undefined}
                  onChange={event=>updateV(model,variant,key,event.target.checked)}/>
                </label>)}
               <div className="catalog-product-variant-operations">
