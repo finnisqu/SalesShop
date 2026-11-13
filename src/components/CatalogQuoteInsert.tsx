@@ -90,7 +90,11 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
     : undefined;
   const rateValues = source.kind === 'rate' ? resolveRateBookValues(source.item, destination?.pricingDivision) : undefined;
   const quantityValue = quantityText.trim() ? Number(quantityText) : undefined;
-  const validQuantity = quantityValue === undefined || (Number.isFinite(quantityValue) && quantityValue > 0 && quantityValue <= 1_000_000);
+  const countRequired=source.kind==='sink'||source.kind==='other';
+  const wholeUnits=source.kind==='sink'||(source.kind==='other'&&(!source.item.unit||source.item.unit==='each'));
+  const validQuantity = quantityValue===undefined?!countRequired:
+    Number.isFinite(quantityValue)&&quantityValue>0&&quantityValue<=1_000_000&&
+    (!wholeUnits||Number.isInteger(quantityValue));
   const validSource = (source.kind==='material'
     ? source.material.active && (!variantId || Boolean(materialVariant)) &&
       (!purchaseOptionId || Boolean(selectedOption))
@@ -112,7 +116,9 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
 
   const insert = () => {
     setError('');
-    if (!validQuantity) { setError('Enter a positive quantity, or leave it blank for takeoff later.'); return; }
+    if (!validQuantity) { setError(countRequired
+      ?'Enter a positive'+(wholeUnits?' whole-number':'')+' quantity for this product.'
+      :'Enter a positive quantity, or leave it blank for takeoff later.'); return; }
     const finalTarget = eligible.find((quote) => quote.id === targetId);
     try {
       // Validate and capture the exact selection BEFORE creating a quote.
@@ -164,9 +170,10 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
             <label className="catalog-quote-field"><span>Slab variant</span><select value={materialVariant?.id ?? ''} onChange={(event) => { setVariantId(event.target.value); setPurchaseOptionId(''); }}>
               {source.material.variants?.filter((variant) => variant.active !== false).map((variant) =>
                 <option key={variant.id} value={variant.id}>{[variant.thickness,variant.finish,variant.formatName,variant.sku].filter(Boolean).join(' · ') || 'Standard variant'}</option>)}
-              {!materialVariant && <option value="">No structured variants · legacy reference</option>}
+              {!materialVariant && <option value="">{variantId?'Selected variant unavailable · choose another':'No structured variants · legacy reference'}</option>}
             </select></label>
             {options.length > 0 && <label className="catalog-quote-field"><span>Supplier purchase program</span><select value={selectedOption?.id ?? ''} onChange={(event) => setPurchaseOptionId(event.target.value)}>
+              {!selectedOption&&<option value="">Select an active supplier program</option>}
               {options.map((option) => <option value={option.id} key={option.id}>{option.label || option.pricingBasis}</option>)}
             </select></label>}
           </>}
@@ -193,7 +200,10 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
                 ? 'Cost-reference rates stay hidden from the customer and excluded from totals.'
                 : 'The current price is frozen in the quote. You can adjust pricing or quantity in Quotes.'}</small>
           </div>
-          {error && <p className="catalog-quote-error" role="alert">{error}</p>}
+          {!validSource&&<p className="catalog-quote-error" role="alert">
+            This Catalog item or selected variant is inactive or unavailable. Choose an active option, or cancel.
+          </p>}
+          {error && <p className="catalog-quote-error" role="alert">{error}</p>
         </div>
         <footer className="catalog-quote-footer">
           <button type="button" onClick={onClose}>Cancel</button>
