@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import type {ReactNode} from 'react';
 import '../record-unified-picker.css';
+import {useDismissiblePopover} from './useDismissibleDetails';
 
 export interface RecordPickerOption{id:string;name:string;detail?:string;}
 /** Search existing links and create from the same field, like Quote material selection. */
@@ -14,6 +15,10 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
  const [open,setOpen]=useState(false),[query,setQuery]=useState(''),
   [saving,setSaving]=useState(false),[error,setError]=useState('');
  const inputRef=useRef<HTMLInputElement>(null);
+ const rootRef=useRef<HTMLDivElement>(null);
+ const triggerRef=useRef<HTMLButtonElement>(null);
+ const pendingRef=useRef(false);
+ useDismissiblePopover(rootRef,open,()=>{if(!pendingRef.current){setOpen(false);setQuery('');setError('');}},'.ss-unified-picker-trigger');
  useEffect(()=>{if(open)inputRef.current?.focus();},[open]);
  const needle=query.trim().toLowerCase();
  const matches=items.filter(item=>[item.name,item.detail??''].join(' ')
@@ -21,15 +26,23 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
  const exactMatch=items.find(item=>item.name.trim().toLowerCase()===needle);
  const exact=Boolean(exactMatch);
  const run=async(action:()=>void|Promise<void>)=>{
+  // React state updates can be batched: an immediate ref guard prevents
+  // duplicate cloud records when Enter and click happen in the same frame.
+  if(pendingRef.current||disabled)return;
+  pendingRef.current=true;
   setSaving(true);setError('');
-  try{await action();setOpen(false);setQuery('');}
-  catch(e){setError(e instanceof Error?e.message:'Unable to update the record.');}
-  finally{setSaving(false);}
+  try{
+   await action();
+   setOpen(false);setQuery('');
+   triggerRef.current?.focus({preventScroll:true});
+  }catch(e){setError(e instanceof Error?e.message:'Unable to update the record.');}
+  finally{pendingRef.current=false;setSaving(false);}
  };
- return <div className="ss-unified-record-picker">
-  <button type="button" className="connections-record-add ss-unified-picker-trigger"
-   disabled={disabled} aria-expanded={open}
-   onClick={()=>{setOpen(prev=>!prev);setError('');setQuery('');}}>
+ return <div className="ss-unified-record-picker" ref={rootRef}>
+  <button type="button" ref={triggerRef}
+   className="connections-record-add ss-unified-picker-trigger"
+   disabled={disabled||saving} aria-expanded={open} aria-haspopup="true"
+   onClick={()=>{setOpen(prev=>!prev);setError('');setQuery('');}}> 
    {open?'Cancel':triggerLabel??'+ Add '+kind}
   </button>
   {open&&<div className="ss-unified-picker-panel" role="group"
@@ -44,13 +57,16 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
          // Keyboard selection is unambiguous only for an exact or sole match;
          // creating a new name requires no existing matching records.
          e.preventDefault();e.stopPropagation();
-         if(saving)return;
+         if(saving||!needle)return;
          const one=exactMatch??(matches.length===1?matches[0]:null);
          if(one){void run(()=>onLink(one.id));return;}
          if(!matches.length&&onCreate&&needle){void run(()=>onCreate(query.trim()));}
          return;
        }
-       if(e.key==='Escape'){e.stopPropagation();setOpen(false);}
+       if(e.key==='Escape'){
+         e.preventDefault();e.stopPropagation();
+         if(!saving){setOpen(false);setQuery('');triggerRef.current?.focus({preventScroll:true});}
+       }
      }}/>
    {extra}
    <div className="ss-unified-picker-results">
