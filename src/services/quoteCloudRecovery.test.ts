@@ -52,11 +52,32 @@ describe('Batch 340 — durable quote recovery marker distinguishes new drafts',
   const token=markPendingQuoteSync(scope,current,baseline);
   expect(token).toBeTruthy();
   const pending=readPendingQuoteSync(scope);
-  expect(pending?.quoteIds).toEqual(['old','new']);
+  expect(pending?.quoteIds).toEqual(['new']);
   expect(pending?.createdQuoteIds).toEqual(['new']);
   // Cloud is missing both IDs: old may have been deleted by another device.
   const merged=mergePendingQuoteDrafts(doc([]),current,pending);
   expect(merged?.quotes.map(q=>q.id)).toEqual(['new']);
+ });
+ it('never marks unrelated unchanged quotes as pending recovery',()=>{
+  const baseline=doc([draft('a'),draft('b'),draft('c')]);
+  const changed=doc([draft('a'),draft('b','2026-11-02T10:00:00Z',
+   {title:'Changed B'}),draft('c')],'b');
+  markPendingQuoteSync(scope,changed,baseline);
+  const pending=readPendingQuoteSync(scope);
+  expect(pending?.quoteIds).toEqual(['b']);
+  expect(pending?.createdQuoteIds).toEqual([]);
+  const remote=doc([draft('a'),draft('b'),draft('c')]);
+  const merged=mergePendingQuoteDrafts(remote,changed,pending);
+  expect(merged?.quotes.find(q=>q.id==='b')?.title).toBe('Changed B');
+  expect(merged?.quotes.find(q=>q.id==='a')?.title).toBe('a');
+ });
+ it('does not mistake a changed active tab for a quote edit',()=>{
+  const baseline=doc([draft('original')],'original');
+  const switched=doc([draft('original')],null);
+  markPendingQuoteSync(scope,switched,baseline);
+  expect(readPendingQuoteSync(scope)?.quoteIds).toEqual([]);
+  expect(mergePendingQuoteDrafts(doc([draft('original')]),switched,readPendingQuoteSync(scope))
+   ?.quotes[0].title).toBe('original');
  });
  it('recovers pending changes to a known server draft without treating it as a creation',()=>{
   const baseline=doc([draft('existing','2026-11-01T15:00:00.000Z')]);
