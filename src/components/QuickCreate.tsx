@@ -152,7 +152,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
             </div>
           </form>
         ) : (
-          <div className="quick-create-options ss-mobile-sheet-body">
+          <div className={'quick-create-options ss-mobile-sheet-body'+(canRecordExternal?' has-external-quote':'')}>
             <button type="button" className="quick-create-option quick-create-option-primary" onClick={openDocumentPicker}>
               <span className="quick-create-icon"><CreateGlyph kind="quote"/></span>
               <span><strong>New SalesShop Quote</strong><small>Create a Quick Quote or pricing schedule.</small></span>
