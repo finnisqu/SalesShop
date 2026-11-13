@@ -7,6 +7,7 @@ import {
 import { useQuoteStore } from '../store/quoteStore';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
 import { compatibleAreaScopeFields } from '../services/quoteAreaScope';
+import {catalogSellingOverride} from '../services/quoteCatalogLineEditing';
 import {
   SINK_CATEGORY_LABELS,
   SINK_CONFIGURATION_LABELS,
@@ -207,6 +208,9 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
 
       {snapshot && (!selectedModel || !selectedVariant) && <span className="quote-source-status is-warning">Source unavailable</span>}
       {snapshot && comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
+      {snapshot && catalogSellingOverride(line) && <span className="quote-source-status">
+        Manual selling override · catalog {snapshot.sellPrice===undefined?'unpriced':money.format(snapshot.sellPrice)}
+      </span>
     </div>
   );
 }
