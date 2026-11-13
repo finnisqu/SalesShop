@@ -3,7 +3,7 @@ import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
-import { buildCatalogQuoteLinePatch, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
+import { buildCatalogQuoteLinePatch, validateCatalogQuoteSource, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
 import { catalogQuoteDestinationLabel } from '../services/catalogQuoteDestination';
 import { resolveStockMaterialCostReference, defaultMaterialVariant, defaultMaterialPurchaseOption } from '../types/settings';
 import { defaultSinkVariant } from '../types/sink';
@@ -31,7 +31,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const [targetId, setTargetId] = useState<string>(() => activeQuoteId ?? TARGET_NEW);
   const [variantId, setVariantId] = useState(() => source.kind === 'rate' ? '' : source.variantId ?? '');
   const [purchaseOptionId, setPurchaseOptionId] = useState('');
-  const [quantityText, setQuantityText] = useState(() => source.kind === 'sink' ? '1' : source.kind === 'rate' && ['each','slab'].includes(source.item.unit) ? '1' : '');
+  const [quantityText, setQuantityText] = useState(() => source.kind === 'sink' || source.kind === 'other' ? '1' : source.kind === 'rate' && ['each','slab'].includes(source.item.unit) ? '1' : '');
   const [newTitle, setNewTitle] = useState('');
   const [error, setError] = useState('');
 
@@ -40,25 +40,45 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const destination = eligible.find((quote) => quote.id === targetId);
   const destinationId = destination ? destination.id : TARGET_NEW;
   const materialVariant = source.kind === 'material'
-    ? source.material.variants?.find((item) => item.id === variantId && item.active !== false) ?? defaultMaterialVariant(source.material)
+    ? variantId
+      ? source.material.variants?.find((item) => item.id === variantId && item.active !== false)
+      : defaultMaterialVariant(source.material)
     : undefined;
   const sinkVariant = source.kind === 'sink'
-    ? source.model.variants.find((item) => item.id === variantId && item.active) ?? defaultSinkVariant(source.model)
+    ? variantId
+      ? source.model.variants.find((item) => item.id === variantId && item.active)
+      : defaultSinkVariant(source.model)
+    : undefined;
+  const otherVariant = source.kind === 'other'
+    ? variantId
+      ? source.item.variants.find((item) => item.id === variantId && item.active)
+      : source.item.variants.find((item) => item.active && item.default) ?? source.item.variants.find((item) => item.active)
     : undefined;
   const options = materialVariant?.purchaseOptions?.filter((option) => option.active !== false) ?? [];
-  const selectedOption = options.find((option) => option.id === purchaseOptionId) ?? defaultMaterialPurchaseOption(materialVariant);
+  const selectedOption = purchaseOptionId
+    ? options.find((option) => option.id === purchaseOptionId)
+    : defaultMaterialPurchaseOption(materialVariant);
   const materialReference = source.kind === 'material'
     ? resolveStockMaterialCostReference(source.material, materialVariant?.id, selectedOption?.id)
     : undefined;
   const rateValues = source.kind === 'rate' ? resolveRateBookValues(source.item, destination?.pricingDivision) : undefined;
   const quantityValue = quantityText.trim() ? Number(quantityText) : undefined;
   const validQuantity = quantityValue === undefined || (Number.isFinite(quantityValue) && quantityValue > 0 && quantityValue <= 1_000_000);
+  const validSource = (source.kind==='material'
+    ? source.material.active && (!variantId || Boolean(materialVariant)) &&
+      (!purchaseOptionId || Boolean(selectedOption))
+    : source.kind==='sink' ? source.model.active && Boolean(sinkVariant)
+    : source.kind==='other' ? source.item.active && Boolean(otherVariant)
+    : source.item.active);
   const title = source.kind === 'material' ? source.material.name : source.kind === 'sink' ? source.model.name : source.item.name;
-  const sourceLabel = source.kind === 'material' ? 'Stone material' : source.kind === 'sink' ? 'Sink variant' : 'Company rate';
+  const sourceLabel = source.kind === 'material' ? 'Stone material' : source.kind === 'sink' ? 'Sink variant' : source.kind === 'other' ? 'Other catalog product' : 'Company rate';
   const priceLabel = source.kind === 'material'
     ? (materialReference?.costPerSf === undefined ? 'Cost not listed' : `${money.format(materialReference.costPerSf)}/SF internal cost`)
     : source.kind === 'sink'
       ? (sinkVariant?.sellPrice === undefined ? 'Customer price not set' : `${money.format(sinkVariant.sellPrice)}/each customer price`)
+      : source.kind === 'other'
+        ? (otherVariant?.sellPrice === undefined ? 'Customer price not set' :
+          `${money.format(otherVariant.sellPrice)}/${source.item.unit||'each'} customer price`)
       : source.item.pricingBehavior === 'cost-reference'
         ? (rateValues?.internalCost === undefined ? 'Internal cost not listed' : `${money.format(rateValues.internalCost)}/${RATE_BOOK_UNIT_LABELS[source.item.unit]} internal cost`)
         : (rateValues?.sellRate === undefined ? 'Customer price not set' : `${money.format(rateValues.sellRate)}/${RATE_BOOK_UNIT_LABELS[source.item.unit]} suggested sell`);
@@ -66,24 +86,28 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const insert = () => {
     setError('');
     if (!validQuantity) { setError('Enter a positive quantity, or leave it blank for takeoff later.'); return; }
-    if (source.kind === 'sink' && !sinkVariant) { setError('Choose an active sink variant before adding.'); return; }
     const finalTarget = eligible.find((quote) => quote.id === targetId);
-    const quoteId = finalTarget?.id ?? createQuote({
-      title: newTitle.trim() || `Quote · ${title}`,
-      documentType: 'quote',
-    });
-    const quote = useQuoteStore.getState().quotes.find((item: Quote) => item.id === quoteId);
-    if (!quote || !quoteIsCommerciallyEditable(quote) || quote.documentType === 'pricing-schedule') {
-      setError('That quote is no longer editable. Choose another quote.'); return;
-    }
     try {
+      // Validate and capture the exact selection BEFORE creating a quote.
+      // A removed variant must not silently become the current default.
+      validateCatalogQuoteSource(source,
+        source.kind==='material'||source.kind==='sink'||source.kind==='other'?variantId||undefined:undefined,
+        source.kind==='material'?purchaseOptionId||undefined:undefined);
       const patch = buildCatalogQuoteLinePatch(source, {
-        variantId: source.kind === 'material' ? materialVariant?.id : source.kind === 'sink' ? sinkVariant?.id : undefined,
+        variantId: source.kind === 'material' ? materialVariant?.id : source.kind === 'sink' ? sinkVariant?.id : source.kind==='other'?otherVariant?.id:undefined,
         purchaseOptionId: source.kind === 'material' ? selectedOption?.id : undefined,
-        division: quote.pricingDivision,
+        division: finalTarget?.pricingDivision,
         quantity: quantityValue,
       });
-      const id = addCatalogLine(quoteId, source.kind, patch);
+      const quoteId = finalTarget?.id ?? createQuote({
+        title: newTitle.trim() || `Quote · ${title}`,
+        documentType: 'quote',
+      });
+      const quote = useQuoteStore.getState().quotes.find((item: Quote) => item.id === quoteId);
+      if (!quote || !quoteIsCommerciallyEditable(quote) || quote.documentType === 'pricing-schedule') {
+        setError('That quote is no longer editable. Choose another quote.'); return;
+      }
+      const id = addCatalogLine(quoteId, source.kind==='other'?'item':source.kind, patch);
       if (!id) { setError('Could not add the line. Check the quote status.'); return; }
       onClose();
       openQuote(quoteId);
@@ -119,12 +143,17 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
               {options.map((option) => <option value={option.id} key={option.id}>{option.label || option.pricingBasis}</option>)}
             </select></label>}
           </>}
-          {source.kind === 'sink' && <label className="catalog-quote-field"><span>Sink variant</span><select value={sinkVariant?.id ?? ''} onChange={(event) => setVariantId(event.target.value)}>
+          {source.kind === 'sink' && <label className="catalog-quote-field"><span>Sink variant</span><select value={sinkVariant?.id ?? ''} onChange={(event) => {setVariantId(event.target.value);setError('');}}>
             {source.model.variants.filter((variant) => variant.active).map((variant) => <option key={variant.id} value={variant.id}>{variant.label}{variant.ada ? ' · ADA' : ''}{variant.code ? ` · ${variant.code}` : ''}</option>)}
-            {!sinkVariant && <option value="">No active variants</option>}
+            {!sinkVariant && <option value="">No active variants · choose another</option>}
+          </select></label>}
+          {source.kind === 'other' && <label className="catalog-quote-field"><span>Product variant</span><select value={otherVariant?.id ?? ''} onChange={(event) => {setVariantId(event.target.value);setError('');}}>
+            {source.item.variants.filter((variant) => variant.active).map((variant) =>
+              <option key={variant.id} value={variant.id}>{variant.label}{variant.sku ? ` · ${variant.sku}` : ''}</option>)}
+            {!otherVariant && <option value="">No active variants · choose another</option>}
           </select></label>}
           {(source.kind !== 'rate' || source.item.unit !== 'flat') && (
-            <label className="catalog-quote-field"><span>{source.kind === 'material' ? 'Quoted area (SF) · optional' : source.kind === 'sink' ? 'Quantity' : `Quantity (${RATE_BOOK_UNIT_LABELS[source.item.unit]}) · optional`}</span>
+            <label className="catalog-quote-field"><span>{source.kind === 'material' ? 'Quoted area (SF) · optional' : source.kind === 'sink' ? 'Quantity' : source.kind==='other' ? `Quantity (${source.item.unit||'each'})` : `Quantity (${RATE_BOOK_UNIT_LABELS[source.item.unit]}) · optional`}</span>
               <input type="number" min="0.001" step="any" inputMode="decimal" value={quantityText} onChange={(event) => setQuantityText(event.target.value)} placeholder={source.kind === 'material' ? 'Enter takeoff SF later' : 'Enter quantity'} />
             </label>
           )}
@@ -141,7 +170,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
         </div>
         <footer className="catalog-quote-footer">
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="button" className="primary" disabled={!validQuantity || (source.kind === 'sink' && !sinkVariant)} onClick={insert}>Add & open quote →</button>
+          <button type="button" className="primary" disabled={!validQuantity || !validSource} onClick={insert}>Add & open quote →</button>
         </footer>
       </div>
     </div>
