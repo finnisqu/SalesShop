@@ -21,8 +21,9 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
  useDismissiblePopover(rootRef,open,()=>{if(!pendingRef.current){setOpen(false);setQuery('');setError('');}},'.ss-unified-picker-trigger');
  useEffect(()=>{if(open)inputRef.current?.focus();},[open]);
  const needle=query.trim().toLowerCase();
- const matches=items.filter(item=>[item.name,item.detail??''].join(' ')
-  .toLowerCase().includes(needle)).slice(0,12);
+ const matching=items.filter(item=>[item.name,item.detail??''].join(' ')
+  .toLowerCase().includes(needle));
+ const matches=matching.slice(0,12);
  const exactMatch=items.find(item=>item.name.trim().toLowerCase()===needle);
  const exact=Boolean(exactMatch);
  const run=async(action:()=>void|Promise<void>)=>{
@@ -54,10 +55,10 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
    className="connections-record-add ss-unified-picker-trigger"
    disabled={disabled||saving} aria-expanded={open} aria-haspopup="true"
    onClick={()=>{setOpen(prev=>!prev);setError('');setQuery('');}}> 
-   {open?'Cancel':triggerLabel??'+ Add '+kind}
+   {saving?'Saving…':open?'Cancel':triggerLabel??'+ Add '+kind}
   </button>
   {open&&<div className="ss-unified-picker-panel" role="group"
-    aria-label={'Add '+kind}>
+    aria-busy={saving} aria-label={'Add '+kind}>
    <input ref={inputRef} type="search" value={query} maxLength={180}
      placeholder={'Search '+kind.toLowerCase()+' or enter a new name…'}
      aria-label={'Search or create '+kind} disabled={saving}
@@ -87,6 +88,9 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
       <strong>{option.name}</strong>{option.detail&&<span>{option.detail}</span>}
     </button>)}
     {!matches.length&&<p className="connections-record-helper">No existing matches.</p>}
+    {matching.length>matches.length&&<small className="ss-unified-picker-limit">
+     Showing {matches.length} of {matching.length}. Keep typing to narrow results.
+    </small>}
    </div>
    {onCreate&&<button type="button" className="ss-unified-picker-create"
      disabled={saving||!needle||exact}
