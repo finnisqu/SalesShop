@@ -159,3 +159,59 @@
   box-shadow:inset 3px 0 #b4955e,0 0 0 2px rgba(180,149,94,.19);
   background:#fff8e8;
 }
+
+
+/* Worktable parity: the Catalog-to-Quote chooser is portaled to document.body,
+ * so theme selectors intentionally target :root rather than .sales-app. */
+:root[data-sales-theme] .catalog-add-to-quote{
+ min-height:36px;min-width:0;margin:3px 0;
+ border-color:var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-card);color:var(--ss-theme-accent);
+ font:750 11px/1.25 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .catalog-add-to-quote:hover{
+ background:var(--ss-theme-tint);
+ border-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme] .catalog-quote-sheet{
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .catalog-quote-heading,
+:root[data-sales-theme] .catalog-quote-footer{
+ border-color:var(--ss-theme-border);
+}
+:root[data-sales-theme] .catalog-quote-heading span,
+:root[data-sales-theme] .catalog-quote-heading small,
+:root[data-sales-theme] .catalog-quote-review>span,
+:root[data-sales-theme] .catalog-quote-review>small,
+:root[data-sales-theme] .catalog-quote-field>span{
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .catalog-quote-heading strong,
+:root[data-sales-theme] .catalog-quote-review>strong{
+ color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .catalog-quote-heading>button,
+:root[data-sales-theme] .catalog-quote-footer button,
+:root[data-sales-theme] .catalog-quote-field :is(input,select){
+ border-color:var(--ss-theme-border);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .catalog-quote-review{
+ border-color:var(--ss-theme-border);background:var(--ss-theme-base);
+}
+:root[data-sales-theme] .catalog-quote-footer{
+ background:var(--ss-theme-base);
+}
+:root[data-sales-theme] .catalog-quote-footer button.primary{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-accent);
+ color:var(--ss-theme-contrast);
+}
+:root[data-sales-theme] .catalog-quote-sheet :is(button,input,select):focus-visible,
+:root[data-sales-theme] .catalog-add-to-quote:focus-visible{
+ outline-color:var(--ss-theme-accent);
+}
+:root[data-sales-theme] .catalog-quote-error{
+ color:var(--ss-danger,#b84444);
+}
