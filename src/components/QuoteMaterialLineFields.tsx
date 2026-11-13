@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { calculateQuoteSlabMultiplierPrice } from '../services/quoteSlabPricing';
+import {quoteMaterialSourcePatch,quoteMaterialSlabRepricePatch,quoteMaterialSlabRepricePreview} from '../services/quoteMaterialSourceRefresh';
 import {
   compareQuoteMaterialSnapshot,
   createQuoteMaterialCostSnapshot,
@@ -71,7 +72,9 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   const [searching, setSearching] = useState(!line.materialReference?.materialId && !line.materialReference?.customMaterialName);
   const [pendingMaterialId, setPendingMaterialId] = useState<string | null>(null);
   const [pendingVariantId, setPendingVariantId] = useState<string | null>(null);
+  const [sourceError,setSourceError]=useState('');
   const pickerRef = useRef<HTMLDivElement>(null);
+  const snapshot=line.materialReference?.snapshot;
 
   useEffect(() => {
     void hydrateSettings();
@@ -117,17 +120,19 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
     [materials],
   );
 
-  const selectedMaterial = line.materialReference?.materialId
-    ? activeMaterials.find((material) => material.id === line.materialReference?.materialId)
-    : undefined;
-  const selectedVariant = selectedMaterial && line.materialReference?.variantId
-    ? (selectedMaterial.variants ?? []).find((variant) => variant.active !== false && variant.id === line.materialReference?.variantId)
-    : undefined;
-  const selectedPurchaseOption = selectedVariant && line.materialReference?.purchaseOptionId
-    ? (selectedVariant.purchaseOptions ?? []).find((option) => option.active !== false && option.id === line.materialReference?.purchaseOptionId)
-    : selectedVariant
-      ? defaultMaterialPurchaseOption(selectedVariant)
-      : undefined;
+  // Old saved quotes sometimes carry IDs only in their frozen snapshot.
+  // Never silently fall back to a different variant or supplier program.
+  const selectedMaterialId=line.materialReference?.materialId??snapshot?.materialId;
+  const selectedVariantId=line.materialReference?.variantId??snapshot?.variantId;
+  const selectedPurchaseId=line.materialReference?.purchaseOptionId??snapshot?.purchaseOptionId;
+  const selectedMaterial=selectedMaterialId
+    ?activeMaterials.find(material=>material.id===selectedMaterialId):undefined;
+  const selectedVariant=selectedMaterial&&selectedVariantId
+    ?(selectedMaterial.variants??[]).find(variant=>variant.id===selectedVariantId&&variant.active!==false)
+    :undefined;
+  const selectedPurchaseOption=selectedVariant&&selectedPurchaseId
+    ?(selectedVariant.purchaseOptions??[]).find(option=>option.id===selectedPurchaseId&&option.active!==false)
+    :selectedVariant?defaultMaterialPurchaseOption(selectedVariant):undefined;
 
   useEffect(() => {
     if (!selectedMaterial || !selectedVariant) return;
@@ -158,45 +163,31 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
   }, [activeMaterials, search, pinned]);
 
   const applyMaterial = (material: StockMaterial, variantId: string, purchaseOptionId?: string) => {
-    const variant = (material.variants ?? []).find((candidate) => candidate.active !== false && candidate.id === variantId);
-    if (!variant) return;
-    const reference = resolveStockMaterialCostReference(material, variant.id, purchaseOptionId);
-    const purchaseOption = reference.purchaseOption ?? defaultMaterialPurchaseOption(variant);
-    const current = line.materialReference;
-    const slabMode = line.pricingMode === 'slab-multiplier';
-    const multiplier = current?.slabMultiplier ?? guide.slabPricingMultiplier;
-    const slabCount = current?.slabCount;
-    const slabCost = slabMode ? reference.slabCost : undefined;
-    const slabPricing = slabMode
-      ? calculateQuoteSlabMultiplierPrice({ slabCost, multiplier, slabCount })
-      : undefined;
-
-    const materialReference: QuoteLineMaterialReference = {
-      materialId: material.id,
-      variantId: variant.id,
-      purchaseOptionId: purchaseOption?.id,
-      stockProgram: material.stockProgram,
-      pricingSource: slabMode ? 'slab-multiplier' : 'manual-line-rate',
-      sourceCostPerSf: reference.costPerSf,
-      catalogSlabCost: reference.slabCost,
-      sourceSlabCost: slabCost,
-      slabCostOverride: false,
-      slabMultiplier: slabMode ? multiplier : undefined,
-      slabCount: slabMode ? slabCount : undefined,
-      customerPricePerSlab: slabPricing?.customerPricePerSlab,
-      snapshot: createQuoteMaterialCostSnapshot(material, reference),
-    };
-
-    updateLine(quoteId, line.id, {
-      description: materialCustomerDescription(material, variant),
-      materialReference,
-      amount: slabMode ? slabPricing?.customerTotal : line.amount,
-    });
-    pinMaterial(quoteId,materialCustomerDescription(material, variant),materialReference);
-    setSearch('');
-    setPendingMaterialId(null);
-    setPendingVariantId(null);
-    setSearching(false);
+    try {
+      const patch=quoteMaterialSourcePatch(
+        line,material,variantId,purchaseOptionId,guide.slabPricingMultiplier,
+      );
+      updateLine(quoteId,line.id,patch);
+      if(patch.materialReference){
+        const variant=(material.variants??[]).find(v=>v.id===variantId);
+        pinMaterial(quoteId,materialCustomerDescription(material,variant),patch.materialReference);
+      }
+      setSourceError('');
+      setSearch('');
+      setPendingMaterialId(null);
+      setPendingVariantId(null);
+      setSearching(false);
+    }catch(error){
+      setSourceError(error instanceof Error?error.message:'Unable to update Material source.');
+    }
+  };
+  const repriceSlabs=()=>{
+    try{
+      updateLine(quoteId,line.id,quoteMaterialSlabRepricePatch(line));
+      setSourceError('');
+    }catch(error){
+      setSourceError(error instanceof Error?error.message:'Unable to recalculate slab pricing.');
+    }
   };
 
   const chooseMaterial = (material: StockMaterial) => {
@@ -230,18 +221,16 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
       pricingSource: slabMode ? 'slab-multiplier' : 'manual-line-rate',
       slabMultiplier: slabMode ? multiplier : undefined,
     };
-    updateLine(quoteId, line.id, {
-      description: name,
-      materialReference,
-      amount: slabMode ? undefined : line.amount,
-    });
+    // Keep the customer's quoted total when replacing a Catalog source with
+    // a custom material; clearing selling requires a separate deliberate edit.
+    updateLine(quoteId, line.id, {description:name,materialReference});
     setSearch('');
     setPendingMaterialId(null);
     setPendingVariantId(null);
     setSearching(false);
   };
 
-  const snapshot = line.materialReference?.snapshot;
+  const repricePreview=quoteMaterialSlabRepricePreview(line);
   const currentReference = selectedMaterial && selectedVariant
     && (!line.materialReference?.purchaseOptionId || selectedPurchaseOption)
       ? resolveStockMaterialCostReference(selectedMaterial, selectedVariant.id, selectedPurchaseOption?.id)
@@ -266,10 +255,15 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
             <small>{snapshot?.variantLabel ?? variantLabel(selectedVariant)}</small>
           </div>
           {snapshotComparison?.changed && currentReference && selectedMaterial && selectedVariant && (
-            <button type="button" onClick={() => applyMaterial(selectedMaterial, selectedVariant.id, currentReference.purchaseOption?.id)}>Update snapshot</button>
+            <button type="button" onClick={() => applyMaterial(selectedMaterial, selectedVariant.id, currentReference.purchaseOption?.id)}>
+              Refresh buying reference · keep quoted price
+            </button>
           )}
         </div>}
 
+        {(snapshot||line.materialReference?.customMaterialName)&&<p className="quote-source-refresh-help">
+          Changing a Material selection updates its private supplier buying reference. The customer selling rate and any existing slab total remain unchanged.
+        </p>}
         {pendingMaterial ? (
           <div className="quote-material-choice-step">
             <div className="quote-material-choice-heading">
@@ -335,6 +329,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
             </div>
           </>
         )}
+        {sourceError&&<p className="quote-source-refresh-error" role="alert">{sourceError}</p>}
       </div>
     );
   }
@@ -358,6 +353,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
             setSearch('');
             setPendingMaterialId(null);
             setPendingVariantId(null);
+            setSourceError('');
             setSearching(true);
           }} title="Change material" aria-label="Change material">✎</button>
         </div>
@@ -373,8 +369,18 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
         <small>{quotedSlabCost === undefined ? 'No slab cost' : `${money.format(quotedSlabCost)}/slab`}</small>
       </div>}
 
-      {snapshot && !selectedMaterial && snapshot.materialId && <span className="quote-source-status is-warning">Source unavailable</span>}
-      {snapshotComparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
+      {snapshot&&(!selectedMaterial||!selectedVariant||(selectedPurchaseId&&!selectedPurchaseOption))&&
+       <span className="quote-source-status is-warning">Catalog variant or purchase program unavailable · saved quote unchanged</span>}
+      {snapshotComparison?.changed && currentSnapshot &&
+       <span className="quote-source-status">Buying source updated · quoted selling unchanged</span>}
+      {line.pricingMode==='slab-multiplier'&&snapshot&&line.materialReference?.slabCostOverride&&
+       <span className="quote-source-status">Quoted slab formula cost is locked separately from Catalog</span>}
+      {line.pricingMode==='slab-multiplier'&&repricePreview!==undefined&&
+       (line.amount===undefined||Math.abs(repricePreview-line.amount)>=.005)&&
+       <button type="button" className="quote-source-apply-price" onClick={repriceSlabs}>
+         Recalculate slab selling total to {money.format(repricePreview)}
+       </button>}
+      {sourceError&&<p role="alert" className="quote-source-refresh-error">{sourceError}</p>
     </div>
   );
 }
