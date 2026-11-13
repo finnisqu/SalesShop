@@ -65,6 +65,8 @@ interface QuoteState {
   redoStacks: Record<string, Quote[]>;
   hydrate: () => void;
   createQuote: (prefill?: Partial<Pick<Quote, 'documentType' | 'title' | 'projectId' | 'companyId' | 'companyName' | 'contactId' | 'contactName' | 'contactEmail'>>) => string;
+  /** Atomic Catalog draft creation: no phantom placeholder line or empty draft. */
+  createCatalogQuote: (title:string,kind:'material'|'sink'|'rate'|'item',patch:Partial<Omit<QuoteLine,'id'>>)=>string;
   createChangeOrder: (sourceQuoteId: string) => string | null;
   duplicateDocument: (sourceQuoteId: string, requestedTitle: string) => string | null;
   selectQuote: (quoteId: string) => void;
@@ -343,6 +345,18 @@ export const useQuoteStore = create<QuoteState>((set, get) => ({
     set({ quotes, activeQuoteId: quote.id });
     recordQuoteCreated(quote);
     if (quote.projectId) recordQuoteLinked(quote);
+    return quote.id;
+  },
+
+  createCatalogQuote:(title,kind,patch)=>{
+    const quote=newQuote({documentType:'quote',title:title.trim()||'Untitled quote'});
+    const line:QuoteLine={...newLine(kind),...patch,kind};
+    quote.lines=[line]; // A selected Catalog item is the only starter line.
+    const quotes=[quote,...get().quotes];
+    persist(quotes,quote.id);
+    set({quotes,activeQuoteId:quote.id,
+      recentCatalogInsert:{quoteId:quote.id,lineId:line.id}});
+    recordQuoteCreated(quote);
     return quote.id;
   },
 
