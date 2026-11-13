@@ -11,6 +11,7 @@ import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 import {activeCatalogDefaultVariant} from '../services/catalogVariantDefaults';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
+import {CatalogBulkActions,useCatalogPageSelection} from './CatalogBulkSelection';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-other-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -38,6 +39,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
  const hydrated=useOtherCatalogStore(s=>s.hydrated);
  const saving=useOtherCatalogStore(s=>s.saving),error=useOtherCatalogStore(s=>s.error);
  const addItem=useOtherCatalogStore(s=>s.addItem),updateItem=useOtherCatalogStore(s=>s.updateItem);
+ const setItemsActive=useOtherCatalogStore(s=>s.setItemsActive);
  const duplicateItem=useOtherCatalogStore(s=>s.duplicateItem);
  const addVariant=useOtherCatalogStore(s=>s.addVariant),updateVariant=useOtherCatalogStore(s=>s.updateVariant);
  const duplicateVariant=useOtherCatalogStore(s=>s.duplicateVariant);
@@ -49,7 +51,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
  const [editing,setEditing]=useState(false),[expanded,setExpanded]=useState<string|null>(null);
  const [query,setQuery]=useState(''),[category,setCategory]=useState('all');
  const [showInactive,setShowInactive]=useState(false);
- const [sort,setSort]=useState<'name'|'category'|'brand'>('category');
+ const [sort,setSort]=useState<'name'|'category'|'brand'|'cost'|'price'>('category');
  const [pins,setPins]=useState<string[]>(readPins);
  useEffect(()=>{void hydrate();},[hydrate]);
  useEffect(()=>{try{localStorage.setItem(PIN_KEY,JSON.stringify(pins));}catch{/* best effort */}},[pins]);
@@ -72,6 +74,10 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
      ...(v.availableColors??[])])],query,externalQuery))
    .sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):
     sort==='brand'?(a.brand??'').localeCompare(b.brand??'')||a.name.localeCompare(b.name):
+    sort==='cost'?(activeCatalogDefaultVariant(a.variants)?.internalCost??Infinity)-
+     (activeCatalogDefaultVariant(b.variants)?.internalCost??Infinity)||a.name.localeCompare(b.name):
+    sort==='price'?(activeCatalogDefaultVariant(a.variants)?.sellPrice??Infinity)-
+     (activeCatalogDefaultVariant(b.variants)?.sellPrice??Infinity)||a.name.localeCompare(b.name):
     a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
  },[items,category,query,externalQuery,showInactive,sort]);
  const activeFilterCount=Number(category!=='all')+
@@ -84,6 +90,23 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
  const pagination=useCatalogPagination(filtered.length,
   JSON.stringify([query,externalQuery,category,showInactive,sort]));
  const pagedItems=filtered.slice(pagination.start,pagination.end);
+ const selecting=canEdit&&editing;
+ const pageSelection=useCatalogPageSelection(pagedItems,
+  JSON.stringify([query,externalQuery,category,showInactive,sort,pagination.page,pagination.pageSize,selecting]));
+ const selectedIds=pageSelection.selectedPageIds;
+ const bulkArchive=()=>{
+  if(!selecting||!pageSelection.activeIds.length)return;
+  const count=pageSelection.activeIds.length;
+  if(!window.confirm(`Archive ${count} selected item${count===1?'':'s'}? Existing quotes keep their historical selections.`))return;
+  setShowInactive(true);
+  setItemsActive(pageSelection.activeIds,false);
+  pageSelection.clear();
+ };
+ const bulkRestore=()=>{
+  if(!selecting||!pageSelection.archivedIds.length)return;
+  setItemsActive(pageSelection.archivedIds,true);
+  pageSelection.clear();
+ };
  // After creating a record, navigate to its page in the sorted catalog.
  useEffect(()=>{
   if(!expanded)return;
@@ -187,28 +210,41 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
      <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
       <select aria-label="Sort other items" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
        <option value="category">Category / name</option><option value="name">Name A–Z</option>
-       <option value="brand">Brand / supplier</option>
+       <option value="brand">Brand / supplier</option><option value="cost">Cost · low first</option>
+        <option value="price">Customer price · low first</option>
       </select>
      </label>
      <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
      </WorktableFilterMenu>
      {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Sync issue: '+error:'Saving…'}</small>}
-     {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(e=>!e)}>
+     {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>{pageSelection.clear();setEditing(e=>!e);}}>
       {editing?'Done editing':'Edit items'}</button>}
     </div>
    </header>
    <CatalogPagination label="Other" total={filtered.length}
     page={pagination.page} pageSize={pagination.pageSize}
-    onPageChange={next=>{pagination.setPage(next);setExpanded(null);}}
-    onPageSizeChange={size=>{pagination.setPageSize(size);setExpanded(null);}}/>
+    onPageChange={next=>{pageSelection.clear();pagination.setPage(next);setExpanded(null);}}
+    onPageSizeChange={size=>{pageSelection.clear();pagination.setPageSize(size);setExpanded(null);}}
+    extraActions={selecting&&selectedIds.length>0&&
+     <CatalogBulkActions label="Other items" selectedCount={selectedIds.length}
+      activeCount={pageSelection.activeIds.length} archivedCount={pageSelection.archivedIds.length}
+      onArchive={bulkArchive} onRestore={bulkRestore} onClear={pageSelection.clear}/>}/>
    <WorktableSurface className="rates-reference-table-wrap catalog-product-scroll" label="Other catalog worktable">
     <table className="rates-reference-table catalog-product-table">
-     <thead><tr><th>Category</th><th>Item</th><th>Brand / supplier</th>
+     <thead><tr>{selecting&&<th className="catalog-product-select-cell" scope="col">
+      <input type="checkbox" aria-label="Select all other items on this page"
+       checked={pageSelection.allSelected} disabled={!pagedItems.length}
+       onChange={event=>pageSelection.selectPage(event.target.checked)}/></th>}
+      <th>Category</th><th>Item</th><th>Brand / supplier</th>
       <th>Unit</th><th>Default cost</th><th>Customer price</th><th>Variants</th></tr></thead>
      <tbody>{pagedItems.map(item=>{
       const open=expanded===item.id,defaultVariant=activeCatalogDefaultVariant(item.variants);
       return <Fragment key={item.id}>
-       <tr className={open?'is-expanded':''}>
+       <tr className={[open?'is-expanded':'',selectedIds.includes(item.id)?'is-bulk-selected':''].filter(Boolean).join(' ')}>
+         {selecting&&<td className="catalog-product-select-cell">
+          <input type="checkbox" aria-label={'Select other item '+item.name}
+           checked={selectedIds.includes(item.id)}
+           onChange={event=>pageSelection.selectRow(item.id,event.target.checked)}/></td>
         <td>{item.category}</td>
         <td className="rates-reference-item"><button type="button" className="materials-name-toggle"
          aria-expanded={open} onClick={()=>setExpanded(open?null:item.id)}><strong>{item.name}</strong></button>
@@ -220,7 +256,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
          {open?'Hide':'Variants · '+item.variants.filter(v=>editing||showInactive||v.active).length}
         </button></td>
        </tr>
-       {open&&<tr className="materials-variant-expanded-row"><td colSpan={7}>
+       {open&&<tr className="materials-variant-expanded-row"><td colSpan={selecting?8:7}>
         <div className="catalog-product-detail">
          {editing&&<div className="catalog-product-properties">
           <Text label="Item name" value={item.name} change={value=>update(item,'name',value)}/>
@@ -307,7 +343,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
        </td></tr>}
       </Fragment>;
      })}
-     {!filtered.length&&<tr><td colSpan={7}>
+     {!filtered.length&&<tr><td colSpan={selecting?8:7}>
       <div className="catalog-product-empty-results">
        <span role="status">No items match. Use + Item to begin your Other catalog.</span>
        {activeFilterCount>0&&<CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>}
