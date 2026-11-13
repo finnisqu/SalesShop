@@ -194,6 +194,40 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   // and other toolbar controls.
   expect(src('worktable-chrome.css')).not.toContain('table thead th::before');
  });
+ it('offers native and external quotes as equal Quick Create paths without duplicating the recorder',()=>{
+  const quick=src('components/QuickCreate.tsx');
+  const css=src('quick-create.css');
+  const quotes=src('components/QuotesMobileBeta.tsx');
+  expect(quick).toContain('<strong>New SalesShop Quote</strong>');
+  expect(quick).toContain('<strong>Record External Quote</strong>');
+  expect(quick).toContain('onClick={openDocumentPicker}');
+  expect(quick).toContain('onClick={startExternalQuote}');
+  expect(quick).toContain("canEditTeamArea(teamRole,department,'crm')");
+  expect(quick).toContain('<ExternalQuoteBackfillDialog');
+  expect(quick).toContain("initialDealId={context?.kind==='deal'?context.id:undefined}");
+  expect(css).toContain('.quick-create-options.ss-mobile-sheet-body>.quick-create-option-primary');
+  expect(quotes).toContain('onRecordExternal={canRecordExternal?()=>');
+ });
+ it('turns pinned Records into direct task and bulk-edit selections',()=>{
+  const table=src('components/ConnectionsTable.tsx');
+  expect(table).toContain('onBulkTask(pins)');
+  expect(table).toContain('setSelected(pins.map(row=>row.id))');
+  expect(table).toContain('setBulkEditing(true)');
+  expect(table).toContain('Bulk edit pins');
+  expect(table).toContain('Select pinned');
+  expect(table).toContain("['companies','people','deals'].includes(tableKey)");
+ });
+ it('keeps Tasks count and status controls inside the standard worktable rather than a second row',()=>{
+  const tasks=src('components/TasksWorkspace.tsx');
+  const strip=src('workspace-table-control-strip.css');
+  const table=src('components/ConnectionsTable.tsx');
+  expect(tasks).toContain('<div className="tasks-toolbar-slot"');
+  expect(tasks).not.toContain('<p className="tasks-directory-caption">');
+  expect(tasks).toContain('toolbarTarget={embedded?undefined:taskToolbarHost}');
+  expect(tasks).toContain('className="tasks-summary"');
+  expect(strip).not.toContain('.tasks-directory-controls .tasks-directory-caption');
+  expect(table).toContain('connections-grid-meta');
+ });
  it('keeps paging in the top toolbar while preserving mobile worktable behavior',()=>{
   const table=src('components/ConnectionsTable.tsx');
   const css=src('worktable-chrome.css');
