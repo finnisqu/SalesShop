@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {createPortal} from 'react-dom';
-import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
-import {WorktableFilterMenu} from './WorktableChrome';
+import {WorkspaceHeader} from './WorkspaceHeader';
+import {WorktableActionMenu,WorktableFilterMenu,type WorktableActionItem} from './WorktableChrome';
 import {RecordsSectionNav,RECORDS_SECTIONS,RECORDS_QUOTES_LIBRARY_KEY,rememberRecordsSection,
  type RecordsSection} from './RecordsSectionNav';
 import {WorkspaceHelp} from './WorkspaceHelp';
@@ -899,20 +899,34 @@ export function QuotesMobileBeta() {
   const sharedLibraryControls=<QuoteLibraryFilterControls filters={libraryFilters} counts={counts}
     externalCount={externalQuoteRecords.length} canFilterOwner={authMode==='cloud'}
     onChange={updateLibraryFilters} onClear={resetLibraryFilters}/>;
+  // Worktable controls are separate from Filters, avoiding the duplicate
+  // document/status menus formerly housed in the page-header ellipsis.
+  const libraryViewItems:WorktableActionItem[]=[
+    {label:'Documents',active:!followUpsTab,onClick:()=>setFollowUpsTab(false)},
+    {label:'Follow-ups',active:followUpsTab,onClick:()=>setFollowUpsTab(true)},
+    ...(canBrowseTeam?[{label:signedShopOutcomesEnabled?'Shop Outcomes':'Team Quotes',
+      onClick:()=>setLibraryMode('team')}]:[]),
+  ];
+  const libraryActionItems:WorktableActionItem[]=[
+    {label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
+    {label:'Clear search and filters',onClick:resetLibraryFilters,disabled:!hasLibraryFilters},
+  ];
+  const libraryToolbarMenus=<>
+    <WorktableActionMenu label="Views" items={libraryViewItems}/>
+    <WorktableActionMenu label="Actions" items={libraryActionItems}/>
+  </>;
   const documentTypeControl=<>
    <label className="qmb-records-document-type">Document type
-     <select aria-label="Filter quote document type" value={followUpsTab?'follow-ups':documentFilter}
+     <select aria-label="Filter quote document type" value={documentFilter}
       onChange={event=>{
        const value=event.target.value;
-       if(value==='follow-ups')setFollowUpsTab(true);
-       else{setFollowUpsTab(false);setDocumentFilter(value as SalesDocumentTemplate|'all');}
+       setDocumentFilter(value as SalesDocumentTemplate|'all');
       }}>
        <option value="all">All documents</option>
        <option value="quick-quote">Quick Quotes</option>
        <option value="builder-rates">Builder Rate Schedules</option>
        <option value="community-pricing">Community Plan Pricing</option>
        <option value="spreadsheet">Custom Spreadsheets</option>
-       <option value="follow-ups">Follow-ups</option>
      </select>
    </label>
   </>;
@@ -1289,20 +1303,6 @@ export function QuotesMobileBeta() {
         mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
         mobileTabValue="quotes" onMobileTabChange={value=>selectRecordsSection(value as RecordsSection)}
         tabs={<RecordsSectionNav selected="quotes" onSelect={selectRecordsSection}/>}
-        more={<WorkspaceMoreMenu compact label="Quote actions" items={[
-          {section:'Document types',label:'Builder Rate Schedule',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('builder-rates');},active:!followUpsTab&&documentFilter==='builder-rates'},
-          {label:'Community Plan Pricing',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('community-pricing');},active:!followUpsTab&&documentFilter==='community-pricing'},
-          {label:'Custom Spreadsheet',onClick:()=>{setFollowUpsTab(false);setDocumentFilter('spreadsheet');},active:!followUpsTab&&documentFilter==='spreadsheet'},
-          {section:'Workspaces',label:'Follow-ups',onClick:()=>setFollowUpsTab(true),active:followUpsTab},
-          {section:'Status filters',label:'Active documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('active');},active:statusFilter==='active'},
-          {label:'Draft documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('drafts');},active:statusFilter==='drafts'},
-          {label:'Issued documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('issued');},active:statusFilter==='issued'},
-          {label:'Archived documents',onClick:()=>{setFollowUpsTab(false);setStatusFilter('archived');},active:statusFilter==='archived'},
-          ...(canBrowseTeam?[{label:signedShopOutcomesEnabled?'Shop Outcomes':'Team Quotes',
-            onClick:()=>setLibraryMode('team')}]:[]),
-          {section:'Tools',label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
-          {section:'Search & filters',label:'Clear search and filters',onClick:resetLibraryFilters,disabled:!hasLibraryFilters},
-        ]}/>}
         search={<input type="search" value={search} onChange={event=>setSearch(event.target.value)}
           aria-label="Search my documents" placeholder="Search documents…" disabled={followUpsTab}/>}
         primary={<button type="button" disabled={!canManageLibrary}
@@ -1311,11 +1311,18 @@ export function QuotesMobileBeta() {
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-library-measure">
          {followUpsTab
-           ?<QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>
+           ?<>
+             <div className="qmb-followups-return-toolbar" aria-label="Quote follow-up navigation">
+               <button type="button" onClick={()=>setFollowUpsTab(false)}>← Documents</button>
+               {libraryToolbarMenus}
+             </div>
+             <QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>
+            </>
            :<>
          <div className="qmb-library-directory-controls" aria-label="Document directory controls">
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
            <div className="qmb-library-mobile-filters">
+             {libraryToolbarMenus}
              <WorktableFilterMenu activeCount={activeDocumentFilterCount}>
               {documentTypeControl}{sharedLibraryControls}
              </WorktableFilterMenu>
@@ -1324,6 +1331,7 @@ export function QuotesMobileBeta() {
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
              toolbarTarget={documentToolbarHost}
+             toolbarControls={libraryToolbarMenus}
              toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}
              filterCount={activeDocumentFilterCount}
              onOpen={id=>id.startsWith('external:')
