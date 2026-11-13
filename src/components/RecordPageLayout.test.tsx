@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import {readFileSync} from 'node:fs';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 
 describe('Connections record layout parity', () => {
@@ -25,11 +26,20 @@ describe('Connections record layout parity', () => {
       expect(html).toContain('aria-label="Record details"');
       expect(html).toContain('aria-label="Linked records"');
       expect(html).toContain('aria-label="Related records"');
+      // Each jump destination can receive programmatic keyboard focus.
+      expect((html.match(/tabindex="-1"/g)??[])).toHaveLength(3);
       expect((html.match(/← Connections/g) ?? [])).toHaveLength(1);
       expect(html).not.toContain('Sales dashboard');
     });
   }
 
+  it('moves keyboard focus with the three mobile section jumps',()=>{
+    const layout=readFileSync(new URL('./RecordPageLayout.tsx',import.meta.url),'utf8');
+    expect(layout).toContain('element.focus({ preventScroll: true })');
+    expect(layout).toContain("element.scrollIntoView({ behavior: 'smooth', block: 'start' })");
+    expect(layout).toContain("area === 'details'");
+    expect(layout).toContain("area === 'records'");
+  });
   it('accepts explicit Deal breadcrumb labels without changing stored entity types', () => {
     const html = renderToStaticMarkup(<RecordPageLayout
       entityType="project" recordTypeLabel="Deal" collectionLabel="Deals" title="School Renovation"

@@ -35,7 +35,11 @@ export function RecordPageLayout({
   const relatedRef = useRef<HTMLElement>(null);
   const jumpTo = (area: 'details' | 'records' | 'related') => {
     const element = area === 'details' ? detailsRef.current : area === 'records' ? recordsRef.current : relatedRef.current;
-    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if(!element)return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Give keyboard and screen-reader users the destination, not only a
+    // visual scroll. preventScroll preserves the smooth navigation animation.
+    element.focus({ preventScroll: true });
   };
   return <section className="connections-record-page" data-record-type={entityType} aria-label={(recordTypeLabel ?? (entityType === 'project' ? 'Deal' : entityType)) + ' record'}>
     <nav className="connections-record-breadcrumb" aria-label="Breadcrumb">
@@ -60,9 +64,9 @@ export function RecordPageLayout({
       <button type="button" onClick={() => jumpTo('related')}>Related</button>
     </nav>
     <div className="connections-record-columns">
-      <aside ref={detailsRef} className="connections-record-properties" aria-label="Record details">{left}</aside>
-      <div ref={recordsRef} className="connections-record-center" role="region" aria-label="Linked records">{center}</div>
-      <aside ref={relatedRef} className="connections-record-related" aria-label="Related records">{right}</aside>
+      <aside ref={detailsRef} className="connections-record-properties" aria-label="Record details" tabIndex={-1}>{left}</aside>
+      <div ref={recordsRef} className="connections-record-center" role="region" aria-label="Linked records" tabIndex={-1}>{center}</div>
+      <aside ref={relatedRef} className="connections-record-related" aria-label="Related records" tabIndex={-1}>{right}</aside>
     </div>
   </section>;
 }

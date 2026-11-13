@@ -83,3 +83,13 @@
  .ss-record-inline-editor :is(input,select){font-size:16px;min-height:44px}
  .ss-record-inline-editor button{flex-basis:44px;min-height:44px}
  .ss-record-unlink-control .ss-record-unlink-button{min-height:44px}}
+
+
+/* Programmatic Record section jumps remain visibly discoverable when navigated
+ * from the keyboard without turning the content regions into Tab stops. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-columns
+ :is(.connections-record-properties,.connections-record-center,.connections-record-related):focus-visible{
+ outline:2px solid var(--ss-theme-accent);
+ outline-offset:2px;
+ border-radius:8px;
+}
