@@ -78,6 +78,10 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(source).toContain('export function quoteSinkSourcePatch(');
   expect(source).toContain('export function quoteRateSourcePatch(');
   expect(source).toContain('catalogSellingOverride(line:QuoteLine)');
+  expect(sinkPicker).toContain('selectedVariantId=line.sinkReference?.variantId??snapshot?.variantId');
+  expect(ratePicker).toContain('selectedRateId=line.rateReference?.rateBookItemId??snapshot?.rateBookItemId');
+  expect(sinkPicker).toContain('Use Catalog selling price');
+  expect(ratePicker).toContain('Use Rate Book selling price');
   const other=src('components/QuoteOtherLineFields.tsx');
   const otherPatch=src('services/quoteOtherSelection.ts');
   expect(other).toContain('quoteOtherSourcePatch(line,nextItem,nextVariant)');
