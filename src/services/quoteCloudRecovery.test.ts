@@ -1,7 +1,7 @@
 import {afterEach,beforeEach,describe,it,expect,vi} from 'vitest';
 import type {Quote,QuoteDocument} from '../types/quote';
 import {chooseActiveQuoteId} from './quoteActiveSelection';
-import {mergePendingQuoteDrafts,markPendingQuoteSync,readPendingQuoteSync,clearPendingQuoteSync,type PendingQuoteSync} from './quoteCloudRecovery';
+import {mergePendingQuoteDrafts,markPendingQuoteSync,readPendingQuoteSync,clearPendingQuoteSync,quoteHasUnsavedContent,type PendingQuoteSync} from './quoteCloudRecovery';
 const draft=(id:string,updatedAt='2026-11-01T15:00:00.000Z',extras:Partial<Quote>={}):Quote=>({
  id,quoteNumber:'DRAFT-'+id,title:id,documentType:'quote',status:'Draft',ownerUserId:'owner',
  updatedAt,createdAt:updatedAt,lines:[],sections:[],history:[],customerNotes:'',internalNotes:'',
@@ -74,8 +74,9 @@ describe('Batch 340 — durable quote recovery marker distinguishes new drafts',
  it('does not mistake a changed active tab for a quote edit',()=>{
   const baseline=doc([draft('original')],'original');
   const switched=doc([draft('original')],null);
-  markPendingQuoteSync(scope,switched,baseline);
-  expect(readPendingQuoteSync(scope)?.quoteIds).toEqual([]);
+  expect(quoteHasUnsavedContent(scope,switched,baseline)).toBe(false);
+  expect(markPendingQuoteSync(scope,switched,baseline)).toBeNull();
+  expect(readPendingQuoteSync(scope)).toBeNull();
   expect(mergePendingQuoteDrafts(doc([draft('original')]),switched,readPendingQuoteSync(scope))
    ?.quotes[0].title).toBe('original');
  });
@@ -105,6 +106,49 @@ describe('Batch 340 — durable quote recovery marker distinguishes new drafts',
   expect(readPendingQuoteSync(scope)?.token).toBe(newerToken);
   clearPendingQuoteSync(scope,newerToken!);
   expect(readPendingQuoteSync(scope)).toBeNull();
+ });
+ it('does not schedule a save for another owner or an unchanged draft',()=>{
+  const baseline=doc([draft('mine'),draft('shared',undefined,{ownerUserId:'colleague'})]);
+  const local=doc([draft('mine'),draft('shared','2026-11-02T00:00:00Z',
+   {ownerUserId:'colleague',title:'Updated elsewhere'})]);
+  expect(quoteHasUnsavedContent(scope,local,baseline)).toBe(false);
+  expect(markPendingQuoteSync(scope,local,baseline)).toBeNull();
+  expect(readPendingQuoteSync(scope)).toBeNull();
+  const changed=doc([draft('mine','2026-11-03T00:00:00Z',{title:'Changed'}),
+   local.quotes[1]]);
+  expect(quoteHasUnsavedContent(scope,changed,baseline)).toBe(true);
+  expect(markPendingQuoteSync(scope,changed,baseline)).toBeTruthy();
+  expect(readPendingQuoteSync(scope)?.quoteIds).toEqual(['mine']);
+ });
+ it('prefers server on equal timestamps for existing drafts',()=>{
+  const timestamp='2026-11-01T15:00:00.000Z';
+  const cloud=doc([draft('existing',timestamp,{title:'Trusted cloud draft'})]);
+  const local=doc([draft('existing',timestamp,{title:'Stale local copy'})]);
+  const pending:PendingQuoteSync={...marker,quoteIds:['existing'],createdQuoteIds:[]};
+  expect(mergePendingQuoteDrafts(cloud,local,pending)?.quotes[0].title)
+   .toBe('Trusted cloud draft');
+ });
+ it('replays a partially inserted new quote with equal timestamps',()=>{
+  const timestamp='2026-11-01T15:00:00.000Z';
+  const remote=doc([draft('new',timestamp,{lines:[]})]);
+  const local=doc([draft('new',timestamp,{lines:[{
+   id:'line-a',kind:'item',description:'Labor',pricingMode:'direct',
+   amount:100,customerVisible:true,includeInTotal:true,
+  }]})]);
+  const pending:PendingQuoteSync={...marker,quoteIds:['new'],createdQuoteIds:['new']};
+  expect(mergePendingQuoteDrafts(remote,local,pending)?.quotes[0].lines)
+   .toEqual(local.quotes[0].lines);
+ });
+ it('rejects invalid timestamps rather than allowing stale overwrites',()=>{
+  const valid=doc([draft('old',undefined,{title:'Cloud is valid'})]);
+  const bad=doc([draft('old','not a real date',{title:'Invalid local'})]);
+  const pending:PendingQuoteSync={...marker,quoteIds:['old'],createdQuoteIds:[]};
+  expect(mergePendingQuoteDrafts(valid,bad,pending)?.quotes[0].title)
+   .toBe('Cloud is valid');
+  const badCloud=doc([draft('old','invalid cloud date',{title:'Unverifiable server'})]);
+  const goodLocal=doc([draft('old','2026-11-15T00:00:00Z',{title:'Good local'})]);
+  expect(mergePendingQuoteDrafts(badCloud,goodLocal,pending)?.quotes[0].title)
+   .toBe('Unverifiable server');
  });
  it('keeps read-only and issued rows protected during creation recovery',()=>{
   const baseline=doc([draft('existing')]);
