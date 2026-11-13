@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import {createPortal} from 'react-dom';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {canEditTeamArea} from '../services/teamDepartments';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
@@ -15,6 +19,29 @@ const TARGET_NEW = '__new__';
 
 export function CatalogAddToQuoteButton({ onClick, label = 'Add to quote' }: { onClick: () => void; label?: string }) {
   return <button type="button" className="catalog-add-to-quote" onClick={onClick}>+ {label}</button>;
+}
+
+/** Launch the existing snapshot-based destination chooser from any Catalog
+ * variant. Its dialog uses a portal so sticky worktable scrollports cannot
+ * clip it, and respects the same quote-edit permissions as Quick Create. */
+export function CatalogQuoteLauncher({source,label='Add to quote'}:{
+ source:CatalogQuoteSource;label?:string;
+}){
+ const [open,setOpen]=useState(false);
+ const mode=useAuthStore(s=>s.mode);
+ const organizationId=useAuthStore(s=>s.organizationId);
+ const userId=useAuthStore(s=>s.user?.id);
+ const teamRole=useAuthStore(s=>s.teamRole);
+ const department=useAuthStore(s=>s.teamDepartment);
+ const preview=useRolePerspectiveStore(s=>s.activePerspective);
+ const allowed=!preview&&(mode==='local'||Boolean(
+  organizationId&&userId&&canEditTeamArea(teamRole,department,'quotes')));
+ if(!allowed)return null;
+ return <>
+  <CatalogAddToQuoteButton label={label} onClick={()=>setOpen(true)}/>
+  {open&&createPortal(<CatalogQuoteInsert source={source}
+    onClose={()=>setOpen(false)}/>,document.body)}
+ </>;
 }
 
 export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSource; onClose: () => void }) {
