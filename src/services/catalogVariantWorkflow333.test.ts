@@ -49,7 +49,8 @@ describe('Batch 333 — Catalog creation remains visible and variant management 
   for(const content of [sinks,other]){
    expect(content).toContain("onClearExternalQuery?.();setExpanded(id);setEditing(true)");
    expect(content).toContain('Active in catalog');
-   expect(content).toContain('Uncheck to archive; saved quotes keep their original selections.');
+   expect(content).toContain("?'Uncheck to archive':'Check to restore'");
+   expect(content).toContain('; saved quotes keep their original selections.');
    expect(content).toContain('CatalogLifecycleStatus active=');
    expect(content).toContain('Include archived');
   }
@@ -72,6 +73,8 @@ describe('Batch 333 — Catalog creation remains visible and variant management 
    expect(content).toContain("variant.active?'Archive variant':'Restore variant'");
    expect(content).toContain('CatalogLifecycleStatus active={variant.active} isDefault={variant.default}');
    expect(content).toContain('catalog-product-restore-action');
+   expect(content).toContain('>Duplicate variant</button>');
+   expect(content).toContain('>Delete variant</button>');
    expect(content).toContain("disabled={key==='default'&&(!variant.active||variant.default)}");
   }
   expect(sinks).toContain("model.active&&variant.active&&<CatalogQuoteLauncher");
