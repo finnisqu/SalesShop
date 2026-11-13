@@ -47,6 +47,17 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(builder).toContain('if(configured.length&&!active.length)');
   expect(builder).toContain('if(programs.length&&!programs.some');
  });
+ it('prevents quote launchers for retired structured Material variants or supplier programs',()=>{
+  const materials=src('components/MaterialsWorkspace.tsx');
+  const builder=src('services/catalogQuoteInsertion.ts');
+  expect(materials).toContain('const retiredPrograms=Boolean(variant.purchaseOptions?.length&&!options.length)');
+  expect(materials).toContain('Supplier programs inactive · reactivate one before quoting');
+  expect(materials).toContain('All structured variants are inactive.');
+  expect(materials).toContain('No structured variants yet. Quote the legacy cost reference');
+  expect(materials).toContain("source={{kind:'material',material,variantId:variant.id}}");
+  expect(builder).toContain('if(configured.length&&!active.length)');
+  expect(builder).toContain('if(programs.length&&!programs.some');
+ });
  it('serializes Catalog-to-Quote creation and avoids duplicate writes after a committed insert',()=>{
   const modal=src('components/CatalogQuoteInsert.tsx');
   expect(modal).toContain('if(insertPending.current)return');

@@ -339,6 +339,9 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
         {activeVariants.map((variant) => {
           const area = materialVariantAreaSf(variant);
           const options = activePurchaseOptions(variant);
+          // A fully retired supplier program cannot supply a new quote.
+          // Variants that never had programs remain eligible for manual pricing.
+          const retiredPrograms=Boolean(variant.purchaseOptions?.length&&!options.length);
           const defaultOption = defaultMaterialPurchaseOption(variant);
           const defaultCost = materialPurchaseCostPerSf(variant, defaultOption);
           const isPinned = pinnedKeySet.has(pinKey(material.id, variant.id));
@@ -365,14 +368,20 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
                   onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}>
                   <WorkspaceChromeIcon name="pin"/> {isPinned ? 'Pinned' : 'Pin'}
                 </button>
-                <CatalogQuoteLauncher source={{kind:'material',material,variantId:variant.id}}/>
+                {retiredPrograms
+                  ?<small role="status">Supplier programs inactive · reactivate one before quoting</small>
+                  :<CatalogQuoteLauncher source={{kind:'material',material,variantId:variant.id}}/>}
               </div>
             </article>
           );
         })}
         {!activeVariants.length && <div className="materials-variant-empty">
-          <span>This material has no active structured variants yet. You can quote its legacy reference or add slab sizes in Edit materials.</span>
-          <CatalogQuoteLauncher source={{kind:'material',material}}/>
+          {material.variants?.length
+            ?<span role="status">All structured variants are inactive. Reactivate one in Edit materials before quoting.</span>
+            :<>
+              <span>No structured variants yet. Quote the legacy cost reference or add slab sizes in Edit materials.</span>
+              <CatalogQuoteLauncher source={{kind:'material',material}}/>
+            </>}
         </div>}
       </div>
     );
