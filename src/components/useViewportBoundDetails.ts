@@ -71,5 +71,7 @@ export function useViewportBoundDetails(ref:RefObject<HTMLDetailsElement|null>){
    window.visualViewport?.removeEventListener('resize',position);
    window.visualViewport?.removeEventListener('scroll',position);
   };
- },[ref]);
+  // A Records toolbar may render in a portal only after its host mounts.
+  // Rebind on React rerenders so a previously null ref cannot strand the menu.
+ });
 }
