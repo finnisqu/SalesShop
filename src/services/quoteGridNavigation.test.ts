@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {nextQuickGridCell,type QuickGridCell} from './quoteGridNavigation';
+import {nextQuickGridCell,quickGridControlIsNavigable,type QuickGridCell} from './quoteGridNavigation';
 
 const cells:QuickGridCell[]=[
  {row:0,column:1},{row:0,column:3},{row:0,column:4},
@@ -8,6 +8,17 @@ const cells:QuickGridCell[]=[
 ];
 
 describe('Quick Quote grid navigation',()=>{
+ it('skips disabled and visually collapsed mobile fields, preserving available cells',()=>{
+  const control=(visible:boolean,disabled:boolean,hidden=false)=>({
+    getClientRects:()=>visible?[{}]:[],
+    matches:(selector:string)=>selector.includes(':disabled')&&disabled,
+    closest:(_selector:string)=>hidden?{}:null,
+  }) as unknown as HTMLElement;
+  expect(quickGridControlIsNavigable(control(true,false))).toBe(true);
+  expect(quickGridControlIsNavigable(control(false,false))).toBe(false);
+  expect(quickGridControlIsNavigable(control(true,true))).toBe(false);
+  expect(quickGridControlIsNavigable(control(true,false,true))).toBe(false);
+ });
  it('moves Tab and Shift+Tab through only the editable cells',()=>{
   expect(nextQuickGridCell(cells,0,'next')).toBe(1);
   expect(nextQuickGridCell(cells,2,'next')).toBe(3);

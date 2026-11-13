@@ -23,6 +23,15 @@ export function nextQuickGridCell(cells:readonly QuickGridCell[],
    ||Math.abs(a.column-here.column)-Math.abs(b.column-here.column));
  return choices[0]?.index??null;
 }
+/** Only visible, enabled cells participate in spreadsheet navigation.
+ * Mobile Areas intentionally collapse some desktop columns; these hidden
+ * buttons must not steal Prev/Next or keyboard focus. */
+export function quickGridControlIsNavigable(control:HTMLElement):boolean{
+ return control.getClientRects().length>0&&
+  !control.matches(':disabled,[aria-disabled="true"]')&&
+  !control.closest('[inert],[hidden],[aria-hidden="true"]');
+}
+
 /** Navigate by stable row/column identity, even when React exchanges an
  * editable cell's input for its resting button after a blur/commit.
  * activate=true is used by the mobile keyboard accessory: it opens the next
@@ -30,7 +39,8 @@ export function nextQuickGridCell(cells:readonly QuickGridCell[],
 export function moveQuickGridFocus(root:HTMLElement,from:HTMLElement,
  direction:QuickGridDirection,activate=false):boolean{
  const rows=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-row]'));
- const controls=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'));
+ const controls=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'))
+  .filter(quickGridControlIsNavigable);
  const index=controls.findIndex(el=>el===from||el.contains(from));
  if(index<0)return false;
  const coordinate=(el:HTMLElement):QuickGridCell=>{
@@ -54,7 +64,8 @@ export function moveQuickGridFocus(root:HTMLElement,from:HTMLElement,
  }
  if(from.matches('input,textarea,[contenteditable="true"]'))from.blur();
  requestAnimationFrame(()=>{
-  const updated=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'));
+  const updated=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'))
+   .filter(quickGridControlIsNavigable);
   const currentRows=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-row]'));
   const nextControl=updated.find(el=>{
    const row=el.closest<HTMLElement>('[data-quick-grid-row]');

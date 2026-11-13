@@ -35,6 +35,8 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(accessory).toContain("onClick={()=>advance('previous')}");
   expect(accessory).toContain('onClick={finish}');
   expect(accessoryCss).toContain('scroll-padding-bottom:64px');
+  expect(source('src/services/quoteGridNavigation.ts')).toContain(
+    '.filter(quickGridControlIsNavigable)');
  });
  it('keeps desktop tables and uses contiguous compact mobile rows',()=>{
   expect(mobile).toContain('@media(max-width:700px)');
