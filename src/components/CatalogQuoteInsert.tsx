@@ -188,7 +188,9 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
           </select></label>}
           {(source.kind !== 'rate' || source.item.unit !== 'flat') && (
             <label className="catalog-quote-field"><span>{source.kind === 'material' ? 'Quoted area (SF) · optional' : source.kind === 'sink' ? 'Quantity' : source.kind==='other' ? `Quantity (${source.item.unit||'each'})` : `Quantity (${RATE_BOOK_UNIT_LABELS[source.item.unit]}) · optional`}</span>
-              <input type="number" min="0.001" step="any" inputMode="decimal" value={quantityText} onChange={(event) => setQuantityText(event.target.value)} placeholder={source.kind === 'material' ? 'Enter takeoff SF later' : 'Enter quantity'} />
+              <input type="number" min={wholeUnits?'1':'0.001'} step={wholeUnits?'1':'any'}
+                inputMode="decimal" value={quantityText} onChange={(event) => setQuantityText(event.target.value)}
+                placeholder={source.kind === 'material' ? 'Enter takeoff SF later' : 'Enter quantity'} />
             </label>
           )}
           <div className="catalog-quote-review">
