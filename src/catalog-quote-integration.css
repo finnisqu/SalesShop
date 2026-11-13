@@ -215,3 +215,33 @@
 :root[data-sales-theme] .catalog-quote-error{
  color:var(--ss-danger,#b84444);
 }
+
+/* Variant grids have one action slot; keep Pin + Quote together rather than
+ * letting the added control create an accidental seventh grid column. */
+:root[data-sales-theme] .sales-app.view-catalog
+ .materials-workspace .materials-variant-line>.materials-variant-actions{
+ display:flex;flex-direction:column;justify-content:center;align-items:stretch;
+ gap:5px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .materials-workspace .materials-variant-actions>.materials-pin-button{
+ justify-self:stretch;min-width:0;width:100%;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .materials-workspace .materials-variant-actions>.catalog-add-to-quote{
+ width:100%;min-height:30px;padding:5px 6px;margin:0;font-size:10px;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .rates-reference-item>.catalog-add-to-quote{
+ min-height:29px;padding:4px 7px;font-size:10px;margin:3px 0 0;
+}
+:root[data-sales-theme] .sales-app.view-catalog
+ .catalog-sink-variant>.catalog-add-to-quote{
+ justify-self:start;min-height:32px;
+}
+@media(max-width:700px){
+ :root[data-sales-theme] .sales-app.view-catalog .materials-workspace
+ .materials-variant-line>.materials-variant-actions{
+  grid-column:2;grid-row:1;align-self:start;
+ }
+}
