@@ -393,8 +393,11 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
         <label>Private total cost
          <CommitNumber label={'Private total cost '+line.description} value={line.internalCost}
           disabled={!editable} onCommit={v=>changeLine(line,{internalCost:v})}/>
-         {line.internalCost===undefined&&line.unitCost!==undefined&&line.quantity!==undefined&&
-          <small>Calculated from Catalog · {amount(line.unitCost*line.quantity)}</small>}
+         {line.internalCost===undefined&&
+          (line.unitCost??line.otherReference?.snapshot?.internalCost)!==undefined&&
+          line.quantity!==undefined&&
+          <small>Calculated from Catalog · {amount(
+            (line.unitCost??line.otherReference?.snapshot?.internalCost??0)*line.quantity)}</small>}
         </label>
        </div>
        <div className="qqs-item-total">
