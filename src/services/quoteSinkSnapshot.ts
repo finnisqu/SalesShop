@@ -55,7 +55,9 @@ export function compareQuoteSinkSnapshot(
 ): QuoteSinkSnapshotComparison {
   const sellPriceChanged = !sameMoney(quoted.sellPrice, current.sellPrice);
   const internalCostChanged = !sameMoney(quoted.internalCost, current.internalCost);
-  const sourceChanged = quoted.sinkModelName !== current.sinkModelName
+  const sourceChanged = quoted.sinkModelId !== current.sinkModelId
+    || quoted.variantId !== current.variantId
+    || quoted.sinkModelName !== current.sinkModelName
     || quoted.modelCode !== current.modelCode
     || quoted.variantLabel !== current.variantLabel
     || quoted.variantCode !== current.variantCode

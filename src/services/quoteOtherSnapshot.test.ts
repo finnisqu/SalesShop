@@ -68,6 +68,18 @@ describe('OTHER catalog quote-time snapshots',()=>{
   expect(compareQuoteOtherSnapshot(original,supplierChanged).sourceChanged).toBe(true);
   expect(original.availableColors).toEqual(['Black','Graphite']);
  });
+ it('flags exact Other item and variant identity when costs and labels match',()=>{
+  const saved=createQuoteOtherSnapshot(item,variant);
+  for(const changed of [
+    {...saved,itemId:'different-accessory'},
+    {...saved,variantId:'different-variant'},
+  ]){
+    expect(compareQuoteOtherSnapshot(saved,changed)).toEqual({
+      changed:true,sellPriceChanged:false,internalCostChanged:false,sourceChanged:true,
+    });
+  }
+  expect(saved.sellPrice).toBe(95);
+ });
  it('detects later prices and spec changes without repricing an existing line',()=>{
   const quoted=createQuoteOtherSnapshot(item,variant);
   const current=createQuoteOtherSnapshot({...item,updatedAt:'2026-11-13T00:00:00Z'},

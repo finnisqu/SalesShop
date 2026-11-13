@@ -120,6 +120,21 @@ describe('quote material cost snapshots', () => {
     expect(current.costPerSf).toBe(15.75);
   });
 
+  it('recognizes a different Material ID or supplier recording even at an identical price',()=>{
+    const source=material();
+    const saved=createQuoteMaterialCostSnapshot(source,resolveStockMaterialCostReference(source));
+    for(const change of [
+      {...saved,materialId:'different-material'},
+      {...saved,sourceRecordedAt:'2026-11-13T12:00:00.000Z'},
+    ]){
+      expect(compareQuoteMaterialSnapshot(saved,change)).toEqual({
+        changed:true,costChanged:false,sourceChanged:true,
+      });
+    }
+    expect(saved.materialId).toBe('mat-1');
+    expect(saved.costPerSf).toBe(14.5);
+  });
+
   it('detects a new source publication even when price stays the same', () => {
     const oldMaterial = material(14.5, 850.86, 'pub-1');
     const newMaterial = material(14.5, 850.86, 'pub-2');

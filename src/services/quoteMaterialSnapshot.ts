@@ -75,7 +75,9 @@ export function compareQuoteMaterialSnapshot(
 ): QuoteMaterialSnapshotComparison {
   const costChanged = !sameMoney(snapshot.costPerSf, current.costPerSf)
     || !sameMoney(snapshot.slabCost, current.slabCost);
-  const sourceChanged = snapshot.sourcePublicationId !== current.sourcePublicationId
+  const sourceChanged = snapshot.materialId !== current.materialId
+    || snapshot.sourceRecordedAt !== current.sourceRecordedAt
+    || snapshot.sourcePublicationId !== current.sourcePublicationId
     || snapshot.sourceEffectiveDate !== current.sourceEffectiveDate
     || snapshot.sourcePriceListLabel !== current.sourcePriceListLabel
     || snapshot.materialName !== current.materialName

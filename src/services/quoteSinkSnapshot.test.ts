@@ -107,6 +107,19 @@ describe('quote sink snapshots', () => {
     expect(quoted.sellPrice).toBe(220);
   });
 
+  it('distinguishes similarly named model and variant IDs without modifying quoted prices',()=>{
+    const saved=createQuoteSinkSnapshot(model(),variant());
+    for(const changed of [
+      {...saved,sinkModelId:'replacement-model'},
+      {...saved,variantId:'replacement-variant'},
+    ]){
+      expect(compareQuoteSinkSnapshot(saved,changed)).toMatchObject({
+        changed:true,sellPriceChanged:false,internalCostChanged:false,sourceChanged:true,
+      });
+    }
+    expect(saved.sellPrice).toBe(220);
+  });
+
   it('creates a practical each-priced quote line with quantity one', () => {
     const snapshot = createQuoteSinkSnapshot(model(), variant());
 

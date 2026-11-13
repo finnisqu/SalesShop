@@ -46,7 +46,8 @@ export function compareQuoteRateSnapshot(
 ): QuoteRateSnapshotComparison {
   const sellRateChanged = !sameMoney(quoted.sellRate, current.sellRate);
   const internalCostChanged = !sameMoney(quoted.internalCost, current.internalCost);
-  const sourceChanged = quoted.effectiveDate !== current.effectiveDate
+  const sourceChanged = quoted.rateBookItemId !== current.rateBookItemId
+    || quoted.effectiveDate !== current.effectiveDate
     || quoted.pricingBehavior !== current.pricingBehavior
     || quoted.pricingDivision !== current.pricingDivision
     || quoted.unit !== current.unit

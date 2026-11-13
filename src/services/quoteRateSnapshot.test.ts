@@ -134,6 +134,16 @@ describe('quote Rate Book snapshots', () => {
     expect(quoted.sellRate).toBe(14.5);
   });
 
+  it('flags a different Rate Book ID without changing an already quoted price',()=>{
+    const saved=createQuoteRateSnapshot(rateItem());
+    const renamed={...saved,rateBookItemId:'different-rate-item'};
+    expect(compareQuoteRateSnapshot(saved,renamed)).toEqual({
+      changed:true,sellRateChanged:false,internalCostChanged:false,sourceChanged:true,
+    });
+    expect(saved.rateBookItemId).toBe('rate-fab');
+    expect(saved.sellRate).toBe(14.5);
+  });
+
   it('flags a pricing-division change even when the numeric rate happens to match', () => {
     const item = rateItem({
       divisionOverrides: [{ division: 'Commercial', sellRate: 14.5 }],

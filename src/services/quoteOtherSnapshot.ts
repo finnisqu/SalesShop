@@ -36,7 +36,9 @@ export function compareQuoteOtherSnapshot(quoted:QuoteOtherSnapshot,current:Quot
  const equalMoney=(a?:number,b?:number)=>a===undefined||b===undefined?a===b:Math.abs(a-b)<.005;
  const sellPriceChanged=!equalMoney(quoted.sellPrice,current.sellPrice);
  const internalCostChanged=!equalMoney(quoted.internalCost,current.internalCost);
- const sourceChanged=quoted.itemName!==current.itemName||
+ const sourceChanged=quoted.itemId!==current.itemId||
+  quoted.variantId!==current.variantId||
+  quoted.itemName!==current.itemName||
   quoted.category!==current.category||quoted.brand!==current.brand||
   quoted.supplier!==current.supplier||quoted.unit!==current.unit||
   quoted.variantLabel!==current.variantLabel||
