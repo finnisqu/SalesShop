@@ -38,6 +38,15 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(builder).toContain('validateCatalogQuoteQuantity(options.quantity,source)');
   expect(builder).toContain('validateCatalogQuoteSource(source,options.variantId,options.purchaseOptionId)');
  });
+ it('disables Quote insertion for retired material sources but retains legacy references',()=>{
+  const modal=src('components/CatalogQuoteInsert.tsx');
+  const builder=src('services/catalogQuoteInsertion.ts');
+  expect(modal).toContain('materialVariantsValid');
+  expect(modal).toContain('materialProgramsValid');
+  expect(modal).toContain('No active variants · choose another material');
+  expect(builder).toContain('if(configured.length&&!active.length)');
+  expect(builder).toContain('if(programs.length&&!programs.some');
+ });
  it('serializes Catalog-to-Quote creation and avoids duplicate writes after a committed insert',()=>{
   const modal=src('components/CatalogQuoteInsert.tsx');
   expect(modal).toContain('if(insertPending.current)return');

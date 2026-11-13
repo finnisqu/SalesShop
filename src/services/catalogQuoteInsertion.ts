@@ -35,14 +35,21 @@ export function validateCatalogQuoteSource(source:CatalogQuoteSource,variantId?:
   const requestedVariant=variantId??(source.kind==='rate'?undefined:source.variantId);
   if(source.kind==='material'){
     if(!source.material.active)throw new Error('This material is inactive. Choose an active catalog item.');
-    const active=(source.material.variants??[]).filter(v=>v.active!==false);
+    const configured=source.material.variants??[];
+    const active=configured.filter(v=>v.active!==false);
+    // A pre-variant legacy record remains usable. A structured Catalog item
+    // with ONLY retired variants must never revert to the legacy unit cost.
+    if(configured.length&&!active.length)
+      throw new Error('This material has no active variant to quote.');
     if(requestedVariant&&!active.some(v=>v.id===requestedVariant))
       throw new Error('The selected material variant is inactive or no longer available.');
-    if(purchaseOptionId){
-      const variant=active.find(v=>v.id===requestedVariant)??active.find(v=>v.default)??active[0];
-      if(!(variant?.purchaseOptions??[]).some(option=>option.id===purchaseOptionId&&option.active!==false))
-        throw new Error('The selected supplier purchase program is inactive or no longer available.');
-    }
+    const variant=active.find(v=>v.id===requestedVariant)??active.find(v=>v.default)??active[0];
+    const programs=variant?.purchaseOptions??[];
+    if(programs.length&&!programs.some(option=>option.active!==false))
+      throw new Error('This material variant has no active supplier purchase program.');
+    if(purchaseOptionId&&
+       !programs.some(option=>option.id===purchaseOptionId&&option.active!==false))
+      throw new Error('The selected supplier purchase program is inactive or no longer available.');
   }else if(source.kind==='sink'){
     if(!source.model.active)throw new Error('This sink model is inactive. Choose an active model.');
     if(requestedVariant&&!source.model.variants.some(v=>v.id===requestedVariant&&v.active))

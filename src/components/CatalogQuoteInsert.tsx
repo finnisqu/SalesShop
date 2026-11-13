@@ -97,9 +97,13 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const validQuantity = quantityValue===undefined?!countRequired:
     Number.isFinite(quantityValue)&&quantityValue>0&&quantityValue<=1_000_000&&
     (!wholeUnits||Number.isInteger(quantityValue));
+  const materialVariantsValid=source.kind!=='material'||
+    !(source.material.variants?.length)||Boolean(materialVariant);
+  const materialProgramsValid=source.kind!=='material'||
+    !(materialVariant?.purchaseOptions?.length)||Boolean(selectedOption);
   const validSource = (source.kind==='material'
-    ? source.material.active && (!variantId || Boolean(materialVariant)) &&
-      (!purchaseOptionId || Boolean(selectedOption))
+    ? source.material.active && materialVariantsValid && materialProgramsValid &&
+      (!variantId || Boolean(materialVariant)) && (!purchaseOptionId || Boolean(selectedOption))
     : source.kind==='sink' ? source.model.active && Boolean(sinkVariant)
     : source.kind==='other' ? source.item.active && Boolean(otherVariant)
     : source.item.active);
@@ -191,7 +195,9 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
             <label className="catalog-quote-field"><span>Slab variant</span><select value={materialVariant?.id ?? ''} onChange={(event) => { setVariantId(event.target.value); setPurchaseOptionId(''); }}>
               {source.material.variants?.filter((variant) => variant.active !== false).map((variant) =>
                 <option key={variant.id} value={variant.id}>{[variant.thickness,variant.finish,variant.formatName,variant.sku].filter(Boolean).join(' · ') || 'Standard variant'}</option>)}
-              {!materialVariant && <option value="">{variantId?'Selected variant unavailable · choose another':'No structured variants · legacy reference'}</option>}
+              {!materialVariant && <option value="">{variantId?'Selected variant unavailable · choose another':
+                  source.material.variants?.length?'No active variants · choose another material':
+                  'No structured variants · legacy reference'}</option>}
             </select></label>
             {options.length > 0 && <label className="catalog-quote-field"><span>Supplier purchase program</span><select value={selectedOption?.id ?? ''} onChange={(event) => setPurchaseOptionId(event.target.value)}>
               {!selectedOption&&<option value="">Select an active supplier program</option>}

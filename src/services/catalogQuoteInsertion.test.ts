@@ -113,6 +113,25 @@ describe('Catalog to Quotes snapshots', () => {
       .toThrow(/positive quantity/);
   });
 
+  it('does not use a legacy buying price when structured variants or supplier programs are all inactive',()=>{
+    const retiredVariant:StockMaterial={...material,internalCost:99,
+      variants:[{...material.variants![0],active:false}]};
+    expect(()=>buildCatalogQuoteLinePatch({kind:'material',material:retiredVariant}))
+      .toThrow(/no active variant/);
+    const retiredProgram:StockMaterial={...material,internalCost:99,
+      variants:[{...material.variants![0],purchaseOptions:[
+        {...material.variants![0].purchaseOptions[0],active:false},
+      ]}]};
+    expect(()=>buildCatalogQuoteLinePatch({kind:'material',material:retiredProgram}))
+      .toThrow(/no active supplier purchase program/);
+    // Older materials with no structured variant data still retain their
+    // legitimate legacy internal-cost reference.
+    const legacy:StockMaterial={...material,variants:undefined,internalCost:25};
+    const patch=buildCatalogQuoteLinePatch({kind:'material',material:legacy});
+    expect(patch.materialReference?.sourceCostPerSf).toBe(25);
+    expect(patch.rate).toBeUndefined();
+  });
+
   it('enforces whole units for sinks and each accessories at the service boundary',()=>{
     const other:OtherCatalogItem={
       id:'other1',name:'Accessory',category:'Plumbing',unit:'each',active:true,
