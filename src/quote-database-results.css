@@ -287,3 +287,34 @@
     font-size: 16px;
   }
 }
+
+/* Refreshing a Catalog source and repricing the customer are separate actions.
+ * Keep the explicit reprice button in the available full-width row on both
+ * desktop and mobile instead of overflowing the compact source grid. */
+:root[data-sales-theme] .qmb .quote-source-apply-price{
+ grid-column:1/-1;justify-self:start;align-self:center;
+ min-height:32px;max-width:100%;
+ padding:6px 10px;border:1px solid var(--ss-theme-border);
+ border-radius:7px;background:var(--ss-theme-card);color:var(--ss-theme-accent);
+ font:750 11px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;white-space:normal;text-align:left;
+}
+:root[data-sales-theme] .qmb .quote-source-apply-price:hover{
+ background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .qmb .quote-source-apply-price:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+:root[data-sales-theme] .qmb .quote-catalog-popover>p.quote-source-status{
+ margin:6px 0;padding:4px 0;min-width:0;max-width:100%;
+ font:500 11px/1.5 var(--ss-font-body,system-ui,sans-serif);
+ letter-spacing:0;text-transform:none;white-space:normal;
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .qmb .quote-catalog-popover>p.quote-source-status.is-warning{
+ color:var(--ss-danger,#ac4e43);
+ overflow-wrap:anywhere;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .qmb .quote-source-apply-price{min-height:40px;}
+}
