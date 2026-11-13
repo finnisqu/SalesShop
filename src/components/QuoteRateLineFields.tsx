@@ -9,11 +9,10 @@ import type { Quote, QuoteLine } from '../types/quote';
 import {
   compareQuoteRateSnapshot,
   createQuoteRateSnapshot,
-  rateSnapshotLinePatch,
 } from '../services/quoteRateSnapshot';
 import { useQuoteStore } from '../store/quoteStore';
 import { useRateBookStore } from '../store/rateBookStore';
-import { compatibleAreaScopeFields } from '../services/quoteAreaScope';
+import {rateCatalogSelectionPatch,catalogSellingOverride} from '../services/quoteCatalogLineEditing';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 const allowedCategories: RateBookCategory[] = ['fabrication-install', 'sink', 'add-on'];
@@ -94,12 +93,8 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
 
   const apply = (item: RateBookItem) => {
     const nextSnapshot = createQuoteRateSnapshot(item, quote.pricingDivision);
-    const patch = rateSnapshotLinePatch(nextSnapshot);
-    const nextLine = { ...line, ...patch } as QuoteLine;
-    const quantitySource = line.quantitySource && compatibleAreaScopeFields(nextLine).includes(line.quantitySource.field)
-      ? line.quantitySource
-      : undefined;
-    updateLine(quote.id, line.id, { ...patch, quantitySource });
+    const patch=rateCatalogSelectionPatch(line,nextSnapshot);
+    updateLine(quote.id,line.id,patch);
     setSearching(false);
     setSearch('');
   };
@@ -179,6 +174,9 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
       </div>
 
       {snapshot?.pricingBehavior === 'cost-reference' && <span className="quote-source-status">Internal only</span>}
+      {snapshot&&catalogSellingOverride(line)&&<span className="quote-source-status">
+        Manual selling override · catalog {snapshot.sellRate===undefined?'unpriced':money.format(snapshot.sellRate)}
+      </span>}
       {snapshot && !selectedItem && <span className="quote-source-status is-warning">Source unavailable</span>}
       {snapshot && comparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
     </div>
