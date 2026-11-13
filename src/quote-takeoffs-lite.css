@@ -348,7 +348,7 @@
 .qtl-combobox-menu .qtl-search-preserved{
  display:grid;gap:3px;min-width:0;margin:5px 4px 7px;
  padding:7px 9px;border:1px solid var(--qt-border);
- border-radius:7px;background:var(--qt-panel,var(--qt-card));
+ border-radius:7px;background:var(--qt-panel,var(--ss-theme-card,#fffdfa));
  color:var(--qt-ink);overflow-wrap:anywhere;
 }
 .qtl-combobox-menu .qtl-search-preserved strong{
