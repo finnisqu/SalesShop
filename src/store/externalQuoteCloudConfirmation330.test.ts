@@ -100,6 +100,13 @@ describe('Batch 330: external submission remote Deal acknowledgement',()=>{
    stage:'Bid Sent',amount:12000,dueDate:undefined});
   expect(useCrmStore.getState().activities).toHaveLength(1);
  });
+ it('does not overwrite a second Deal edited while cloud confirmation is in flight',async()=>{
+  const unrelated={...deal,id:'deal-two',name:'Other GC job',
+   updatedAt:'2026-11-13T13:10:00Z'};
+  useCrmStore.setState({projects:[{...deal},unrelated]});
+  expect(await submit()).toBe(true);
+  expect(useCrmStore.getState().projects.find(d=>d.id==='deal-two')).toEqual(unrelated);
+ });
  it('does not claim success or change local records when the Deal write fails',async()=>{
   cloud.failProject=true;
   await expect(submit()).rejects.toThrow('Deal update failed');

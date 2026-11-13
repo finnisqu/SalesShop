@@ -3,6 +3,7 @@ import { localCrmRepository } from '../data/crmRepository';
 import { supabase } from '../lib/supabase';
 import { applyProjectStageTransition } from '../services/boardIntegrity';
 import {confirmedExternalQuoteDeal} from '../services/externalQuoteDealConfirmation';
+import {reconcileExternalQuoteDealAfterAck} from '../services/externalQuoteDealReconcile';
 import {
   companyIdentityMatches,
   contactIdentityMatches,
@@ -749,12 +750,19 @@ export const useCrmStore = create<CrmState>((set, get) => ({
           throw new Error('Workspace changed while confirming the Deal. Reopen the quote record.');
       }
     }
-    // Both Activity and non-historical Deal now have cloud acknowledgement.
-    // The regular CRM sync still persists any other in-memory CRM changes.
-    const activities=get().activities.some(item=>item.id===activity.id)
-      ?get().activities:[...get().activities,activity];
-    persist(get().companies,get().contacts,projects,activities);
-    set({projects,activities});
+    // The network waits above may span another edit to a different Deal or
+    // this Deal's notes. Apply only submission fields to the CURRENT store,
+    // not the stale projects/companies/activities arrays from request start.
+    // Never roll back a later local Deal-stage advancement.
+    const latest=get();
+    const submitted=projects.find(project=>project.id===projectId);
+    const liveProjects=historical||!submitted
+      ?latest.projects:reconcileExternalQuoteDealAfterAck(
+        latest.projects,current,submitted);
+    const activities=latest.activities.some(item=>item.id===activity.id)
+      ?latest.activities:[...latest.activities,activity];
+    persist(latest.companies,latest.contacts,liveProjects,activities);
+    set({projects:liveProjects,activities});
     return true;
   },
 
