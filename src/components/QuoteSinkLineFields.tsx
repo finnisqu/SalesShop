@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   compareQuoteSinkSnapshot,
   createQuoteSinkSnapshot,
-  sinkSnapshotLinePatch,
 } from '../services/quoteSinkSnapshot';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
-import { compatibleAreaScopeFields } from '../services/quoteAreaScope';
-import {catalogSellingOverride} from '../services/quoteCatalogLineEditing';
+import {
+ catalogSellingOverride,quoteSinkSourcePatch,quoteSinkCatalogPricePatch,
+} from '../services/quoteCatalogLineEditing';
 import {
   SINK_CATEGORY_LABELS,
   SINK_CONFIGURATION_LABELS,
@@ -59,6 +59,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
   const snapshot = line.sinkReference?.snapshot;
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(!snapshot);
+  const [sourceError,setSourceError]=useState('');
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { void hydrate(); }, [hydrate]);
@@ -121,15 +122,25 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
   }, [activeModels, search]);
 
   const apply = (model: SinkModel, variant: SinkVariant) => {
-    const nextSnapshot = createQuoteSinkSnapshot(model, variant);
-    const patch = sinkSnapshotLinePatch(nextSnapshot);
-    const nextLine = { ...line, ...patch } as QuoteLine;
-    const quantitySource = line.quantitySource && compatibleAreaScopeFields(nextLine).includes(line.quantitySource.field)
-      ? line.quantitySource
-      : undefined;
-    updateLine(quoteId, line.id, { ...patch, quantity: line.quantity ?? 1, quantitySource });
-    setSearch('');
-    setSearching(false);
+    try {
+      if(!model.active||!variant.active||!model.variants.some(v=>v.id===variant.id&&v.active))
+        throw new Error('Choose an active Sink Catalog variant.');
+      const nextSnapshot = createQuoteSinkSnapshot(model, variant);
+      updateLine(quoteId,line.id,quoteSinkSourcePatch(line,nextSnapshot));
+      setSourceError('');
+      setSearch('');
+      setSearching(false);
+    }catch(error){
+      setSourceError(error instanceof Error?error.message:'Unable to update Sink source.');
+    }
+  };
+  const applyCatalogPrice = () => {
+    try {
+      updateLine(quoteId,line.id,quoteSinkCatalogPricePatch(line));
+      setSourceError('');
+    }catch(error){
+      setSourceError(error instanceof Error?error.message:'Unable to apply Catalog selling price.');
+    }
   };
 
   if (searching) {
@@ -147,9 +158,12 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
             ].filter(Boolean).join(' · ')}</small>
           </div>
           {comparison?.changed && currentSnapshot && selectedModel && selectedVariant && (
-            <button type="button" onClick={() => apply(selectedModel, selectedVariant)}>Update snapshot</button>
+            <button type="button" onClick={() => apply(selectedModel, selectedVariant)}>Refresh source · keep quoted price</button>
           )}
         </div>}
+        {snapshot&&<p className="quote-source-status">
+          Changing a Sink selection updates specifications and private costs, but preserves the quoted selling price.
+        </p>}
         <div className="quote-sink-search-row">
           <input
             value={search}
@@ -174,6 +188,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
           ))}
           {!results.length && <div className="quote-sink-empty">No matching active sink variants.</div>}
         </div>
+        {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>}
       </div>
     );
   }
@@ -210,7 +225,13 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
       {snapshot && comparison?.changed && selectedModel && selectedVariant && <span className="quote-source-status">Source updated</span>}
       {snapshot && catalogSellingOverride(line) && <span className="quote-source-status">
         Manual selling override · catalog {snapshot.sellPrice===undefined?'unpriced':money.format(snapshot.sellPrice)}
-      </span>
+      </span>}
+      {snapshot&&line.pricingMode==='quantity-rate'&&snapshot.sellPrice!==undefined&&
+       (catalogSellingOverride(line)||line.rate===undefined)&&
+       <button type="button" className="quote-source-apply-price" onClick={applyCatalogPrice}>
+         Use Catalog selling price {money.format(snapshot.sellPrice)}
+       </button>}
+      {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>
     </div>
   );
 }
