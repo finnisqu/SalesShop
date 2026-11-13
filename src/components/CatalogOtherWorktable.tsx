@@ -249,7 +249,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
          {selecting&&<td className="catalog-product-select-cell">
           <input type="checkbox" aria-label={'Select other item '+item.name}
            checked={selectedIds.includes(item.id)}
-           onChange={event=>pageSelection.selectRow(item.id,event.target.checked)}/></td>
+           onChange={event=>pageSelection.selectRow(item.id,event.target.checked)}/></td>}
         <td>{item.category}</td>
         <td className="rates-reference-item"><button type="button" className="materials-name-toggle"
          aria-expanded={open} onClick={()=>setExpanded(open?null:item.id)}><strong>{item.name}</strong></button>
