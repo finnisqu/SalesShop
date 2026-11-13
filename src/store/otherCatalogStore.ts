@@ -23,6 +23,7 @@ interface OtherCatalogState{
  addItem:()=>string;
  duplicateItem:(itemId:string)=>string|null;
  updateItem:(id:string,patch:Partial<OtherCatalogItem>)=>void;
+ setItemsActive:(itemIds:readonly string[],active:boolean)=>void;
  addVariant:(id:string)=>void;
  updateVariant:(id:string,variantId:string,patch:Partial<OtherCatalogVariant>)=>void;
  duplicateVariant:(id:string,variantId:string)=>void;
@@ -133,6 +134,14 @@ export const useOtherCatalogStore=create<OtherCatalogState>((set,get)=>({
    ...item,...patch,variants:normalizeCatalogVariantDefaults(patch.variants??item.variants),
    updatedAt:new Date().toISOString(),
   }:item);
+  set({items:next});scheduleSave(next);
+ },
+ setItemsActive:(itemIds,active)=>{
+  const selected=new Set(itemIds);
+  if(!selected.size||!get().items.some(item=>selected.has(item.id)&&item.active!==active))return;
+  const now=new Date().toISOString();
+  const next:OtherCatalogItem[]=get().items.map(item=>
+   selected.has(item.id)&&item.active!==active?{...item,active,updatedAt:now}:item);
   set({items:next});scheduleSave(next);
  },
  addVariant:(id)=>{
