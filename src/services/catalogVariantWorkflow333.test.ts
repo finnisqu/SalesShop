@@ -39,4 +39,20 @@ describe('Batch 333 — Catalog creation remains visible and variant management 
   expect(other).toContain('variantId:variant.id');
   expect(other).toContain('sellPrice:variant.sellPrice');
  });
+ it('offers model-level duplication and reversible archiving on both worktables',()=>{
+  const sinks=source('components/CatalogSinksWorktable.tsx');
+  const other=source('components/CatalogOtherWorktable.tsx');
+  expect(sinks).toContain('onClick={()=>duplicateCatalogModel(model.id)}');
+  expect(other).toContain('onClick={()=>duplicateCatalogItem(item.id)}');
+  expect(sinks).toContain('const id=duplicateModel(modelId)');
+  expect(other).toContain('const id=duplicateItem(itemId)');
+  for(const content of [sinks,other]){
+   expect(content).toContain("onClearExternalQuery?.();setExpanded(id);setEditing(true)");
+   expect(content).toContain('Active in catalog');
+   expect(content).toContain('Uncheck to archive; saved quotes keep their original selections.');
+   expect(content).toContain("?' · Archived':''");
+  }
+  expect(sinks).toContain("variant.internalCost===undefined?'—':money.format(variant.internalCost)");
+  expect(sinks).toContain("variant.sellPrice===undefined?'—':money.format(variant.sellPrice)");
+ });
 });
