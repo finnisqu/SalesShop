@@ -48,7 +48,8 @@ describe('Home calendar custom badges',()=>{
    activity('manual-touchpoint','email','email'),
    activity('manual-touchpoint','text','text'),
    activity('notebook-touchpoint','meeting','in-person'),
-   activity('quote-sent','quote'),
+   {...activity('quote-sent','quote'),quoteId:'quote-1',
+    metadata:{source:'manual',deliveryConfirmed:true,revision:0}},
   ];
   const index=buildCalendarBadgeIndex(pending,[task('t1')],history,
    [company('customer','customer'),company('vendor','non-customer')],
@@ -78,7 +79,7 @@ describe('Home calendar custom badges',()=>{
  });
  it('uses the recorded sent date for external quotes, not the logging date',()=>{
   const external:Activity={
-   id:'external',type:'quote-sent',summary:'External quote sent',
+   id:'external',projectId:'deal-1',type:'quote-sent',summary:'External quote sent',
    occurredAt:'2026-11-06T12:00:00',
    metadata:{externalQuoteSent:true,bidSentDate:day,amount:100000},
   };
@@ -86,6 +87,21 @@ describe('Home calendar custom badges',()=>{
    DEFAULT_HOME_CALENDAR_SETTINGS);
   expect(metricCount(index,day,'quotes-sent')).toBe(1);
   expect(metricCount(index,'2026-11-06','quotes-sent')).toBe(0);
+ });
+ it('counts only native delivery, never issuance, and agrees with drilldown',()=>{
+  const issued={id:'issued',type:'quote-sent' as const,quoteId:'quote-native',
+   projectId:'deal-1',summary:'Q-100 issued',occurredAt:timestamp,
+   metadata:{source:'quote' as const,revision:1}};
+  const delivered={...issued,id:'delivered',summary:'Q-100 delivered',
+   metadata:{source:'manual' as const,deliveryConfirmed:true,revision:1}};
+  const external={id:'external-dated',type:'quote-sent' as const,
+   projectId:'deal-1',summary:'Builder portal submitted',
+   occurredAt:'2026-11-09T17:00:00Z',
+   metadata:{externalQuoteSent:true,bidSentDate:day,fromStage:'Bid Development'}};
+  const calendar=buildCalendarBadgeIndex([],[],[issued,delivered,external],[],[],
+   DEFAULT_HOME_CALENDAR_SETTINGS);
+  expect(metricCount(calendar,day,'quotes-sent')).toBe(2);
+  expect(metricCount(calendar,'2026-11-09','quotes-sent')).toBe(0);
  });
  it('counts a repeated genuine external submission ID once on its sent day',()=>{
   const bid:Activity={id:'external-1',projectId:'deal-1',type:'quote-sent',

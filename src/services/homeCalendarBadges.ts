@@ -3,6 +3,7 @@ import type {PersonalTask} from '../store/personalTaskStore';
 import {outstandingTask,isoLocalDay,type SalesCalendarEvent} from './salesCalendar';
 import type {CalendarBadgeMetric,HomeCalendarSettings} from '../store/homeCalendarSettings';
 import {dedupeExternalQuoteActivities} from './salesQuoteRegistry';
+import {isCustomerQuoteSubmission} from './confirmedBidSubmissions';
 
 export type CalendarBadgeDayCounts=Partial<Record<CalendarBadgeMetric,number>>;
 export type CalendarBadgeIndex=Map<string,CalendarBadgeDayCounts>;
@@ -41,7 +42,7 @@ export function buildCalendarBadgeIndex(
  for(const activity of dedupeExternalQuoteActivities(activities)){
   const date=activity.metadata?.externalQuoteSent&&activity.metadata.bidSentDate
    ?activity.metadata.bidSentDate:isoLocalDay(activity.occurredAt);
-  if(activity.type==='quote-sent'){
+  if(isCustomerQuoteSubmission(activity)){
    add(index,date,'quotes-sent');
   }
   if(activity.type!=='manual-touchpoint'&&activity.type!=='notebook-touchpoint')continue;

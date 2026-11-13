@@ -1,16 +1,25 @@
 import type {Activity} from '../types/crm';
 const HISTORICAL=new Set(['Closed Won','Completed','Closed Lost','Discarded']);
+/** A Calendar "Quotes Sent" entry requires customer delivery, not merely
+ * internal issuance of a prepared SalesShop document. Historical external
+ * submissions still count on their actual sent date. */
+export function isCustomerQuoteSubmission(activity:Activity):boolean{
+ if(activity.type!=='quote-sent')return false;
+ const meta=activity.metadata;
+ return (Boolean(activity.quoteId)&&meta?.source==='manual'&&
+   meta.deliveryConfirmed===true)||
+  (!activity.quoteId&&Boolean(activity.projectId)&&meta?.externalQuoteSent===true);
+}
+
 /** Durable CRM delivery evidence; "quote issued" and a Deal stage alone
  * cannot count as submission. Historical backfills do not alter old Tasks. */
 export function confirmedBidSubmissionDealIds(activities:readonly Activity[]):Set<string>{
  const found=new Set<string>();
  for(const activity of activities){
-  if(!activity.projectId||activity.type!=='quote-sent')continue;
-  const meta=activity.metadata;
-  const quoteDelivered=meta?.deliveryConfirmed===true&&Boolean(activity.quoteId);
-  const externalSent=meta?.externalQuoteSent===true&&
-    !HISTORICAL.has(meta.fromStage??'');
-  if(quoteDelivered||externalSent)found.add(activity.projectId);
+  if(!activity.projectId||!isCustomerQuoteSubmission(activity))continue;
+  if(activity.metadata?.externalQuoteSent===true&&
+     HISTORICAL.has(activity.metadata.fromStage??''))continue;
+  found.add(activity.projectId);
  }
  return found;
 }

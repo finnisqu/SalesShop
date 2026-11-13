@@ -62,6 +62,23 @@ describe('Home badge drilldowns',()=>{
   expect(list('meetings')[0]).toMatchObject({kind:'activity',id:'meeting'});
   expect(list('quotes-sent')[0]).toMatchObject({kind:'activity',id:'external'});
  });
+ it('shows only native customer-delivered quotes alongside external submissions',()=>{
+  const issued={id:'issued-native',type:'quote-sent' as const,
+   quoteId:'quote-2',projectId:'deal',occurredAt:when,
+   summary:'Q-2 issued',metadata:{source:'quote' as const,revision:0}};
+  const delivered={...issued,id:'delivered-native',summary:'Q-2 delivered',
+   metadata:{source:'manual' as const,deliveryConfirmed:true,revision:0}};
+  const events=[...history,issued,delivered];
+  const badge=buildCalendarBadgeIndex(activeEvents,tasks,events,
+   companies,contacts,settings);
+  const entries=homeCalendarBadgeEntries('quotes-sent',date,activeEvents,tasks,
+   events,companies,contacts,settings);
+  expect(metricCount(badge,date,'quotes-sent')).toBe(2);
+  expect(entries).toHaveLength(2);
+  expect(entries.find(entry=>entry.id==='quote-2')).toMatchObject({
+   kind:'quote',key:'quote-sent:delivered-native'});
+  expect(entries.some(entry=>entry.key==='quote-sent:issued-native')).toBe(false);
+ });
  it('filters vendors from customer/prospect creation drilldowns',()=>{
   expect(list('companies-created')).toHaveLength(1);
   expect(list('people-created')).toHaveLength(1);

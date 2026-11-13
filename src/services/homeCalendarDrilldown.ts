@@ -3,6 +3,7 @@ import type {PersonalTask} from '../store/personalTaskStore';
 import {isoLocalDay,outstandingTask,type SalesCalendarEvent} from './salesCalendar';
 import type {CalendarBadgeMetric,HomeCalendarSettings} from '../store/homeCalendarSettings';
 import {dedupeExternalQuoteActivities,isExternalQuoteActivity} from './salesQuoteRegistry';
+import {isCustomerQuoteSubmission} from './confirmedBidSubmissions';
 
 export type HomeBadgeRecordKind='task'|'deal'|'quote'|'activity'|'company'|'person';
 export interface HomeBadgeRecord{
@@ -61,7 +62,7 @@ export function homeCalendarBadgeEntries(
     ?activity.metadata.bidSentDate:isoLocalDay(activity.occurredAt);
    if(date!==day)continue;
    if(metric==='quotes-sent'){
-    if(activity.type!=='quote-sent')continue;
+    if(!isCustomerQuoteSubmission(activity))continue;
     // External bids open their actual Activity details, not just their Deal.
     const external=isExternalQuoteActivity(activity);
     const kind:HomeBadgeRecordKind=external?'activity':
