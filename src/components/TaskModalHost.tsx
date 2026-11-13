@@ -224,7 +224,7 @@ export function TaskModalHost(){
      </PreviewPanelActions>
     </section>
    </div>:null}
-   {linkedPreview&&<RecordPreviewDrawer record={linkedPreview}
+   {linkedPreview&&<RecordPreviewDrawer record={linkedPreview} returnToLabel="Task"
     onClose={()=>setLinkedPreview(null)} onSelect={setLinkedPreview}/>}
    {externalDealId&&<ExternalQuoteBackfillDialog key={externalDealId}
     initialDealId={externalDealId} onClose={()=>setExternalDealId(null)}
