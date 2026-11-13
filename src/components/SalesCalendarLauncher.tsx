@@ -239,7 +239,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  },[activeFocus,selected,otherDayGroups,focusKeys]);
  useEffect(()=>{
   if(!activeFocus)return;
-  const timeout=window.setTimeout(()=>setBadgeFocus(null),5200);
+  // Badge drilldown remains selected until the user clears it or chooses
+  // another day; an arbitrary timeout made the selected-day view jump.
   const frame=window.requestAnimationFrame(()=>{
    window.requestAnimationFrame(()=>{
     const matching=agendaRef.current?.querySelector<HTMLElement>('[data-home-badge-match="true"]');
@@ -248,7 +249,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
      behavior:'smooth',block:'nearest',inline:'nearest'});
    });
   });
-  return()=>{window.clearTimeout(timeout);window.cancelAnimationFrame(frame);};
+  return()=>window.cancelAnimationFrame(frame);
  },[activeFocus,selected,expandedHistory,focusKeys]);
  const recentQuotes=useMemo(()=>homeRecentQuoteEntries(ownQuotes,sources.activities,5),
   [ownQuotes,sources.activities]);
@@ -518,10 +519,13 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          {badges.map((slot,i)=>canDrillIntoBadges
           ?<button type="button" key={i} className="home-calendar-badge-action"
             style={{backgroundColor:badgeColor(slot.color)}}
+            aria-pressed={activeFocus?.date===key&&activeFocus.metric===slot.metric}
             aria-label={slot.count+' '+badgeLabel(slot.metric)+' on '+dateLabel(key)+'. Highlight in agenda'}
             title={'Highlight '+badgeLabel(slot.metric)+' in agenda'}
             onClick={()=>{
-             setSelected(key);setBadgeFocus({date:key,metric:slot.metric});
+             setSelected(key);
+             setBadgeFocus(previous=>previous?.date===key&&previous.metric===slot.metric
+               ?null:{date:key,metric:slot.metric});
              if(!inMonth){const date=new Date(key+'T12:00:00');
               setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
             }}>{slot.count>99?'99+':slot.count}</button>
@@ -534,10 +538,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
     </div>
      </div>
     <section ref={agendaRef} className="sales-calendar-day-preview"
-     aria-label={'Items for '+dateLabel(selected)}
-     onClickCapture={()=>{if(activeFocus)setBadgeFocus(null);}}>
+     aria-label={'Items for '+dateLabel(selected)}>
      <div className="sales-calendar-preview-heading"><strong>{dateLabel(selected)}</strong>
-      <div><span aria-label={eventsForDay.length+' pending items'}>{'Pending · '+eventsForDay.length}</span>
+      <div>
+       {activeFocus&&<div className="home-calendar-active-badge" role="status">
+        <span>{'Highlighting '+badgeLabel(activeFocus.metric)+' · '+focusEntries.length}</span>
+        <button type="button" aria-label="Clear selected calendar badge" onClick={()=>setBadgeFocus(null)}>Clear</button>
+       </div>}
+       <span aria-label={eventsForDay.length+' pending items'}>{'Pending · '+eventsForDay.length}</span>
        {embedded&&<div className="sales-calendar-add-wrap">
         <button ref={addButtonRef} type="button" className="sales-calendar-add" aria-haspopup="menu"
          aria-expanded={addOpen} aria-label={'Add to '+dateLabel(selected)}
