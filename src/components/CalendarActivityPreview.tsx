@@ -62,6 +62,10 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  const canEdit=allowed&&(loggedInteraction||externalQuote);
  const scopeKey=draftStorageKey('activity-edit:'+activityId,mode,orgId,userId);
  const [editing,setEditing]=useState(false);
+ // A mounted inspector may switch Activity or workspace while edits are open.
+ // Only the exact originating draft scope may be written or submitted.
+ const [editorScopeKey,setEditorScopeKey]=useState<string|null>(null);
+ const activeEditing=editing&&Boolean(scopeKey)&&editorScopeKey===scopeKey&&canEdit;
  const [method,setMethod]=useState<Method>('call');
  const [occurred,setOccurred]=useState('');
  const [notes,setNotes]=useState('');
@@ -94,7 +98,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   ...link,label:optionLabels.get(link.type+':'+link.id)??link.label??labels[link.type],
  })):[];
  const openEditor=()=>{
-  if(!activity||!canEdit)return;
+  if(!activity||!canEdit||!scopeKey)return;
   const restored=readSavedDraft<EditDraft>(scopeKey);
   setMethod(restored?.method??activity.metadata?.interactionMethod??'call');
   setOccurred(restored?.occurred??localTimestamp(activity.occurredAt));
@@ -105,22 +109,25 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
     setExternalAmount(restored?.amount??String(activity.metadata?.amount??''));
     setExternalPlatform(restored?.platform??activity.metadata?.externalQuoteFormat??'');
   }
-  setError('');setEditing(true);
+  setError('');setEditorScopeKey(scopeKey);setEditing(true);
  };
  useEffect(()=>{
-  if(!editing||!scopeKey)return;
+  if(!activeEditing||!scopeKey)return;
   writeSavedDraft(scopeKey,{method,occurred,notes,links,
     ...(externalQuote?{sentDate,amount:externalAmount,platform:externalPlatform}:{})});
- },[editing,scopeKey,method,occurred,notes,links,externalQuote,sentDate,externalAmount,externalPlatform]);
- useEffect(()=>{setEditing(false);setError('');},[activityId,scopeKey]);
+ },[activeEditing,scopeKey,method,occurred,notes,links,externalQuote,sentDate,externalAmount,externalPlatform]);
+ useEffect(()=>{setEditing(false);setEditorScopeKey(null);setError('');},[activityId,scopeKey]);
+ useEffect(()=>{
+  if(!canEdit&&editing){setEditing(false);setEditorScopeKey(null);setError('');}
+ },[canEdit,editing]);
  if(!activity)return null;
  const close=()=>{if(!saving)onClose();};
  const discard=()=>{
-  clearSavedDraft(scopeKey);setEditing(false);setError('');
+  clearSavedDraft(scopeKey);setEditing(false);setEditorScopeKey(null);setError('');
  };
  const submit=async(event:FormEvent)=>{
   event.preventDefault();
-  if(!activity||!canEdit||saving)return;
+  if(!activity||!activeEditing||saving)return;
   if(externalQuote){
     const amount=Number(externalAmount);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(sentDate)||sentDate>localDateKey(new Date())||
@@ -132,7 +139,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       await correctExternalQuote(activityId,{
         bidSentDate:sentDate,amount,format:externalPlatform,notes,
       });
-      clearSavedDraft(scopeKey);setEditing(false);
+      clearSavedDraft(scopeKey);setEditing(false);setEditorScopeKey(null);
     }catch(e){
       setError(e instanceof Error?e.message:'External quote correction was not confirmed.');
     }finally{setSaving(false);}
@@ -157,7 +164,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
     metadata:{...activity.metadata,interactionMethod:method,
      relatedRecords:relations,notes:notes.trim().slice(0,5000)||undefined},
    });
-   clearSavedDraft(scopeKey);setEditing(false);
+   clearSavedDraft(scopeKey);setEditing(false);setEditorScopeKey(null);
   }catch(e){setError(e instanceof Error?e.message:'Activity save was not confirmed. Try again.');}
   finally{setSaving(false);}
  };
@@ -166,20 +173,20 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
   <section ref={previewRef}
    className="tasks-preview-card record-preview-panel activity-preview-panel activity-quick-card ss-mobile-sheet"
    role="dialog" aria-modal="true"
-    aria-label={editing?(externalQuote?'Correct external quote':'Edit Activity'):'Activity preview'}>
+    aria-label={activeEditing?(externalQuote?'Correct external quote':'Edit Activity'):'Activity preview'}>
    <MobileSheetHandle onClose={close} disabled={saving}/>
    <header className="activity-preview-header ss-unified-preview-header">
     <PreviewPanelHeading eyebrow={activity.metadata?.externalQuoteSent?'CRM · EXTERNAL QUOTE SENT':
       loggedInteraction?'CRM · LOGGED INTERACTION':'CRM · ACTIVITY DETAILS'}
-      title={editing?(externalQuote?'Correct external quote':'Edit activity'):activity.summary}
-      detail={editing?(externalQuote
+      title={activeEditing?(externalQuote?'Correct external quote':'Edit activity'):activity.summary}
+      detail={activeEditing?(externalQuote
         ?'Correct the submitted date, value or platform on this existing quote. No new submission is created.'
         :'Correct the date, time, notes or participants in this Activity.'):undefined}/>
     <PreviewPanelClose onClose={close} label="Close activity preview"
       className="editor-close" disabled={saving}/>
    </header>
    <div className="tasks-preview-body record-preview-body activity-preview-body ss-mobile-sheet-body">
-    {editing?<form id="activity-preview-edit" className="activity-preview-edit" onSubmit={submit}>
+    {activeEditing?<form id="activity-preview-edit" className="activity-preview-edit" onSubmit={submit}>
       {externalQuote?<div className="activity-preview-external-edit">
         <div className="activity-preview-fields">
           <label>Date sent
@@ -256,9 +263,9 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
      </>}
    </div>
    <PreviewPanelActions className="record-preview-actions activity-preview-actions ss-mobile-sheet-actions">
-    {editing?<>
+    {activeEditing?<>
       <button type="button" onClick={discard} disabled={saving}>Discard changes</button>
-      <button type="button" onClick={()=>setEditing(false)} disabled={saving}>Back to preview</button>
+      <button type="button" onClick={()=>{setEditing(false);setEditorScopeKey(null);}} disabled={saving}>Back to preview</button>
       <button type="submit" form="activity-preview-edit" className="activity-preview-primary"
        disabled={saving}>{saving?'Saving…':externalQuote?'Save correction':'Save changes'}</button>
      </>:<>
