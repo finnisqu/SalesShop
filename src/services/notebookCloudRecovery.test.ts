@@ -53,6 +53,36 @@ describe('Interrupted private Notebook saves',()=>{
     expect(mergePendingNotebookChanges(latestCloud,local,pending)).toBe(latestCloud);
   });
 
+  it('ignores page navigation when no Notebook content changed',()=>{
+    const data=new Map<string,string>();
+    vi.stubGlobal('localStorage',{
+      getItem:(key:string)=>data.get(key)??null,
+      setItem:(key:string,value:string)=>{data.set(key,value);},
+      removeItem:(key:string)=>{data.delete(key);},
+    });
+    vi.stubGlobal('crypto',{randomUUID:()=> 'phantom-token'});
+    const baseline=doc([page('first'),page('second')]);
+    const selected={...baseline,activeEntryId:'second'};
+    expect(markPendingNotebookSync(scope,selected,baseline)).toBeNull();
+    expect(readPendingNotebookSync(scope)).toBeNull();
+    expect(data.size).toBe(0);
+  });
+  it('rejects malformed local Notebook timestamps without altering cloud pages',()=>{
+    const cloud=doc([page('existing',late,'Trusted cloud')]);
+    const local=doc([
+      page('existing','invalid-date','Malformed local edit'),
+      page('new','invalid-date','Malformed new page'),
+    ]);
+    const pending={...marker,changedEntryIds:['existing','new'],
+      createdEntryIds:['new']};
+    expect(mergePendingNotebookChanges(cloud,local,pending)).toBe(cloud);
+    const badCloud=doc([page('existing','invalid-cloud-date','Unverifiable')]);
+    const validLocal=doc([page('existing',late,'Candidate')]);
+    expect(mergePendingNotebookChanges(badCloud,validLocal,{
+      ...pending,changedEntryIds:['existing'],createdEntryIds:[],
+    })).toBe(badCloud);
+  });
+
   it('uses a lightweight user-and-organization scoped token',()=>{
     const data=new Map<string,string>();
     vi.stubGlobal('localStorage',{
