@@ -15,6 +15,14 @@ export interface SalesQuoteRecord {
  ownerUserId?:string;archived?:boolean;
 }
 type DealSummary=Pick<Project,'id'|'name'|'companyId'|'companyName'|'assignedUserId'>;
+/** The Quotes register and Home badges must use the viewer's same local day.
+ * The document's sentAt represents issuance and is not delivery evidence. */
+function deliveredLocalDay(timestamp:string):string|undefined{
+ const date=new Date(timestamp);
+ if(!Number.isFinite(date.getTime()))return undefined;
+ return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),
+  String(date.getDate()).padStart(2,'0')].join('-');
+}
 export function isExternalQuoteActivity(activity:Activity):boolean{
  return activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true&&
   Boolean(activity.projectId)&&!activity.quoteId;
@@ -48,7 +56,7 @@ export function buildSalesQuoteRegistry(quotes:readonly Quote[],activities:reado
   status:q.status,value:quoteTotal(q),
   // sentAt tracks document issuance, not proof the customer received it.
  // Only salesperson-confirmed delivery supplies the registry's sent date.
- sentDate:confirmedQuoteDeliveries(q,activities)[0]?.occurredAt.slice(0,10),
+ sentDate:deliveredLocalDay(confirmedQuoteDeliveries(q,activities)[0]?.occurredAt??''),
  updatedAt:q.updatedAt,
   ownerUserId:q.ownerUserId,archived:Boolean(q.archivedAt),
  }));
