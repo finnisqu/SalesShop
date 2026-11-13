@@ -84,7 +84,7 @@ function overlay<T extends {id:string;updatedAt:string}>(
  const newIds=new Set(created);
  let recovered=false;
  for(const row of local){
-  if(!changed.includes(row.id))continue;
+  if(!changed.includes(row.id)||!Number.isFinite(Date.parse(row.updatedAt)))continue;
   const server=byId.get(row.id);
   if(server&&!newer(row.updatedAt,server.updatedAt))continue;
   // A remotely deleted existing record must not be resurrected by a local cache.
