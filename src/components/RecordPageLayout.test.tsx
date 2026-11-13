@@ -28,7 +28,7 @@ describe('Connections record layout parity', () => {
       expect(html).toContain('aria-label="Related records"');
       // Each jump destination can receive programmatic keyboard focus.
       expect((html.match(/tabindex="-1"/gi)??[])).toHaveLength(3);
-      expect((html.match(/← Connections/g) ?? [])).toHaveLength(1);
+      expect((html.match(/← Records/g) ?? [])).toHaveLength(1);
       expect(html).not.toContain('Sales dashboard');
     });
   }
