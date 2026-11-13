@@ -5,6 +5,15 @@ import {join} from 'node:path';
 const source=(file:string)=>readFileSync(join(process.cwd(),file),'utf8');
 
 describe('Global header Quick Create Activity action',()=>{
+ it('never silently dismisses a failed Deal/Account create and prevents duplicate retries after partial linking',()=>{
+  const menu=source('src/components/QuickCreate.tsx');
+  expect(menu).toContain("if(!projectId)throw new Error(");
+  expect(menu).toContain("if(!companyId)throw new Error(");
+  expect(menu).toContain("if(namedCreatePending.current||pendingCreated)return;");
+  expect(menu).toContain("setPendingCreated({id:createdId,kind:namedMode})");
+  expect(menu).toContain('role="alert"');
+  expect(menu).toContain('Open created record');
+ });
  it('offers Log Activity alongside New Task and opens the existing global composer',()=>{
   const menu=source('src/components/QuickCreate.tsx');
   const app=source('src/App.tsx');

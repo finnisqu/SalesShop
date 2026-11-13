@@ -10,6 +10,7 @@ import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {PreviewPanelClose} from './PreviewPanelChrome';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
+import {recordNameKey} from '../services/recordNameKey';
 import '../external-quote.css';
 
 export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,initialSentDate}:{
@@ -33,7 +34,7 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,in
   if(!editable)throw new Error('Your role cannot create Deals.');
   const clean=name.trim();
   if(!clean)throw new Error('Enter a Deal name.');
-  if(deals.some(d=>d.name.trim().toLowerCase()===clean.toLowerCase()))
+  if(deals.some(d=>recordNameKey(d.name)===recordNameKey(clean)))
     throw new Error('A Deal with that name already exists. Select it from search.');
   const id=createDeal(clean,'Discovery');
   if(!id)throw new Error('Could not create the Deal.');

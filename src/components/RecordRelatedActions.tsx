@@ -8,6 +8,7 @@ import {isOurOrgCompany,isOurOrgContact} from '../services/ourOrganizationDirect
 import {companyRelationshipPatch,isOurCompany} from '../services/companyRelationship';
 import {UnifiedRecordPicker,type RecordPickerOption} from './UnifiedRecordPicker';
 import {useNavigationStore} from '../store/navigationStore';
+import {recordNameKey} from '../services/recordNameKey';
 import '../record-related-actions.css';
 
 export type RelatedEntityKind='company'|'person'|'deal';
@@ -98,7 +99,7 @@ export function RecordNewDeal({companyId,companyName,onCreated}:{
  if(!editable)return null;
  const submit=()=>{
   const clean=name.trim();if(!clean)return;
-  if(existing.some(d=>d.name.trim().toLowerCase()===clean.toLowerCase()&&d.companyId===companyId)){
+  if(existing.some(d=>recordNameKey(d.name)===recordNameKey(clean)&&d.companyId===companyId)){
    setError('A Deal with that name is already linked. Open it above.');return;
   }
   try{
@@ -137,7 +138,7 @@ export function RecordNewCompany({source,onCreated}:{
  if(!eligible)return null;
  const save=()=>{
   const cleaned=name.trim();if(!cleaned)return;
-  if(companies.some(c=>c.name.toLowerCase()===cleaned.toLowerCase())){
+  if(companies.some(c=>recordNameKey(c.name)===recordNameKey(cleaned))){
    setError('That Company already exists. Use Link existing instead.');return;
   }
   try{
@@ -227,8 +228,9 @@ export function RecordRelationshipPicker({source,target}:{
   if(!name.trim())throw new Error('Enter a name.');
   const existing=target==='company'?companies:target==='person'?people:
     target==='deal'?deals:quotes;
-  if(existing.some(record=>('name'in record?record.name:'title'in record?record.title:'')
-     ?.trim().toLowerCase()===name.toLowerCase()))
+  if(existing.some(record=>recordNameKey(
+      ('name'in record?record.name:'title'in record?record.title:'')??''
+    )===recordNameKey(name)))
    throw new Error('A matching record exists. Select it above instead.');
   if(target==='person'&&source.kind==='company'){
    const id=createContact({name,companyId:source.id,source:'manual'});

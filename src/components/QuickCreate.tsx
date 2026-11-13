@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {MobileSheetHandle} from './MobileSheetHandle';
@@ -42,6 +42,9 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
   const [open, setOpen] = useState(false);
   const [namedMode, setNamedMode] = useState<NamedCreateMode>(null);
   const [name, setName] = useState('');
+  const [namedCreateError,setNamedCreateError]=useState('');
+  const [pendingCreated,setPendingCreated]=useState<{id:string;kind:'project'|'account'}|null>(null);
+  const namedCreatePending=useRef(false);
   const [recordExternalOpen,setRecordExternalOpen]=useState(false);
   const authMode=useAuthStore(s=>s.mode);
   const organizationId=useAuthStore(s=>s.organizationId);
@@ -65,6 +68,8 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     setOpen(false);
     setNamedMode(null);
     setName('');
+    setNamedCreateError('');
+    setPendingCreated(null);
   };
   useModalScrollLock(open);
   const sheetRef=useDismissibleLayer<HTMLElement>(open,close);
@@ -100,34 +105,62 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     setView('notebook');
   };
 
+  const openPendingCreated=()=>{
+    if(!pendingCreated)return;
+    const saved=pendingCreated;
+    close();
+    if(saved.kind==='project')openProject(saved.id);
+    else openCompany(saved.id);
+  };
+
   const submitNamedCreate = (event: FormEvent) => {
     event.preventDefault();
-    const clean = name.trim();
-    if (!clean || !namedMode) return;
-
-    if (namedMode === 'project') {
-      const projectId = createProject(clean);
-      if(projectId&&context?.kind==='company')setProjectCompany(projectId,context.id);
-      if(projectId&&context?.kind==='person'){
-        const person=useCrmStore.getState().contacts.find(item=>item.id===context.id);
-        if(person?.companyId)setProjectCompany(projectId,person.companyId);
-        const links=useDealPeopleStore.getState();
-        if(links.loaded&&links.scope)void links.add(projectId,context.id).catch(()=>{/* Also available under Deal People */});
+    // Do not create a second record from Enter + click before the dialog closes.
+    if(namedCreatePending.current||pendingCreated)return;
+    const clean=name.trim();
+    if(!clean||!namedMode)return;
+    namedCreatePending.current=true;
+    setNamedCreateError('');
+    let createdId:string|undefined;
+    try{
+      if(namedMode==='project'){
+        const projectId=createProject(clean);
+        if(!projectId)throw new Error('Could not create the Deal. Check its name and try again.');
+        createdId=projectId;
+        if(context?.kind==='company')setProjectCompany(projectId,context.id);
+        if(context?.kind==='person'){
+          const person=useCrmStore.getState().contacts.find(item=>item.id===context.id);
+          if(person?.companyId)setProjectCompany(projectId,person.companyId);
+          const links=useDealPeopleStore.getState();
+          if(links.loaded&&links.scope)void links.add(projectId,context.id).catch(()=>{/* Also available under Deal People */});
+        }
+        if(context?.kind==='deal'){
+          const parent=useCrmStore.getState().projects.find(item=>item.id===context.id);
+          if(parent?.companyId)setProjectCompany(projectId,parent.companyId);
+        }
+        close();
+        openProject(projectId);
+        return;
       }
-      if(projectId&&context?.kind==='deal'){
-        const parent=useCrmStore.getState().projects.find(item=>item.id===context.id);
-        if(parent?.companyId)setProjectCompany(projectId,parent.companyId);
-      }
+      const companyId=resolveCompany(clean,'customer');
+      if(!companyId)throw new Error('Could not create the Account. Check its name and try again.');
+      createdId=companyId;
+      if(context?.kind==='person')updateContact(context.id,{companyId});
+      if(context?.kind==='deal')setProjectCompany(context.id,companyId);
       close();
-      if (projectId) openProject(projectId);
-      return;
+      openCompany(companyId);
+    }catch(reason){
+      const message=reason instanceof Error?reason.message:'Could not create this record.';
+      if(createdId){
+        // Creation succeeded even if an association failed. Offer a route to
+        // the existing record instead of permitting a duplicate retry.
+        setPendingCreated({id:createdId,kind:namedMode});
+        setNamedCreateError('Record created, but a related link may be incomplete. Open it to review. '+message);
+      }else{
+        namedCreatePending.current=false;
+        setNamedCreateError(message);
+      }
     }
-
-    const companyId = resolveCompany(clean, 'customer');
-    if(companyId&&context?.kind==='person')updateContact(context.id,{companyId});
-    if(companyId&&context?.kind==='deal')setProjectCompany(context.id,companyId);
-    close();
-    if (companyId) openCompany(companyId);
   };
 
   const sheet = open ? createPortal(
@@ -144,11 +177,19 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
             <label>
               <span>{namedMode === 'project' ? 'Deal name' : 'Account / company name'}</span>
               <input autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
-                value={name} onChange={(event) => setName(event.target.value)} placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : 'e.g. DeVane Builders'} />
+                value={name} disabled={Boolean(pendingCreated)}
+                onChange={(event) => {setName(event.target.value);setNamedCreateError('');}}
+                placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : 'e.g. DeVane Builders'} />
             </label>
+            {namedCreateError&&<p className="quick-create-error" role="alert">{namedCreateError}</p>}
             <div>
-              <button type="button" className="quick-create-secondary" onClick={() => { setNamedMode(null); setName(''); }}>Back</button>
-              <button type="submit" className="quick-create-primary" disabled={!name.trim()}>Create & open</button>
+              <button type="button" className="quick-create-secondary"
+                onClick={() => pendingCreated?close():(setNamedMode(null),setName(''),setNamedCreateError(''))}>
+                {pendingCreated?'Close':'Back'}
+              </button>
+              {pendingCreated?
+                <button type="button" className="quick-create-primary" onClick={openPendingCreated}>Open created record</button>:
+                <button type="submit" className="quick-create-primary" disabled={!name.trim()}>Create & open</button>}
             </div>
           </form>
         ) : (
@@ -185,7 +226,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
   return (
     <>
       <button type="button" className={context?'connections-record-primary ss-record-new-launcher':'quick-create-launcher'}
-        onClick={() => setOpen(true)} aria-label={context?'New related record':'Quick create'}
+        onClick={() => {namedCreatePending.current=false;setNamedCreateError('');setPendingCreated(null);setOpen(true);}} aria-label={context?'New related record':'Quick create'}
         title={context?'Create a record linked to '+context.name:'Quick create'}>
         {launcherLabel??'+'}
       </button>

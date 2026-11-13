@@ -19,6 +19,14 @@ describe('Unified CRM relationship field and pin polish',()=>{
   expect(quickCreate).toContain('recordNameKey(p.name)===recordNameKey(clean)');
   expect(quickCreate).toContain('recordNameKey(d.name)===recordNameKey(clean)');
  });
+ it('uses consistent normalized duplicate checks in external quotes and relationship creators',()=>{
+  const external=source('src/components/ExternalQuoteBackfillDialog.tsx');
+  const related=source('src/components/RecordRelatedActions.tsx');
+  expect(external).toContain('recordNameKey(d.name)===recordNameKey(clean)');
+  expect(related).toContain('recordNameKey(d.name)===recordNameKey(clean)');
+  expect(related).toContain('recordNameKey(c.name)===recordNameKey(cleaned)');
+  expect(related).toContain('===recordNameKey(name)');
+ });
  it('stages a Person Company selection or creation until saving, and discards it on cancel',()=>{
   const person=source('src/components/PersonRecordPage.tsx');
   expect(person).toContain('<UnifiedRecordPicker kind="Company"');

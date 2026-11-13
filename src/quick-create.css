@@ -335,3 +335,6 @@
   min-width:0;
  }
 }
+
+/* Keep failed named quick-creates visible until corrected or deliberately closed. */
+.quick-create-error{margin:0;padding:8px 10px;color:var(--ss-theme-danger,#9b322d);font-size:.88rem;line-height:1.35;}
