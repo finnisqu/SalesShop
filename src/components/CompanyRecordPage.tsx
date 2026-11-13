@@ -98,6 +98,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
   const perspective=useRolePerspectiveStore(state=>state.activePerspective);
   const canEditRecord=!perspective&&(authMode==='local'||Boolean(organizationId&&userId&&
     canEditTeamArea(teamRole,department,'crm')));
+  useEffect(()=>{if(!canEditRecord){setEditing(false);setUnlinking(false);}},[canEditRecord]);
   const personalScope=taskScope(authMode,organizationId,userId);
   const timelineQuotes=useMemo(()=>authMode==='cloud'
     ?quotes.filter(q=>q.ownerUserId===userId):quotes,[authMode,quotes,userId]);
@@ -131,6 +132,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
 
   const saveCompany = (event: FormEvent) => {
     event.preventDefault();
+    if(!canEditRecord){setEditError('You no longer have permission to edit this Company.');return;}
     const message=!draft.name.trim()?'Enter a company name.':
       nonnegativeFieldError(draft.annualUnits,'Annual units')||
       (draft.annualUnits.trim()&&!Number.isInteger(Number(draft.annualUnits))?'Annual units must be a whole number.':'')||
