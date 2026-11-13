@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {normalizeCatalogVariantDefaults} from './catalogVariantDefaults';
+import {normalizeCatalogVariantDefaults,activeCatalogDefaultVariant} from './catalogVariantDefaults';
 
 const fixture=(active=[true,true,true],defaults=[false,false,false])=>active.map((value,i)=>({
  id:'variant-'+i,active:value,default:defaults[i]??false,label:'SKU '+i,
@@ -34,6 +34,14 @@ describe('Batch 333a — one unambiguous active Catalog default',()=>{
   expect(next[0]).toBe(source[0]);
   expect(next[1]).toBe(source[1]);
   expect(next[2]).toBe(source[2]);
+ });
+ it('only displays pricing from the currently available default SKU',()=>{
+  const source=fixture([false,true,true],[true,false,true]);
+  expect(activeCatalogDefaultVariant(source)?.id).toBe('variant-2');
+  expect(activeCatalogDefaultVariant(fixture([false,false,false],[true,false,false])))
+   .toBeUndefined();
+  expect(activeCatalogDefaultVariant(fixture([false,true,true],[false,false,false]))?.id)
+   .toBe('variant-1');
  });
  it('handles empty variants and removing the default without inventing identity',()=>{
   expect(normalizeCatalogVariantDefaults([])).toEqual([]);

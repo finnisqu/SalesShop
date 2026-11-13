@@ -1,7 +1,8 @@
 import {Fragment,useEffect,useMemo,useState} from 'react';
 import {useSinkCatalogStore} from '../store/sinkCatalogStore';
 import {SINK_CATEGORIES,SINK_CATEGORY_LABELS,SINK_CONFIGURATIONS,SINK_CONFIGURATION_LABELS,
- type SinkCategory,type SinkModel,type SinkVariant,type SinkMountType} from '../types/sink';
+ type SinkCategory,type SinkModel,type SinkVariant,type SinkMountType,
+ defaultSinkVariant} from '../types/sink';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import {scopedStorageKey} from '../lib/developerPlayground';
 import {useAuthStore} from '../store/authStore';
@@ -103,7 +104,8 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       ...(variant.availableColors??[])])],query,externalQuery))
    .sort((a,b)=>sort==='category'?a.category.localeCompare(b.category)||a.name.localeCompare(b.name):
      sort==='name'?a.name.localeCompare(b.name):
-     sort==='cost'?(a.variants[0]?.internalCost??Infinity)-(b.variants[0]?.internalCost??Infinity):
+     sort==='cost'?(defaultSinkVariant(a)?.internalCost??Infinity)-
+      (defaultSinkVariant(b)?.internalCost??Infinity)||a.name.localeCompare(b.name):
      (a.brand??a.supplier??'').localeCompare(b.brand??b.supplier??'')||a.name.localeCompare(b.name));
  },[models,showInactive,category,query,externalQuery,sort]);
  const activeFilterCount=Number(category!=='all')+

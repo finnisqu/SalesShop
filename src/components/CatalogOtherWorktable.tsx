@@ -9,6 +9,7 @@ import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
+import {activeCatalogDefaultVariant} from '../services/catalogVariantDefaults';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-other-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -184,7 +185,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
      <thead><tr><th>Category</th><th>Item</th><th>Brand / supplier</th>
       <th>Unit</th><th>Default cost</th><th>Customer price</th><th>Variants</th></tr></thead>
      <tbody>{pagedItems.map(item=>{
-      const open=expanded===item.id,defaultVariant=item.variants.find(v=>v.default)||item.variants[0];
+      const open=expanded===item.id,defaultVariant=activeCatalogDefaultVariant(item.variants);
       return <Fragment key={item.id}>
        <tr className={open?'is-expanded':''}>
         <td>{item.category}</td>
