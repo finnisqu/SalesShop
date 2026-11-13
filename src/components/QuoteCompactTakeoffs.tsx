@@ -5,6 +5,7 @@ import {quoteLineAmount,quoteLinesTotal} from '../types/quote';
 import {useQuoteStore} from '../store/quoteStore';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
+import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
@@ -225,7 +226,11 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
  useEffect(()=>{
-  const fn=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')closeRef.current();};
+  const fn=(e:globalThis.KeyboardEvent)=>{
+    if(quoteSheetEscapeShouldClose(e,Boolean(ref.current?.contains(e.target as Node)))){
+      e.preventDefault();closeRef.current();
+    }
+  };
   document.addEventListener('keydown',fn);
   ref.current?.querySelector<HTMLButtonElement>('.qqt-close')?.focus();
   return()=>document.removeEventListener('keydown',fn);

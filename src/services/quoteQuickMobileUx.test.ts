@@ -23,6 +23,12 @@ const calculator=source('src/components/QuoteWorkTables.tsx');
 const quickArea=source('src/components/QuoteAreaQuickPanel.tsx');
 
 describe('Quick Quote dedicated phone usability contract',()=>{
+ it('scopes Escape to a non-editing focused control in the active detail sheet',()=>{
+  const shared=source('src/services/quoteSheetEscape.ts');
+  expect(shared).toContain("target.closest('input,textarea,select");
+  expect(areas).toContain("quoteSheetEscapeShouldClose(e,Boolean(input.current?.contains(e.target as Node)))");
+  expect(takeoffs).toContain("quoteSheetEscapeShouldClose(e,Boolean(ref.current?.contains(e.target as Node)))");
+ });
  it('reuses the native-keyboard Prev/Next/Done accessory in Areas and Takeoffs',()=>{
   const accessory=source('src/components/QuoteMobileCellToolbar.tsx');
   const accessoryCss=source('src/components/quote-mobile-cell-toolbar.css');

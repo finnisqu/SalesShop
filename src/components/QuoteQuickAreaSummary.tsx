@@ -6,6 +6,7 @@ import {QuoteOtherLineFields} from './QuoteOtherLineFields';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
+import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from '../services/quoteQuickAreaSummary';
@@ -180,7 +181,11 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
  useEffect(()=>{
-  const escape=(e:globalThis.KeyboardEvent)=>{if(e.key==='Escape')closeRef.current();};
+  const escape=(e:globalThis.KeyboardEvent)=>{
+    if(quoteSheetEscapeShouldClose(e,Boolean(input.current?.contains(e.target as Node)))){
+      e.preventDefault();closeRef.current();
+    }
+  };
   document.addEventListener('keydown',escape);
   input.current?.querySelector<HTMLButtonElement>('.qqs-panel-close')?.focus();
   return()=>document.removeEventListener('keydown',escape);
