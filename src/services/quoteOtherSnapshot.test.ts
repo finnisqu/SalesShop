@@ -54,6 +54,20 @@ describe('OTHER catalog quote-time snapshots',()=>{
   const snapshot=createQuoteOtherSnapshot(item,{...variant,sellPrice:undefined});
   expect(otherSnapshotLinePatch(snapshot).rate).toBeUndefined();
  });
+ it('recognizes color, unit, and supplier revisions even without a price change',()=>{
+  const original=createQuoteOtherSnapshot(item,variant);
+  const variantChanged=createQuoteOtherSnapshot(item,{
+   ...variant,availableColors:['Black','White'],
+  });
+  expect(compareQuoteOtherSnapshot(original,variantChanged)).toEqual({
+   changed:true,sellPriceChanged:false,internalCostChanged:false,sourceChanged:true,
+  });
+  const supplierChanged=createQuoteOtherSnapshot({
+   ...item,supplier:'New supplier',unit:'slab',
+  },variant);
+  expect(compareQuoteOtherSnapshot(original,supplierChanged).sourceChanged).toBe(true);
+  expect(original.availableColors).toEqual(['Black','Graphite']);
+ });
  it('detects later prices and spec changes without repricing an existing line',()=>{
   const quoted=createQuoteOtherSnapshot(item,variant);
   const current=createQuoteOtherSnapshot({...item,updatedAt:'2026-11-13T00:00:00Z'},
