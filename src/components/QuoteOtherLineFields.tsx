@@ -14,6 +14,8 @@ export function QuoteOtherLineFields({quoteId,line,disabled=false}:{
  quoteId:string;line:QuoteLine;disabled?:boolean;
 }){
  const items=useOtherCatalogStore(s=>s.items);
+ const hydrated=useOtherCatalogStore(s=>s.hydrated);
+ const loadError=useOtherCatalogStore(s=>s.error);
  const hydrate=useOtherCatalogStore(s=>s.hydrate);
  const update=useQuoteStore(s=>s.updateLine);
  const [open,setOpen]=useState(false);
@@ -84,7 +86,10 @@ export function QuoteOtherLineFields({quoteId,line,disabled=false}:{
     onClick={expand}>{open?'Close selector':'Change / refresh'}</button>
   </div>
   <div className="quote-other-source-status" aria-live="polite">
-   {!variant&&<span className="is-warning">Catalog source unavailable · quoted values retained</span>}
+   {!hydrated&&<span>Checking Catalog source…</span>}
+   {hydrated&&!variant&&<span className="is-warning">
+    {loadError?'Catalog lookup unavailable':'Catalog source unavailable'} · quoted values retained
+   </span>
    {comparison?.changed&&<span>Catalog updated · quote remains unchanged</span>}
    {catalogSellingOverride(line)&&<span>Manual selling price · quoted source retained</span>}
   </div>
@@ -120,7 +125,7 @@ export function QuoteOtherLineFields({quoteId,line,disabled=false}:{
    (catalogSellingOverride(line)||line.rate===undefined)&&
    <button type="button" className="quote-other-source-price" disabled={disabled}
     onClick={catalogPrice}>
-    Apply quoted Catalog reference price {money.format(snapshot.sellPrice)}
+    Use current Catalog sell price {money.format(snapshot.sellPrice)}
    </button>}
  </div>;
 }
