@@ -1,4 +1,5 @@
 import {createContext,useCallback,useContext,useId,useMemo,useRef,useState,type ReactNode} from 'react';
+import {createRecordInlineEditGuard} from '../services/recordInlineEditGuard';
 
 interface RecordInlineEditScopeState{
  activeId:string|null;
@@ -11,18 +12,16 @@ const Context=createContext<RecordInlineEditScopeState|null>(null);
  * An attempt to start another edit never silently discards the first draft.
  * A new record key remounts this scope so a prior record's editor cannot leak. */
 export function RecordInlineEditScope({children}:{children:ReactNode}){
- const holder=useRef<string|null>(null);
+ const holder=useRef(createRecordInlineEditGuard());
  const [activeId,setActiveId]=useState<string|null>(null);
  const claim=useCallback((id:string)=>{
-  if(holder.current!==null&&holder.current!==id)return false;
-  holder.current=id;
-  setActiveId(id);
+  if(!holder.current.claim(id))return false;
+  setActiveId(holder.current.activeId);
   return true;
  },[]);
  const release=useCallback((id:string)=>{
-  if(holder.current!==id)return;
-  holder.current=null;
-  setActiveId(null);
+  if(!holder.current.release(id))return;
+  setActiveId(holder.current.activeId);
  },[]);
  const value=useMemo(()=>({activeId,claim,release}),[activeId,claim,release]);
  return <Context.Provider value={value}>{children}</Context.Provider>;
