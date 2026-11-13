@@ -14,6 +14,7 @@ import {activityRelations,primaryActivityRelations,activityMethodSummary,
  type ActivityRelation} from '../services/activityRelations';
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
 import {localDateKey} from '../services/salesCalendar';
+import {activityEditorCanUseDraft} from '../services/activityEditorScope';
 import {isExternalQuoteActivity} from '../services/salesQuoteRegistry';
 import type {ActivityMetadata} from '../types/crm';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
@@ -65,7 +66,7 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  // A mounted inspector may switch Activity or workspace while edits are open.
  // Only the exact originating draft scope may be written or submitted.
  const [editorScopeKey,setEditorScopeKey]=useState<string|null>(null);
- const activeEditing=editing&&Boolean(scopeKey)&&editorScopeKey===scopeKey&&canEdit;
+ const activeEditing=activityEditorCanUseDraft(editing,editorScopeKey,scopeKey,canEdit);
  const [method,setMethod]=useState<Method>('call');
  const [occurred,setOccurred]=useState('');
  const [notes,setNotes]=useState('');
