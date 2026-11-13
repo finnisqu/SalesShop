@@ -37,11 +37,14 @@ export function compareQuoteOtherSnapshot(quoted:QuoteOtherSnapshot,current:Quot
  const sellPriceChanged=!equalMoney(quoted.sellPrice,current.sellPrice);
  const internalCostChanged=!equalMoney(quoted.internalCost,current.internalCost);
  const sourceChanged=quoted.itemName!==current.itemName||
+  quoted.category!==current.category||quoted.brand!==current.brand||
+  quoted.supplier!==current.supplier||quoted.unit!==current.unit||
   quoted.variantLabel!==current.variantLabel||
   quoted.variantSku!==current.variantSku||quoted.sku!==current.sku||
   quoted.specification!==current.specification||
-  quoted.finish!==current.finish||
-  quoted.material!==current.material||
+  quoted.finish!==current.finish||quoted.material!==current.material||
+  quoted.notes!==current.notes||
+  JSON.stringify(quoted.availableColors??[])!==JSON.stringify(current.availableColors??[])||
   quoted.sourceUpdatedAt!==current.sourceUpdatedAt;
  return {changed:sellPriceChanged||internalCostChanged||sourceChanged,
   sellPriceChanged,internalCostChanged,sourceChanged};
