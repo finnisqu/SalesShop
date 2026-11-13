@@ -7,6 +7,7 @@ import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
+import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from '../services/quoteQuickAreaSummary';
@@ -177,6 +178,7 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
  const extras=section?data?.specialty??[]:general.lines;
  const title=section?.title??'General';
  const input=useRef<HTMLDivElement>(null);
+ useMobileQuoteSheetFieldReveal(input);
  const sheetSwipeStart=useRef<number|null>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;

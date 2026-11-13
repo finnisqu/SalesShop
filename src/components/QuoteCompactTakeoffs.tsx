@@ -6,6 +6,7 @@ import {useQuoteStore} from '../store/quoteStore';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
+import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
@@ -102,6 +103,7 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
 }){
  const editable=quoteIsCommerciallyEditable(quote),store=useQuoteStore.getState();
  const ref=useRef<HTMLDivElement>(null);
+ useMobileQuoteSheetFieldReveal(ref);
  const sheetSwipeStart=useRef<number|null>(null);
  const sheetMode=useRef<'expanded'|'compact'>('expanded');
  const [sheetExpanded,setSheetExpanded]=useState(true);

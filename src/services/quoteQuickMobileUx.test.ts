@@ -23,6 +23,19 @@ const calculator=source('src/components/QuoteWorkTables.tsx');
 const quickArea=source('src/components/QuoteAreaQuickPanel.tsx');
 
 describe('Quick Quote dedicated phone usability contract',()=>{
+ it('keeps all editable sheets and active fields inside the visible mobile keyboard viewport',()=>{
+  const quick=source('src/components/QuoteAreaQuickPanel.tsx');
+  const reveal=source('src/lib/useMobileQuoteSheetFieldReveal.ts');
+  const viewport=source('src/mobile-quote-viewport-reliability.css');
+  expect(quick).toContain('useMobileQuoteSheetFieldReveal(ref)');
+  expect(areas).toContain('useMobileQuoteSheetFieldReveal(input)');
+  expect(takeoffs).toContain('useMobileQuoteSheetFieldReveal(ref)');
+  expect(reveal).toContain("window.visualViewport?.addEventListener('resize',reveal)");
+  expect(reveal).toContain("active.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'})");
+  expect(viewport).toContain(':root[data-ss-mobile-keyboard="open"] .sales-app .qmb.qqs-overlay');
+  expect(viewport).toContain('.qmb .qmb-quick-area-footer');
+  expect(viewport).toContain('scroll-padding-bottom:76px');
+ });
  it('scopes Escape to a non-editing focused control in the active detail sheet',()=>{
   const shared=source('src/services/quoteSheetEscape.ts');
   expect(shared).toContain("target.closest('input,textarea,select");

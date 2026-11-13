@@ -121,3 +121,35 @@
   box-sizing:border-box;min-height:44px;
  }
 }
+
+/* Keyboard-safe Quick Quote editor sheets. The visual viewport, not the
+   layout viewport, is the usable space while Safari's keyboard is present. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb.qqs-overlay.qqs-overlay,
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb.qmb-quick-area-backdrop.qmb-quick-area-backdrop{
+  top:var(--ss-mobile-visual-top,0px)!important;
+  bottom:auto!important;
+  height:var(--ss-mobile-visual-height,100dvh)!important;
+  max-height:var(--ss-mobile-visual-height,100dvh)!important;
+  padding-bottom:0!important;
+ }
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb.qqs-overlay>.qqs-panel.qqs-panel,
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb.qmb-quick-area-backdrop .qmb-quick-area-panel.qmb-quick-area-panel{
+  max-height:calc(var(--ss-mobile-visual-height,100dvh) - 12px)!important;
+ }
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb.qqt-overlay>.qqt-panel.qqt-panel{
+  bottom:max(8px,calc(100dvh - var(--ss-mobile-visual-top,0px) - var(--ss-mobile-visual-height,100dvh) + 8px))!important;
+ }
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb .qqs-panel>footer,
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb .qqt-panel>footer,
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb .qmb-quick-area-footer{
+  display:none!important;
+ }
+ :root[data-sales-theme] .sales-app .qmb :is(.qqs-panel-body,.qqt-panel-body,.qmb-quick-area-body){
+  scroll-padding-bottom:76px;
+ }
+ :root[data-sales-theme] .sales-app .qmb :is(.qqs-panel-body,.qqt-panel-body,.qmb-quick-area-body)
+ :is(input,textarea,select,[contenteditable="true"]){
+  scroll-margin-block:12px 76px;
+ }
+}

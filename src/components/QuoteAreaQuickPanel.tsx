@@ -6,6 +6,7 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {PHONE_LAYOUT_QUERY} from '../lib/mobileViewport';
+import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {useQuoteStore} from '../store/quoteStore';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
@@ -23,6 +24,7 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
  onFull:(tab:'measure'|'materials'|'pricing'|'calculator')=>void;
 }){
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
+ useMobileQuoteSheetFieldReveal(ref);
  const section=quote.sections.find(a=>a.id===areaId);
  const editable=quoteIsCommerciallyEditable(quote);
  const updateSection=useQuoteStore(s=>s.updateSection);
