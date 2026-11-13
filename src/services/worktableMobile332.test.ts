@@ -9,8 +9,8 @@ describe('Batch 332d — mobile worktable chrome and scrolling',()=>{
   expect(records).toContain('useViewportBoundDetails(columnsMenuRef)');
   const helper=src('components/useViewportBoundDetails.ts');
   expect(helper).toContain('if(!menu.open)return');
-  expect(helper).toContain('document.addEventListener(\'scroll\',outsideScroll,true)');
-  expect(helper).toContain('menu.removeEventListener(\'toggle\',toggle)');
+  expect(helper).toContain("document.addEventListener('scroll',outsideScroll,true)");
+  expect(helper).toContain("menu.removeEventListener('toggle',toggle)");
   const style=src('worktable-chrome.css');
   expect(style).toContain('transform:translateX(var(--ss-worktable-menu-shift-x,0px))');
   expect(style).toContain('[data-worktable-side="above"]');
