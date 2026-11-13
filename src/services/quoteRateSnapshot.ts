@@ -49,7 +49,12 @@ export function compareQuoteRateSnapshot(
   const sourceChanged = quoted.effectiveDate !== current.effectiveDate
     || quoted.pricingBehavior !== current.pricingBehavior
     || quoted.pricingDivision !== current.pricingDivision
-    || quoted.unit !== current.unit;
+    || quoted.unit !== current.unit
+    || quoted.name !== current.name
+    || quoted.code !== current.code
+    || quoted.category !== current.category
+    || quoted.notes !== current.notes
+    || quoted.sourceUpdatedAt !== current.sourceUpdatedAt;
   return {
     changed: sellRateChanged || internalCostChanged || sourceChanged,
     sellRateChanged,
