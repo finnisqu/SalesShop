@@ -44,10 +44,12 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   const store=src('store/quoteStore.ts');
   expect(quote).toContain('otherReference?: QuoteLineOtherReference');
   expect(quote).toContain('otherCatalog?:QuoteLineOtherReference');
-  expect(sync).toContain('otherReference:rateReferenceOrUndefined(row.rate_reference)?.otherCatalog');
-  expect(sync).toContain('...(line.otherReference?{otherCatalog:line.otherReference}:{}),');
-  expect(sync).toContain('unitCost:line.unitCost');
-  expect(sync).toContain('unitCost:rateReferenceOrUndefined(row.rate_reference)?.estimate?.unitCost');
+  const codec=src('services/quoteCloudLineMetadata.ts');
+  expect(sync).toContain('...quoteCloudLineMetadata(row.rate_reference)');
+  expect(sync).toContain('rate_reference:quoteCloudLineReference(line)');
+  expect(codec).toContain('...(line.otherReference?{otherCatalog:line.otherReference}:{}),');
+  expect(codec).toContain('unitCost:line.unitCost');
+  expect(codec).toContain('unitCost:estimate?.unitCost??reference?.otherCatalog?.snapshot?.internalCost');
   expect(store).toContain("'material' | 'sink' | 'rate' | 'item'");
  });
  it('keeps quote-time Catalog source snapshots through manual selling edits across editors',()=>{
