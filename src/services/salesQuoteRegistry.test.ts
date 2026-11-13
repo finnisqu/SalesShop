@@ -43,6 +43,25 @@ describe('one first-class quote index for both submission methods',()=>{
   });
   expect(externalRecord.updatedAt).toBe('2026-11-10T12:00:00Z');
  });
+ it('records an actual native delivery date, not the earlier issue timestamp',()=>{
+  const issued={...native,sentAt:'2026-11-05T12:00:00Z',revision:1,
+   updatedAt:'2026-11-09T12:00:00Z'};
+  const issuance:Activity={id:'issued',type:'quote-sent',quoteId:issued.id,
+   projectId:'d1',occurredAt:'2026-11-05T12:00:00Z',
+   summary:'SalesShop quote issued',metadata:{source:'quote',revision:1}};
+  const delivered:Activity={...issuance,id:'delivered',
+   occurredAt:'2026-11-07T14:00:00Z',summary:'Delivered by email',
+   metadata:{source:'manual',deliveryConfirmed:true,revision:1}};
+  const unconfirmed=buildSalesQuoteRegistry([issued],[issuance],[deal]);
+  expect(unconfirmed[0].sentDate).toBeUndefined();
+  const confirmed=buildSalesQuoteRegistry([issued],[issuance,delivered],[deal]);
+  expect(confirmed[0].sentDate).toBe('2026-11-07');
+  expect(confirmed[0].status).toBe(issued.status);
+  // A newer revision must be delivered separately.
+  const revised=buildSalesQuoteRegistry([{...issued,revision:2}],
+   [issuance,delivered],[deal]);
+  expect(revised[0].sentDate).toBeUndefined();
+ });
  it('includes archived native quotes only when the library requests them',()=>{
   const archived={...native,archivedAt:'2026-11-11T12:00:00Z'};
   expect(buildSalesQuoteRegistry([archived],[],[deal])).toEqual([]);

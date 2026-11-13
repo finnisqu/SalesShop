@@ -1,6 +1,7 @@
 import type {Activity,Project} from '../types/crm';
 import type {Quote} from '../types/quote';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
+import {confirmedQuoteDeliveries} from './quoteDeliveryLifecycle';
 
 /** All submitted bids deserve a searchable Quote record. A SalesShop quote
  * retains its full editable document; an external quote retains its actual
@@ -45,7 +46,10 @@ export function buildSalesQuoteRegistry(quotes:readonly Quote[],activities:reado
   companyId:q.companyId,companyName:q.companyName,
   projectId:q.projectId,dealName:dealMap.get(q.projectId??'')?.name,
   status:q.status,value:quoteTotal(q),
-  sentDate:q.sentAt?.slice(0,10),updatedAt:q.updatedAt,
+  // sentAt tracks document issuance, not proof the customer received it.
+ // Only salesperson-confirmed delivery supplies the registry's sent date.
+ sentDate:confirmedQuoteDeliveries(q,activities)[0]?.occurredAt.slice(0,10),
+ updatedAt:q.updatedAt,
   ownerUserId:q.ownerUserId,archived:Boolean(q.archivedAt),
  }));
  const external:SalesQuoteRecord[]=externalQuoteActivities(activities).map(a=>{

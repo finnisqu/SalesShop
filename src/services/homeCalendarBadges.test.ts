@@ -94,7 +94,7 @@ describe('Home calendar custom badges',()=>{
    metadata:{source:'quote' as const,revision:1}};
   const delivered={...issued,id:'delivered',summary:'Q-100 delivered',
    metadata:{source:'manual' as const,deliveryConfirmed:true,revision:1}};
-  const external={id:'external-dated',type:'quote-sent' as const,
+  const external:Activity={id:'external-dated',type:'quote-sent',
    projectId:'deal-1',summary:'Builder portal submitted',
    occurredAt:'2026-11-09T17:00:00Z',
    metadata:{externalQuoteSent:true,bidSentDate:day,fromStage:'Bid Development'}};
