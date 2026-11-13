@@ -34,6 +34,7 @@ import '../sales-document-ux-qc.css';
 import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
+import {QuoteOtherLineFields} from './QuoteOtherLineFields';
 import {catalogSellingOverride} from '../services/quoteCatalogLineEditing';
 import { QuoteBetaEditablePreview } from './QuoteBetaEditablePreview';
 import {QuoteContractApproval} from './QuoteContractApproval';
@@ -187,13 +188,7 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
         {line.kind==='material'&&<QuoteMaterialLineFields quoteId={quote.id} line={line}/>}
         {line.kind==='sink'&&<QuoteSinkLineFields quoteId={quote.id} line={line}/>}
         {line.kind==='rate'&&<QuoteRateLineFields quote={quote} line={line}/>}
-        {line.otherReference&&<div className="qmb-help" aria-label="Catalog Other product reference">
-          Catalog product · {line.otherReference.snapshot.itemName} · {line.otherReference.snapshot.variantLabel}
-          {' · '}{line.otherReference.snapshot.unit??'each'}
-          {line.otherReference.snapshot.internalCost!==undefined
-            ?' · Private unit cost '+money.format(line.otherReference.snapshot.internalCost):''}
-          {catalogSellingOverride(line)?' · Manual selling override':''}
-        </div>}
+        {line.otherReference&&<QuoteOtherLineFields quoteId={quote.id} line={line} disabled={!editable}/>} 
         {line.kind==='sink'&&catalogSellingOverride(line)&&<p className="qmb-help">Manual sink selling override · catalog source retained</p>}
         {!textOnly&&<div className="qmb-two">
           {line.pricingMode==='quantity-rate'?<>
