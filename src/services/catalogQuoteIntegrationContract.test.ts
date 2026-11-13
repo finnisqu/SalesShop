@@ -23,7 +23,14 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   const modal=src('components/CatalogQuoteInsert.tsx');
   const builder=src('services/catalogQuoteInsertion.ts');
   expect(modal.indexOf('const patch = buildCatalogQuoteLinePatch(source')).toBeLessThan(
-   modal.indexOf('const quoteId = finalTarget?.id ?? createQuote('));
+   modal.indexOf('quoteId=createCatalogQuote('));
+  expect(modal).toContain('quoteId=createCatalogQuote(');
+  expect(modal).toContain('const id=addCatalogLine(quote.id,kind,patch)');
+  const store=src('store/quoteStore.ts');
+  expect(store).toContain('createCatalogQuote:(title,kind,patch)=>');
+  expect(store).toContain('quote.lines=[line]');
+  expect(store).toContain('persist(quotes,quote.id)');
+  expect(store).toContain('recentCatalogInsert:{quoteId:quote.id,lineId:line.id}');
   expect(modal).toContain('validateCatalogQuoteSource(source,');
   expect(modal).toContain("source.kind==='other'?'item':source.kind");
   expect(modal).toContain('disabled={!validQuantity || !validSource}');
