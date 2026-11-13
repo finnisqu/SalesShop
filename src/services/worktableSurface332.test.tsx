@@ -44,8 +44,10 @@ describe('Batch 332a — one rounded table surface for Records and Catalog',()=>
   expect(css).toContain(':is(.ss-worktable-action-menu,.ss-worktable-filter-menu)[open]>summary');
   expect(css).toContain('.ss-worktable-surface:focus-visible');
   expect(css).toContain('outline-offset:-2px');
-  expect(css).not.toContain('.ss-worktable-filter-menu>summary{');
-  expect(css).not.toContain('.ss-worktable-action-menu>summary{');
+  // Reject duplicated global trigger rules, not the intentional Catalog
+  // mobile override (.catalog-card-filter.ss-worktable-filter-menu).
+  expect(css).not.toMatch(/:root\[data-sales-theme\]\s+\.sales-app\s+\.ss-worktable-(?:filter|action)-menu>summary\s*\{/);
+  expect(css).toContain('.catalog-card-filter.ss-worktable-filter-menu>summary{');
  });
  it('follows the shared workbook density for Catalog headings and ordinary rows',()=>{
   const css=readFileSync(new URL('../catalog-product-worktable.css',import.meta.url),'utf8');
