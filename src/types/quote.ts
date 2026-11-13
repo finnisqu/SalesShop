@@ -300,6 +300,21 @@ export interface QuoteLineSinkReference {
   snapshot?: QuoteSinkSnapshot;
 }
 
+/** Frozen catalog OTHER item and variant, including private buying cost.
+ * Historic quote lines without this field remain valid. */
+export interface QuoteOtherSnapshot {
+  capturedAt:string;
+  itemId:string;itemName:string;category:string;
+  variantId:string;variantLabel:string;
+  brand?:string;supplier?:string;sku?:string;variantSku?:string;
+  unit?:string;specification?:string;material?:string;finish?:string;
+  availableColors?:string[];notes?:string;
+  internalCost?:number;sellPrice?:number;sourceUpdatedAt?:string;
+}
+export interface QuoteLineOtherReference {
+  itemId:string;variantId:string;snapshot:QuoteOtherSnapshot;
+}
+
 export interface QuoteLineMaterialReference {
   materialId?: string;
   customMaterialName?: string;
@@ -354,6 +369,7 @@ export interface QuoteLine {
   includeInTotal: boolean;
   materialReference?: QuoteLineMaterialReference;
   sinkReference?: QuoteLineSinkReference;
+  otherReference?: QuoteLineOtherReference;
   /** Links a sink price row managed by Area Takeoffs Lite. */
   takeoffSinkId?: string;
   rateReference?: QuoteLineRateReference;
