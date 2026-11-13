@@ -235,8 +235,13 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
       <WorktableSelectPageCheckbox label="Select all other items on this page"
        allSelected={pageSelection.allSelected} someSelected={selectedIds.length>0}
        disabled={!pagedItems.length} onChange={checked=>pageSelection.selectPage(checked)}/></th>}
-      <th scope="col">Category</th><th scope="col">Item</th><th scope="col">Brand / supplier</th>
-      <th scope="col">Unit</th><th scope="col">Default cost</th><th scope="col">Customer price</th><th scope="col">Variants</th></tr></thead>
+      <th scope="col" aria-sort={sort==='category'?'ascending':undefined}>Category</th>
+      <th scope="col" aria-sort={sort==='name'?'ascending':undefined}>Item</th>
+      <th scope="col" aria-sort={sort==='brand'?'ascending':undefined}>Brand / supplier</th>
+      <th scope="col">Unit</th>
+      <th scope="col" aria-sort={sort==='cost'?'ascending':undefined}>Default cost</th>
+      <th scope="col" aria-sort={sort==='price'?'ascending':undefined}>Customer price</th>
+      <th scope="col">Variants</th></tr></thead>
      <tbody>{pagedItems.map(item=>{
       const open=expanded===item.id,defaultVariant=activeCatalogDefaultVariant(item.variants);
       return <Fragment key={item.id}>
