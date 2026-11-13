@@ -94,8 +94,7 @@ import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDr
 import {pricingScheduleValidationError} from '../services/pricingSchedule';
 import {salesDocumentTemplate,salesTemplateLabel,SALES_DOCUMENT_TEMPLATES,createTemplateSchedule,
   type SalesTemplateStart} from '../services/salesDocumentTemplates';
-import {filterSalesDocuments,salesDocumentCounts,
-  type SalesDocumentStatusFilter,type SalesDocumentSort} from '../services/salesDocumentLibrary';
+import {filterSalesDocuments,salesDocumentCounts} from '../services/salesDocumentLibrary';
 import {NewSalesDocumentPicker} from './NewSalesDocumentPicker';
 import {useRateBookStore} from '../store/rateBookStore';
 import {useMaterialLevelGuideStore} from '../store/materialLevelGuideStore';
@@ -622,9 +621,7 @@ export function QuotesMobileBeta() {
   const search=libraryFilters.query;
   const setSearch=(query:string)=>updateLibraryFilters({query});
   const statusFilter=libraryFilters.status;
-  const setStatusFilter=(status:SalesDocumentStatusFilter)=>updateLibraryFilters({status});
   const documentSort=libraryFilters.sort;
-  const setDocumentSort=(sort:SalesDocumentSort)=>updateLibraryFilters({sort});
   const documentFilter=libraryFilters.template;
   const setDocumentFilter=(template:'all'|SalesDocumentTemplate)=>updateLibraryFilters({template});
   const [documentToolbarHost,setDocumentToolbarHost]=useState<HTMLDivElement|null>(null);
@@ -911,7 +908,8 @@ export function QuotesMobileBeta() {
     {label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
     {label:'Clear search and filters',onClick:resetLibraryFilters,disabled:!hasLibraryFilters},
   ];
-  const libraryToolbarMenus=<>
+  const renderLibraryToolbarMenus=()=> <>
+
     <WorktableActionMenu label="Views" items={libraryViewItems}/>
     <WorktableActionMenu label="Actions" items={libraryActionItems}/>
   </>;
@@ -1314,7 +1312,7 @@ export function QuotesMobileBeta() {
            ?<>
              <div className="qmb-followups-return-toolbar" aria-label="Quote follow-up navigation">
                <button type="button" onClick={()=>setFollowUpsTab(false)}>← Documents</button>
-               {libraryToolbarMenus}
+               {renderLibraryToolbarMenus()}
              </div>
              <QuotesFollowUpDashboard quotes={myQuotes} onOpen={openQuote} canManage={canManageLibrary}/>
             </>
@@ -1322,7 +1320,7 @@ export function QuotesMobileBeta() {
          <div className="qmb-library-directory-controls" aria-label="Document directory controls">
            <div className="qmb-library-toolbar-slot" ref={setDocumentToolbarHost}/>
            <div className="qmb-library-mobile-filters">
-             {libraryToolbarMenus}
+             {renderLibraryToolbarMenus()}
              <WorktableFilterMenu activeCount={activeDocumentFilterCount}>
               {documentTypeControl}{sharedLibraryControls}
              </WorktableFilterMenu>
@@ -1331,7 +1329,7 @@ export function QuotesMobileBeta() {
          <div className="qmb-documents-table">
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
              toolbarTarget={documentToolbarHost}
-             toolbarControls={libraryToolbarMenus}
+             toolbarControls={renderLibraryToolbarMenus()}
              toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}
              filterCount={activeDocumentFilterCount}
              onOpen={id=>id.startsWith('external:')
