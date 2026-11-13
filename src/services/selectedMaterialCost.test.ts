@@ -11,7 +11,7 @@ const materials:StockMaterial[]=[{
   id:'quartz-one',name:'Ashen White',materialType:'Quartz',stockProgram:true,
   active:true,unit:'sf',variants:[{
     id:'3cm',active:true,default:true,thickness:'3cm',
-    purchaseOptions:[{id:'supplier',default:true,active:true,costPerSf:14.25,pricingBasis:'sf'}],
+    purchaseOptions:[{id:'supplier',label:'Supplier program',default:true,active:true,costPerSf:14.25,pricingBasis:'sf'}],
   }],
 } as StockMaterial];
 
@@ -43,7 +43,7 @@ describe('mobile Area internal supplier cost comparison',()=>{
       stockProgram:true,pricingSource:'manual-line-rate',sourceCostPerSf:13.5,
       snapshot:{
         capturedAt:'2026-11-01T00:00:00Z',materialId:'quartz-one',
-        materialName:'Ashen White',stockProgram:true,
+        materialName:'Ashen White',materialType:'Quartz',stockProgram:true,
         variantId:'3cm',purchaseOptionId:'supplier',costPerSf:13.5,
       },
     };
@@ -69,7 +69,7 @@ describe('mobile Area internal supplier cost comparison',()=>{
     expect(selectedMaterialCost('Ashen White',ref,materials).currentCatalogCostPerSf)
       .toBeUndefined();
     const noOptions:StockMaterial[]=[{
-      ...materials[0],variants:[{...materials[0].variants![0],purchaseOptions:undefined}],
+      ...materials[0],variants:[{...materials[0].variants![0],purchaseOptions:[]}],
     }];
     expect(selectedMaterialCost('Ashen White',ref,noOptions).currentCatalogCostPerSf)
       .toBeUndefined();

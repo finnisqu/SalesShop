@@ -74,7 +74,7 @@ describe('Takeoffs Lite Catalog integration',()=>{
       id:'m-2',name:'Black Quartz',materialType:'Quartz',
       active:true,stockProgram:true,unit:'sf',variants:[{
        id:'black',active:true,default:true,thickness:'3cm',
-       purchaseOptions:[{id:'program',active:true,default:true,
+       purchaseOptions:[{id:'program',active:true,default:true,label:'Stock program',
         pricingBasis:'sf',costPerSf:26}],
       }],
     };
