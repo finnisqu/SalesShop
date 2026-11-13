@@ -42,6 +42,10 @@ export function useDismissibleLayer<T extends HTMLElement>(
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        // A nested record picker owns Escape while its search menu is open.
+        // This listener runs in capture phase before the picker's own handler;
+        // closing the parent here would discard an Activity or Deal form.
+        if (layerRef.current?.querySelector('.ss-unified-picker-panel')) return;
         event.preventDefault();
         event.stopPropagation();
         closeRef.current();
