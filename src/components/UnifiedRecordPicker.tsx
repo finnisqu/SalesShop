@@ -18,7 +18,8 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
  const needle=query.trim().toLowerCase();
  const matches=items.filter(item=>[item.name,item.detail??''].join(' ')
   .toLowerCase().includes(needle)).slice(0,12);
- const exact=items.some(item=>item.name.trim().toLowerCase()===needle);
+ const exactMatch=items.find(item=>item.name.trim().toLowerCase()===needle);
+ const exact=Boolean(exactMatch);
  const run=async(action:()=>void|Promise<void>)=>{
   setSaving(true);setError('');
   try{await action();setOpen(false);setQuery('');}
@@ -39,8 +40,15 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
      onChange={e=>{setQuery(e.target.value);setError('');}}
      onKeyDown={e=>{
        if(e.key==='Enter'){
-         // Selecting a Company is separate from submitting an enclosing Deal form.
-         e.preventDefault();return;
+         // Never submit the parent Activity/Deal form from a relationship picker.
+         // Keyboard selection is unambiguous only for an exact or sole match;
+         // creating a new name requires no existing matching records.
+         e.preventDefault();e.stopPropagation();
+         if(saving)return;
+         const one=exactMatch??(matches.length===1?matches[0]:null);
+         if(one){void run(()=>onLink(one.id));return;}
+         if(!matches.length&&onCreate&&needle){void run(()=>onCreate(query.trim()));}
+         return;
        }
        if(e.key==='Escape'){e.stopPropagation();setOpen(false);}
      }}/>
