@@ -33,7 +33,7 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(store).toContain('recentCatalogInsert:{quoteId:quote.id,lineId:line.id}');
   expect(modal).toContain('validateCatalogQuoteSource(source,');
   expect(modal).toContain("source.kind==='other'?'item':source.kind");
-  expect(modal).toContain('disabled={inserting || !validQuantity || !validSource}');
+  expect(modal).toContain('disabled={inserting || !validQuantity || !validSource || !validDestination}');
   expect(modal).toContain('const countRequired=source.kind');
   expect(builder).toContain('validateCatalogQuoteQuantity(options.quantity,source)');
   expect(builder).toContain('validateCatalogQuoteSource(source,options.variantId,options.purchaseOptionId)');
