@@ -10,7 +10,7 @@ describe('Global header Quick Create Activity action',()=>{
   expect(board).toContain('const savingRef=useRef(false)');
   expect(board).toContain('if(!clean||savingRef.current)return');
   expect(board).toContain('savingRef.current=true;setSaving(true)');
-  expect(board).toContain('finally{savingRef.current=false;setSaving(false)}');
+  expect(board).toContain('finally{savingRef.current=false;setSaving(false);}');
   expect(board).toContain("This Person is already in the pending selection.");
   expect(board).toContain('if(!savingRef.current)reset()');
   expect(board).toContain('<MobileSheetHandle onClose={close} disabled={saving}/>');
