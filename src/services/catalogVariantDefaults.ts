@@ -16,7 +16,6 @@ export function normalizeCatalogVariantDefaults<T extends CatalogDefaultVariant>
   return variant.default===shouldDefault?variant:{...variant,default:shouldDefault};
  });
 }
-\n
 
 /** Read an available default without exposing an inactive historical SKU.
  * A legacy source may not have been normalized yet; fall back to its first
