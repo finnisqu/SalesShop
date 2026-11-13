@@ -77,6 +77,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
   const [saveError,setSaveError]=useState('');
   const [newCompanyName,setNewCompanyName]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
+  useEffect(()=>{if(!canEditCrm){setEditing(false);setUnlinking(false);}},[canEditCrm]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [timelineOpen,setTimelineOpen]=useState(false);
@@ -133,6 +134,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
 
   const saveDeal = async (event: FormEvent) => {
     event.preventDefault();
+    if(!canEditCrm){setSaveError('You no longer have permission to edit this Deal.');return;}
     if(saving)return;
     if(!draft.name.trim()){setSaveError('Enter a deal name.');return;}
     const amountError=nonnegativeFieldError(draft.amount,'Deal amount');
