@@ -117,8 +117,11 @@ export function BoardQuickCreate({kind,onCreate}:{
                     onLink={id=>setPersonIds(ids=>ids.includes(id)?ids:[...ids,id])}
                     onCreate={value=>{
                       const clean=value.trim();
-                      if(people.some(p=>recordNameKey(p.name)===recordNameKey(clean)))
-                        throw new Error('This Person already exists. Select them above.');
+                      const existing=people.find(p=>recordNameKey(p.name)===recordNameKey(clean));
+                      if(existing)
+                        throw new Error(personIds.includes(existing.id)
+                          ?'This Person is already selected.'
+                          :'This Person already exists. Select them above.');
                       if(newPeopleNames.some(n=>recordNameKey(n)===recordNameKey(clean)))
                         throw new Error('This Person is already in the pending selection.');
                       setNewPeopleNames(names=>[...names,clean]);

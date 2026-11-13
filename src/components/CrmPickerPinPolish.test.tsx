@@ -98,6 +98,11 @@ describe('Unified CRM relationship field and pin polish',()=>{
   expect(board).toContain('recordNameKey(p.name)===recordNameKey(clean)');
   expect(board).toContain('recordNameKey(n)===recordNameKey(clean)');
   expect(board).toContain("detail:personIds.includes(p.id)?'Already selected'");
+  expect(direct).toContain('linkedIds.has(existing.id)');
+  expect(direct).toContain('known.has(existing.id)');
+  expect(direct).toContain('This Person is already linked to this Deal.');
+  expect(direct).toContain('This Deal is already linked to this Person.');
+  expect(board).toContain('This Person is already selected.');
  });
  it('renders a symmetric, readable shared pin used by the worktables and Materials',()=>{
   const icon=renderToStaticMarkup(<WorkspaceChromeIcon name="pin"/>);
