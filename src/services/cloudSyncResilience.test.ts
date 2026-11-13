@@ -23,6 +23,14 @@ describe('Cloud sync reconnect and stale-session safety contract',()=>{
     expect(cloud).toContain("if(canWriteQuotes&&retryableFailures.has(QUOTES_DOCUMENT_KEY))");
     expect(cloud).toContain("const active=()=>!disposed&&options.isActive?.()!==false");
   });
+  it('tracks quote creation against the last acknowledged cloud baseline',()=>{
+    expect(cloud).toContain('let baselineQuotes=readLocalDocument(QUOTES_DOCUMENT_KEY)');
+    expect(cloud).toContain('markPendingQuoteSync(scope,document,baselineQuotes)');
+    expect(cloud).toContain('if(key===QUOTES_DOCUMENT_KEY&&!readPendingQuoteSync(scope))');
+    expect(cloud).toContain('baselineQuotes=document as QuoteDocument');
+    expect(cloud).toContain('if(scheduledRevision.get(key)!==revision)return');
+    expect(cloud).toContain("const operation=(inFlight.get(key)??Promise.resolve()).catch(()=>{}).then(()=>");
+  });
   it('replays CRM, Quotes and private Notebook only with scoped recovery markers',()=>{
     expect(cloud).toContain('if(canWriteQuotes&&readPendingQuoteSync(scope))');
     expect(cloud).toContain('if(canWriteCrm&&readPendingCrmSync(scope))');
