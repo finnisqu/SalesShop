@@ -165,7 +165,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
     setNewAlias('');
   };
 
-  return <><RecordPageLayout entityType="company" title={company.name} onBack={onBack} backLabel={backLabel}
+  return <><RecordPageLayout entityType="company" recordKey={company.id} title={company.name} onBack={onBack} backLabel={backLabel}
     subtitle={companyRelationshipLabel(company)}
     badge={<><span className={'connections-record-stage'+(isOurCompany(company)?' is-self-company':'')}>
       {isOurCompany(company)?'SELF · Our Company':companyRelationshipLabel(company)}
