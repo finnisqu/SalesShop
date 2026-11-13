@@ -70,8 +70,9 @@ describe('Batch #114 — Catalog layout parity',()=>{
   expect(parity).toContain('>.rates-workspace.is-catalog-embedded');
   expect(parity).toContain('>.catalog-product-worktable');
   expect(parity).toContain('min-height:72px');
-  expect(parity).toContain('height:46px');
-  expect(parity).toContain('height:60px');
+  expect(parity).toContain('height:var(--ss-workbook-heading-height,40px)');
+  expect(parity).toContain('height:var(--ss-workbook-row-height,51px)');
+  expect(parity).toContain('padding:var(--ss-workbook-cell-pad-y,9px) 12px');
  });
  it('keeps Tags checkbox and pin cells visible and preserves rotated phone layout',()=>{
   const css=src('catalog-product-worktable.css');

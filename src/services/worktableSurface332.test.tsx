@@ -36,6 +36,19 @@ describe('Batch 332a — one rounded table surface for Records and Catalog',()=>
   expect(source('ConnectionsTable')).toContain('<WorktableSurface className="connections-table-scroll"');
   expect(source('SuppliersWorkspace')).toContain('<WorktableSurface className="supplier-directory-table-scroll"');
  });
+
+ it('follows the shared workbook density for Catalog headings and ordinary rows',()=>{
+  const css=readFileSync(new URL('../catalog-product-worktable.css',import.meta.url),'utf8');
+  const shared=readFileSync(new URL('../workbook-table-foundation.css',import.meta.url),'utf8');
+  expect(css).toContain('height:var(--ss-workbook-heading-height,40px)');
+  expect(css).toContain('height:var(--ss-workbook-row-height,51px)');
+  expect(css).toContain('padding:var(--ss-workbook-cell-pad-y,9px) 12px');
+  expect(shared).toContain('--ss-workbook-row-height:41px');
+  expect(shared).toContain('[data-ss-workbook-density="compact"]');
+  expect(css).toContain('tbody tr:not(.materials-variant-expanded-row)>td');
+  // The mobile Catalog override retains auto-sized cells.
+  expect(css).toContain('height:auto;');
+ });
  it('preserves each Catalog table\'s existing data and row editing logic',()=>{
   expect(source('MaterialsWorkspace')).toContain('pagedMaterials.map');
   expect(source('RatesWorkspace')).toContain('pagedRates.map');

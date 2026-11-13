@@ -767,28 +767,30 @@
  gap:8px;
 }
 
-/* Stable column-heading and row rhythm, shared across the five tabs. */
+/* Shared workbook tokens own Catalog column-heading and row density.
+ * Use exactly the same comfortable/compact settings as Records, Tasks
+ * and the Quotes library, without shrinking expanded variant editors. */
 :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
  :is(.rates-reference-table,.connections-data-table) thead th{
  box-sizing:border-box;
- height:46px;
- min-height:46px;
- padding:0 12px;
+ height:var(--ss-workbook-heading-height,40px);
+ min-height:var(--ss-workbook-heading-height,40px);
+ padding:0 var(--ss-workbook-heading-pad,11px);
  vertical-align:middle;
  border-color:var(--ss-theme-border);
  background:var(--ss-theme-base);
  color:var(--ss-theme-muted);
- font:850 9px/1.35 var(--ss-font-body,system-ui,sans-serif);
- letter-spacing:.04em;
+ font:750 var(--ss-workbook-heading-size,10px)/1.2 var(--ss-font-body,system-ui,sans-serif);
+ letter-spacing:.035em;
  text-align:left;
  text-transform:uppercase;
 }
 :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
  :is(.rates-reference-table,.connections-data-table) tbody tr:not(.materials-variant-expanded-row)>td{
  box-sizing:border-box;
- height:60px;
- min-height:60px;
- padding:10px 12px;
+ height:var(--ss-workbook-row-height,51px);
+ min-height:var(--ss-workbook-row-height,51px);
+ padding:var(--ss-workbook-cell-pad-y,9px) 12px;
  border-color:var(--ss-theme-border);
  vertical-align:middle;
  font-size:11px;
