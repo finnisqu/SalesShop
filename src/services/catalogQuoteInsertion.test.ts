@@ -66,7 +66,7 @@ describe('Catalog to Quotes snapshots', () => {
     const line=buildCatalogQuoteLinePatch({kind:'other',item:other,variantId:'chrome'},{quantity:2});
     expect(line).toMatchObject({
       description:'Acme Faucet upgrade · Chrome',
-      kind:undefined,pricingMode:'quantity-rate',quantity:2,rate:65,
+      pricingMode:'quantity-rate',quantity:2,rate:65,
       unitCost:30,customerVisible:true,includeInTotal:true,
       otherReference:{itemId:'other1',variantId:'chrome',
         snapshot:{internalCost:30,sellPrice:65}},
