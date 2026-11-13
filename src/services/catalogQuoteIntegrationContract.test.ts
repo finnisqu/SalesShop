@@ -50,6 +50,32 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(sync).toContain('unitCost:rateReferenceOrUndefined(row.rate_reference)?.estimate?.unitCost');
   expect(store).toContain("'material' | 'sink' | 'rate' | 'item'");
  });
+ it('keeps quote-time Catalog source snapshots through manual selling edits across editors',()=>{
+  const beta=src('components/QuotesMobileBeta.tsx');
+  const audit=src('components/QuoteAuditInlineEditor.tsx');
+  const summary=src('components/QuoteQuickAreaSummary.tsx');
+  const ratePicker=src('components/QuoteRateLineFields.tsx');
+  const sinkPicker=src('components/QuoteSinkLineFields.tsx');
+  const source=src('services/quoteCatalogLineEditing.ts');
+  expect(beta).toContain('rate:e.target.value===\'\'?undefined:Number(e.target.value)');
+  expect(beta).toContain('Preserve the frozen source snapshot when overriding selling.');
+  expect(beta).toContain('line.otherReference&&<div');
+  expect(audit).toContain('updateLine(quote.id,line.id,{rate:n})');
+  expect(summary).toContain("line.otherReference.snapshot.itemName");
+  expect(summary).toContain("Calculated from Catalog");
+  expect(summary).not.toContain("rateReference:undefined,");
+  expect(ratePicker).toContain('rateCatalogSelectionPatch(line,nextSnapshot)');
+  expect(ratePicker).toContain('Manual selling override');
+  expect(sinkPicker).toContain('Manual selling override');
+  expect(source).toContain('const sameUnit=priorUnit===snapshot.unit');
+  expect(source).toContain('catalogSellingOverride(line:QuoteLine)');
+ });
+ it('recovers quoted OTHER cost if older normalized records lack unitCost',()=>{
+  const pricing=src('services/quoteInternalPricing.ts');
+  expect(pricing).toContain('line.unitCost??line.otherReference?.snapshot?.internalCost');
+  expect(src('services/quoteCatalogLifecycle.test.ts'))
+   .toContain('reconstructs original Catalog prices and snapshots after a new quote revision');
+ });
  it('keeps the destination dialog themed after portal rendering outside the sales-app root',()=>{
   const css=src('catalog-quote-integration.css');
   expect(css).toContain(':root[data-sales-theme] .catalog-quote-sheet');
