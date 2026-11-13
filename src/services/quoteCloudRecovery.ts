@@ -17,6 +17,16 @@ function isQuoteDoc(value:unknown):value is QuoteDocument {
   const doc=value as Partial<QuoteDocument>;
   return doc.schemaVersion===2&&Array.isArray(doc.quotes);
 }
+/** Compare owned quote CONTENT only. Active selection and other users' rows
+ * do not require a cloud write. A missing baseline is never assumed saved. */
+export function quoteHasUnsavedContent(
+  scope:QuoteSyncScope,value:unknown,baseline:QuoteDocument|null,
+):boolean {
+  if(!isQuoteDoc(value)||!isQuoteDoc(baseline))return true;
+  const saved=new Map(baseline.quotes.map(quote=>[quote.id,quote]));
+  return value.quotes.some(quote=>quote.ownerUserId===scope.userId&&
+    JSON.stringify(saved.get(quote.id))!==JSON.stringify(quote));
+}
 export function readPendingQuoteSync(scope:QuoteSyncScope):PendingQuoteSync|null {
   try{
     const value=JSON.parse(localStorage.getItem(KEY)??'null') as Partial<PendingQuoteSync>|null;
@@ -55,6 +65,9 @@ export function markPendingQuoteSync(
       ...(earlier?.createdQuoteIds??[]),
       ...quoteIds.filter(id=>!baselineIds.has(id)),
     ]).filter(id=>activeIds.has(id));
+    // Do not create a phantom pending save for page selection or an
+    // unrelated device-local preference when every owned quote is unchanged.
+    if(!quoteIds.length&&!earlier)return null;
     const marker:PendingQuoteSync={...scope,token,quoteIds,
       // Legacy markers have no creation metadata. Keep their existing
       // recovery semantics until the old marker is acknowledged.
@@ -83,12 +96,22 @@ export function mergePendingQuoteDrafts(
   for(const candidate of local.quotes){
     if(!pendingIds.has(candidate.id)||candidate.ownerUserId!==pending.userId||
        candidate.archivedAt||!['Draft','Ready'].includes(candidate.status))continue;
+    const localTime=Date.parse(candidate.updatedAt);
+    // Never let malformed dates bypass the server-version guard.
+    if(!Number.isFinite(localTime))continue;
     const server=byId.get(candidate.id);
     // Existing drafts deleted remotely must stay deleted. Newly created
     // unsynced drafts are the only records eligible to be added back.
     if(!server&&newIds&&!newIds.has(candidate.id))continue;
     if(server&&(server.archivedAt||!['Draft','Ready'].includes(server.status)))continue;
-    if(server&&Date.parse(candidate.updatedAt)<Date.parse(server.updatedAt))continue;
+    if(server){
+      const serverTime=Date.parse(server.updatedAt);
+      if(!Number.isFinite(serverTime)||localTime<serverTime)continue;
+      // Equal stamps favor cloud for existing quotes. A newly inserted
+      // parent may be missing child rows, so that explicit creation marker
+      // remains eligible for replay with an identical timestamp.
+      if(localTime===serverTime&&!newIds?.has(candidate.id))continue;
+    }
     byId.set(candidate.id,candidate);
     recovered=true;
   }
