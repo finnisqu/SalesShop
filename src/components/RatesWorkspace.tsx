@@ -20,6 +20,7 @@ import { RateBook } from './RateBook';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
+import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 type ReferenceCategory = 'all' | RateBookCategory;
@@ -373,6 +374,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                         <div><span>Effective date</span><strong>{item.effectiveDate || '—'}</strong></div>
                         <div><span>Division overrides</span><strong>{item.divisionOverrides.length || '—'}</strong></div>
                         {item.notes && <p>{item.notes}</p>}
+                        <CatalogQuoteLauncher source={{kind:'rate',item}}/>
                       </div>
                     }
                   />
@@ -385,7 +387,8 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
                 <tbody>
                   {pagedRates.map((item) => (
                     <tr key={item.id}>
-                      <td className="rates-reference-item"><strong>{item.name}</strong><small>{item.code || 'No code'}</small></td>
+                      <td className="rates-reference-item"><strong>{item.name}</strong><small>{item.code || 'No code'}</small>
+                        <CatalogQuoteLauncher source={{kind:'rate',item}}/></td>
                       <td>{RATE_BOOK_CATEGORY_LABELS[item.category]}</td>
                       <td className="number">{moneyLabel(item.internalCost)}</td>
                       <td className="rates-reference-sell"><strong>{moneyLabel(item.sellRate)}</strong><small>{RATE_BOOK_PRICING_BEHAVIOR_LABELS[item.pricingBehavior]}</small></td>
