@@ -259,7 +259,10 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       <WorktableSelectPageCheckbox label="Select all sink models on this page"
        allSelected={pageSelection.allSelected} someSelected={selectedIds.length>0}
        disabled={!pagedModels.length} onChange={checked=>pageSelection.selectPage(checked)}/></th>}
-      <th scope="col">Brand</th><th scope="col">Model</th><th scope="col">Category</th><th scope="col">Material</th><th scope="col">Mount</th>
+      <th scope="col" aria-sort={sort==='brand'?'ascending':undefined}>Brand</th>
+      <th scope="col" aria-sort={sort==='name'?'ascending':undefined}>Model</th>
+      <th scope="col" aria-sort={sort==='category'?'ascending':undefined}>Category</th>
+      <th scope="col">Material</th><th scope="col">Mount</th>
       <th scope="col">Total W × L × H</th><th scope="col">Variants</th></tr></thead>
      <tbody>
       {pagedModels.map(model=>{
