@@ -129,3 +129,16 @@
  outline-offset:2px;
  border-radius:8px;
 }
+
+/* Batch 341 — indicate a second About edit is temporarily locked, rather
+ * than allowing the existing unsaved field draft to be silently replaced. */
+:root[data-sales-theme] .sales-app .ss-record-pencil:disabled{
+ opacity:.45!important;
+ cursor:not-allowed;
+ background:transparent;
+ border-color:transparent;
+}
+:root[data-sales-theme] .sales-app .ss-record-actions-menu>summary[aria-disabled="true"]{
+ opacity:.55;
+ cursor:not-allowed;
+}
