@@ -5,6 +5,7 @@ import {TaskAssociationsField} from './TaskAssociationsField';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {TaskPreviewDueControls} from './TaskPreviewDueControls';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
+import {taskCompletionBlocker,taskBulkCompletionPlan} from '../services/taskCompletionEligibility';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {ConnectionsTable,type ConnectionColumn,type ConnectionTableRow} from './ConnectionsTable';
@@ -543,16 +544,31 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
         onTaskDuePreset={quickDue}
         onTaskToggleComplete={(id,finished)=>{
           const task=own.find(item=>item.id===id);
-          if(task&&!finished&&isProtectedBidTask(task)&&!task.submissionConfirmedAt)return;
+          if(!task)return;
+          if(!finished){
+           const blocker=taskCompletionBlocker(task);
+           if(blocker){
+            setTaskNotice({kind:'error',message:blocker==='bid-submission'
+             ?'Confirm Quote delivery or record an external quote before completing this bid submission task.'
+             :'Complete the task checklist before marking this task finished.'});
+            return;
+           }
+          }
           if(finished)reopen(id);else complete(id);
         }}
         onBulkComplete={items=>{
-          const protectedCount=items.filter(item=>own.some(task=>task.id===item.id&&isProtectedBidTask(task)&&!task.submissionConfirmedAt)).length;
-          items.forEach(item=>{
-           if(own.some(task=>task.id===item.id&&!taskComplete(task)&&(!isProtectedBidTask(task)||Boolean(task.submissionConfirmedAt))))complete(item.id);
-          });
-          if(protectedCount)setTaskNotice({kind:'error',
-            message:protectedCount+' bid submission task(s) require confirmed Quote delivery or a recorded external quote.'});
+          // Resolve current tasks, not stale Records rows, before applying a
+          // bulk action. The store remains the final completion safeguard.
+          const selectedIds=new Set(items.map(item=>item.id));
+          const plan=taskBulkCompletionPlan(own.filter(task=>selectedIds.has(task.id)));
+          plan.eligible.forEach(task=>complete(task.id));
+          if(plan.bidBlocked||plan.checklistBlocked){
+           const warnings=[
+            plan.bidBlocked?plan.bidBlocked+' bid submission task(s) require confirmed Quote delivery or a recorded external quote.':'',
+            plan.checklistBlocked?plan.checklistBlocked+' task(s) still have unfinished checklist items.':'',
+           ].filter(Boolean);
+           setTaskNotice({kind:'error',message:warnings.join(' ')});
+          }
         }}
         onBulkTaskProperty={async(items,change:TaskBulkChange)=>{
           const current=usePersonalTaskStore.getState();
