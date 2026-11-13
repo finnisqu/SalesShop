@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { buildCatalogQuoteLinePatch } from './catalogQuoteInsertion';
+import { buildCatalogQuoteLinePatch, validateCatalogQuoteQuantity,
+ validateCatalogQuoteSource } from './catalogQuoteInsertion';
+import type {OtherCatalogItem} from '../store/otherCatalogStore';
 import type { StockMaterial } from '../types/settings';
 import type { SinkModel } from '../types/sink';
 import type { RateBookItem } from '../types/rateBook';
@@ -52,6 +54,63 @@ describe('Catalog to Quotes snapshots', () => {
     expect(patch.rateReference?.snapshot?.rateBookItemId).toBe('rate1');
     expect(patch.rate).toBe(5);
     expect(patch.quantity).toBeUndefined();
+  });
+
+  it('inserts OTHER catalog product variants with private cost and immutable sell snapshot',()=>{
+    const other:OtherCatalogItem={
+      id:'other1',name:'Faucet upgrade',category:'Plumbing',unit:'each',
+      brand:'Acme',active:true,updatedAt:'2026-11-12',
+      variants:[{id:'chrome',label:'Chrome',default:true,active:true,
+        internalCost:30,sellPrice:65,material:'Brass'}],
+    };
+    const line=buildCatalogQuoteLinePatch({kind:'other',item:other,variantId:'chrome'},{quantity:2});
+    expect(line).toMatchObject({
+      description:'Acme Faucet upgrade · Chrome',
+      kind:undefined,pricingMode:'quantity-rate',quantity:2,rate:65,
+      unitCost:30,customerVisible:true,includeInTotal:true,
+      otherReference:{itemId:'other1',variantId:'chrome',
+        snapshot:{internalCost:30,sellPrice:65}},
+    });
+    expect(line.amount).toBeUndefined();
+    other.variants[0].sellPrice=75;
+    expect(line.rate).toBe(65);
+  });
+
+  it('rejects inactive or removed variant selections instead of defaulting to a different SKU',()=>{
+    const staleSink:SinkModel={...sink,variants:[
+      ...sink.variants,{...sink.variants[0],id:'retired',active:false,default:false}]};
+    expect(()=>buildCatalogQuoteLinePatch({kind:'sink',model:staleSink,variantId:'retired'}))
+      .toThrow(/inactive or no longer available/);
+    expect(()=>buildCatalogQuoteLinePatch({kind:'sink',model:{...sink,active:false}}))
+      .toThrow(/inactive/);
+    const staleMaterial:StockMaterial={...material,variants:[
+      ...material.variants!,{...material.variants![0],id:'retired',active:false,default:false}]};
+    expect(()=>buildCatalogQuoteLinePatch({kind:'material',material:staleMaterial,variantId:'retired'}))
+      .toThrow(/inactive or no longer available/);
+    expect(()=>buildCatalogQuoteLinePatch({kind:'material',material},{purchaseOptionId:'not-found'}))
+      .toThrow(/purchase program is inactive/);
+    expect(()=>buildCatalogQuoteLinePatch({kind:'rate',item:{...rate,active:false}}))
+      .toThrow(/inactive/);
+    const other:OtherCatalogItem={
+      id:'other1',name:'Shelf',category:'Accessories',unit:'each',active:true,
+      updatedAt:'2026-11-12',variants:[
+        {id:'default',label:'Standard',active:true,default:true},
+        {id:'retired',label:'Old',active:false,default:false},
+      ],
+    };
+    expect(()=>buildCatalogQuoteLinePatch({kind:'other',item:other,variantId:'retired'}))
+      .toThrow(/inactive or no longer available/);
+    expect(()=>buildCatalogQuoteLinePatch({kind:'other',item:{...other,active:false}}))
+      .toThrow(/inactive/);
+    expect(()=>validateCatalogQuoteSource({kind:'other',item:other},'default')).not.toThrow();
+  });
+
+  it('rejects invalid purchase quantities before pricing',()=>{
+    for(const amount of [0,-1,Number.NaN,Number.POSITIVE_INFINITY,1_000_001])
+      expect(()=>validateCatalogQuoteQuantity(amount)).toThrow(/positive quantity/);
+    expect(()=>validateCatalogQuoteQuantity(undefined)).not.toThrow();
+    expect(()=>buildCatalogQuoteLinePatch({kind:'sink',model:sink},{quantity:-2}))
+      .toThrow(/positive quantity/);
   });
 
   it('keeps internal-only rate references out of customer totals', () => {
