@@ -71,7 +71,7 @@ const deal:Project={
 };
 const submit=()=>useCrmStore.getState().recordExternalQuoteSent(
  'deal-cloud',12000,'2026-11-12','Builder portal',
- 'submission-stable-id','2026-11-13T13:00:00.000Z',
+ 'activity_submission_stable_id','2026-11-13T13:00:00.000Z',
 );
 
 describe('Batch 330: external submission remote Deal acknowledgement',()=>{
@@ -113,19 +113,19 @@ describe('Batch 330: external submission remote Deal acknowledgement',()=>{
  it('does not claim success or change local records when the Deal write fails',async()=>{
   cloud.failProject=true;
   await expect(submit()).rejects.toThrow('Deal update failed');
-  expect(cloud.activity?.id).toBe('submission-stable-id');
+  expect(cloud.activity?.id).toBe('activity_submission_stable_id');
   expect(useCrmStore.getState().projects[0]).toEqual(deal);
   expect(useCrmStore.getState().activities).toEqual([]);
   cloud.failProject=false;
   expect(await submit()).toBe(true);
   expect(cloud.insertCount).toBe(2);
   expect(useCrmStore.getState().activities.map(a=>a.id))
-   .toEqual(['submission-stable-id']);
+   .toEqual(['activity_submission_stable_id']);
  });
  it('recovers an acknowledged Activity across a simulated browser refresh without duplicating it',async()=>{
   const identity={organizationId:'org-cloud',userId:'rep-1',dealId:'deal-cloud'};
   const pending:PendingExternalQuoteSubmission={...identity,version:1,
-   id:'submission-stable-id',recordedAt:'2026-11-13T13:00:00.000Z',
+   id:'activity_submission_stable_id',recordedAt:'2026-11-13T13:00:00.000Z',
    bidSentDate:'2026-11-12',amount:12000,format:'Builder portal'};
   const records=new Map<string,string>();
   const storage={
