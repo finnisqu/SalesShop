@@ -292,6 +292,11 @@ export interface QuoteSinkSnapshot {
   sellPrice?: number;
   effectiveDate?: string;
   sourceUpdatedAt?: string;
+  /** Variant dimensions and finishes are locked to this quoted selection. */
+  finish?:string;cornerRadiusIn?:number;
+  bowlWidthIn?:number;bowlLengthIn?:number;bowlHeightIn?:number;
+  totalWidthIn?:number;totalLengthIn?:number;totalHeightIn?:number;
+  availableColors?:string[];
 }
 
 export interface QuoteLineSinkReference {
