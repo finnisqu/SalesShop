@@ -20,6 +20,7 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
   const sinks=section.scope?.takeoffSinks??[];
   const projected=projectAreaCost(quote,section);
   const materials=useCompanySettingsStore(s=>s.settings.stockMaterials);
+  const catalogHydrated=useCompanySettingsStore(s=>s.hydrated);
   const catalogCost=selectedMaterialCost(section.scope?.takeoffMaterial??'',
     section.scope?.takeoffMaterialReference,materials);
   const materialSfCost=catalogCost.quotedCostPerSf??catalogCost.currentCatalogCostPerSf;
@@ -36,6 +37,10 @@ export function QuoteBetaMaterials({quote,section,editable,part='all',separateSi
         selected={section.scope?.takeoffMaterialReference} pinned={quote.projectMaterials??[]}
         onTextChange={name=>selectMaterial(quote.id,section.id,name)}
         onSelect={(reference,label)=>selectMaterial(quote.id,section.id,label,reference)}/>
+      {catalogHydrated&&catalogCost.catalogSourceUnavailable&&
+        <p className="qmb-material-source-warning" role="status">
+          Saved Catalog variant or supplier program unavailable. The quoted buying cost and selling price are preserved. Choose an active Material to relink.
+        </p>}
       <details className="qmb-buying-details" aria-label="Private material buying cost">
         <summary>Buying reference · internal <span aria-hidden="true">⌄</span></summary>
         <div className="qmb-material-cost-caption">
