@@ -105,38 +105,40 @@
 }
 
 
-/* Quotes: center the Records tabs against the ENTIRE desktop header.
- * The default grid positioning puts the tabs in column 2. Applying
- * absolute/50% to that grid child previously positioned it relative to
- * that column, which shifted the tab group to the right.
- *
- * A full-grid, non-interactive overlay keeps the *same* visual midpoint
- * as Companies/Deals while retaining clickability of the tabs and More.
- * Leave the standard two-row layout and mobile layout untouched. */
+/* Records navigation uses one placement across all five primary tabs.
+ * Previously only QUOTES used a full-width overlay, while Companies/Deals
+ * used grid-cell centering. Because the actual layout midpoints differed,
+ * switching to QUOTES still produced a visible jump even when QUOTES was
+ * geometrically centered. Unify both routes rather than shifting one. */
 @media(min-width:1400px){
- :root[data-sales-theme] .sales-app.view-quotes
- .qmb-library-workspace-header.ss-workspace-header{
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+ .ss-workspace-header:has(>.ss-workspace-header__tabs>.records-section-nav){
   position:relative;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
  }
- :root[data-sales-theme] .sales-app.view-quotes
- .qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tabs{
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+ .ss-workspace-header:has(>.ss-workspace-header__tabs>.records-section-nav)
+ >.ss-workspace-header__tabs{
   position:absolute!important;
   grid-column:1 / -1!important;
   grid-row:1!important;
   inset:0!important;
-  width:auto!important;
+  width:100%!important;
   max-width:none!important;
+  min-width:0!important;
   margin:0!important;
   transform:none!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
-  pointer-events:none;
   overflow:visible!important;
+  pointer-events:none;
   z-index:2;
  }
- :root[data-sales-theme] .sales-app.view-quotes
- .qmb-library-workspace-header.ss-workspace-header
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+ .ss-workspace-header:has(>.ss-workspace-header__tabs>.records-section-nav)
  >.ss-workspace-header__tabs>.records-section-nav{
   pointer-events:auto;
  }
