@@ -22,7 +22,12 @@ assert(contains(quick,[
   'personIds,newPeopleNames','Bid due date',
   "kind==='Deal'&&more?details:undefined",
   'onCreate={value=>{setCompanyId',
-  'onCreate={name=>setNewPeopleNames',
+  // Name-first creation now validates existing People and stages a unique
+  // new name; it no longer uses the old one-line onCreate setter.
+  'onCreate={value=>{',
+  'recordNameKey(p.name)===recordNameKey(clean)',
+  'recordNameKey(n)===recordNameKey(clean)',
+  'setNewPeopleNames(names=>[...names,clean])',
   'const id=await onCreate('
 ]),'Board Deal quick-create details are incomplete');
 
