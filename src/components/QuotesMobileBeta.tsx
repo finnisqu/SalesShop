@@ -34,6 +34,7 @@ import '../sales-document-ux-qc.css';
 import { QuoteMaterialLineFields } from './QuoteMaterialLineFields';
 import { QuoteSinkLineFields } from './QuoteSinkLineFields';
 import { QuoteRateLineFields } from './QuoteRateLineFields';
+import {catalogSellingOverride} from '../services/quoteCatalogLineEditing';
 import { QuoteBetaEditablePreview } from './QuoteBetaEditablePreview';
 import {QuoteContractApproval} from './QuoteContractApproval';
 import {approvedCustomerDraft,quoteDeliveryApprovalKey} from '../services/quoteDeliveryApproval';
@@ -186,6 +187,14 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
         {line.kind==='material'&&<QuoteMaterialLineFields quoteId={quote.id} line={line}/>}
         {line.kind==='sink'&&<QuoteSinkLineFields quoteId={quote.id} line={line}/>}
         {line.kind==='rate'&&<QuoteRateLineFields quote={quote} line={line}/>}
+        {line.otherReference&&<div className="qmb-help" aria-label="Catalog Other product reference">
+          Catalog product · {line.otherReference.snapshot.itemName} · {line.otherReference.snapshot.variantLabel}
+          {' · '}{line.otherReference.snapshot.unit??'each'}
+          {line.otherReference.snapshot.internalCost!==undefined
+            ?' · Private unit cost '+money.format(line.otherReference.snapshot.internalCost):''}
+          {catalogSellingOverride(line)?' · Manual selling override':''}
+        </div>}
+        {line.kind==='sink'&&catalogSellingOverride(line)&&<p className="qmb-help">Manual sink selling override · catalog source retained</p>}
         {!textOnly&&<div className="qmb-two">
           {line.pricingMode==='quantity-rate'?<>
             <Field label="Quantity"><input type="number" inputMode="decimal" step="any" value={line.quantity??''}
@@ -195,7 +204,8 @@ function BetaLine({quote,line,editable}:{quote:Quote;line:QuoteLine;editable:boo
               <Field label={line.kind==='sink'?"Sell price ($/each)":line.kind==='material'?"Sell rate ($/SF)":"Sell rate ($/unit)"}><input type="number" inputMode="decimal" min="0" step=".01"
                 value={line.rate??''} placeholder="Not set"
                 onChange={e=>update(quote.id,line.id,{
-                  rate:e.target.value===''?undefined:Number(e.target.value),rateReference:undefined,
+                  // Preserve the frozen source snapshot when overriding selling.
+                  rate:e.target.value===''?undefined:Number(e.target.value),
                 })}/></Field>
               {line.kind==='material'&&<button type="button"
                 className="qmb-builder-rate-toggle qmb-line-rate-trigger"
