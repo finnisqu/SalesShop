@@ -101,7 +101,10 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(quotes).toContain("label:'Documents',active:!followUpsTab");
   expect(quotes).toContain("label:'Follow-ups',active:followUpsTab");
   expect(quotes).toContain("label:'Detailed Editor'");
-  expect(quotes).toContain("label:'Clear search and filters'");
+  expect(quotes).toContain("label:'Record external quote'");
+  expect(quotes).toContain("disabled:!canManageLibrary");
+  expect(quotes).not.toContain("label:'Clear search and filters'");
+  expect(quotes).toContain('onClear={resetLibraryFilters}');
   expect(quotes).toContain('className="qmb-followups-return-toolbar"');
   expect(quotes).toContain('onClick={()=>setFollowUpsTab(false)}>← Documents');
   expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
