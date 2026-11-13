@@ -2,6 +2,11 @@ import {useRef,type PointerEvent} from 'react';
 import './mobile-sheet.css';
 
 type DragState={pointerId:number;originY:number;distance:number;sheet:HTMLElement};
+
+/** Gesture threshold is shared with the mobile interaction regression suite. */
+export function shouldCloseMobileSheet(distance:number,cancelled:boolean,disabled:boolean){
+ return !cancelled&&!disabled&&Number.isFinite(distance)&&distance>=88;
+}
 /** Touch-only drag handle for the shared mobile sheets.
  * Dragging 88px down closes; otherwise the sheet springs back.
  * The ordinary close button remains the keyboard-accessible way to dismiss.
@@ -9,6 +14,12 @@ type DragState={pointerId:number;originY:number;distance:number;sheet:HTMLElemen
 export function MobileSheetHandle({onClose,disabled=false}:{onClose:()=>void;disabled?:boolean}){
  const dragging=useRef<DragState|null>(null);
  const reset=(sheet:HTMLElement)=>{
+  // Inline transitions outrank our reduced-motion CSS: honor the OS setting.
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+   sheet.style.transition='';
+   sheet.style.transform='';
+   return;
+  }
   sheet.style.transition='transform 160ms ease-out';
   sheet.style.transform='';
   window.setTimeout(()=>{
@@ -36,14 +47,15 @@ export function MobileSheetHandle({onClose,disabled=false}:{onClose:()=>void;dis
   dragging.current=null;
   if(event.currentTarget.hasPointerCapture(event.pointerId))
    event.currentTarget.releasePointerCapture(event.pointerId);
-  if(!cancelled&&!disabled&&drag.distance>=88){
+  if(shouldCloseMobileSheet(drag.distance,cancelled,disabled)){
    onClose();
   }else reset(drag.sheet);
  };
  return <div className={'ss-mobile-sheet-handle'+(disabled?' is-disabled':'')} aria-hidden="true"
   onPointerDown={down} onPointerMove={move}
   onPointerUp={event=>finish(event,false)}
-  onPointerCancel={event=>finish(event,true)}>
+  onPointerCancel={event=>finish(event,true)}
+  onLostPointerCapture={event=>finish(event,true)}>
   <span/>
  </div>;
 }

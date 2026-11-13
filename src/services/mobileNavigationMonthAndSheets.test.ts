@@ -1,9 +1,20 @@
 import {describe,expect,it} from 'vitest';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {shouldCloseMobileSheet} from '../components/MobileSheetHandle';
 const load=(path:string)=>readFileSync(join(process.cwd(),path),'utf8');
 
 describe('Mobile navigation, sheet and calendar consistency',()=>{
+ it('never leaves a dismiss gesture active after cancellation or capture loss',()=>{
+  expect(shouldCloseMobileSheet(87,false,false)).toBe(false);
+  expect(shouldCloseMobileSheet(88,false,false)).toBe(true);
+  expect(shouldCloseMobileSheet(150,true,false)).toBe(false);
+  expect(shouldCloseMobileSheet(150,false,true)).toBe(false);
+  expect(shouldCloseMobileSheet(Number.NaN,false,false)).toBe(false);
+  const handle=load('src/components/MobileSheetHandle.tsx');
+  expect(handle).toContain('onLostPointerCapture={event=>finish(event,true)}');
+  expect(handle).toContain("prefers-reduced-motion: reduce");
+ });
  it('navigates directly to Catalog and gives every destination a labeled icon row',()=>{
   const chrome=load('src/components/MobileAppChrome.tsx');
   const nav=load('src/lib/mobileDrawerNavigation.ts');
