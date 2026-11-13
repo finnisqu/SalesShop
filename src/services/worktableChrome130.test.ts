@@ -87,17 +87,20 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
   expect(app).toContain("import './workspace-tab-nav.css'");
  });
- it('centers Quotes navigation independently of the secondary action More on wide desktop',()=>{
+ it('centers Quotes in a symmetric grid without overlapping its secondary More menu',()=>{
   const quote=src('components/QuotesMobileBeta.tsx');
   const header=src('workspace-header-parity.css');
   expect(quote).toContain('className="qmb-library-workspace-header"');
   expect(quote).toContain('more={<WorkspaceMoreMenu compact label="Quote actions"');
   expect(header).toContain('@media(min-width:1400px)');
   expect(header).toContain('.qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tabs');
-  expect(header).toContain('position:absolute!important');
-  expect(header).toContain('left:50%!important');
-  expect(header).toContain('transform:translate(-50%,-50%)!important');
-  expect(header).toContain('width:min(440px,calc(100% - 36px))!important');
+  expect(header).toContain('grid-template-columns:minmax(0,1fr) minmax(0,440px) minmax(0,1fr)!important');
+  expect(header).toContain('position:static!important');
+  expect(header).toContain('grid-column:2!important;grid-row:1!important');
+  expect(header).toContain('transform:none!important');
+  expect(header).toContain('.qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tools');
+  expect(header).toContain('grid-column:3!important;grid-row:1!important');
+  expect(header).not.toContain('left:50%!important');
   // Do not alter the common Records/Catalog header or the narrower two-row layout.
   expect(header).toContain('@media(min-width:761px) and (max-width:1399px)');
  });
