@@ -22,7 +22,7 @@ Preserve SalesShop's source snapshot pricing model while making new quote insert
 
 ## Manual QA
 
-1. From Catalog Sinks or OTHER, open **Add to quote** and leave the dialog open. In another application view/tab of the same client, change the selected variant's cost or selling price. After the Catalog state updates, the chooser should reflect the current value; newly created quotes must capture it, while earlier quotes remain unchanged.
+1. In a controlled same-session test, open **Add to quote** and update the selected Sink/OTHER record in the live Catalog store while the chooser is mounted. The review should reflect the new values; newly inserted quotes must capture them while earlier quotes remain unchanged. Changes made in a different browser tab or device are not guaranteed to appear until that Catalog state is refreshed.
 2. Archive/remove the selected variant and try to insert. The chooser should block that selection, not substitute a different default. Repeat after archiving the parent item.
 3. With no explicit variant preselected, change the active default while the chooser is open. The newly inserted line should use the currently active default.
 4. Open the chooser with an existing editable destination, then change the quote's status or remove it. The chooser must require a valid destination instead of creating an unintended new draft.
