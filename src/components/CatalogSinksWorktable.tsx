@@ -14,6 +14,7 @@ import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
+import {CatalogBulkActions,useCatalogPageSelection} from './CatalogBulkSelection';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-sink-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -54,6 +55,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
  const addModel=useSinkCatalogStore(s=>s.addModel);
  const duplicateModel=useSinkCatalogStore(s=>s.duplicateModel);
  const updateModel=useSinkCatalogStore(s=>s.updateModel);
+ const setModelsActive=useSinkCatalogStore(s=>s.setModelsActive);
  const addVariant=useSinkCatalogStore(s=>s.addVariant);
  const updateVariant=useSinkCatalogStore(s=>s.updateVariant);
  const duplicateVariant=useSinkCatalogStore(s=>s.duplicateVariant);
@@ -112,8 +114,8 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
   return models.filter(model=>(showInactive||model.active)&&
    (category==='all'||model.category===category)&&
    matchesCatalogSearch([model.name,model.modelCode,model.brand,model.supplier,
-    model.material,model.mountType,model.notes,...(model.availableColors??[]),
-    ...model.variants.flatMap(variant=>[variant.label,variant.code,variant.finish,variant.notes,
+    model.material,model.mountType,model.notes,SINK_CATEGORY_LABELS[model.category],...(model.availableColors??[]),
+    ...model.variants.flatMap(variant=>[variant.label,variant.code,SINK_CONFIGURATION_LABELS[variant.configuration],variant.finish,variant.notes,
       ...(variant.availableColors??[])])],query,externalQuery))
    .sort((a,b)=>sort==='category'?a.category.localeCompare(b.category)||a.name.localeCompare(b.name):
      sort==='name'?a.name.localeCompare(b.name):
@@ -131,6 +133,23 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
  const pagination=useCatalogPagination(filtered.length,
   JSON.stringify([query,externalQuery,category,showInactive,sort]));
  const pagedModels=filtered.slice(pagination.start,pagination.end);
+ const selecting=canEdit&&editing;
+ const pageSelection=useCatalogPageSelection(pagedModels,
+  JSON.stringify([query,externalQuery,category,showInactive,sort,pagination.page,pagination.pageSize,selecting]));
+ const selectedIds=pageSelection.selectedPageIds;
+ const bulkArchive=()=>{
+  if(!selecting||!pageSelection.activeIds.length)return;
+  const count=pageSelection.activeIds.length;
+  if(!window.confirm(`Archive ${count} selected sink model${count===1?'':'s'}? Existing quotes keep their historical selections.`))return;
+  setShowInactive(true);
+  setModelsActive(pageSelection.activeIds,false);
+  pageSelection.clear();
+ };
+ const bulkRestore=()=>{
+  if(!selecting||!pageSelection.archivedIds.length)return;
+  setModelsActive(pageSelection.archivedIds,true);
+  pageSelection.clear();
+ };
  // After creating a record, navigate to its page in the sorted catalog.
  useEffect(()=>{
   if(!expanded)return;
@@ -222,23 +241,35 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
      <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
      </WorktableFilterMenu>
      {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Cloud issue: '+error:'Saving…'}</small>}
-     {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(x=>!x)}>
+     {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>{pageSelection.clear();setEditing(x=>!x);}}>
       {editing?'Done editing':'Edit sinks'}</button>}
     </div>
    </header>
    <CatalogPagination label="Sinks" total={filtered.length}
     page={pagination.page} pageSize={pagination.pageSize}
-    onPageChange={next=>{pagination.setPage(next);setExpanded(null);}}
-    onPageSizeChange={size=>{pagination.setPageSize(size);setExpanded(null);}}/>
+    onPageChange={next=>{pageSelection.clear();pagination.setPage(next);setExpanded(null);}}
+    onPageSizeChange={size=>{pageSelection.clear();pagination.setPageSize(size);setExpanded(null);}}
+    extraActions={selecting&&selectedIds.length>0&&
+     <CatalogBulkActions label="Sink models" selectedCount={selectedIds.length}
+      activeCount={pageSelection.activeIds.length} archivedCount={pageSelection.archivedIds.length}
+      onArchive={bulkArchive} onRestore={bulkRestore} onClear={pageSelection.clear}/>}/>
    <WorktableSurface className="rates-reference-table-wrap catalog-product-scroll" label="Sinks catalog worktable">
     <table className="rates-reference-table catalog-product-table">
-     <thead><tr><th>Brand</th><th>Model</th><th>Category</th><th>Material</th><th>Mount</th>
+     <thead><tr>{selecting&&<th className="catalog-product-select-cell" scope="col">
+      <input type="checkbox" aria-label="Select all sink models on this page"
+       checked={pageSelection.allSelected} disabled={!pagedModels.length}
+       onChange={event=>pageSelection.selectPage(event.target.checked)}/></th>}
+      <th>Brand</th><th>Model</th><th>Category</th><th>Material</th><th>Mount</th>
       <th>Total W × L × H</th><th>Variants</th></tr></thead>
      <tbody>
       {pagedModels.map(model=>{
        const open=expanded===model.id,variants=model.variants.filter(v=>editing||showInactive||v.active);
        return <Fragment key={model.id}>
-        <tr className={open?'is-expanded':''}>
+        <tr className={[open?'is-expanded':'',selectedIds.includes(model.id)?'is-bulk-selected':''].filter(Boolean).join(' ')}>
+         {selecting&&<td className="catalog-product-select-cell">
+          <input type="checkbox" aria-label={'Select sink model '+model.name}
+           checked={selectedIds.includes(model.id)}
+           onChange={event=>pageSelection.selectRow(model.id,event.target.checked)}/></td>}
          <td>{model.brand||model.supplier||'—'}</td>
          <td className="rates-reference-item"><button type="button" className="materials-name-toggle"
            aria-expanded={open} onClick={()=>setExpanded(open?null:model.id)}><strong>{model.name}</strong></button>
@@ -248,7 +279,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
          <td><button type="button" className={open?'active':''} onClick={()=>setExpanded(open?null:model.id)}>
            {open?'Hide':'Variants · '+variants.length}</button></td>
         </tr>
-        {open&&<tr className="materials-variant-expanded-row"><td colSpan={7}>
+        {open&&<tr className="materials-variant-expanded-row"><td colSpan={selecting?8:7}>
          <div className="catalog-product-detail">
           {editing&&<div className="catalog-product-properties">
            <TextField label="Model name" value={model.name} onChange={value=>update(model,'name',value)}/>
@@ -355,7 +386,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
         </td></tr>}
        </Fragment>;
       })}
-      {!filtered.length&&<tr><td colSpan={7}>
+      {!filtered.length&&<tr><td colSpan={selecting?8:7}>
        <div className="catalog-product-empty-results">
         <span role="status">No sink models match. Clear filters or add a sink.</span>
         {activeFilterCount>0&&<CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>}
