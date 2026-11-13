@@ -93,6 +93,16 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   const styles=src('worktable-chrome.css');
   const header=src('workspace-header-parity.css');
   expect(quotes).toContain('className="qmb-library-workspace-header"');
+  // The Quotes header must be a sibling of the document editor, like the
+  // other Records headers. Keeping it inside qmb-desktop-main let that inner
+  // workspace subtly influence the centered tab group's placement.
+  const frameIndex=quotes.indexOf("    <div className={'qmb-desktop-frame'");
+  const headerIndex=quotes.indexOf('className="qmb-library-workspace-header"',frameIndex);
+  const mainIndex=quotes.indexOf('<div className="qmb-desktop-main">',frameIndex);
+  expect(frameIndex).toBeGreaterThan(-1);
+  expect(headerIndex).toBeGreaterThan(frameIndex);
+  expect(mainIndex).toBeGreaterThan(headerIndex);
+  expect(quotes).toContain("{page==='library'&&");
   expect(quotes).not.toContain('more={<WorkspaceMoreMenu compact label="Quote actions"');
   expect(quotes).toContain('tabs={<RecordsSectionNav selected="quotes"');
   expect(quotes).toContain('toolbarControls={renderLibraryToolbarMenus()}');
