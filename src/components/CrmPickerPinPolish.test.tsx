@@ -42,6 +42,23 @@ describe('Unified CRM relationship field and pin polish',()=>{
   expect(picker).toContain('if(one){void run(()=>onLink(one.id));return;}');
   expect(picker).toContain('if(!matches.length&&onCreate&&needle)');
  });
+ it('dismisses nested record pickers safely and guards duplicate cloud creates',()=>{
+  const picker=source('src/components/UnifiedRecordPicker.tsx');
+  const css=source('src/record-unified-picker.css');
+  const parent=source('src/lib/useDismissibleLayer.ts');
+  expect(picker).toContain('useDismissiblePopover(rootRef,open');
+  expect(picker).toContain("'.ss-unified-picker-trigger'");
+  expect(picker).toContain('const pendingRef=useRef(false)');
+  expect(picker).toContain('if(pendingRef.current||disabled)return');
+  expect(picker).toContain('pendingRef.current=true');
+  expect(picker).toContain('finally{pendingRef.current=false;setSaving(false);}');
+  expect(picker).toContain('if(saving||!needle)return');
+  expect(picker).toContain('disabled={disabled||saving}');
+  expect(picker).toContain('const stillInside=Boolean(rootRef.current?.contains(document.activeElement))');
+  expect(parent).toContain("layerRef.current?.querySelector('.ss-unified-picker-panel')");
+  expect(css).toContain('max-height:min(25dvh,180px)');
+  expect(css).toContain('overscroll-behavior:contain');
+ });
  it('renders a symmetric, readable shared pin used by the worktables and Materials',()=>{
   const icon=renderToStaticMarkup(<WorkspaceChromeIcon name="pin"/>);
   expect(icon).toContain('M9 3h6v6l3 4v2H6v-2l3-4V3Z');
