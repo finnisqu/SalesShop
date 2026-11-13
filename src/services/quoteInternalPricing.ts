@@ -89,8 +89,12 @@ function internalCostForLine(line: QuoteLine) {
       source: 'manual-total' as const,
     };
   }
-  if (validNumber(line.unitCost) && validNumber(line.quantity)) return {
-    value:roundCurrency((line.unitCost??0)*(line.quantity??0)),source:'product-unit' as const,
+  // OTHER catalog products carry a frozen cost snapshot as well as the
+  // editable unit-cost field. Keep private pricing available after older
+  // normalized cloud records that lack the separate unitCost metadata.
+  const productCost=line.unitCost??line.otherReference?.snapshot?.internalCost;
+  if (validNumber(productCost) && validNumber(line.quantity)) return {
+    value:roundCurrency((productCost??0)*(line.quantity??0)),source:'product-unit' as const,
   };
   if (line.kind === 'material') return materialInternalCost(line);
   if (line.kind === 'sink') return sinkInternalCost(line);
