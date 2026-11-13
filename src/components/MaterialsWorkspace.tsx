@@ -277,7 +277,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
   };
 
   const activeMobileFilters: MobileCatalogFilterChip[] = [
-    ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
+    ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => {setQuery('');onClearExternalQuery?.();} }] : []),
     ...(programFilter !== 'all' ? [{ key: 'program', label: `Program: ${programFilter === 'stock' ? 'STOCK' : 'Non-stock'}`, onRemove: () => setProgramFilter('all') }] : []),
     ...(materialFamilyFilter !== 'all' ? [{ key: 'family', label: materialFamilyFilter, onRemove: () => setMaterialFamilyFilter('all') }] : []),
     ...(materialTypeFilter !== 'all' ? [{ key: 'type', label: materialTypeFilter, onRemove: () => setMaterialTypeFilter('all') }] : []),

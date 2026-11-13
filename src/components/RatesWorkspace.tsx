@@ -188,7 +188,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
   };
 
   const activeMobileFilters: MobileCatalogFilterChip[] = [
-    ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
+    ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => {setQuery('');onClearExternalQuery?.();} }] : []),
     ...(category !== 'all' ? [{ key: 'category', label: CATEGORY_TABS.find(([key]) => key === category)?.[1] || category, onRemove: () => selectCategory('all') }] : []),
     ...(!showingMaterialPricing && behaviorFilter !== 'all' ? [{ key: 'behavior', label: RATE_BOOK_PRICING_BEHAVIOR_LABELS[behaviorFilter], onRemove: () => setBehaviorFilter('all') }] : []),
     ...(!showingMaterialPricing && unitFilter !== 'all' ? [{ key: 'unit', label: RATE_BOOK_UNIT_LABELS[unitFilter], onRemove: () => setUnitFilter('all') }] : []),

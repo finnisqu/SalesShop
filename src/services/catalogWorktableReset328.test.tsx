@@ -43,6 +43,8 @@ describe('Batch 328 — shared Catalog reset semantics',()=>{
   }
   const materials=source(paths[0]),rates=source(paths[3]);
   expect(materials).toContain('<MobileCatalogActiveFilters items={activeMobileFilters} onClear={resetCatalogView}');
+  expect(materials).toContain("onRemove: () => {setQuery('');onClearExternalQuery?.();}");
+  expect(rates).toContain("onRemove: () => {setQuery('');onClearExternalQuery?.();}");
   expect(materials).toContain('onReset={catalogViewFilterCount ? resetCatalogView : undefined}');
   expect(rates).toContain('onClear={resetCatalogView}');
   expect(rates).toContain('onReset={catalogViewFilterCount ? resetCatalogView : undefined}');
