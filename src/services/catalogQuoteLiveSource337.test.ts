@@ -89,7 +89,10 @@ describe('Batch 337 — quote insertion uses current Catalog source identity',()
   expect(modal).toContain('const latestSource=resolveCatalogQuoteLiveSource(initialSource,');
   expect(modal).toContain('const source=latestSource;');
   expect(modal).toContain('if(!latestSource)throw new Error(');
-  expect(modal).toContain('disabled={inserting || !validQuantity || !validSource}');
+  expect(modal).toContain('disabled={inserting || !validQuantity || !validSource || !validDestination}');
+  expect(modal).toContain('if(targetId!==TARGET_NEW&&!finalTarget)');
+  expect(modal).toContain('Selected quote unavailable · choose another');
+  expect(modal).toContain("currentSource===null?'Catalog record unavailable'");
   expect(modal).toContain('activeCatalogDefaultVariant(source.item.variants)');
   expect(builder).toContain('defaultSinkVariant(source.model)');
   expect(builder).toContain('activeCatalogDefaultVariant(source.item.variants)');
