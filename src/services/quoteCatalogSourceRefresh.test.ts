@@ -23,15 +23,13 @@ const rate:RateBookItem={
  createdAt:'2026-11-01',updatedAt:'2026-11-01',
 };
 const sinkLine=():QuoteLine=>({
- id:'sink-line',kind:'sink',description:'Custom customer sink',
- pricingMode:'quantity-rate',quantity:4,rate:260,amount:undefined,
- customerVisible:true,includeInTotal:true,internalCost:495,
+ id:'sink-line',kind:'sink',customerVisible:true,includeInTotal:true,
  ...sinkSnapshotLinePatch(createQuoteSinkSnapshot(model,model.variants[0])),
- quantity:4,rate:260,internalCost:495,description:'Custom customer sink',
+ pricingMode:'quantity-rate',quantity:4,rate:260,internalCost:495,
+ description:'Custom customer sink',
 });
 const rateLine=():QuoteLine=>({
- id:'rate-line',kind:'rate',description:'Customer-approved fabrication',
- customerVisible:true,includeInTotal:true,
+ id:'rate-line',kind:'rate',customerVisible:true,includeInTotal:true,
  ...rateSnapshotLinePatch(createQuoteRateSnapshot(rate)),
  quantity:125,rate:18,description:'Customer-approved fabrication',
 });
@@ -80,7 +78,7 @@ describe('Catalog source refresh does not reprice a customer quote',()=>{
  });
  it('keeps fixed flat Rate Book amounts until explicit repricing',()=>{
   const flat=createQuoteRateSnapshot({...rate,id:'trip',unit:'flat',sellRate:150});
-  const line:QuoteLine={id:'flat',kind:'rate',description:'Approved trip fee',
+  const line:QuoteLine={id:'flat',kind:'rate',
    customerVisible:true,includeInTotal:true,...rateSnapshotLinePatch(flat),
    amount:180,description:'Approved trip fee'};
   const revised=createQuoteRateSnapshot({...rate,id:'trip',unit:'flat',sellRate:210});
