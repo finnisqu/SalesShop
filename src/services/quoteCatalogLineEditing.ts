@@ -25,6 +25,9 @@ export function catalogSellingOverride(line:QuoteLine):boolean{
   line.kind==='sink'?line.sinkReference?.snapshot?.sellPrice:
   line.otherReference?.snapshot?.sellPrice;
  if(captured===undefined)return false;
+ if(line.kind==='rate'&&line.rateReference?.snapshot?.unit==='flat'&&
+   line.pricingMode==='direct')
+  return line.amount===undefined||Math.abs(line.amount-captured)>=0.005;
  return line.pricingMode==='quantity-rate'&&
   (line.rate===undefined||Math.abs(line.rate-captured)>=0.005);
 }
@@ -36,7 +39,13 @@ export function quoteSinkSourcePatch(line:QuoteLine,snapshot:QuoteSinkSnapshot):
  if(line.kind!=='sink')throw new Error('This line is not a Sink charge.');
  if(!snapshot.sinkModelId||!snapshot.variantId)
   throw new Error('Choose an active Sink model and variant.');
- if(!line.sinkReference?.snapshot)return sinkSnapshotLinePatch(snapshot);
+ if(!line.sinkReference?.snapshot){
+  const seed=sinkSnapshotLinePatch(snapshot);
+  const nextLine={...line,...seed,quantity:line.quantity??seed.quantity} as QuoteLine;
+  const quantitySource=line.quantitySource&&compatibleAreaScopeFields(nextLine)
+   .includes(line.quantitySource.field)?line.quantitySource:undefined;
+  return {...seed,quantity:line.quantity??seed.quantity,quantitySource};
+ }
  const sameSource=line.sinkReference.sinkModelId===snapshot.sinkModelId&&
   line.sinkReference.variantId===snapshot.variantId;
  return {
