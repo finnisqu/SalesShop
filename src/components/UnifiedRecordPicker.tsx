@@ -37,8 +37,15 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
    // back to the picker after the async action finishes.
    const stillInside=Boolean(rootRef.current?.contains(document.activeElement));
    setOpen(false);setQuery('');
-   if(stillInside&&triggerRef.current?.isConnected)
-    triggerRef.current.focus({preventScroll:true});
+   if(stillInside)window.requestAnimationFrame(()=>{
+    const trigger=triggerRef.current;
+    // React has re-enabled the trigger by now. Leave focus alone if a
+    // newly opened Task/Quote editor claimed it in the meantime.
+    const focused=document.activeElement;
+    if(!trigger?.isConnected||trigger.disabled)return;
+    if(focused!==document.body&&!rootRef.current?.contains(focused))return;
+    trigger.focus({preventScroll:true});
+   });
   }catch(e){setError(e instanceof Error?e.message:'Unable to update the record.');}
   finally{pendingRef.current=false;setSaving(false);}
  };
