@@ -1,6 +1,8 @@
 import { createQuoteMaterialCostSnapshot } from './quoteMaterialSnapshot';
 import { createQuoteRateSnapshot, rateSnapshotLinePatch } from './quoteRateSnapshot';
 import { createQuoteSinkSnapshot, sinkSnapshotLinePatch } from './quoteSinkSnapshot';
+import { createQuoteOtherSnapshot, otherSnapshotLinePatch } from './quoteOtherSnapshot';
+import type {OtherCatalogItem} from '../store/otherCatalogStore';
 import { resolveStockMaterialCostReference, type StockMaterial } from '../types/settings';
 import type { SinkModel } from '../types/sink';
 import type { RateBookItem } from '../types/rateBook';
@@ -10,7 +12,8 @@ import type { RateBookDivision } from '../types/rateBook';
 export type CatalogQuoteSource =
   | { kind: 'material'; material: StockMaterial; variantId?: string }
   | { kind: 'sink'; model: SinkModel; variantId?: string }
-  | { kind: 'rate'; item: RateBookItem };
+  | { kind: 'rate'; item: RateBookItem }
+  | { kind: 'other'; item: OtherCatalogItem; variantId?: string };
 
 export function validateCatalogQuoteQuantity(quantity?: number):void{
   if(quantity!==undefined&&(!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000))
@@ -37,6 +40,12 @@ export function validateCatalogQuoteSource(source:CatalogQuoteSource,variantId?:
       throw new Error('The selected sink variant is inactive or no longer available.');
     if(!source.model.variants.some(v=>v.active))
       throw new Error('This sink model has no active variant to quote.');
+  }else if(source.kind==='other'){
+    if(!source.item.active)throw new Error('This Other catalog item is inactive.');
+    if(requestedVariant&&!source.item.variants.some(v=>v.id===requestedVariant&&v.active))
+      throw new Error('The selected Other variant is inactive or no longer available.');
+    if(!source.item.variants.some(v=>v.active))
+      throw new Error('This Other catalog item has no active variant to quote.');
   }else if(!source.item.active){
     throw new Error('This Rate Book item is inactive. Choose an active rate.');
   }
@@ -79,6 +88,15 @@ export function buildCatalogQuoteLinePatch(
     if (!variant) throw new Error('This sink model has no active variant to quote.');
     const patch = sinkSnapshotLinePatch(createQuoteSinkSnapshot(source.model, variant));
     return { ...patch, quantity: options.quantity ?? 1 };
+  }
+  if(source.kind==='other'){
+    const requested=options.variantId??source.variantId;
+    const variant=(requested?source.item.variants.find(item=>item.id===requested&&item.active):undefined)
+      ??source.item.variants.find(item=>item.default&&item.active)
+      ??source.item.variants.find(item=>item.active);
+    if(!variant)throw new Error('This Other catalog item has no active variant to quote.');
+    return {...otherSnapshotLinePatch(createQuoteOtherSnapshot(source.item,variant)),
+      quantity:options.quantity??1};
   }
   const snapshot = createQuoteRateSnapshot(source.item, options.division);
   const patch = rateSnapshotLinePatch(snapshot);
