@@ -18,6 +18,7 @@ interface SinkCatalogState {
   error: string | null;
   hydrate: () => Promise<void>;
   addModel: (category?: SinkCategory) => string;
+  duplicateModel: (modelId: string) => string | null;
   updateModel: (id: string, patch: Partial<SinkModel>) => void;
   addVariant: (modelId: string, seed?: Partial<SinkVariant>) => string;
   updateVariant: (modelId: string, variantId: string, patch: Partial<SinkVariant>) => void;
@@ -338,6 +339,34 @@ export const useSinkCatalogStore = create<SinkCatalogState>((set, get) => ({
       updatedAt: now,
     };
     updateModels(set, get, (models) => [...models, model]);
+    return id;
+  },
+
+  // A duplicated model is a new Catalog source, not another reference to the
+  // original SKU or price-audit trail. Historical quotes keep their old IDs.
+  duplicateModel: (modelId) => {
+    const source = get().models.find((model) => model.id === modelId);
+    if (!source) return null;
+    const id = uid('sink_model');
+    const now = new Date().toISOString();
+    const copy: SinkModel = {
+      ...structuredClone(source),
+      id,
+      name: `${source.name} copy`,
+      modelCode: undefined,
+      active: true,
+      createdAt: now,
+      updatedAt: now,
+      variants: normalizeCatalogVariantDefaults(source.variants.map((variant) => ({
+        ...structuredClone(variant),
+        id: uid('sink_variant'),
+        code: undefined,
+        // Carry current costs/prices, not another model's historical audit entries.
+        history: [],
+        effectiveDate: undefined,
+      }))),
+    };
+    updateModels(set, get, (models) => [...models, copy]);
     return id;
   },
 
