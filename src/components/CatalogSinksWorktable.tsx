@@ -51,6 +51,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
  const saving=useSinkCatalogStore(s=>s.saving);
  const error=useSinkCatalogStore(s=>s.error);
  const addModel=useSinkCatalogStore(s=>s.addModel);
+ const duplicateModel=useSinkCatalogStore(s=>s.duplicateModel);
  const updateModel=useSinkCatalogStore(s=>s.updateModel);
  const addVariant=useSinkCatalogStore(s=>s.addVariant);
  const updateVariant=useSinkCatalogStore(s=>s.updateVariant);
@@ -84,6 +85,12 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
   window.addEventListener('sales-shop:catalog-create',create);
   return()=>window.removeEventListener('sales-shop:catalog-create',create);
  },[addModel,category,canEdit,onClearExternalQuery]);
+ const duplicateCatalogModel=(modelId:string)=>{
+  const id=duplicateModel(modelId);
+  if(!id)return;
+  setQuery('');setCategory('all');setShowInactive(false);setSort('brand');
+  onClearExternalQuery?.();setExpanded(id);setEditing(true);
+ };
  const togglePin=(modelId:string,variantId:string)=>{
   const key=modelId+':'+variantId;
   setPins(current=>current.includes(key)?current.filter(item=>item!==key):[...current,key]);
@@ -171,7 +178,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
        <div><dt>Total W × L × H</dt><dd>{size(variant.totalWidthIn??model.widthIn,
          variant.totalLengthIn??model.depthIn,variant.totalHeightIn??model.heightIn)}</dd></div>
        <div><dt>Material / finish</dt><dd>{[model.material,variant.finish].filter(Boolean).join(' · ')||'—'}</dd></div>
-       <div><dt>Cost / price</dt><dd>{money.format(variant.internalCost??0)} / {money.format(variant.sellPrice??0)}</dd></div>
+       <div><dt>Cost / price</dt><dd>{variant.internalCost===undefined?'—':money.format(variant.internalCost)} / {variant.sellPrice===undefined?'—':money.format(variant.sellPrice)}</dd></div>
       </dl>
       <small>{(variant.availableColors?.length?variant.availableColors:model.availableColors??[]).join(', ')||'Colors not listed'}</small>
       {model.active&&variant.active&&<CatalogQuoteLauncher
@@ -226,7 +233,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
          <td>{model.brand||model.supplier||'—'}</td>
          <td className="rates-reference-item"><button type="button" className="materials-name-toggle"
            aria-expanded={open} onClick={()=>setExpanded(open?null:model.id)}><strong>{model.name}</strong></button>
-           <small>{model.modelCode||'No SKU'}{!model.active?' · Inactive':''}</small></td>
+           <small>{model.modelCode||'No SKU'}{!model.active?' · Archived':''}</small></td>
          <td>{SINK_CATEGORY_LABELS[model.category]}</td><td>{model.material||'—'}</td>
          <td>{model.mountType||'—'}</td><td>{size(model.widthIn,model.depthIn,model.heightIn)}</td>
          <td><button type="button" className={open?'active':''} onClick={()=>setExpanded(open?null:model.id)}>
@@ -254,13 +261,17 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
            <NumericField label="Total length (in)" value={model.depthIn} onChange={value=>update(model,'depthIn',value)}/>
            <NumericField label="Total height (in)" value={model.heightIn} onChange={value=>update(model,'heightIn',value)}/>
            <TextField label="Model notes" value={model.notes} onChange={value=>update(model,'notes',value)}/>
-           <label className="catalog-product-property"><span>Available</span><input type="checkbox" checked={model.active}
-             onChange={event=>update(model,'active',event.target.checked)}/></label>
+           <label className="catalog-product-property"><span>Active in catalog</span><input type="checkbox" checked={model.active}
+             onChange={event=>update(model,'active',event.target.checked)}/>
+             <small className="catalog-product-default-note">Uncheck to archive; saved quotes keep their original selections.</small></label>
           </div>}
           <div className="catalog-product-detail-head"><div><strong>Variants and bowls</strong>
             {editing&&<small className="catalog-product-default-note">
              Choose an available variant as default for new selections.</small>}</div>
-           {editing&&<button type="button" onClick={()=>addVariant(model.id)}>+ Variant</button>}
+           {editing&&<span className="catalog-product-variant-operations">
+             <button type="button" onClick={()=>duplicateCatalogModel(model.id)}>Duplicate model</button>
+             <button type="button" onClick={()=>addVariant(model.id)}>+ Variant</button>
+            </span>}
           </div>
           <div className="catalog-product-variant-list">
            {variants.map(variant=>{
