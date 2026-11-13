@@ -37,10 +37,18 @@ export function markPendingQuoteSync(
   try{
     const token=crypto.randomUUID();
     const earlier=readPendingQuoteSync(scope);
-    const quoteIds=cleanQuoteIds(value.quotes
-      .filter(q=>q.ownerUserId===scope.userId).map(q=>q.id));
-    const activeIds=new Set(quoteIds);
-    const baselineIds=new Set(isQuoteDoc(baseline)?baseline.quotes.map(q=>q.id):[]);
+    const owned=value.quotes.filter(q=>q.ownerUserId===scope.userId);
+    const activeIds=new Set(owned.map(q=>q.id));
+    const base=isQuoteDoc(baseline)?baseline:null;
+    const baselineById=new Map((base?.quotes??[]).map(q=>[q.id,q]));
+    const baselineIds=new Set(baselineById.keys());
+    const stillPending=new Set(earlier?.quoteIds??[]);
+    // The marker is for UNSAVED edits only, not the entire quote library.
+    // Preserve IDs from a previous unacknowledged generation on retries.
+    const quoteIds=cleanQuoteIds(owned.filter(q=>
+      stillPending.has(q.id)||!base||
+      JSON.stringify(baselineById.get(q.id))!==JSON.stringify(q)
+    ).map(q=>q.id));
     // Preserve older pending creations when a partially completed INSERT
     // wrote its parent row but did not finish its line/section batches.
     const created=cleanQuoteIds([
