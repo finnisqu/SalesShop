@@ -15,6 +15,7 @@ import {TrashIcon} from './TrashIcon';
 import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE,CATALOG_PAGE_SIZES,catalogPageRange} from './CatalogPagination';
 import {WorktableFilterMenu,WorktablePagination,WorktableSurface,WorktableSelectPageCheckbox} from './WorktableChrome';
 import {worktableStoredSort} from '../services/worktableSortPreference';
+import {useWorktableDirectoryState} from './useWorktableDirectoryState';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;readOnly?:boolean;isSelfCompany?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization'|'pages'|'activity';columns:ConnectionColumn[];rows:ConnectionTableRow[];
@@ -56,13 +57,23 @@ function read(key:string):string[]{
 }
 export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBulkTask,onBulkEdit,onBulkTaskProperty,bulkEditCompanies=[],onBulkComplete,onTaskDelete,onBulkTaskDelete,
  onTaskDuePreset,onTaskToggleComplete,onDocumentArchive,onDocumentRestore,toolbarTarget,toolbarControls,toolbarFilters,filterCount=0,bulkActions,catalogPagination=false,catalogPaginationKey=''}:Props){
- const [keys,setKeys]=useState<string[]>(()=>read(storage(tableKey,'cols')));
- const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
- const [selected,setSelected]=useState<string[]>([]);
+ // Keep each directory's device preferences isolated. A retained component
+ // may switch from Companies to People or Tasks without remounting.
+ const [keys,setKeys]=useWorktableDirectoryState(tableKey,
+  scope=>read(storage(scope,'cols')),
+  (scope,value)=>{try{localStorage.setItem(storage(scope,'cols'),JSON.stringify(value));}
+   catch{/* optional device preference */}});
+ const [pinned,setPinned]=useWorktableDirectoryState(tableKey,
+  scope=>read(storage(scope,'pins')),
+  (scope,value)=>{try{localStorage.setItem(storage(scope,'pins'),JSON.stringify(value));}
+   catch{/* optional device preference */}});
+ // Selection, bulk dialogs and mobile selection mode must never transfer to
+ // another Records directory, even when row IDs happen to overlap.
+ const [selected,setSelected]=useWorktableDirectoryState<string[]>(tableKey,()=>[]);
  const [density,setDensity]=useWorkbookTableDensity();
- const [bulkEditing,setBulkEditing]=useState(false);
- const [bulkTaskEditing,setBulkTaskEditing]=useState(false);
- const [mobileBulkMode,setMobileBulkMode]=useState(false);
+ const [bulkEditing,setBulkEditing]=useWorktableDirectoryState(tableKey,()=>false);
+ const [bulkTaskEditing,setBulkTaskEditing]=useWorktableDirectoryState(tableKey,()=>false);
+ const [mobileBulkMode,setMobileBulkMode]=useWorktableDirectoryState(tableKey,()=>false);
  const defaultSort=()=>{
   const key=tableKey==='activity'?'occurred':
     tableKey==='documents'||tableKey==='pages'?'updated':
@@ -79,15 +90,26 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  // never applies another directory's saved order or writes over its preference.
  const [sortState,setSort]=useState(()=>({tableKey,...readSort()}));
  const sort=sortState.tableKey===tableKey?sortState:{tableKey,...readSort()};
- const [page,setPage]=useState(1);
- const [pageSize,setPageSize]=useState<number>(()=>{
-  if(catalogPagination)return DEFAULT_CATALOG_PAGE_SIZE;
-  try{const saved=Number(localStorage.getItem(storage(tableKey,'pageSize')));
-   return CATALOG_PAGE_SIZES.includes(saved as typeof CATALOG_PAGE_SIZES[number])?saved:PAGE_SIZE;}
-  catch{return PAGE_SIZE;}
- });
+ const [page,setPage]=useWorktableDirectoryState(tableKey,()=>1);
+ // Tags has Catalog-style paging; other directories keep independent local
+ // preferences. Scope the mode as well as the directory to avoid stale writes.
+ const pageSizeScope=tableKey+'|'+(catalogPagination?'catalog':'records');
+ const [pageSize,setPageSize]=useWorktableDirectoryState<number>(pageSizeScope,
+  scope=>{
+   const [directory,mode]=scope.split('|');
+   if(mode==='catalog')return DEFAULT_CATALOG_PAGE_SIZE;
+   try{
+    const saved=Number(localStorage.getItem(storage(directory,'pageSize')));
+    return CATALOG_PAGE_SIZES.includes(saved as typeof CATALOG_PAGE_SIZES[number])?saved:PAGE_SIZE;
+   }catch{return PAGE_SIZE;}
+  },
+  (scope,value)=>{
+   const [directory,mode]=scope.split('|');
+   if(mode==='catalog')return;
+   try{localStorage.setItem(storage(directory,'pageSize'),String(value));}
+   catch{/* optional device preference */}
+  });
  useEffect(()=>{if(catalogPagination)setPage(1);},[catalogPagination,catalogPaginationKey]);
- useEffect(()=>{if(!catalogPagination)try{localStorage.setItem(storage(tableKey,'pageSize'),String(pageSize));}catch{/* optional */}},[tableKey,pageSize,catalogPagination]);
  useEffect(()=>{
   try{localStorage.setItem(storage(sortState.tableKey,'sort'),
     JSON.stringify({key:sortState.key,reverse:sortState.reverse}));}
@@ -104,8 +126,6 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  const hasTaskActions=tableKey==='tasks'&&Boolean(onTaskDuePreset||onTaskToggleComplete||onTaskDelete);
  const hasDocumentActions=tableKey==='documents'&&Boolean(onDocumentArchive||onDocumentRestore);
  const hasRowActions=hasTaskActions||hasDocumentActions||Boolean(onRecordEdit);
- useEffect(()=>{try{localStorage.setItem(storage(tableKey,'cols'),JSON.stringify(keys));}catch{/* preference storage is optional */}},[tableKey,keys]);
- useEffect(()=>{try{localStorage.setItem(storage(tableKey,'pins'),JSON.stringify(pinned));}catch{/* preference storage is optional */}},[tableKey,pinned]);
  const active=useMemo(()=>visibleConnectionColumns(keys,columns.map(c=>c.key)),[keys,columns]);
  const visible=useMemo(()=>{
    const byKey=new Map(columns.map(col=>[col.key,col]));
