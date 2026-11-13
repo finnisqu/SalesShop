@@ -6,6 +6,10 @@ import {canEditTeamArea} from '../services/teamDepartments';
 import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
+import {useSinkCatalogStore} from '../store/sinkCatalogStore';
+import {useOtherCatalogStore} from '../store/otherCatalogStore';
+import {resolveCatalogQuoteLiveSource} from '../services/catalogQuoteLiveSource';
+import {activeCatalogDefaultVariant} from '../services/catalogVariantDefaults';
 import { quoteIsCommerciallyEditable } from '../services/quoteIntegrity';
 import { buildCatalogQuoteLinePatch, validateCatalogQuoteSource, catalogQuoteWholeUnits, type CatalogQuoteSource } from '../services/catalogQuoteInsertion';
 import { catalogQuoteDestinationLabel } from '../services/catalogQuoteDestination';
@@ -44,7 +48,18 @@ export function CatalogQuoteLauncher({source,label='Add to quote'}:{
  </>;
 }
 
-export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSource; onClose: () => void }) {
+export function CatalogQuoteInsert({ source: initialSource, onClose }: { source: CatalogQuoteSource; onClose: () => void }) {
+  // Read the live Catalog while the dialog is open, not just the row snapshot
+  // from when the launcher was clicked. Removed SKUs must never be revived.
+  const sinkModels=useSinkCatalogStore(state=>state.models);
+  const sinkHydrated=useSinkCatalogStore(state=>state.hydrated);
+  const otherItems=useOtherCatalogStore(state=>state.items);
+  const otherHydrated=useOtherCatalogStore(state=>state.hydrated);
+  const currentSource=resolveCatalogQuoteLiveSource(initialSource,{
+    sinkModels:sinkHydrated?sinkModels:undefined,
+    otherItems:otherHydrated?otherItems:undefined,
+  });
+  const source=currentSource??initialSource;
   const ref = useDismissibleLayer<HTMLDivElement>(true, onClose);
   const quotes = useQuoteStore((state) => state.quotes);
   const activeQuoteId = useQuoteStore((state) => state.activeQuoteId);
@@ -81,7 +96,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const otherVariant = source.kind === 'other'
     ? variantId
       ? source.item.variants.find((item) => item.id === variantId && item.active)
-      : source.item.variants.find((item) => item.active && item.default) ?? source.item.variants.find((item) => item.active)
+      : activeCatalogDefaultVariant(source.item.variants)
     : undefined;
   const options = materialVariant?.purchaseOptions?.filter((option) => option.active !== false) ?? [];
   const selectedOption = purchaseOptionId
@@ -101,7 +116,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
     !(source.material.variants?.length)||Boolean(materialVariant);
   const materialProgramsValid=source.kind!=='material'||
     !(materialVariant?.purchaseOptions?.length)||Boolean(selectedOption);
-  const validSource = (source.kind==='material'
+  const validSource = Boolean(currentSource) && (source.kind==='material'
     ? source.material.active && materialVariantsValid && materialProgramsValid &&
       (!variantId || Boolean(materialVariant)) && (!purchaseOptionId || Boolean(selectedOption))
     : source.kind==='sink' ? source.model.active && Boolean(sinkVariant)
@@ -133,13 +148,21 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
     const finalTarget = eligible.find((quote) => quote.id === targetId);
     let committed=false;
     try {
+      // Re-read store state at the exact commit boundary, including changes
+      // that occur before React can re-render this dialog.
+      const latestSource=resolveCatalogQuoteLiveSource(initialSource,{
+        sinkModels:useSinkCatalogStore.getState().hydrated?useSinkCatalogStore.getState().models:undefined,
+        otherItems:useOtherCatalogStore.getState().hydrated?useOtherCatalogStore.getState().items:undefined,
+      });
+      if(!latestSource)throw new Error('This Catalog record was removed. Choose another item.');
+      const source=latestSource;
       // Validate and capture the exact selection BEFORE creating a quote.
       // A removed variant must not silently become the current default.
       validateCatalogQuoteSource(source,
         source.kind==='material'||source.kind==='sink'||source.kind==='other'?variantId||undefined:undefined,
         source.kind==='material'?purchaseOptionId||undefined:undefined);
       const patch = buildCatalogQuoteLinePatch(source, {
-        variantId: source.kind === 'material' ? materialVariant?.id : source.kind === 'sink' ? sinkVariant?.id : source.kind==='other'?otherVariant?.id:undefined,
+        variantId: source.kind === 'material' ? materialVariant?.id : source.kind === 'sink' || source.kind === 'other' ? variantId||undefined : undefined,
         purchaseOptionId: source.kind === 'material' ? selectedOption?.id : undefined,
         division: finalTarget?.pricingDivision,
         quantity: quantityValue,
@@ -230,7 +253,9 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
                 : 'The current price is frozen in the quote. You can adjust pricing or quantity in Quotes.'}</small>
           </div>
           {!validSource&&<p className="catalog-quote-error" role="alert">
-            This Catalog item or selected variant is inactive or unavailable. Choose an active option, or cancel.
+            {currentSource===null
+              ?'This Catalog record was removed. Choose another item or cancel.'
+              :'This Catalog item or selected variant is inactive or unavailable. Choose an active option, or cancel.'}
           </p>}
           {error && <p className="catalog-quote-error" role="alert">{error}</p>}
         </div>
