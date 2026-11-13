@@ -318,3 +318,29 @@
 @media(max-width:760px){
  :root[data-sales-theme] .qmb .quote-source-apply-price{min-height:40px;}
 }
+
+/* Explicit Material source refresh must not be mistaken for selling repricing.
+ * Keep explanatory text readable in the compact desktop and phone picker. */
+:root[data-sales-theme] .qmb .quote-material-picker .quote-source-refresh-help{
+ margin:6px 0;min-width:0;max-width:100%;
+ padding:6px 8px;border:1px solid var(--ss-theme-border);
+ border-radius:7px;background:var(--ss-theme-base);
+ color:var(--ss-theme-muted);
+ font:500 11px/1.5 var(--ss-font-body,system-ui,sans-serif);
+ white-space:normal;overflow-wrap:anywhere;
+}
+:root[data-sales-theme] .qmb .quote-material-picker .quote-source-refresh-error,
+:root[data-sales-theme] .qmb .quote-material-selection .quote-source-refresh-error{
+ display:block;min-width:0;max-width:100%;
+ margin:6px 0;color:var(--ss-danger,#b44e43);
+ font:600 11px/1.5 var(--ss-font-body,system-ui,sans-serif);
+ white-space:normal;overflow-wrap:anywhere;
+}
+:root[data-sales-theme] .qmb .quote-material-selection>.quote-source-apply-price{
+ grid-column:1/-1;justify-self:start;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .qmb .quote-material-picker .quote-source-refresh-help{
+  font-size:11px;line-height:1.55;
+ }
+}
