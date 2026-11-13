@@ -58,6 +58,8 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   const summary=src('components/QuoteQuickAreaSummary.tsx');
   const ratePicker=src('components/QuoteRateLineFields.tsx');
   const sinkPicker=src('components/QuoteSinkLineFields.tsx');
+  const materialPicker=src('components/QuoteMaterialLineFields.tsx');
+  const materialSource=src('services/quoteMaterialSourceRefresh.ts');
   const source=src('services/quoteCatalogLineEditing.ts');
   expect(beta).toContain('rate:e.target.value===\'\'?undefined:Number(e.target.value)');
   expect(beta).toContain('Preserve the frozen source snapshot when overriding selling.');
@@ -82,6 +84,15 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(ratePicker).toContain('selectedRateId=line.rateReference?.rateBookItemId??snapshot?.rateBookItemId');
   expect(sinkPicker).toContain('Use Catalog selling price');
   expect(ratePicker).toContain('Use Rate Book selling price');
+  expect(materialPicker).toContain('quoteMaterialSourcePatch(');
+  expect(materialPicker).toContain('quoteMaterialSlabRepricePatch(line)');
+  expect(materialPicker).toContain('Refresh buying reference · keep quoted price');
+  expect(materialPicker).toContain('Recalculate slab selling total to');
+  expect(materialPicker).toContain('selectedVariantId=line.materialReference?.variantId??snapshot?.variantId');
+  expect(materialPicker).toContain('selectedPurchaseId=line.materialReference?.purchaseOptionId??snapshot?.purchaseOptionId');
+  expect(materialSource).toContain('lockedCost=slabMode&&existingSource');
+  expect(materialSource).toContain('export function quoteMaterialSlabRepricePatch(');
+  expect(materialSource).not.toContain('rate:reference.costPerSf');
   const other=src('components/QuoteOtherLineFields.tsx');
   const otherPatch=src('services/quoteOtherSelection.ts');
   expect(other).toContain('quoteOtherSourcePatch(line,nextItem,nextVariant)');
