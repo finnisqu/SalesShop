@@ -410,7 +410,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {canLog&&<button type="button" data-mobile-label="Activity" onClick={()=>{
         onClose();openActivityComposer({associations:contextualLinks});
        }}>Log activity</button>}
-       {onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&
+       {canLog&&onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&
          <button type="button" data-mobile-label="Edit" onClick={()=>{onClose();onEditBoard(record);}}>Edit</button>}
        <button type="button" className="record-preview-full" data-mobile-label="Full page" onClick={goToPage}>Go to page</button>
        {quote&&<button type="button" className={center?'tasks-primary record-preview-open-quote':'record-preview-open-quote'}
