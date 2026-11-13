@@ -94,7 +94,7 @@ export function mergePendingNotebookChanges(
   const created=new Set(pending.createdEntryIds);
   let recovered=false;
   for(const entry of local.entries){
-    if(!changed.has(entry.id))continue;
+    if(!changed.has(entry.id)||!Number.isFinite(Date.parse(entry.updatedAt)))continue;
     const server=byId.get(entry.id);
     if(server?!newer(entry.updatedAt,server.updatedAt):!created.has(entry.id))continue;
     byId.set(entry.id,entry);
