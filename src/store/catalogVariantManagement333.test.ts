@@ -88,6 +88,58 @@ describe('Batch 333 — persisted Sink and OTHER variant management',()=>{
   expect(oldSnapshot).toMatchObject({variantId:'chrome',sellPrice:65,internalCost:30});
   expect(saved.has('salesshop-catalog-other-v1')).toBe(true);
  });
+ it('duplicates a Sink model as a fresh quote source with no inherited SKU or price history',()=>{
+  const store=useSinkCatalogStore.getState();
+  store.updateModel('sink333',{modelCode:'OLD-SINK',active:false});
+  store.updateVariant('sink333','chrome',{code:'OLD-CHROME',availableColors:['White']});
+  const before=structuredClone(useSinkCatalogStore.getState().models[0]);
+  const historical=createQuoteSinkSnapshot(before,before.variants[0]);
+  const newId=store.duplicateModel('sink333');
+  expect(newId).toBeTruthy();
+  expect(newId).not.toBe(before.id);
+  const copy=useSinkCatalogStore.getState().models.find(model=>model.id===newId)!;
+  expect(copy).toMatchObject({name:before.name+' copy',active:true,modelCode:undefined});
+  expect(copy.variants).toHaveLength(before.variants.length);
+  expect(new Set(copy.variants.map(v=>v.id)).size).toBe(copy.variants.length);
+  expect(copy.variants.some(v=>before.variants.some(original=>original.id===v.id))).toBe(false);
+  expect(copy.variants.every(v=>v.code===undefined&&v.history.length===0&&v.effectiveDate===undefined)).toBe(true);
+  expect(copy.variants[0]).toMatchObject({internalCost:110,sellPrice:220,availableColors:['White']});
+  expect(defaults(copy.variants)).toEqual([copy.variants[0].id]);
+  expect(useSinkCatalogStore.getState().models[0]).toEqual(before);
+  useSinkCatalogStore.getState().updateVariant(copy.id,copy.variants[0].id,{sellPrice:777});
+  expect(useSinkCatalogStore.getState().models[0].variants[0].sellPrice).toBe(220);
+  expect(historical).toMatchObject({modelId:'sink333',variantId:'chrome',sellPrice:220});
+  expect(saved.has('salesshop-sink-catalog-v1')).toBe(true);
+ });
+ it('duplicates archived OTHER items without sharing IDs, SKUs or mutable variants',()=>{
+  const store=useOtherCatalogStore.getState();
+  store.updateItem('other333',{active:false,sku:'OLD-ITEM'});
+  store.updateVariant('other333','chrome',{sku:'OLD-CHROME',availableColors:['Silver']});
+  const before=structuredClone(useOtherCatalogStore.getState().items[0]);
+  const historical=createQuoteOtherSnapshot(before,before.variants[0]);
+  const newId=store.duplicateItem('other333');
+  expect(newId).toBeTruthy();
+  expect(newId).not.toBe(before.id);
+  const copy=useOtherCatalogStore.getState().items.find(item=>item.id===newId)!;
+  expect(copy).toMatchObject({name:before.name+' copy',active:true,sku:undefined});
+  expect(copy.variants).toHaveLength(before.variants.length);
+  expect(copy.variants.some(v=>before.variants.some(original=>original.id===v.id))).toBe(false);
+  expect(new Set(copy.variants.map(v=>v.id)).size).toBe(copy.variants.length);
+  expect(copy.variants.every(v=>v.sku===undefined)).toBe(true);
+  expect(copy.variants[0]).toMatchObject({internalCost:30,sellPrice:65,availableColors:['Silver']});
+  expect(defaults(copy.variants)).toEqual([copy.variants[0].id]);
+  expect(useOtherCatalogStore.getState().items[0]).toEqual(before);
+  useOtherCatalogStore.getState().updateVariant(copy.id,copy.variants[0].id,{sellPrice:999});
+  expect(useOtherCatalogStore.getState().items[0].variants[0].sellPrice).toBe(65);
+  expect(historical).toMatchObject({variantId:'chrome',sellPrice:65,internalCost:30});
+  expect(saved.has('salesshop-catalog-other-v1')).toBe(true);
+ });
+ it('does not create copies for missing Catalog records',()=>{
+  const originals=[useSinkCatalogStore.getState().models.length,useOtherCatalogStore.getState().items.length];
+  expect(useSinkCatalogStore.getState().duplicateModel('missing')).toBeNull();
+  expect(useOtherCatalogStore.getState().duplicateItem('missing')).toBeNull();
+  expect([useSinkCatalogStore.getState().models.length,useOtherCatalogStore.getState().items.length]).toEqual(originals);
+ });
  it('does not show a retired Other SKU as a default price',()=>{
   useOtherCatalogStore.getState().updateVariant('other333','chrome',{active:false});
   useOtherCatalogStore.getState().updateVariant('other333','black',{active:false});
