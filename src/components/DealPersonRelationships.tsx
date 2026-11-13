@@ -90,7 +90,12 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
       const deal=deals.find(d=>d.id===dealId);
       const personId=createPerson({name,companyId:deal?.companyId,source:'manual'});
       if(!personId)throw new Error('Unable to create Person.');
-      await manager.add(dealId,personId,role);setRole('');
+      try{
+        await manager.add(dealId,personId,role);setRole('');
+      }catch(cause){
+        const detail=cause instanceof Error?cause.message:'Shared link failed.';
+        throw new Error('Person created, but the Deal link did not save. Select the new Person above and retry. '+detail);
+      }
     }}
     helper="Links directly to the Deal without creating an Activity or changing a Quote."/>}
   {error&&<p role="alert" className="ss-deal-relations-error">{error}</p>}
@@ -146,7 +151,12 @@ export function PersonDealRelationships({personId,deals,onOpenDeal,editing=false
         throw new Error('This Deal already exists. Select it above.');
       const id=createDeal(name,'Discovery');
       if(!id)throw new Error('Unable to create Deal.');
-      await manager.add(id,personId,role);setRole('');
+      try{
+        await manager.add(id,personId,role);setRole('');
+      }catch(cause){
+        const detail=cause instanceof Error?cause.message:'Shared link failed.';
+        throw new Error('Deal created, but the Person link did not save. Select the new Deal above and retry. '+detail);
+      }
     }}
     helper="Direct Deal contact roles are shared; no Activity is created."/>}
   {error&&<p role="alert" className="ss-deal-relations-error">{error}</p>}
