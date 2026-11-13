@@ -1036,3 +1036,21 @@
  :root[data-sales-theme] .sales-app.view-catalog .catalog-section-host.catalog-reference-layout
   .catalog-pagination-extras{flex:1 1 100%;justify-content:flex-end;margin-left:0;}
 }
+
+/* Batch 328: one reset action in each Catalog filter menu. It clears local
+   facets, sort and the shared page-level search, not pin boards or records. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-reset{
+ box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+ width:100%;min-height:38px;margin-top:4px;padding:8px 12px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:750 11px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-reset:not(:disabled):hover,
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-reset:not(:disabled):focus-visible{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-card-reset:disabled{
+ opacity:.45;cursor:default;
+}

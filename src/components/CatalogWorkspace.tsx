@@ -122,13 +122,13 @@ export function CatalogWorkspace() {
       {section==='materials'&&<SupplierImportLauncher placement="hidden"/>}
       <section ref={sectionScrollRef} className={`catalog-section-host catalog-reference-layout catalog-section-${section}`}>
         {section === 'materials' ? (
-          <MaterialsWorkspace embedded externalQuery={catalogSearch}/>
+          <MaterialsWorkspace embedded externalQuery={catalogSearch} onClearExternalQuery={()=>setCatalogSearch('')}/>
         ) : section === 'sinks' ? (
-          <CatalogSinksWorktable externalQuery={catalogSearch} />
+          <CatalogSinksWorktable externalQuery={catalogSearch} onClearExternalQuery={()=>setCatalogSearch('')} />
         ) : section === 'other' ? (
-          <CatalogOtherWorktable externalQuery={catalogSearch} />
+          <CatalogOtherWorktable externalQuery={catalogSearch} onClearExternalQuery={()=>setCatalogSearch('')} />
         ) : section === 'rates' ? (
-          <RatesWorkspace embedded externalQuery={catalogSearch} />
+          <RatesWorkspace embedded externalQuery={catalogSearch} onClearExternalQuery={()=>setCatalogSearch('')} />
         ) : section === 'tags' ? (
           <CatalogTagsWorkspace externalQuery={catalogSearch} />
         ) : (

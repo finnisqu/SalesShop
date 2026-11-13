@@ -9,6 +9,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
+import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 
@@ -40,7 +41,9 @@ function TextField({label,value,onChange,placeholder}:{
   <input value={value??''} placeholder={placeholder} onChange={event=>onChange(event.target.value)}/>
  </label>;
 }
-export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}){
+export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
+ externalQuery?:string;onClearExternalQuery?:()=>void;
+}){
  const models=useSinkCatalogStore(s=>s.models);
  const hydrated=useSinkCatalogStore(s=>s.hydrated);
  const hydrate=useSinkCatalogStore(s=>s.hydrate);
@@ -103,6 +106,13 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
      sort==='cost'?(a.variants[0]?.internalCost??Infinity)-(b.variants[0]?.internalCost??Infinity):
      (a.brand??a.supplier??'').localeCompare(b.brand??b.supplier??'')||a.name.localeCompare(b.name));
  },[models,showInactive,category,query,externalQuery,sort]);
+ const activeFilterCount=Number(category!=='all')+
+  Number(Boolean(query.trim()||externalQuery.trim()))+
+  Number(showInactive)+Number(sort!=='brand');
+ const resetCatalogView=()=>{
+  setQuery('');setCategory('all');setShowInactive(false);setSort('brand');
+  setExpanded(null);onClearExternalQuery?.();
+ };
  const pagination=useCatalogPagination(filtered.length,
   JSON.stringify([query,externalQuery,category,showInactive,sort]));
  const pagedModels=filtered.slice(pagination.start,pagination.end);
@@ -168,7 +178,7 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
     <div className="catalog-card-actions">
      <span className="catalog-card-hint">Expand models to compare sink dimensions and variants.</span>
      <WorktableFilterMenu className="catalog-card-filter"
-      activeCount={Number(category!=='all')+Number(Boolean(query.trim()))+Number(sort!=='brand')}>
+      activeCount={activeFilterCount}>
       <div className="catalog-card-filter-panel">
        <label>Find models<input type="search" aria-label="Find sink models" placeholder="Model, finish or SKU…"
         value={query} onChange={event=>setQuery(event.target.value)}/></label>
@@ -186,6 +196,7 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
        <option value="category">Category</option><option value="cost">Cost · low first</option>
       </select>
      </label>
+     <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
      </WorktableFilterMenu>
      {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Cloud issue: '+error:'Saving…'}</small>}
      {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(x=>!x)}>

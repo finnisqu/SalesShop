@@ -6,6 +6,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
+import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 
@@ -28,7 +29,9 @@ const Price=({label,value,change}:{
  <input type="number" min="0" step="0.01" value={value??''} inputMode="decimal"
   onChange={event=>change(parseNumber(event.target.value))}/></label>;
 
-export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}){
+export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
+ externalQuery?:string;onClearExternalQuery?:()=>void;
+}){
  const items=useOtherCatalogStore(s=>s.items),hydrate=useOtherCatalogStore(s=>s.hydrate);
  const hydrated=useOtherCatalogStore(s=>s.hydrated);
  const saving=useOtherCatalogStore(s=>s.saving),error=useOtherCatalogStore(s=>s.error);
@@ -63,6 +66,13 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
     sort==='brand'?(a.brand??'').localeCompare(b.brand??'')||a.name.localeCompare(b.name):
     a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
  },[items,category,query,externalQuery,showInactive,sort]);
+ const activeFilterCount=Number(category!=='all')+
+  Number(Boolean(query.trim()||externalQuery.trim()))+
+  Number(showInactive)+Number(sort!=='category');
+ const resetCatalogView=()=>{
+  setQuery('');setCategory('all');setShowInactive(false);setSort('category');
+  setExpanded(null);onClearExternalQuery?.();
+ };
  const pagination=useCatalogPagination(filtered.length,
   JSON.stringify([query,externalQuery,category,showInactive,sort]));
  const pagedItems=filtered.slice(pagination.start,pagination.end);
@@ -140,7 +150,7 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
     <div className="catalog-card-actions">
      <span className="catalog-card-hint">Open a row for variants, costs and specifications.</span>
      <WorktableFilterMenu className="catalog-card-filter"
-      activeCount={Number(category!=='all')+Number(Boolean(query.trim()))+Number(sort!=='category')}>
+      activeCount={activeFilterCount}>
       <div className="catalog-card-filter-panel">
        <label>Find items<input type="search" placeholder="Accessories, SKUs, suppliers…" aria-label="Find Other catalog items"
         value={query} onChange={event=>setQuery(event.target.value)}/></label>
@@ -158,6 +168,7 @@ export function CatalogOtherWorktable({externalQuery=''}:{externalQuery?:string}
        <option value="brand">Brand / supplier</option>
       </select>
      </label>
+     <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
      </WorktableFilterMenu>
      {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Sync issue: '+error:'Saving…'}</small>}
      {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(e=>!e)}>

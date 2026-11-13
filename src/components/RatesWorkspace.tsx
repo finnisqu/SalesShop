@@ -20,6 +20,7 @@ import { RateBook } from './RateBook';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
+import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -60,7 +61,9 @@ function editorTabMatches(button: HTMLButtonElement, category: ReferenceCategory
   return text.startsWith('material');
 }
 
-export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: boolean;externalQuery?:string } = {}) {
+export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQuery }: {
+ embedded?: boolean;externalQuery?:string;onClearExternalQuery?:()=>void;
+} = {}) {
   const items = useRateBookStore((state) => state.items);
   const hydrated = useRateBookStore((state) => state.hydrated);
   const hydrateRates = useRateBookStore((state) => state.hydrate);
@@ -174,6 +177,16 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
     setOverrideFilter('all');
   };
 
+  const catalogViewFilterCount=activeReferenceFilters+
+    Number(category!=='all')+
+    Number(Boolean(query.trim()||externalQuery?.trim()))+
+    Number(rateSort!=='category');
+  const resetCatalogView=()=>{
+    setQuery('');selectCategory('all');clearReferenceFilters();
+    setRateSort('category');setExpandedRateId(null);setExpandedLevelId(null);
+    onClearExternalQuery?.();
+  };
+
   const activeMobileFilters: MobileCatalogFilterChip[] = [
     ...(query.trim() ? [{ key: 'search', label: `Search: ${query.trim()}`, onRemove: () => setQuery('') }] : []),
     ...(category !== 'all' ? [{ key: 'category', label: CATEGORY_TABS.find(([key]) => key === category)?.[1] || category, onRemove: () => selectCategory('all') }] : []),
@@ -191,7 +204,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
     </label>
     {!showingMaterialPricing&&<>
       <WorktableFilterMenu className="catalog-card-filter"
-       activeCount={activeReferenceFilters+Number(rateSort!=='category')}>
+       activeCount={catalogViewFilterCount}>
         <div className="rates-filter-popover rates-foundation-filter-popover catalog-card-filter-panel">
           <RatesFilterFields idPrefix="rates-table"
             behaviorFilter={behaviorFilter} unitFilter={unitFilter} overrideFilter={overrideFilter}
@@ -210,6 +223,7 @@ export function RatesWorkspace({ embedded = false,externalQuery }: { embedded?: 
             <option value="effective-desc">Effective · newest</option>
           </select>
         </label>
+        <CatalogFilterReset activeCount={catalogViewFilterCount} onReset={resetCatalogView}/>
       </WorktableFilterMenu>
     </>}
     <button type="button" className="catalog-card-edit" onClick={()=>{

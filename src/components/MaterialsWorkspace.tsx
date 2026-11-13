@@ -26,6 +26,7 @@ import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { CatalogPagination } from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
+import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import { restoreScrollAnchor } from '../lib/scrollAnchor';
 
@@ -92,8 +93,8 @@ function compareOptionalNumbers(left?: number, right?: number) {
   return left - right;
 }
 
-export function MaterialsWorkspace({embedded=false,externalQuery}:{
- embedded?:boolean;externalQuery?:string;
+export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternalQuery}:{
+ embedded?:boolean;externalQuery?:string;onClearExternalQuery?:()=>void;
 }={}) {
   const openBuilderRates = useNavigationStore(state=>state.openBuilderRates);
   const settings = useCompanySettingsStore((state) => state.settings);
@@ -251,6 +252,13 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
     setTagFilter('all');
     setFinishFilter('all');
     setThicknessFilter('all');
+  };
+  const catalogViewFilterCount=activeFilterCount+
+    Number(Boolean(query.trim()||externalQuery?.trim()))+
+    Number(sort!=='stock-brand');
+  const resetCatalogView=()=>{
+    setQuery('');clearFilters();setSort('stock-brand');
+    setExpandedMaterialId(null);onClearExternalQuery?.();
   };
   // Both desktop and mobile filter sheets receive exactly the same state.
   const filterFields: Omit<MaterialsFilterFieldsProps, 'idPrefix'> = {
@@ -634,7 +642,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
                 <span className="catalog-card-hint">Variants reveal slab sizes, availability and supplier price programs.</span>
                 {!isMobileReference&&<>
                   <WorktableFilterMenu className="catalog-card-filter"
-                    activeCount={activeFilterCount+Number(sort!=='stock-brand')}>
+                    activeCount={catalogViewFilterCount}>
                     <div className="materials-foundation-filter-popover catalog-card-filter-panel">
                       <MaterialsFilterFields idPrefix="materials-table" {...filterFields}/>
                     </div>
@@ -648,6 +656,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
                       <option value="cost-asc">Cost · low first</option><option value="cost-desc">Cost · high first</option>
                     </select>
                   </label>
+                  <CatalogFilterReset activeCount={catalogViewFilterCount} onReset={resetCatalogView}/>
                   </WorktableFilterMenu>
                 </>}
                 {embedded&&<button type="button" className="catalog-card-edit" onClick={()=>setEditing(true)}>Edit materials</button>}
