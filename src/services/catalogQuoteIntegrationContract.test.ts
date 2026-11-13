@@ -61,9 +61,9 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   const source=src('services/quoteCatalogLineEditing.ts');
   expect(beta).toContain('rate:e.target.value===\'\'?undefined:Number(e.target.value)');
   expect(beta).toContain('Preserve the frozen source snapshot when overriding selling.');
-  expect(beta).toContain('line.otherReference&&<div');
+  expect(beta).toContain("line.otherReference&&<QuoteOtherLineFields");
   expect(audit).toContain('updateLine(quote.id,line.id,{rate:n})');
-  expect(summary).toContain("line.otherReference.snapshot.itemName");
+  expect(summary).toContain('line.otherReference&&<QuoteOtherLineFields');
   expect(summary).toContain("Calculated from Catalog");
   expect(summary).not.toContain("rateReference:undefined,");
   expect(ratePicker).toContain('rateCatalogSelectionPatch(line,nextSnapshot)');
@@ -71,6 +71,14 @@ describe('Catalog to Quote worktable and cloud parity',()=>{
   expect(sinkPicker).toContain('Manual selling override');
   expect(source).toContain('const sameUnit=priorUnit===snapshot.unit');
   expect(source).toContain('catalogSellingOverride(line:QuoteLine)');
+  const other=src('components/QuoteOtherLineFields.tsx');
+  const otherPatch=src('services/quoteOtherSelection.ts');
+  expect(other).toContain('quoteOtherSourcePatch(line,nextItem,nextVariant)');
+  expect(other).toContain('quoteOtherCatalogPricePatch(line)');
+  expect(other).toContain('Refresh this Catalog variant · keep quoted price');
+  expect(otherPatch).toContain('const quotedUnit=line.otherReference.snapshot.unit');
+  expect(otherPatch).toContain("rate:price");
+  expect(otherPatch).not.toContain('rate:next.rate');
  });
  it('recovers quoted OTHER cost if older normalized records lack unitCost',()=>{
   const pricing=src('services/quoteInternalPricing.ts');
