@@ -1,4 +1,4 @@
-import {useRef,type ReactNode} from 'react';
+import {useEffect,useRef,type ReactNode} from 'react';
 import {useDismissibleDetails} from './useDismissibleDetails';
 import {useViewportBoundDetails} from './useViewportBoundDetails';
 
@@ -19,6 +19,22 @@ export function worktablePageRange(total:number,requestedPage:number,pageSize:nu
   first:count===0?0:start+1,last:Math.min(start+safeSize,count)};
 }
 
+/** Shared page-selection checkbox: true native mixed state and matching
+ * announcement for screen readers in Records and Catalog. */
+export function WorktableSelectPageCheckbox({label,allSelected,someSelected,onChange,disabled=false}:{
+ label:string;allSelected:boolean;someSelected:boolean;
+ onChange:(checked:boolean)=>void;disabled?:boolean;
+}){
+ const ref=useRef<HTMLInputElement>(null);
+ const mixed=someSelected&&!allSelected;
+ useEffect(()=>{
+  if(ref.current)ref.current.indeterminate=mixed;
+ },[mixed]);
+ return <input ref={ref} type="checkbox" checked={allSelected}
+  aria-label={label} aria-checked={mixed?'mixed':allSelected}
+  disabled={disabled} onChange={event=>onChange(event.target.checked)}/>;
+}
+
 /** One accessible pagination control for every Records/Catalog worktable. */
 export function WorktablePagination({label,total,page,pageSize,onPageChange,onPageSizeChange}:{
  label:string;total:number;page:number;pageSize:number;
@@ -36,7 +52,8 @@ export function WorktablePagination({label,total,page,pageSize,onPageChange,onPa
   <div className="ss-worktable-page-steps">
    <button type="button" disabled={range.page<=1} onClick={()=>onPageChange(range.page-1)}
     aria-label={'Previous '+label+' page'} title="Previous page">‹</button>
-   <span aria-live="polite">{range.page} / {range.pageCount}</span>
+   <span aria-live="polite" aria-label={'Page '+range.page+' of '+range.pageCount}>
+    {range.page} / {range.pageCount}</span>
    <button type="button" disabled={range.page>=range.pageCount} onClick={()=>onPageChange(range.page+1)}
     aria-label={'Next '+label+' page'} title="Next page">›</button>
   </div>
