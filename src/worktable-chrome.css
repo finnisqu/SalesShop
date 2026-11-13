@@ -504,6 +504,24 @@
   flex-wrap:wrap;
  }
 }
+/* Catalog's older filter and Tags rules are more specific than the shared
+ * chrome selector. Keep their touch targets aligned without changing desktop. */
+@media(max-width:820px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-card-filter.ss-worktable-filter-menu>summary{
+  height:auto;
+  min-height:44px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog
+  .ss-worktable-filter-panel .catalog-card-reset{
+  min-height:44px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-tags .catalog-pagination-extras .connections-columns-menu>summary{
+  height:auto;
+  min-height:44px;
+ }
+}
 @media(max-width:520px){
  :root[data-sales-theme] .sales-app.view-catalog
   .catalog-section-host.catalog-reference-layout .catalog-pagination.materials-page-controls{

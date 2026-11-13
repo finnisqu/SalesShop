@@ -53,15 +53,21 @@ export function useViewportBoundDetails(ref:RefObject<HTMLDetailsElement|null>){
    panel.style.maxHeight=next.maxHeight+'px';
   };
   const toggle=()=>{if(menu.open)position();};
+  // Wheel/touch scrolling INSIDE the panel never moves its anchor. Avoid
+  // a synchronous geometry pass on every item-list scroll event.
+  const outsideScroll=(event:Event)=>{
+   if(event.target instanceof Node&&menu.contains(event.target))return;
+   position();
+  };
   menu.addEventListener('toggle',toggle);
   window.addEventListener('resize',position,{passive:true});
-  document.addEventListener('scroll',position,true);
+  document.addEventListener('scroll',outsideScroll,true);
   window.visualViewport?.addEventListener('resize',position,{passive:true});
   window.visualViewport?.addEventListener('scroll',position,{passive:true});
   return ()=>{
    menu.removeEventListener('toggle',toggle);
    window.removeEventListener('resize',position);
-   document.removeEventListener('scroll',position,true);
+   document.removeEventListener('scroll',outsideScroll,true);
    window.visualViewport?.removeEventListener('resize',position);
    window.visualViewport?.removeEventListener('scroll',position);
   };

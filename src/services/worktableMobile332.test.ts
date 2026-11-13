@@ -18,6 +18,9 @@ describe('Batch 332d — mobile worktable chrome and scrolling',()=>{
   expect(style).toContain('-webkit-overflow-scrolling:touch');
   expect(style).toContain('scrollbar-width:thin');
   expect(style).toContain('min-height:44px');
+  expect(style).toContain('.catalog-card-filter.ss-worktable-filter-menu>summary');
+  expect(style).toContain('.ss-worktable-filter-panel .catalog-card-reset');
+  expect(style).toContain('.catalog-section-tags .catalog-pagination-extras .connections-columns-menu>summary');
   expect(style).toContain('white-space:normal;\n  overflow-wrap:anywhere;');
   expect(style).toContain('.connections-grid-toolbar .connections-toolbar-controls{\n  flex-wrap:wrap;');
  });
