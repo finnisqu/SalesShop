@@ -35,7 +35,7 @@ describe('Batch 332e — unified Record inline property editing',()=>{
   expect(editor).toContain('restoreFocus.current=false');
   expect(editor).toContain('pencilRef.current?.focus({preventScroll:true})');
   expect(editor).toContain('if(saving)return');
-  expect(editor).toContain('try{await onSave(draft);restoreFocus.current=true;setEditing(false);}');
+  expect(editor).toContain('try{await onSave(draft);restoreFocus.current=true;setEditing(false);release?.(id);}');
  });
  it('reuses the mobile viewport menu and returns focus after record actions',()=>{
   const menu=source('RecordActionsMenu.tsx');
