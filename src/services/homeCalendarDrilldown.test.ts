@@ -1,4 +1,6 @@
 import {describe,expect,it} from 'vitest';
+import {readFileSync} from 'node:fs';
+import {join} from 'node:path';
 import type {Activity,Company,Contact} from '../types/crm';
 import type {PersonalTask} from '../store/personalTaskStore';
 import type {SalesCalendarEvent} from './salesCalendar';
@@ -83,4 +85,18 @@ describe('Home badge drilldowns',()=>{
   expect(entries).toHaveLength(1);
   expect(entries[0]).toMatchObject({kind:'activity',id:'external'});
  });
+ it('keeps badge selection visible until the user changes or clears it',()=>{
+  const calendar=readFileSync(join(process.cwd(),'src/components/SalesCalendarLauncher.tsx'),'utf8');
+  const css=readFileSync(join(process.cwd(),'src/components/sales-calendar.css'),'utf8');
+  expect(calendar).toContain('aria-pressed={activeFocus?.date===key&&activeFocus.metric===slot.metric}');
+  expect(calendar).toContain('setBadgeFocus(previous=>previous?.date===key&&previous.metric===slot.metric');
+  expect(calendar).toContain('aria-label="Clear selected calendar badge"');
+  expect(calendar).toContain('onClick={()=>setBadgeFocus(null)}>Clear</button>');
+  expect(calendar).toContain("'Highlighting '+badgeLabel(activeFocus.metric)");
+  expect(calendar).not.toContain('window.setTimeout(()=>setBadgeFocus(null),5200)');
+  expect(calendar).not.toContain('onClickCapture={()=>{if(activeFocus)setBadgeFocus(null);}}');
+  expect(css).toContain('.home-calendar-badge-action[aria-pressed="true"]');
+  expect(css).toContain('.home-calendar-active-badge>button');
+ });
+
 });
