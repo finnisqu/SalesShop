@@ -9,7 +9,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
@@ -256,11 +256,11 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
    <WorktableSurface className="rates-reference-table-wrap catalog-product-scroll" label="Sinks catalog worktable">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr>{selecting&&<th className="catalog-product-select-cell" scope="col">
-      <input type="checkbox" aria-label="Select all sink models on this page"
-       checked={pageSelection.allSelected} disabled={!pagedModels.length}
-       onChange={event=>pageSelection.selectPage(event.target.checked)}/></th>}
-      <th>Brand</th><th>Model</th><th>Category</th><th>Material</th><th>Mount</th>
-      <th>Total W × L × H</th><th>Variants</th></tr></thead>
+      <WorktableSelectPageCheckbox label="Select all sink models on this page"
+       allSelected={pageSelection.allSelected} someSelected={selectedIds.length>0}
+       disabled={!pagedModels.length} onChange={checked=>pageSelection.selectPage(checked)}/></th>}
+      <th scope="col">Brand</th><th scope="col">Model</th><th scope="col">Category</th><th scope="col">Material</th><th scope="col">Mount</th>
+      <th scope="col">Total W × L × H</th><th scope="col">Variants</th></tr></thead>
      <tbody>
       {pagedModels.map(model=>{
        const open=expanded===model.id,variants=model.variants.filter(v=>editing||showInactive||v.active);
