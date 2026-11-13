@@ -1078,3 +1078,34 @@
   align-self:flex-start;min-height:42px;
  }
 }
+
+/* Batch 335 — one lifecycle language for Sink models and OTHER items/variants. */
+.catalog-product-statuses{
+ display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;
+ max-width:100%;margin-inline-start:5px;vertical-align:middle;
+}
+.catalog-product-status{
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ min-height:18px;padding:2px 6px;border:1px solid var(--ss-theme-border);
+ border-radius:999px;background:var(--ss-theme-base);color:var(--ss-theme-muted);
+ font:700 10px/1.1 var(--ss-font-body,system-ui,sans-serif);white-space:nowrap;
+}
+.catalog-product-status.is-active{background:var(--ss-theme-card);color:var(--ss-theme-ink);}
+.catalog-product-status.is-archived{background:var(--ss-theme-tint);color:var(--ss-theme-muted);}
+.catalog-product-status.is-default{border-color:var(--ss-theme-accent);color:var(--ss-theme-ink);background:var(--ss-theme-tint);}
+.catalog-product-table .rates-reference-item>small{line-height:1.8;overflow-wrap:anywhere;}
+.catalog-product-variant-heading{flex-wrap:wrap;min-width:0;}
+.catalog-product-variant-heading>div{flex:1 1 180px;}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-section-host:is(
+ .catalog-section-sinks,.catalog-section-other
+) .catalog-product-variant-operations button.catalog-product-restore-action{
+ background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
+ color:var(--ss-theme-ink);
+}
+@media(max-width:760px){
+ .catalog-product-variant-heading{justify-content:flex-start;gap:7px;}
+ .catalog-product-variant-heading>div{flex-basis:100%;}
+ .catalog-product-variant-operations{gap:6px;}
+ .catalog-product-variant-operations button{min-height:40px;}
+ .catalog-product-statuses{margin-inline-start:3px;gap:3px;}
+}
