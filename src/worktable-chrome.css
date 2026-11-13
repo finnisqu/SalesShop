@@ -462,3 +462,73 @@
   left:0;right:auto;
  }
 }
+
+
+/* Batch 332d: touch-sized shared worktable controls, with phone widths
+ * governed by the toolbar rather than a new horizontal-scrolling parent.
+ * The latter would clip Filters/Actions/Columns popovers. */
+@media(max-width:820px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app .ss-worktable-surface{
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scroll-padding-inline:12px;
+  scrollbar-width:thin;
+ }
+ :root[data-sales-theme] .sales-app
+  :is(.ss-worktable-filter-menu,.ss-worktable-action-menu,.connections-columns-menu)>summary,
+ :root[data-sales-theme] .sales-app
+  .ss-worktable-page-steps>button,
+ :root[data-sales-theme] .sales-app
+  .ss-worktable-page-size>select{
+  min-height:44px;
+ }
+ :root[data-sales-theme] .sales-app
+  :is(.ss-worktable-filter-panel,.ss-worktable-action-panel,.connections-columns-popover){
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+ }
+ :root[data-sales-theme] .sales-app .ss-worktable-filter-panel button,
+ :root[data-sales-theme] .sales-app .ss-worktable-action-entry>button{
+  min-height:44px;
+ }
+ :root[data-sales-theme] .sales-app .ss-worktable-action-entry>button{
+  white-space:normal;
+  overflow-wrap:anywhere;
+ }
+ :root[data-sales-theme] .sales-app .connections-grid-toolbar,
+ :root[data-sales-theme] .sales-app .connections-toolbar-controls{
+  max-width:100%;
+  min-width:0;
+ }
+ :root[data-sales-theme] .sales-app .connections-grid-toolbar .connections-toolbar-controls{
+  flex-wrap:wrap;
+ }
+}
+@media(max-width:520px){
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-section-host.catalog-reference-layout .catalog-pagination.materials-page-controls{
+  justify-content:flex-start;
+  gap:8px;
+ }
+ :root[data-sales-theme] .sales-app .catalog-pagination .ss-worktable-pagination{
+  box-sizing:border-box;
+  flex:1 1 100%;
+  width:100%;max-width:100%;
+  justify-content:space-between;
+  gap:6px;
+ }
+ :root[data-sales-theme] .sales-app .catalog-pagination .catalog-pagination-extras{
+  box-sizing:border-box;
+  flex:1 1 100%;
+  width:100%;max-width:100%;
+  margin:0;
+  justify-content:flex-start;
+ }
+ :root[data-sales-theme] .sales-app
+  .catalog-pagination .catalog-pagination-extras>.connections-grid-toolbar{
+  box-sizing:border-box;
+  width:100%;min-width:0;
+  justify-content:flex-start;
+  flex-wrap:wrap;
+ }
+}
