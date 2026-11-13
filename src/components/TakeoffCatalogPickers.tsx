@@ -86,6 +86,10 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
       aria-label="Material: type to search Catalog" onFocus={()=>{setSearchTerm('');setOpen(true);}}
       onChange={e=>{setSearchTerm(e.target.value);setMaterialId(null);setVariantId(null);setOpen(true);}}/>
     {open&&<div className="qtl-combobox-menu" id={menuId} role="group" aria-label="Material catalog suggestions">
+      {value.trim()&&<p className="qtl-search-preserved">
+        <strong>Current: {value}</strong>
+        <small>Searching will not change this Area until you choose or commit a material.</small>
+      </p>}
       {material?<div className="qtl-combobox-results">
         <button type="button" onClick={()=>{if(variant)setVariantId(null);else setMaterialId(null);}}>← Back to {variant?'variants':'materials'}</button>
         <strong className="qtl-step-title">{[material.brand,material.name].filter(Boolean).join(' ')}</strong>
@@ -175,6 +179,10 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
       onFocus={()=>{setSearchTerm('');setOpen(true);}}
       onChange={e=>{setSearchTerm(e.target.value);setOpen(true);}}/>
     {open&&<div className="qtl-combobox-menu" id={menuId} role="group" aria-label="Sink catalog suggestions">
+      {value.trim()&&<p className="qtl-search-preserved">
+        <strong>Current: {value}</strong>
+        <small>Searching preserves the existing Sink and its price until you choose or commit.</small>
+      </p>}
       <div className="qtl-combobox-results">
         {results.map(({model,variant})=><button key={variant.id} type="button"
           onClick={()=>choose(model,variant)}>
