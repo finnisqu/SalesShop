@@ -37,6 +37,16 @@ describe('Unified CRM Add existing / Create new actions',()=>{
   expect(tasks).toContain("requestTaskModal({mode:'create',title");
   expect(tasks).toContain("normalizedTaskAssociations(task)");
  });
+ it('makes partial Deal–Person cloud-link failures recoverable without duplicating a record',()=>{
+  const direct=read('src/components/DealPersonRelationships.tsx');
+  expect(direct).toContain('Person created, but the Deal link did not save.');
+  expect(direct).toContain('Deal created, but the Person link did not save.');
+  expect(direct).toContain('Select the new Person above and retry.');
+  expect(direct).toContain('Select the new Deal above and retry.');
+  expect(direct).toContain('try{');
+  expect(direct).toContain('await manager.add(dealId,personId,role)');
+  expect(direct).toContain('await manager.add(id,personId,role)');
+ });
  it('retains SELF Company membership and hides identity behind advanced edit section',()=>{
   expect(company).toContain('Company identity');
   expect(company).toContain('This is our company');
