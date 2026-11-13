@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { localCrmRepository } from '../data/crmRepository';
 import { supabase } from '../lib/supabase';
 import { applyProjectStageTransition } from '../services/boardIntegrity';
+import {confirmedExternalQuoteDeal} from '../services/externalQuoteDealConfirmation';
 import {
   companyIdentityMatches,
   contactIdentityMatches,
@@ -710,11 +711,48 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       if(nextAuth.mode!=='cloud'||nextAuth.organizationId!==organizationId||
          nextAuth.user?.id!==actorId)
         throw new Error('Workspace changed while saving. Reopen the quote record.');
+
+      // Confirm the linked Deal as well. Previously the Activity was durable,
+      // but the stage/amount/deadline were only queued for an async CRM write.
+      // Never complete a Submit Quote Task while those changes are unconfirmed.
+      // A stage precondition prevents an older browser from reversing a Deal
+      // that a teammate has moved while this submission was in flight.
+      if(!historical){
+        const intended=projects.find(project=>project.id===projectId);
+        if(!intended)throw new Error('The linked Deal is unavailable. Refresh and retry.');
+        const {data:updatedRows,error:dealError}=await supabase.from('projects')
+          .update({
+            stage:intended.stage,stage_changed_at:intended.stageChangedAt??null,
+            due_date:null,amount:intended.amount??null,
+            last_touchpoint:intended.lastTouchpoint??null,updated_at:intended.updatedAt,
+          })
+          .eq('organization_id',organizationId).eq('id',projectId)
+          .eq('stage',current.stage)
+          .select('id,stage,amount,due_date');
+        if(dealError)throw new Error('External quote was recorded, but the Deal update failed: '+dealError.message);
+        let confirmedDeal=updatedRows?.[0];
+        if(!confirmedDeal){
+          // A lost response on an earlier attempt can leave the remote Deal
+          // correctly updated. Verify that state rather than rewriting it or
+          // creating a second quote-sent Activity on retry.
+          const {data:remote,error:checkError}=await supabase.from('projects')
+            .select('id,stage,amount,due_date')
+            .eq('organization_id',organizationId).eq('id',projectId).maybeSingle();
+          if(checkError)throw new Error('External quote was recorded, but the Deal update could not be verified.');
+          confirmedDeal=remote??undefined;
+        }
+        if(!confirmedExternalQuoteDeal(confirmedDeal,projectId,intended.stage,amount))
+          throw new Error('External quote was recorded, but the Deal changed or did not save. Refresh before retrying.');
+        const stillCurrent=useAuthStore.getState();
+        if(stillCurrent.mode!=='cloud'||stillCurrent.organizationId!==organizationId||
+           stillCurrent.user?.id!==actorId)
+          throw new Error('Workspace changed while confirming the Deal. Reopen the quote record.');
+      }
     }
-    // Record appears immediately after the cloud acknowledgement. Standard
-    // CRM sync subsequently persists Deal stage, value and due date changes.
-    if(get().activities.some(item=>item.id===activity.id))return true;
-    const activities=[...get().activities,activity];
+    // Both Activity and non-historical Deal now have cloud acknowledgement.
+    // The regular CRM sync still persists any other in-memory CRM changes.
+    const activities=get().activities.some(item=>item.id===activity.id)
+      ?get().activities:[...get().activities,activity];
     persist(get().companies,get().contacts,projects,activities);
     set({projects,activities});
     return true;

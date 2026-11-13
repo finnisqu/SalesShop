@@ -101,6 +101,12 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   expect(form).toContain('const saved=await recordExternalQuoteSent(');
   expect(form).toContain('submissionId.current,recordedAt.current');
   expect(form).toContain('onRecorded?.(bidSentDate)');
+  expect(store).toContain("await supabase.from('projects')");
+  expect(store).toContain(".eq('stage',current.stage)");
+  expect(store).toContain("if(!confirmedExternalQuoteDeal(confirmedDeal,projectId,intended.stage,amount))");
+  expect(store).toContain("if(!historical){");
+  expect(store.indexOf("if(!confirmedExternalQuoteDeal(confirmedDeal,projectId,intended.stage,amount))"))
+    .toBeLessThan(store.indexOf("const activities=get().activities.some(item=>item.id===activity.id)"));
   expect(file('src/components/SalesCalendarLauncher.tsx')).toContain(
    "setBadgeFocus({date,metric:'quotes-sent'})");
  });
