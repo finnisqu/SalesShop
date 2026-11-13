@@ -81,6 +81,23 @@ describe('mobile Area internal supplier cost comparison',()=>{
       catalogSourceUnavailable:false,
     });
   });
+  it('does not guess a supplier program when a frozen quote has no exact program ID',()=>{
+    const ref={...reference(13.5),purchaseOptionId:undefined};
+    const cost=selectedMaterialCost('Ashen White',ref,materials);
+    expect(cost).toMatchObject({
+      quotedCostPerSf:13.5,currentCatalogCostPerSf:undefined,
+      catalogCostChanged:false,catalogSourceUnavailable:true,
+    });
+  });
+  it('does not substitute legacy buying cost for a removed explicit variant',()=>{
+    const oldQuote=reference(13.5);
+    const stripped:StockMaterial[]=[{...materials[0],variants:[]}];
+    const cost=selectedMaterialCost('Ashen White',oldQuote,stripped);
+    expect(cost).toMatchObject({
+      quotedCostPerSf:13.5,currentCatalogCostPerSf:undefined,
+      catalogSourceUnavailable:true,
+    });
+  });
   it('uses current Catalog cost only as a separate reference for old quoted materials',()=>{
     const quoteRef={...reference(),sourceCostPerSf:undefined};
     const cost=selectedMaterialCost('Ashen White',quoteRef,materials);

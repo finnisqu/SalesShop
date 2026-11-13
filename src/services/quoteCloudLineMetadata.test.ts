@@ -62,6 +62,26 @@ describe('quote line Catalog metadata cloud round-trip',()=>{
   expect(meta.unitCost).toBe(0);
   expect(meta.internalOnlyCost).toBe(false);
  });
+ it('preserves frozen OTHER selling references independently of the quoted selling rate',()=>{
+  const source=line({rate:180,quantity:4,internalCost:250,includeInTotal:false});
+  const encoded=quoteCloudLineReference(source);
+  const decoded=quoteCloudLineMetadata(JSON.parse(JSON.stringify(encoded)));
+  expect(decoded.otherReference?.snapshot).toEqual(other.snapshot);
+  expect(decoded.unitCost).toBe(42);
+  expect(decoded).not.toHaveProperty('rate');
+  expect(decoded).not.toHaveProperty('quantity');
+  expect(decoded).not.toHaveProperty('internalCost');
+  expect(decoded).not.toHaveProperty('includeInTotal');
+  expect(source).toMatchObject({rate:180,quantity:4,internalCost:250,includeInTotal:false});
+ });
+ it('keeps a frozen zero supplier cost after a JSON round-trip without borrowing customer price',()=>{
+  const zero={...other,snapshot:{...other.snapshot,internalCost:0,sellPrice:0}};
+  const meta=roundTrip(line({otherReference:zero,unitCost:undefined,
+    productCode:undefined,supplierName:undefined,costCategory:undefined,unitLabel:undefined}));
+  expect(meta.unitCost).toBe(0);
+  expect(meta.otherReference?.snapshot.sellPrice).toBe(0);
+  expect(meta).not.toHaveProperty('rate');
+ });
  it('leaves legacy lines without JSON metadata unchanged',()=>{
   const legacy=line({otherReference:undefined,rateReference:undefined,
    unitCost:undefined,productCode:undefined,supplierName:undefined,

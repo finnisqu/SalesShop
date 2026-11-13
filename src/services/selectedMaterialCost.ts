@@ -38,9 +38,18 @@ export function selectedMaterialCost(
   const variant=variantId?material?.variants?.find(item=>
     item.id===variantId&&item.active!==false):undefined;
   // Never compare a saved quote against an unrelated default variant/program.
-  const variantMissing=Boolean(material?.variants?.length&&!variant);
-  const optionMissing=Boolean(purchaseOptionId&&
-    !variant?.purchaseOptions?.some(option=>option.id===purchaseOptionId&&option.active!==false));
+  // An explicit saved variant is never interchangeable with a legacy/default
+  // Catalog selection, even if the Catalog now has no active variants.
+  const variantMissing=Boolean(material&&((variantId&&!variant)||
+    (material.variants?.length&&!variant)));
+  // If a variant offers supplier programs, a missing saved program ID is
+  // ambiguous. Show an unavailable source instead of guessing its default.
+  const options=variant?.purchaseOptions??[];
+  const optionMissing=Boolean(
+    (purchaseOptionId&&!options.some(option=>
+      option.id===purchaseOptionId&&option.active!==false))||
+    (!purchaseOptionId&&options.length>0),
+  );
   const currentCatalogCostPerSf=material&&!variantMissing&&!optionMissing
     ?validCost(resolveStockMaterialCostReference(
       material,variantId,purchaseOptionId).costPerSf):undefined;
