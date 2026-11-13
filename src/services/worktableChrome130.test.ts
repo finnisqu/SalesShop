@@ -205,7 +205,8 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(quick).toContain("canEditTeamArea(teamRole,department,'crm')");
   expect(quick).toContain('<ExternalQuoteBackfillDialog');
   expect(quick).toContain("initialDealId={context?.kind==='deal'?context.id:undefined}");
-  expect(css).toContain('.quick-create-options.ss-mobile-sheet-body>.quick-create-option-primary');
+  expect(quick).toContain("canRecordExternal?' has-external-quote':'');");
+  expect(css).toContain('.quick-create-options.ss-mobile-sheet-body.has-external-quote>.quick-create-option-primary');
   expect(quotes).toContain('onRecordExternal={canRecordExternal?()=>');
  });
  it('turns pinned Records into direct task and bulk-edit selections',()=>{
