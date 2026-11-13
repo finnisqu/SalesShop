@@ -8,6 +8,8 @@ export interface SelectedMaterialCostReference {
   /** Current Catalog cost for the exact material/variant/purchase option, if still present. */
   currentCatalogCostPerSf?: number;
   catalogCostChanged: boolean;
+  /** Captured variant/program is missing or inactive; quoted buying cost remains intact. */
+  catalogSourceUnavailable:boolean;
   materialType?: string;
 }
 
@@ -48,6 +50,7 @@ export function selectedMaterialCost(
     currentCatalogCostPerSf,
     catalogCostChanged:quotedCostPerSf!==undefined&&currentCatalogCostPerSf!==undefined
       &&Math.abs(currentCatalogCostPerSf-quotedCostPerSf)>=0.005,
+    catalogSourceUnavailable:Boolean(materialId&&(!material||variantMissing||optionMissing)),
     materialType:reference?.snapshot?.materialType??material?.materialType,
   };
 }
