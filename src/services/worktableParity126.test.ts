@@ -36,15 +36,19 @@ describe('Batch 126 — shared compact Records/Catalog worktables',()=>{
   expect(organization).toContain('our-org-table-controls');
   expect(organization).toContain('toolbarFilters={<div className="our-org-table-controls">');
  });
- it('keeps Quotes in the existing full workspace, with a single table toolbar and compact action menu',()=>{
+ it('keeps Quotes in the full workspace with centered tabs and contextual worktable menus',()=>{
   const quotes=src('components/QuotesMobileBeta.tsx');
-  const header=src('components/WorkspaceHeader.tsx');
+  const chrome=src('components/WorktableChrome.tsx');
   expect(quotes).toContain('<WorkspaceHeader title="Records"');
+  expect(quotes).toContain('tabs={<RecordsSectionNav selected="quotes"');
+  expect(quotes).not.toContain('more={<WorkspaceMoreMenu');
   expect(quotes).toContain('const documentTypeControl');
   expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
+  expect(quotes).toContain('toolbarControls={renderLibraryToolbarMenus()}');
+  expect(quotes).toContain('<WorktableActionMenu label="Views"');
+  expect(quotes).toContain('<WorktableActionMenu label="Actions"');
   expect(quotes).not.toContain('qmb-library-directory-caption');
-  expect(quotes).toContain('compact label="Quote actions"');
-  expect(header).toContain('compact=false');
+  expect(chrome).toContain('export function WorktableActionMenu');
  });
  it('prevents Overview panel from stretching Tasks and retains mobile access to Activity/Pages',()=>{
   const style=src('worktable-parity.css');
