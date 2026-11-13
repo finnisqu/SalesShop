@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState,type ReactNode,type FormEvent} from 'react';
+import {useRecordInlineEditScope} from './RecordInlineEditScope';
 /** One-at-a-time editing that preserves the About panel's property positions. */
 export function RecordInlineProperty({label,value,display,type='text',options,onSave,
  disabled=false,placeholder='Not set',validate}:{
@@ -12,6 +13,20 @@ export function RecordInlineProperty({label,value,display,type='text',options,on
   [saving,setSaving]=useState(false),[error,setError]=useState('');
  const pencilRef=useRef<HTMLButtonElement>(null);
  const restoreFocus=useRef(false);
+ const {id,activeId,claim,release}=useRecordInlineEditScope();
+ const anotherFieldEditing=activeId!==null&&activeId!==id;
+ // This editor must relinquish the shared lock on unmount (e.g. when a
+ // conditional Account forecast panel disappears during a saved change).
+ useEffect(()=>()=>release?.(id),[id,release]);
+ // Permission/perspective changes must not leave a previously opened
+ // inline field actionable after its editing rights were withdrawn.
+ useEffect(()=>{
+  if(disabled&&editing&&!saving){
+   restoreFocus.current=false;
+   setEditing(false);setDraft(value);setError('');
+   release?.(id);
+  }
+ },[disabled,editing,saving,value,release,id]);
  useEffect(()=>{if(!editing)setDraft(value);},[value,editing]);
  // Restore keyboard focus to the same property after saving or cancellation,
  // rather than sending Tab navigation back to the start of the record.
@@ -24,13 +39,14 @@ export function RecordInlineProperty({label,value,display,type='text',options,on
  const close=()=>{
   if(saving)return;
   restoreFocus.current=true;setEditing(false);setDraft(value);setError('');
+  release?.(id);
  };
  const submit=async(event:FormEvent)=>{
-  event.preventDefault();if(saving)return;
+  event.preventDefault();if(saving||disabled)return;
   const message=validate?.(draft);
   if(message){setError(message);return;}
   setSaving(true);setError('');
-  try{await onSave(draft);restoreFocus.current=true;setEditing(false);}
+  try{await onSave(draft);restoreFocus.current=true;setEditing(false);release?.(id);}
   catch(e){setError(e instanceof Error?e.message:'Unable to update '+label);}
   finally{setSaving(false);}
  };
@@ -38,8 +54,13 @@ export function RecordInlineProperty({label,value,display,type='text',options,on
   <span>{label}</span>
   {!editing?<div className="ss-record-inline-value">
    <strong>{display??(value||placeholder)}</strong>
-   {!disabled&&<button ref={pencilRef} type="button" className="ss-record-pencil" aria-label={'Edit '+label}
-     title={'Edit '+label} onClick={()=>{setDraft(value);setError('');setEditing(true);}}>
+   {!disabled&&<button ref={pencilRef} type="button" className="ss-record-pencil"
+     disabled={anotherFieldEditing} aria-label={'Edit '+label}
+     title={anotherFieldEditing?'Finish or cancel the current field edit first':'Edit '+label}
+     onClick={()=>{
+      if(claim&&!claim(id))return;
+      setDraft(value);setError('');setEditing(true);
+     }}>
      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="m16 4 4 4-11 11-5 1 1-5L16 4Z"/><path d="m14 6 4 4"/>
