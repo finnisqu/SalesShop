@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import {forEachCloudWriteBatch} from './cloudWriteBatches';
 import {chooseActiveQuoteId} from './quoteActiveSelection';
 import {slabPoolsFromAreaScopes} from './quoteSharedSlabs';
+import {quoteCloudLineReference,quoteCloudLineMetadata} from './quoteCloudLineMetadata';
 import { useAuthStore } from '../store/authStore';
 import {
   isDraftQuoteNumber,
@@ -13,7 +14,6 @@ import {
   type QuoteLine,
   type QuoteLineKind,
   type QuoteLineMaterialReference,
-  type QuoteLineRateReference,
   type QuoteLineSinkReference,
   type QuotePricingMode,
   type QuoteRevisionSnapshot,
@@ -39,10 +39,6 @@ function numericOrUndefined(value: unknown) {
 
 function materialReferenceOrUndefined(value: unknown): QuoteLineMaterialReference | undefined {
   return value && typeof value === 'object' ? value as QuoteLineMaterialReference : undefined;
-}
-
-function rateReferenceOrUndefined(value: unknown): QuoteLineRateReference | undefined {
-  return value && typeof value === 'object' ? value as QuoteLineRateReference : undefined;
 }
 
 function areaScopeOrUndefined(value: unknown): QuoteAreaScope | undefined {
@@ -138,16 +134,8 @@ export async function loadNormalizedQuotes(organizationId: string, preferredActi
     materialReference: materialReferenceOrUndefined(row.material_reference),
     sinkReference: sinkReferenceOrUndefined(row.sink_reference),
     takeoffSinkId: valueOrUndefined(row.takeoff_sink_id),
-    rateReference: rateReferenceOrUndefined(row.rate_reference),
-    // OTHER products persist in the existing JSONB rate_reference field;
-    // no new production column or RLS migration is required.
-    otherReference:rateReferenceOrUndefined(row.rate_reference)?.otherCatalog,
-    costCategory:rateReferenceOrUndefined(row.rate_reference)?.estimate?.costCategory,
-    productCode:rateReferenceOrUndefined(row.rate_reference)?.estimate?.productCode,
-    supplierName:rateReferenceOrUndefined(row.rate_reference)?.estimate?.supplierName,
-    unitLabel:rateReferenceOrUndefined(row.rate_reference)?.estimate?.unitLabel,
-    unitCost:rateReferenceOrUndefined(row.rate_reference)?.estimate?.unitCost,
-    internalOnlyCost:rateReferenceOrUndefined(row.rate_reference)?.estimate?.internalOnlyCost,
+    // Private metadata stays within the same existing JSONB column.
+    ...quoteCloudLineMetadata(row.rate_reference),
   }));
   const revisionsByQuote = groupByQuote<QuoteRevisionSnapshot>(revisionRows, (row) => {
     const snapshot = row.snapshot;
@@ -385,16 +373,7 @@ export async function syncNormalizedQuotes(organizationId: string, document: Quo
     material_reference: line.materialReference ?? null,
     sink_reference: line.sinkReference ?? null,
     takeoff_sink_id: line.takeoffSinkId ?? null,
-    rate_reference:line.otherReference||line.costCategory||line.productCode||
-      line.supplierName||line.unitLabel||line.unitCost!==undefined||line.internalOnlyCost
-      ?{...(line.rateReference??{}),
-        ...(line.otherReference?{otherCatalog:line.otherReference}:{}),
-        ...((line.costCategory||line.productCode||line.supplierName||line.unitLabel||
-          line.unitCost!==undefined||line.internalOnlyCost)
-          ?{estimate:{costCategory:line.costCategory,
-            productCode:line.productCode,supplierName:line.supplierName,unitLabel:line.unitLabel,
-            unitCost:line.unitCost,internalOnlyCost:line.internalOnlyCost}}:{})}
-      :line.rateReference??null,
+    rate_reference:quoteCloudLineReference(line),
     sort_order: sortOrder,
   })));
 
