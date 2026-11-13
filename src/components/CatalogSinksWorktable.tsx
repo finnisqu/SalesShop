@@ -73,12 +73,17 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
  useEffect(()=>{
   const create=()=>{
    if(!canEdit)return;
-   const id=addModel(category==='all'?'kitchen':category);
+   // Keep the selected new-model category, but clear view restrictions
+   // before opening the record. Otherwise its edit row can stay hidden.
+   const selectedCategory=category==='all'?'kitchen':category;
+   setQuery('');setCategory('all');setShowInactive(false);setSort('brand');
+   onClearExternalQuery?.();
+   const id=addModel(selectedCategory);
    setExpanded(id);setEditing(true);
   };
   window.addEventListener('sales-shop:catalog-create',create);
   return()=>window.removeEventListener('sales-shop:catalog-create',create);
- },[addModel,category,canEdit]);
+ },[addModel,category,canEdit,onClearExternalQuery]);
  const togglePin=(modelId:string,variantId:string)=>{
   const key=modelId+':'+variantId;
   setPins(current=>current.includes(key)?current.filter(item=>item!==key):[...current,key]);

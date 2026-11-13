@@ -52,10 +52,15 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
  useEffect(()=>{void hydrate();},[hydrate]);
  useEffect(()=>{try{localStorage.setItem(PIN_KEY,JSON.stringify(pins));}catch{/* best effort */}},[pins]);
  useEffect(()=>{
-  const create=()=>{if(!canEdit)return;const id=addItem();setEditing(true);setExpanded(id);};
+  const create=()=>{
+   if(!canEdit)return;
+   setQuery('');setCategory('all');setShowInactive(false);setSort('category');
+   onClearExternalQuery?.();
+   const id=addItem();setEditing(true);setExpanded(id);
+  };
   window.addEventListener('sales-shop:catalog-create',create);
   return()=>window.removeEventListener('sales-shop:catalog-create',create);
- },[addItem,canEdit]);
+ },[addItem,canEdit,onClearExternalQuery]);
  const categories=useMemo(()=>[...new Set(items.map(item=>item.category))].sort(),[items]);
  const filtered=useMemo(()=>{
   return items.filter(item=>(showInactive||item.active)&&
