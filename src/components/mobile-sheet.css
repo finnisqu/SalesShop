@@ -2,7 +2,7 @@
    colors/typography, while backdrop geometry, touch handling, scrolling,
    safe areas and the drag handle are consistent across SalesShop. */
 .ss-mobile-sheet-handle{display:none}
-@media(max-width:760px){
+@media(max-width:760px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
  .ss-mobile-sheet-backdrop{
   box-sizing:border-box!important;
   position:fixed!important;
@@ -75,6 +75,13 @@
  }
  .ss-mobile-sheet-handle:active{cursor:grabbing}
  .ss-mobile-sheet-handle.is-disabled{opacity:.45;cursor:default;touch-action:auto}
+ /* Keep the currently focused input above the footer when the virtual
+    keyboard shortens the visible viewport. The body, never the full sheet,
+    owns vertical scrolling. */
+ .ss-mobile-sheet:focus-within .ss-mobile-sheet-body{
+  scroll-padding-top:12px;
+  scroll-padding-bottom:80px;
+ }
  .ss-mobile-sheet .ss-mobile-sheet-body{
   box-sizing:border-box;
   flex:1 1 auto;
