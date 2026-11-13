@@ -21,7 +21,7 @@ const cleanIds=(value:unknown):string[]=>Array.isArray(value)
   ?[...new Set(value.filter((id):id is string=>typeof id==='string'&&id.length>0))]:[];
 const newer=(a:string,b:string):boolean=>{
   const at=Date.parse(a),bt=Date.parse(b);
-  return Number.isFinite(at)&&Number.isFinite(bt)?at>bt:a>b;
+  return Number.isFinite(at)&&Number.isFinite(bt)&&at>bt;
 };
 export function readPendingNotebookSync(scope:NotebookRecoveryScope):PendingNotebookSync|null{
   try{
@@ -66,6 +66,10 @@ export function markPendingNotebookSync(scope:NotebookRecoveryScope,
     createdEntryIds:[...created].filter(id=>localEntries.has(id)),
     trashedEntryIds:[...trashed].filter(id=>!localEntries.has(id)&&localTrash.has(id)),
     createdFolderIds:[...folders].filter(id=>(input.folders??[]).some(f=>f.id===id))};
+  // Opening a Notebook page or changing the active page is not a pending
+  // content edit. Keep an earlier unacknowledged marker intact, however.
+  if(!previous&&!marker.changedEntryIds.length&&!marker.trashedEntryIds.length
+    &&!marker.createdFolderIds.length)return null;
   try{
     localStorage.setItem(KEY,JSON.stringify(marker));
     return marker.token;
