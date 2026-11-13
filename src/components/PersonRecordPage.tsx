@@ -63,6 +63,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
   const [editError,setEditError]=useState('');
   const [newCompanyName,setNewCompanyName]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
+  useEffect(()=>{if(!canEditRecord){setEditing(false);setUnlinking(false);}},[canEditRecord]);
   const [draft, setDraft] = useState({
     name: person?.name ?? '', email: person?.email ?? '', phone: person?.phone ?? '',
     title: person?.title ?? '', companyId: person?.companyId ?? '',
@@ -98,6 +99,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
 
   const save = (event: FormEvent) => {
     event.preventDefault();
+    if(!canEditRecord){setEditError('You no longer have permission to edit this Person.');return;}
     const name=draft.name.trim()||draft.email.trim();
     if(!name){setEditError('Enter a name or email.');return;}
     const emailError=recordEmailError(draft.email);
