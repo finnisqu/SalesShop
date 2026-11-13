@@ -28,6 +28,11 @@ describe('Batch 341b — Task and Activity inspector navigation',()=>{
   expect(task).toContain('if(target)setLinkedPreview(target)');
   expect(task).toContain("if(link.type==='notebook'){close();nav.openNotebookPage(link.id);return;}");
   expect(task).toContain('onClose={()=>setLinkedPreview(null)} onSelect={setLinkedPreview}');
+  expect(task).toContain('returnToLabel="Task"');
+  const preview=source('components/RecordPreviewDrawer.tsx');
+  expect(preview).toContain("aria-label={'Back to '+returnToLabel}");
+  expect(preview).toContain('onClick={onClose} aria-label={');
+  expect(preview).toContain('onClick={backToRelated} aria-label="Back to previous related record"');
   expect(task).toContain("setLinkedPreview(null);setExternalDealId(null)");
   // The linked Record's local back trail is still available within its preview.
   const record=source('components/RecordPreviewDrawer.tsx');
