@@ -22,6 +22,11 @@
   box-shadow:0 -3px 14px #0002;
   touch-action:manipulation;
  }
+ /* Leave clearance to reveal the focused cell above the keyboard dock. */
+ .sales-app .qmb .qqs-scroll,
+ .sales-app .qmb .qqt-scroll{
+  scroll-padding-bottom:64px;
+ }
  .qqt-mobile-cell-toolbar-label{
   flex:1 1 0;
   min-width:0;

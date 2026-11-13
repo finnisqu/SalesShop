@@ -23,6 +23,19 @@ const calculator=source('src/components/QuoteWorkTables.tsx');
 const quickArea=source('src/components/QuoteAreaQuickPanel.tsx');
 
 describe('Quick Quote dedicated phone usability contract',()=>{
+ it('reuses the native-keyboard Prev/Next/Done accessory in Areas and Takeoffs',()=>{
+  const accessory=source('src/components/QuoteMobileCellToolbar.tsx');
+  const accessoryCss=source('src/components/quote-mobile-cell-toolbar.css');
+  expect(areas).toContain("import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar'");
+  expect(areas).toContain('<QuoteMobileCellToolbar grid={table}/>');
+  expect(takeoffs).toContain('<QuoteMobileCellToolbar grid={list}/>');
+  expect(areas).toContain('className="qqs-edit is-editing"');
+  expect(areas).toContain("event.target.closest('.qqt-mobile-cell-toolbar')");
+  expect(accessory).toContain("onClick={()=>advance('next')}");
+  expect(accessory).toContain("onClick={()=>advance('previous')}");
+  expect(accessory).toContain('onClick={finish}');
+  expect(accessoryCss).toContain('scroll-padding-bottom:64px');
+ });
  it('keeps desktop tables and uses contiguous compact mobile rows',()=>{
   expect(mobile).toContain('@media(max-width:700px)');
   expect(mobile).toContain('.qqs-grid.qqs-row');

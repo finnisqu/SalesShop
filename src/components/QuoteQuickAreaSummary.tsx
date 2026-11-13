@@ -6,6 +6,7 @@ import {QuoteOtherLineFields} from './QuoteOtherLineFields';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
+import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from '../services/quoteQuickAreaSummary';
 import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
@@ -89,7 +90,7 @@ function CommitNumber({value,onCommit,label,disabled=false,integer=false,autoFoc
    if(parsed!==value)onCommit(parsed);
   }else setDraft(value===undefined?'':String(value));
  };
- return <input className="qqs-edit" data-quick-grid-editable="true" type="text" inputMode="decimal" aria-label={label}
+ return <input className="qqs-edit is-editing" data-quick-grid-editable="true" type="text" inputMode="decimal" aria-label={label}
   value={draft} disabled={disabled} placeholder="—" autoFocus={autoFocus}
   onChange={event=>setDraft(event.target.value)}
   onFocus={event=>{if(startWith===undefined)event.currentTarget.select();}}
@@ -448,6 +449,10 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
  useEffect(()=>{setSelected([]);setDetail(null);setFocus('');setExpandedAreas([]);setGeneralExpanded(false);setBulkRateOpen(false);setBulkRateError('');},[quote.id]);
  useEffect(()=>{
   const outside=(event:PointerEvent)=>{
+   // Phone keyboard controls live outside the table in a portal.
+   // Let Prev, Next and Done finish their intended cell action first.
+   if(event.target instanceof Element&&
+      event.target.closest('.qqt-mobile-cell-toolbar'))return;
    if(table.current&&!table.current.contains(event.target as Node)){
     // Commit a focused inline edit before deselecting its cell.
     table.current.querySelector<HTMLInputElement>('input.qqs-edit:focus')?.blur();
@@ -492,6 +497,7 @@ export function QuoteQuickAreaSummary({quote,onAddArea,onLayouts,onCopyArea,onTa
   if(count===selected.length)setSelected([]);
  };
  return <section className={'qqs-summary'+(!editable?' is-readonly':'')} aria-label="Quick Quote compact Area summary">
+   <QuoteMobileCellToolbar grid={table}/>
    <header className="qqs-summary-head">
     <div><h3>Areas</h3>
      <span className="qqs-mobile-count" aria-label={areas.length+' Areas'}>{areas.length}</span>
