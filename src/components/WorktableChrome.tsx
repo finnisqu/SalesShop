@@ -55,6 +55,39 @@ export function WorktableFilterMenu({children,activeCount=0,label='Filters',clas
  </details>;
 }
 
+/** Reusable action/view dropdown for worktable toolbars. Separated from Filters
+ * because navigation and actions should not be mixed with dataset filters. */
+export interface WorktableActionItem{
+ label:string;onClick:()=>void;active?:boolean;disabled?:boolean;section?:string;
+}
+export function WorktableActionMenu({label,items}:{
+ label:string;items:readonly WorktableActionItem[];
+}){
+ const ref=useRef<HTMLDetailsElement>(null);
+ useDismissibleDetails(ref);
+ return <details className="ss-worktable-action-menu" ref={ref}>
+  <summary aria-label={label+' menu'} aria-haspopup="true">
+   {label}<span className="ss-worktable-action-chevron" aria-hidden="true">⌄</span>
+  </summary>
+  <div className="ss-worktable-action-panel" role="group" aria-label={label+' options'}>
+   {items.map((item,index)=><div className="ss-worktable-action-entry" key={item.label}>
+    {item.section&&(index===0||items[index-1]?.section!==item.section)&&
+     <div className="ss-worktable-action-section">{item.section}</div>}
+    <button type="button" disabled={item.disabled}
+     aria-pressed={item.active===undefined?undefined:item.active}
+     onClick={()=>{
+      ref.current?.removeAttribute('open');
+      ref.current?.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
+      item.onClick();
+     }}>
+     <span>{item.label}</span>
+     {item.active&&<span className="ss-worktable-action-selected" aria-hidden="true">✓</span>}
+    </button>
+   </div>)}
+  </div>
+ </details>;
+}
+
 /** Shared rounded table surface used by CRM, Quotes and Catalog rows. */
 export function WorktableSurface({children,className='',label}:{
  children:ReactNode;className?:string;label:string;
