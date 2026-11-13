@@ -6,7 +6,7 @@ import {createQuoteSinkSnapshot,sinkSnapshotLinePatch} from './quoteSinkSnapshot
 import {createQuoteRateSnapshot,rateSnapshotLinePatch} from './quoteRateSnapshot';
 import {
  quoteSinkSourcePatch,quoteSinkCatalogPricePatch,
- quoteRateSourcePatch,quoteRateCatalogPricePatch,
+ quoteRateSourcePatch,quoteRateCatalogPricePatch,catalogSellingOverride,
 } from './quoteCatalogLineEditing';
 
 const model:SinkModel={
@@ -31,7 +31,8 @@ const sinkLine=():QuoteLine=>({
 const rateLine=():QuoteLine=>({
  id:'rate-line',kind:'rate',customerVisible:true,includeInTotal:true,
  ...rateSnapshotLinePatch(createQuoteRateSnapshot(rate)),
- quantity:125,rate:18,description:'Customer-approved fabrication',
+ pricingMode:'quantity-rate',quantity:125,rate:18,
+ description:'Customer-approved fabrication',
 });
 
 describe('Catalog source refresh does not reprice a customer quote',()=>{
@@ -80,13 +81,14 @@ describe('Catalog source refresh does not reprice a customer quote',()=>{
   const flat=createQuoteRateSnapshot({...rate,id:'trip',unit:'flat',sellRate:150});
   const line:QuoteLine={id:'flat',kind:'rate',
    customerVisible:true,includeInTotal:true,...rateSnapshotLinePatch(flat),
-   amount:180,description:'Approved trip fee'};
+   pricingMode:'direct',amount:180,description:'Approved trip fee'};
   const revised=createQuoteRateSnapshot({...rate,id:'trip',unit:'flat',sellRate:210});
   const patch=quoteRateSourcePatch(line,revised);
   expect(patch).not.toHaveProperty('amount');
   expect(patch).not.toHaveProperty('pricingMode');
   expect({...line,...patch}).toMatchObject({pricingMode:'direct',amount:180});
   expect(quoteRateCatalogPricePatch({...line,...patch})).toEqual({amount:210});
+  expect(catalogSellingOverride({...line,...patch})).toBe(true);
  });
  it('rejects changing a linked Rate unit or private billing designation',()=>{
   const before=rateLine();
@@ -117,6 +119,7 @@ describe('Catalog source refresh does not reprice a customer quote',()=>{
   const sinkPatch=quoteSinkSourcePatch(freshSink,
    createQuoteSinkSnapshot(model,model.variants[0]));
   expect(sinkPatch.rate).toBe(225);
+  expect(sinkPatch.quantity).toBe(4);
   const freshRate={...rateLine(),rateReference:undefined,rate:undefined};
   const ratePatch=quoteRateSourcePatch(freshRate,createQuoteRateSnapshot(rate));
   expect(ratePatch.rate).toBe(15);
