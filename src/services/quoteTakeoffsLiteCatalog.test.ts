@@ -120,6 +120,10 @@ describe('Takeoffs Lite Catalog integration',()=>{
     expect(material).toContain('onCustomCommit?.()');
     expect(sink).toContain('onSelect({name:sinkSnapshotDescription(snapshot)');
     expect(read('src/quote-takeoffs-lite.css')).toContain('max-height:min(29dvh,210px)');
+    const mobile=read('src/components/QuoteBetaMaterials.tsx');
+    expect(mobile).toContain('catalogHydrated&&catalogCost.catalogSourceUnavailable');
+    expect(mobile).toContain('The quoted buying cost and selling price are preserved.');
+    expect(read('src/quote-takeoffs-lite.css')).toContain('.qmb-material-source-warning');
   });
   it('uses the same catalog stores as Quote line selectors and mobile-safe search controls',()=>{
     const pickers=read('src/components/TakeoffCatalogPickers.tsx');
