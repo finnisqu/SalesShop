@@ -9,6 +9,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu} from './WorktableChrome';
+import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-sink-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -157,6 +158,8 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
        <div><dt>Cost / price</dt><dd>{money.format(variant.internalCost??0)} / {money.format(variant.sellPrice??0)}</dd></div>
       </dl>
       <small>{(variant.availableColors?.length?variant.availableColors:model.availableColors??[]).join(', ')||'Colors not listed'}</small>
+      {model.active&&variant.active&&<CatalogQuoteLauncher
+        source={{kind:'sink',model,variantId:variant.id}}/>}
     </article>)}
    </div>
   </section>}
@@ -252,6 +255,8 @@ export function CatalogSinksWorktable({externalQuery=''}:{externalQuery?:string}
               <button type="button" className={'materials-pin-button'+(pinned?' is-pinned':'')}
                aria-pressed={pinned} onClick={()=>togglePin(model.id,variant.id)}>
                {pinned?'Pinned':'Pin'}</button>
+              {model.active&&variant.active&&<CatalogQuoteLauncher
+                source={{kind:'sink',model,variantId:variant.id}}/>}
              </div>
              {editing?<div className="catalog-product-properties">
               <TextField label="Variant" value={variant.label} onChange={value=>updateV(model,variant,'label',value)}/>
