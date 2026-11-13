@@ -135,7 +135,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
   const ownCompany=companies.find(isOurCompany);
   const associatedOwnCompany=isInternal?ownCompany:undefined;
 
-  return <><RecordPageLayout entityType="person" title={displayName} onBack={onBack} backLabel={backLabel}
+  return <><RecordPageLayout entityType="person" recordKey={person.id} title={displayName} onBack={onBack} backLabel={backLabel}
     subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
     actions={<>
