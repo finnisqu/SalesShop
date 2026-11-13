@@ -42,3 +42,34 @@
 .ss-record-association-current>button{flex:none;border:0;background:transparent;
  color:var(--ss-theme-accent);cursor:pointer;font-size:12px;font-weight:650}
 .ss-record-association-field>.ss-unified-record-picker{margin:0}
+
+/* Keep nested record search manageable inside the Activity/Deal bottom sheet.
+ * Scroll matching records inside the picker instead of introducing a second
+ * full-screen panel or letting a long result list displace the form buttons. */
+.ss-unified-picker-results{
+ overscroll-behavior:contain;
+ scrollbar-gutter:stable;
+}
+.ss-unified-picker-results>button:focus-visible{
+ position:relative;z-index:1;
+ background:var(--ss-theme-tint);
+}
+.ss-unified-picker-trigger[aria-expanded="true"]{
+ border-color:var(--ss-theme-accent);
+}
+@media(max-width:760px){
+ .ss-unified-picker-panel{max-width:100%;min-width:0}
+ .ss-unified-picker-results{
+  max-height:min(25dvh,180px);
+  -webkit-overflow-scrolling:touch;
+ }
+ .ss-unified-picker-results>button,
+ .ss-unified-picker-create,
+ .ss-unified-picker-trigger{
+  touch-action:manipulation;
+ }
+ .ss-unified-picker-panel .ss-unified-picker-help,
+ .ss-unified-picker-panel .ss-unified-picker-error{
+  overflow-wrap:anywhere;
+ }
+}
