@@ -68,6 +68,23 @@ describe('Batch 341b — Task and Activity inspector navigation',()=>{
   expect(activity).toContain('onClick={()=>{setEditing(false);setEditorScopeKey(null);}}');
   expect(activity).toContain('clearSavedDraft(scopeKey);setEditing(false);setEditorScopeKey(null);');
  });
+ it('reports a failed Task save without clearing the recoverable editor draft',()=>{
+  const host=source('components/TaskModalHost.tsx');
+  const editor=source('components/TasksWorkspace.tsx');
+  expect(host).toContain("if(!newId)throw new Error('Task could not be saved.");
+  expect(host).toContain('Your Task workspace changed. The unsaved Task draft was preserved.');
+  expect(host).toContain('This Task is no longer available. The unsaved edit draft was preserved.');
+  const start=editor.indexOf('const submit=(event:FormEvent)=>');
+  const saveCall=editor.indexOf('onSave({title:title.trim()',start);
+  const clear=editor.indexOf('clearSavedDraft(scopeKey);clearSavedDraft(activeKey)',saveCall);
+  const catchError=editor.indexOf('}catch(reason){setFormError(',clear);
+  expect(start).toBeGreaterThan(-1);
+  expect(saveCall).toBeGreaterThan(start);
+  expect(clear).toBeGreaterThan(saveCall);
+  expect(catchError).toBeGreaterThan(clear);
+  // Throwing from onSave skips draft cleanup and displays the error.
+  expect(editor).toContain("reason instanceof Error?reason.message:'Unable to apply task changes. Draft preserved.'");
+ });
  it('keeps Task completion guards consistent in the quick-view inspector',()=>{
   const task=source('components/TaskModalHost.tsx');
   expect(task).toContain("task.status==='canceled'||Boolean(taskCompletionBlocker(task))");
