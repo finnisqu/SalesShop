@@ -5,6 +5,15 @@ import {join} from 'node:path';
 const source=(file:string)=>readFileSync(join(process.cwd(),file),'utf8');
 
 describe('Global header Quick Create Activity action',()=>{
+ it('serializes Board name-first creation before the saving rerender',()=>{
+  const board=source('src/components/BoardQuickCreate.tsx');
+  expect(board).toContain('const savingRef=useRef(false)');
+  expect(board).toContain('if(!clean||savingRef.current)return');
+  expect(board).toContain('savingRef.current=true;setSaving(true)');
+  expect(board).toContain('finally{savingRef.current=false;setSaving(false)}');
+  expect(board).toContain("This Person is already in the pending selection.");
+ });
+
  it('never silently dismisses a failed Deal/Account create and prevents duplicate retries after partial linking',()=>{
   const menu=source('src/components/QuickCreate.tsx');
   expect(menu).toContain("if(!projectId)throw new Error(");

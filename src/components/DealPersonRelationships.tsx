@@ -6,6 +6,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import type {Contact,Project} from '../types/crm';
+import {recordNameKey} from '../services/recordNameKey';
 import '../deal-person-relationships.css';
 
 function useLinks(){
@@ -85,7 +86,7 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
       onChange={e=>setRole(e.target.value)}/>}
     onLink={async id=>{await manager.add(dealId,id,role);setRole('');}}
     onCreate={async name=>{
-      if(people.some(p=>p.name.trim().toLowerCase()===name.trim().toLowerCase()))
+      if(people.some(p=>recordNameKey(p.name)===recordNameKey(name)))
         throw new Error('This Person already exists. Select them above.');
       const deal=deals.find(d=>d.id===dealId);
       const personId=createPerson({name,companyId:deal?.companyId,source:'manual'});
@@ -147,7 +148,7 @@ export function PersonDealRelationships({personId,deals,onOpenDeal,editing=false
       onChange={e=>setRole(e.target.value)}/>}
     onLink={async id=>{await manager.add(id,personId,role);setRole('');}}
     onCreate={async name=>{
-      if(deals.some(d=>d.name.trim().toLowerCase()===name.trim().toLowerCase()))
+      if(deals.some(d=>recordNameKey(d.name)===recordNameKey(name)))
         throw new Error('This Deal already exists. Select it above.');
       const id=createDeal(name,'Discovery');
       if(!id)throw new Error('Unable to create Deal.');

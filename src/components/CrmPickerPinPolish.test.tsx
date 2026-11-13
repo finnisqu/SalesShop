@@ -87,6 +87,15 @@ describe('Unified CRM relationship field and pin polish',()=>{
   expect(picker).toContain('if(focused!==document.body&&!rootRef.current?.contains(focused))return;');
   expect(css).toContain('.ss-unified-picker-limit');
  });
+ it('uses the same normalized duplicate checks in Deal-Person creation and staged Board details',()=>{
+  const direct=source('src/components/DealPersonRelationships.tsx');
+  const board=source('src/components/BoardQuickCreate.tsx');
+  expect(direct).toContain('recordNameKey(p.name)===recordNameKey(name)');
+  expect(direct).toContain('recordNameKey(d.name)===recordNameKey(name)');
+  expect(board).toContain('recordNameKey(p.name)===recordNameKey(clean)');
+  expect(board).toContain('recordNameKey(n)===recordNameKey(clean)');
+  expect(board).toContain("detail:personIds.includes(p.id)?'Already selected'");
+ });
  it('renders a symmetric, readable shared pin used by the worktables and Materials',()=>{
   const icon=renderToStaticMarkup(<WorkspaceChromeIcon name="pin"/>);
   expect(icon).toContain('M9 3h6v6l3 4v2H6v-2l3-4V3Z');

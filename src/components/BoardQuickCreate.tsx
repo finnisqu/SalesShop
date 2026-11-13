@@ -6,6 +6,7 @@ import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {useCrmStore} from '../store/crmStore';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {isOurCompany} from '../services/companyRelationship';
+import {recordNameKey} from '../services/recordNameKey';
 import {createPortal} from 'react-dom';
 import './board-quick-create-mobile.css';
 
@@ -26,6 +27,7 @@ export function BoardQuickCreate({kind,onCreate}:{
   const [dueDate,setDueDate]=useState('');
   const [name,setName]=useState('');
   const [error,setError]=useState('');
+  const savingRef=useRef(false);
   const trigger=useRef<HTMLButtonElement>(null);
   const inputId=useId();
   const reset=()=>{
@@ -38,8 +40,9 @@ export function BoardQuickCreate({kind,onCreate}:{
   const sheetRef=useDismissibleLayer<HTMLFormElement>(open,()=>{if(!saving)close();});
   const submit=async(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
-    const clean=name.trim();if(!clean||saving)return;
-    setSaving(true);setError('');
+    const clean=name.trim();if(!clean||savingRef.current)return;
+    // Block a second Enter or click before React paints the disabled button.
+    savingRef.current=true;setSaving(true);setError('');
     try{
       const details:BoardDealCreateDetails={
         ...(companyId?{companyId}:{}),...(newCompanyName?{newCompanyName}:{}),
@@ -49,7 +52,7 @@ export function BoardQuickCreate({kind,onCreate}:{
       if(!id){setError('This name could not be saved. Check for duplicates and try again.');return;}
       reset();
     }catch(reason){setError(reason instanceof Error?reason.message:'Unable to create the record.');}
-    finally{setSaving(false);}
+    finally{savingRef.current=false;setSaving(false);}
   };
   return <>
     <button type="button" ref={trigger} className="board-add-button"
@@ -109,11 +112,17 @@ export function BoardQuickCreate({kind,onCreate}:{
                   </div>
                   <UnifiedRecordPicker kind="Person" triggerLabel="Search or create Person"
                     disabled={saving}
-                    items={people.filter(p=>!personIds.includes(p.id))
-                      .map(p=>({id:p.id,name:p.name,detail:p.email||p.title}))}
+                    items={people.map(p=>({id:p.id,name:p.name,
+                      detail:personIds.includes(p.id)?'Already selected':p.email||p.title}))}
                     onLink={id=>setPersonIds(ids=>ids.includes(id)?ids:[...ids,id])}
-                    onCreate={name=>setNewPeopleNames(names=>
-                      names.some(n=>n.toLowerCase()===name.toLowerCase())?names:[...names,name.trim()])}
+                    onCreate={value=>{
+                      const clean=value.trim();
+                      if(people.some(p=>recordNameKey(p.name)===recordNameKey(clean)))
+                        throw new Error('This Person already exists. Select them above.');
+                      if(newPeopleNames.some(n=>recordNameKey(n)===recordNameKey(clean)))
+                        throw new Error('This Person is already in the pending selection.');
+                      setNewPeopleNames(names=>[...names,clean]);
+                    }}
                     helper="Select multiple People. New People are created only when you save."/>
                 </div>
                 <label htmlFor={inputId+'-date'}>Bid due date</label>
