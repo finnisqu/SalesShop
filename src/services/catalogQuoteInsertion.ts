@@ -31,7 +31,7 @@ export function validateCatalogQuoteSource(source:CatalogQuoteSource,variantId?:
       throw new Error('The selected material variant is inactive or no longer available.');
     if(purchaseOptionId){
       const variant=active.find(v=>v.id===requestedVariant)??active.find(v=>v.default)??active[0];
-      if(!variant?.purchaseOptions.some(option=>option.id===purchaseOptionId&&option.active!==false))
+      if(!(variant?.purchaseOptions??[]).some(option=>option.id===purchaseOptionId&&option.active!==false))
         throw new Error('The selected supplier purchase program is inactive or no longer available.');
     }
   }else if(source.kind==='sink'){
