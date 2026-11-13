@@ -180,4 +180,46 @@ describe('Batch 333 — persisted Sink and OTHER variant management',()=>{
   expect(quoted).toMatchObject({itemId:'other333',variantId:'chrome',sellPrice:65,internalCost:30});
   expect(saved.has('salesshop-catalog-other-v1')).toBe(true);
  });
+ it('archives only selected Sink models in a single persistence write',()=>{
+  const first=sinkModel();
+  const second={...sinkModel(),id:'sink-keep',name:'Keep active'};
+  useSinkCatalogStore.setState({models:[first,second]});
+  const historical=createQuoteSinkSnapshot(first,first.variants[0]);
+  const before=structuredClone(useSinkCatalogStore.getState().models);
+  useSinkCatalogStore.getState().setModelsActive(['sink333','missing','sink333'],false);
+  const updated=useSinkCatalogStore.getState().models;
+  expect(updated[0].active).toBe(false);
+  expect(updated[0].variants).toEqual(before[0].variants);
+  expect(updated[1]).toBe(before[1]);
+  expect(saved.has('salesshop-sink-catalog-v1')).toBe(true);
+  expect(historical).toMatchObject({sinkModelId:'sink333',variantId:'chrome',sellPrice:220});
+  useSinkCatalogStore.getState().setModelsActive(['sink333'],true);
+  expect(useSinkCatalogStore.getState().models[0].active).toBe(true);
+  expect(useSinkCatalogStore.getState().models[0].variants).toEqual(before[0].variants);
+ });
+ it('archives and restores only targeted OTHER items and preserves source identity',()=>{
+  const first=otherItem();
+  const second={...otherItem(),id:'other-keep',name:'Unselected item'};
+  useOtherCatalogStore.setState({items:[first,second]});
+  const historical=createQuoteOtherSnapshot(first,first.variants[0]);
+  const before=structuredClone(useOtherCatalogStore.getState().items);
+  useOtherCatalogStore.getState().setItemsActive(['other333','missing','other333'],false);
+  const updated=useOtherCatalogStore.getState().items;
+  expect(updated[0].active).toBe(false);
+  expect(updated[0].variants).toEqual(before[0].variants);
+  expect(updated[1]).toBe(before[1]);
+  expect(saved.has('salesshop-catalog-other-v1')).toBe(true);
+  expect(historical).toMatchObject({itemId:'other333',variantId:'chrome',sellPrice:65});
+  useOtherCatalogStore.getState().setItemsActive(['other333'],true);
+  expect(useOtherCatalogStore.getState().items[0].active).toBe(true);
+  expect(useOtherCatalogStore.getState().items[0].variants).toEqual(before[0].variants);
+ });
+ it('ignores empty or unchanged bulk updates without persisting',()=>{
+  useSinkCatalogStore.getState().setModelsActive(['missing'],false);
+  useOtherCatalogStore.getState().setItemsActive([],false);
+  expect(saved.size).toBe(0);
+  useSinkCatalogStore.getState().setModelsActive(['sink333'],true);
+  useOtherCatalogStore.getState().setItemsActive(['other333'],true);
+  expect(saved.size).toBe(0);
+ });
 });
