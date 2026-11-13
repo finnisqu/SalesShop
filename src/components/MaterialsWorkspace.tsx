@@ -352,12 +352,13 @@ export function MaterialsWorkspace({embedded=false,externalQuery}:{
                   );
                 }) : <div className="is-empty"><span>No supplier price programs</span><strong>—</strong></div>}
               </div>
-              <button
-                type="button"
-                className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`}
-                onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}
-              ><WorkspaceChromeIcon name="pin"/> {isPinned ? 'Pinned' : 'Pin'}</button>
-              <CatalogQuoteLauncher source={{kind:'material',material,variantId:variant.id}}/>
+              <div className="materials-variant-actions">
+                <button type="button" className={`materials-pin-button ${isPinned ? 'is-pinned' : ''}`}
+                  onClick={(event) => togglePin(material.id, variant.id, event.currentTarget)}>
+                  <WorkspaceChromeIcon name="pin"/> {isPinned ? 'Pinned' : 'Pin'}
+                </button>
+                <CatalogQuoteLauncher source={{kind:'material',material,variantId:variant.id}}/>
+              </div>
             </article>
           );
         })}
