@@ -12,6 +12,8 @@ describe('Global header Quick Create Activity action',()=>{
   expect(board).toContain('savingRef.current=true;setSaving(true)');
   expect(board).toContain('finally{savingRef.current=false;setSaving(false)}');
   expect(board).toContain("This Person is already in the pending selection.");
+  expect(board).toContain('if(!savingRef.current)reset()');
+  expect(board).toContain('<MobileSheetHandle onClose={close} disabled={saving}/>');
  });
 
  it('never silently dismisses a failed Deal/Account create and prevents duplicate retries after partial linking',()=>{

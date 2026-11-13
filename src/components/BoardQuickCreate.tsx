@@ -35,9 +35,9 @@ export function BoardQuickCreate({kind,onCreate}:{
     setCompanyId('');setNewCompanyName('');setPersonIds([]);setNewPeopleNames([]);setDueDate('');
     trigger.current?.focus();
   };
-  const close=()=>{if(!saving)reset();};
+  const close=()=>{if(!savingRef.current)reset();};
   useModalScrollLock(open);
-  const sheetRef=useDismissibleLayer<HTMLFormElement>(open,()=>{if(!saving)close();});
+  const sheetRef=useDismissibleLayer<HTMLFormElement>(open,close);
   const submit=async(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
     const clean=name.trim();if(!clean||savingRef.current)return;
@@ -64,7 +64,7 @@ export function BoardQuickCreate({kind,onCreate}:{
       }}>
         <form ref={sheetRef} className="board-create-sheet ss-mobile-sheet" role="dialog" aria-modal="true"
           aria-label={'Quick create '+kind.toLowerCase()} onSubmit={event=>void submit(event)} aria-busy={saving}>
-          <MobileSheetHandle onClose={close}/>
+          <MobileSheetHandle onClose={close} disabled={saving}/>
           <header>
             <div><small>BOARD · QUICK CREATE</small><h2>New {kind.toLowerCase()}</h2></div>
             <button type="button" onClick={close} disabled={saving} aria-label="Close quick create"

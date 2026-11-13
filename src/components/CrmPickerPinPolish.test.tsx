@@ -76,7 +76,10 @@ describe('Unified CRM relationship field and pin polish',()=>{
   expect(picker).toContain('if(saving||!needle)return');
   expect(picker).toContain('disabled={disabled||saving}');
   expect(picker).toContain('const stillInside=Boolean(rootRef.current?.contains(document.activeElement))');
-  expect(parent).toContain("layerRef.current?.querySelector('.ss-unified-picker-panel')");
+  expect(parent).toContain("event.target.closest('.ss-unified-record-picker')");
+  expect(parent).toContain("nestedPicker?.querySelector('.ss-unified-picker-panel')");
+  expect(parent).toContain('layer.contains(event.target as Node)');
+  expect(parent).toContain('focused===document.body||layerRef.current?.contains(focused)');
   expect(css).toContain('max-height:min(25dvh,180px)');
   expect(css).toContain('overscroll-behavior:contain');
   expect(picker).toContain('aria-busy={saving}');

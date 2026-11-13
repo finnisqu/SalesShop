@@ -42,10 +42,16 @@ export function useDismissibleLayer<T extends HTMLElement>(
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        // A nested record picker owns Escape while its search menu is open.
-        // This listener runs in capture phase before the picker's own handler;
-        // closing the parent here would discard an Activity or Deal form.
-        if (layerRef.current?.querySelector('.ss-unified-picker-panel')) return;
+        // Only the dialog that currently owns keyboard focus should close.
+        // In particular a nested portal/dialog must not dismiss its parent.
+        const layer=layerRef.current;
+        if(!layer||!layer.contains(event.target as Node))return;
+        // A nested record picker owns Escape only while focus is inside
+        // that picker and its search panel is open. An unrelated focused
+        // control must still be able to close the parent dialog.
+        const nestedPicker=event.target instanceof Element
+          ?event.target.closest('.ss-unified-record-picker'):null;
+        if(nestedPicker?.querySelector('.ss-unified-picker-panel'))return;
         event.preventDefault();
         event.stopPropagation();
         closeRef.current();
@@ -72,7 +78,11 @@ export function useDismissibleLayer<T extends HTMLElement>(
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener('keydown', onKeyDown, true);
-      if (previouslyFocused?.isConnected) {
+      // A newly opened editor may already have claimed focus. Avoid taking
+      // it back merely because this older drawer has unmounted.
+      const focused=document.activeElement;
+      if (previouslyFocused?.isConnected &&
+          (focused===document.body||layerRef.current?.contains(focused))) {
         previouslyFocused.focus({ preventScroll: true });
       }
     };
