@@ -87,22 +87,31 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(css).toContain('.ss-workspace-more.is-tab[open]>summary');
   expect(app).toContain("import './workspace-tab-nav.css'");
  });
- it('centers Quotes in a symmetric grid without overlapping its secondary More menu',()=>{
-  const quote=src('components/QuotesMobileBeta.tsx');
+ it('places Quotes Views/Actions in the worktable rather than the shared centered header',()=>{
+  const quotes=src('components/QuotesMobileBeta.tsx');
+  const chrome=src('components/WorktableChrome.tsx');
+  const styles=src('worktable-chrome.css');
   const header=src('workspace-header-parity.css');
-  expect(quote).toContain('className="qmb-library-workspace-header"');
-  expect(quote).toContain('more={<WorkspaceMoreMenu compact label="Quote actions"');
-  expect(header).toContain('@media(min-width:1400px)');
-  expect(header).toContain('.qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tabs');
-  expect(header).toContain('grid-template-columns:minmax(0,1fr) minmax(0,440px) minmax(0,1fr)!important');
-  expect(header).toContain('position:static!important');
-  expect(header).toContain('grid-column:2!important;grid-row:1!important');
-  expect(header).toContain('transform:none!important');
-  expect(header).toContain('.qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tools');
-  expect(header).toContain('grid-column:3!important;grid-row:1!important');
-  expect(header).not.toContain('left:50%!important');
-  // Do not alter the common Records/Catalog header or the narrower two-row layout.
-  expect(header).toContain('@media(min-width:761px) and (max-width:1399px)');
+  expect(quotes).toContain('className="qmb-library-workspace-header"');
+  expect(quotes).not.toContain('more={<WorkspaceMoreMenu compact label="Quote actions"');
+  expect(quotes).toContain('tabs={<RecordsSectionNav selected="quotes"');
+  expect(quotes).toContain('toolbarControls={renderLibraryToolbarMenus()}');
+  expect(quotes).toContain('<WorktableActionMenu label="Views"');
+  expect(quotes).toContain('<WorktableActionMenu label="Actions"');
+  expect(quotes).toContain("label:'Documents',active:!followUpsTab");
+  expect(quotes).toContain("label:'Follow-ups',active:followUpsTab");
+  expect(quotes).toContain("label:'Detailed Editor'");
+  expect(quotes).toContain("label:'Clear search and filters'");
+  expect(quotes).toContain('className="qmb-followups-return-toolbar"');
+  expect(quotes).toContain('onClick={()=>setFollowUpsTab(false)}>← Documents');
+  expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
+  expect(quotes).not.toContain('value="follow-ups">Follow-ups</option>');
+  expect(header).not.toContain('Quotes is a Records view with an additional action-More');
+  expect(chrome).toContain('export function WorktableActionMenu');
+  expect(chrome).toContain('useDismissibleDetails(ref)');
+  expect(chrome).toContain("ref.current?.removeAttribute('open')");
+  expect(styles).toContain('.ss-worktable-action-menu:not([open])>.ss-worktable-action-panel');
+  expect(styles).toContain('.qmb-library-mobile-filters');
  });
  it('keeps the global account dropdown above page headers without elevating the idle bar',()=>{
   const styles=src('account-menu.css');
