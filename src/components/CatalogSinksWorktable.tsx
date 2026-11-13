@@ -13,6 +13,7 @@ import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
+import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-sink-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -137,6 +138,14 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
   if(index>=0)pagination.setPage(Math.floor(index/pagination.pageSize)+1);
  },[expanded,filtered,pagination.pageSize]);
 
+ const setModelActive=(model:SinkModel,active:boolean)=>{
+  if(!active)setShowInactive(true);
+  updateModel(model.id,{active});
+ };
+ const setVariantActive=(model:SinkModel,variant:SinkVariant,active:boolean)=>{
+  if(!active)setShowInactive(true);
+  updateVariant(model.id,variant.id,{active});
+ };
  const update=<T extends keyof SinkModel,>(model:SinkModel,key:T,value:SinkModel[T])=>
   updateModel(model.id,{[key]:value});
  const updateV=<T extends keyof SinkVariant,>(model:SinkModel,variant:SinkVariant,key:T,value:SinkVariant[T])=>
@@ -201,8 +210,8 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
         <option value="all">All sink types</option>
         {SINK_CATEGORIES.map(key=><option key={key} value={key}>{SINK_CATEGORY_LABELS[key]}</option>)}
        </select></label>
-       {editing&&<label className="catalog-card-checkbox"><input type="checkbox"
-        checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Show inactive</label>}
+       <label className="catalog-card-checkbox"><input type="checkbox"
+         checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Include archived</label>
       </div>
      <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
       <select aria-label="Sort sinks" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
@@ -227,13 +236,13 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       <th>Total W × L × H</th><th>Variants</th></tr></thead>
      <tbody>
       {pagedModels.map(model=>{
-       const open=expanded===model.id,variants=model.variants.filter(v=>showInactive||v.active);
+       const open=expanded===model.id,variants=model.variants.filter(v=>editing||showInactive||v.active);
        return <Fragment key={model.id}>
         <tr className={open?'is-expanded':''}>
          <td>{model.brand||model.supplier||'—'}</td>
          <td className="rates-reference-item"><button type="button" className="materials-name-toggle"
            aria-expanded={open} onClick={()=>setExpanded(open?null:model.id)}><strong>{model.name}</strong></button>
-           <small>{model.modelCode||'No SKU'}{!model.active?' · Archived':''}</small></td>
+           <small>{model.modelCode||'No SKU'} <CatalogLifecycleStatus active={model.active}/></small></td>
          <td>{SINK_CATEGORY_LABELS[model.category]}</td><td>{model.material||'—'}</td>
          <td>{model.mountType||'—'}</td><td>{size(model.widthIn,model.depthIn,model.heightIn)}</td>
          <td><button type="button" className={open?'active':''} onClick={()=>setExpanded(open?null:model.id)}>
@@ -262,12 +271,14 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
            <NumericField label="Total height (in)" value={model.heightIn} onChange={value=>update(model,'heightIn',value)}/>
            <TextField label="Model notes" value={model.notes} onChange={value=>update(model,'notes',value)}/>
            <label className="catalog-product-property"><span>Active in catalog</span><input type="checkbox" checked={model.active}
-             onChange={event=>update(model,'active',event.target.checked)}/>
+             onChange={event=>setModelActive(model,event.target.checked)}/>
              <small className="catalog-product-default-note">Uncheck to archive; saved quotes keep their original selections.</small></label>
           </div>}
           <div className="catalog-product-detail-head"><div><strong>Variants and bowls</strong>
             {editing&&<small className="catalog-product-default-note">
-             Choose an available variant as default for new selections.</small>}</div>
+             Choose an available variant as default for new selections.</small>}
+             {!model.active&&<small className="catalog-product-default-note">
+              Model archived — restore it to include variants in new quotes.</small>}</div>
            {editing&&<span className="catalog-product-variant-operations">
              <button type="button" onClick={()=>duplicateCatalogModel(model.id)}>Duplicate model</button>
              <button type="button" onClick={()=>addVariant(model.id)}>+ Variant</button>
@@ -280,7 +291,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
              <div className="catalog-product-variant-heading">
               <div><strong>{variant.label}</strong><small>
                {variant.code||'No variant SKU'} · {SINK_CONFIGURATION_LABELS[variant.configuration]}
-               {variant.ada?' · ADA':''}{variant.default?' · Default':''}
+               {variant.ada?' · ADA':''} <CatalogLifecycleStatus active={variant.active} isDefault={variant.default}/>
               </small></div>
               <button type="button" className={'materials-pin-button'+(pinned?' is-pinned':'')}
                aria-pressed={pinned} onClick={()=>togglePin(model.id,variant.id)}>
@@ -308,7 +319,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
               <NumericField label="Internal cost" value={variant.internalCost} onChange={value=>updateV(model,variant,'internalCost',value)}/>
               <NumericField label="Customer price" value={variant.sellPrice} onChange={value=>updateV(model,variant,'sellPrice',value)}/>
               <TextField label="Notes" value={variant.notes} onChange={value=>updateV(model,variant,'notes',value)}/>
-              {(['ada','default','active'] as const).map(key=><label key={key} className="catalog-product-property">
+              {(['ada','default'] as const).map(key=><label key={key} className="catalog-product-property">
                 <span>{key==='ada'?'ADA':key==='default'?'Default variant':'Available'}</span>
                 <input type="checkbox" checked={variant[key]}
                  disabled={key==='default'&&(!variant.active||variant.default)}
@@ -318,7 +329,11 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
                  onChange={event=>updateV(model,variant,key,event.target.checked)}/>
                </label>)}
               <div className="catalog-product-variant-operations">
-               <button type="button" onClick={()=>duplicateVariant(model.id,variant.id)}>Duplicate variant</button>
+               <button type="button" className={variant.active?'catalog-product-archive-action':'catalog-product-restore-action'}
+                 aria-label={(variant.active?'Archive ':'Restore ')+variant.label}
+                 onClick={()=>setVariantActive(model,variant,!variant.active)}>
+                 {variant.active?'Archive variant':'Restore variant'}</button>
+                <button type="button" onClick={()=>duplicateVariant(model.id,variant.id)}>Duplicate variant</button>
                <button type="button" className="is-danger" disabled={model.variants.length<=1}
                 onClick={()=>{if(window.confirm('Delete this variant? Saved quotes retain their historical snapshots.'))deleteVariant(model.id,variant.id);}}>Delete variant</button>
               </div>
