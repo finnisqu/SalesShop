@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import {normalizeCatalogVariantDefaults} from '../services/catalogVariantDefaults';
 import { supabase } from '../lib/supabase';
 import { scopedStorageKey } from '../lib/developerPlayground';
 import {
@@ -178,10 +179,7 @@ function normalizeModel(raw: Partial<SinkModel>, index: number): SinkModel {
     ? raw.variants.map((variant, variantIndex) => normalizeVariant(variant, variantIndex))
     : [];
   if (!variants.length) variants = [normalizeVariant({ label: 'Standard', default: true }, 0)];
-  if (!variants.some((variant) => variant.default && variant.active)) {
-    const firstActive = variants.findIndex((variant) => variant.active);
-    if (firstActive >= 0) variants = variants.map((variant, variantIndex) => ({ ...variant, default: variantIndex === firstActive }));
-  }
+  variants = normalizeCatalogVariantDefaults(variants);
   const category: SinkCategory = ['kitchen', 'vanity', 'bar-prep', 'laundry', 'other'].includes(String(raw.category))
     ? raw.category as SinkCategory
     : 'other';
@@ -345,7 +343,9 @@ export const useSinkCatalogStore = create<SinkCatalogState>((set, get) => ({
 
   updateModel: (id, patch) => {
     updateModels(set, get, (models) => models.map((model) => model.id === id
-      ? { ...model, ...patch, updatedAt: new Date().toISOString() }
+      ? { ...model, ...patch,
+          variants:normalizeCatalogVariantDefaults(patch.variants??model.variants),
+          updatedAt: new Date().toISOString() }
       : model));
   },
 
@@ -372,7 +372,9 @@ export const useSinkCatalogStore = create<SinkCatalogState>((set, get) => ({
         notes: seed.notes,
         history: structuredClone(seed.history ?? []),
       };
-      return { ...model, variants: [...model.variants, variant], updatedAt: new Date().toISOString() };
+      return { ...model, variants:normalizeCatalogVariantDefaults(
+        [...model.variants, variant],seed.default?variant.id:undefined,
+       ), updatedAt: new Date().toISOString() };
     }));
     return id;
   },
@@ -383,18 +385,14 @@ export const useSinkCatalogStore = create<SinkCatalogState>((set, get) => ({
       const pricingChanged = Object.prototype.hasOwnProperty.call(patch, 'internalCost')
         || Object.prototype.hasOwnProperty.call(patch, 'sellPrice')
         || Object.prototype.hasOwnProperty.call(patch, 'effectiveDate');
-      let variants = model.variants.map((variant) => {
-        if (patch.default && variant.id !== variantId) return { ...variant, default: false };
+      const variants = model.variants.map((variant) => {
         if (variant.id !== variantId) return variant;
         const next = { ...variant, ...patch };
         return pricingChanged ? upsertVariantHistory(next) : next;
       });
-      const changed = variants.find((variant) => variant.id === variantId);
-      if (changed && !changed.active && changed.default) {
-        const fallback = variants.find((variant) => variant.id !== variantId && variant.active);
-        if (fallback) variants = variants.map((variant) => ({ ...variant, default: variant.id === fallback.id }));
-      }
-      return { ...model, variants, updatedAt: new Date().toISOString() };
+      return { ...model, variants:normalizeCatalogVariantDefaults(
+        variants,patch.default?variantId:undefined,
+       ), updatedAt: new Date().toISOString() };
     }));
   },
 
@@ -411,7 +409,8 @@ export const useSinkCatalogStore = create<SinkCatalogState>((set, get) => ({
       history: source.history.map((version) => ({ ...structuredClone(version), id: uid('sink_history') })),
     };
     updateModels(set, get, (models) => models.map((candidate) => candidate.id === modelId
-      ? { ...candidate, variants: [...candidate.variants, copy], updatedAt: new Date().toISOString() }
+      ? { ...candidate, variants:normalizeCatalogVariantDefaults([...candidate.variants, copy]),
+          updatedAt: new Date().toISOString() }
       : candidate));
     return id;
   },
@@ -419,11 +418,8 @@ export const useSinkCatalogStore = create<SinkCatalogState>((set, get) => ({
   deleteVariant: (modelId, variantId) => {
     updateModels(set, get, (models) => models.map((model) => {
       if (model.id !== modelId || model.variants.length <= 1) return model;
-      let variants = model.variants.filter((variant) => variant.id !== variantId);
-      if (!variants.some((variant) => variant.default && variant.active)) {
-        const fallback = variants.find((variant) => variant.active);
-        if (fallback) variants = variants.map((variant) => ({ ...variant, default: variant.id === fallback.id }));
-      }
+      const variants=normalizeCatalogVariantDefaults(
+        model.variants.filter((variant) => variant.id !== variantId));
       return { ...model, variants, updatedAt: new Date().toISOString() };
     }));
   },
