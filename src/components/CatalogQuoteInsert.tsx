@@ -70,7 +70,7 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
   const eligible = useMemo(() => quotes.filter((quote) =>
     quoteIsCommerciallyEditable(quote) && quote.documentType !== 'pricing-schedule',
   ), [quotes]);
-  const [targetId, setTargetId] = useState<string>(() => activeQuoteId ?? TARGET_NEW);
+  const [targetId, setTargetId] = useState<string>(() => activeQuoteId && eligible.some(quote=>quote.id===activeQuoteId) ? activeQuoteId : TARGET_NEW);
   const [variantId, setVariantId] = useState(() => source.kind === 'rate' ? '' : source.variantId ?? '');
   const [purchaseOptionId, setPurchaseOptionId] = useState('');
   const [quantityText, setQuantityText] = useState(() => source.kind === 'sink' || source.kind === 'other' ? '1' : source.kind === 'rate' && ['each','slab'].includes(source.item.unit) ? '1' : '');
@@ -82,7 +82,9 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
   useEffect(() => { hydrate(); }, [hydrate]);
 
   const destination = eligible.find((quote) => quote.id === targetId);
-  const destinationId = destination ? destination.id : TARGET_NEW;
+  const validDestination=targetId===TARGET_NEW||Boolean(destination);
+  // Never silently retarget a now-ineligible quote into a new draft.
+  const destinationId=destination?destination.id:targetId;
   const materialVariant = source.kind === 'material'
     ? variantId
       ? source.material.variants?.find((item) => item.id === variantId && item.active !== false)
@@ -124,7 +126,7 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
     : source.item.active);
   const title = source.kind === 'material' ? source.material.name : source.kind === 'sink' ? source.model.name : source.item.name;
   const sourceLabel = source.kind === 'material' ? 'Stone material' : source.kind === 'sink' ? 'Sink variant' : source.kind === 'other' ? 'Other catalog product' : 'Company rate';
-  const priceLabel = source.kind === 'material'
+  const priceLabel = currentSource===null?'Catalog record unavailable':source.kind === 'material'
     ? (materialReference?.costPerSf === undefined ? 'Cost not listed' : `${money.format(materialReference.costPerSf)}/SF internal cost`)
     : source.kind === 'sink'
       ? (sinkVariant?.sellPrice === undefined ? 'Customer price not set' : `${money.format(sinkVariant.sellPrice)}/each customer price`)
@@ -144,8 +146,12 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
       ?'Enter a positive'+(wholeUnits?' whole-number':'')+' quantity for this product.'
       :'Enter a positive quantity, or leave it blank for takeoff later.'); return; }
     if(!validSource){setError('Choose an active Catalog source.');return;}
+    if(!validDestination){setError('That quote is no longer editable. Choose another destination.');return;}
     insertPending.current=true;setInserting(true);
     const finalTarget = eligible.find((quote) => quote.id === targetId);
+    if(targetId!==TARGET_NEW&&!finalTarget){
+      setError('That quote is no longer editable. Choose another destination.');return;
+    }
     let committed=false;
     try {
       // Re-read store state at the exact commit boundary, including changes
@@ -210,6 +216,7 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
           <label className="catalog-quote-field"><span>Destination quote</span>
             <select value={destinationId} onChange={(event) => { setTargetId(event.target.value); setError(''); }}>
               <option value={TARGET_NEW}>+ Create new quote</option>
+              {!validDestination&&<option value={targetId} disabled>Selected quote unavailable · choose another</option>}
               {eligible.map((quote) => <option key={quote.id} value={quote.id}>{catalogQuoteDestinationLabel(quote)}</option>)}
             </select>
           </label>
@@ -252,6 +259,9 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
                 ? 'Cost-reference rates stay hidden from the customer and excluded from totals.'
                 : 'The current price is frozen in the quote. You can adjust pricing or quantity in Quotes.'}</small>
           </div>
+          {!validDestination&&<p className="catalog-quote-error" role="alert">
+            This destination quote is no longer editable. Choose an available quote or create a new one.
+          </p>}
           {!validSource&&<p className="catalog-quote-error" role="alert">
             {currentSource===null
               ?'This Catalog record was removed. Choose another item or cancel.'
@@ -261,7 +271,7 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
         </div>
         <footer className="catalog-quote-footer">
           <button type="button" onClick={onClose}>Cancel</button>
-          <button type="button" className="primary" disabled={inserting || !validQuantity || !validSource} onClick={insert}>Add & open quote →</button>
+          <button type="button" className="primary" disabled={inserting || !validQuantity || !validSource || !validDestination} onClick={insert}>Add & open quote →</button>
         </footer>
       </div>
     </div>
