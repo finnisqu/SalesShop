@@ -74,7 +74,7 @@ export function WorktableActionMenu({label,items}:{
    {label}<span className="ss-worktable-action-chevron" aria-hidden="true">⌄</span>
   </summary>
   <div className="ss-worktable-action-panel" role="group" aria-label={label+' options'}>
-   {items.map((item,index)=><div className="ss-worktable-action-entry" key={item.label}>
+   {items.map((item,index)=><div className="ss-worktable-action-entry" key={(item.section??'')+':'+item.label+':'+index}>
     {item.section&&(index===0||items[index-1]?.section!==item.section)&&
      <div className="ss-worktable-action-section">{item.section}</div>}
     <button type="button" disabled={item.disabled}

@@ -13,6 +13,7 @@ import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
 import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE,CATALOG_PAGE_SIZES,catalogPageRange} from './CatalogPagination';
 import {WorktableFilterMenu,WorktablePagination,WorktableSurface} from './WorktableChrome';
+import {worktableStoredSort} from '../services/worktableSortPreference';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;readOnly?:boolean;isSelfCompany?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization'|'pages'|'activity';columns:ConnectionColumn[];rows:ConnectionTableRow[];
@@ -62,12 +63,22 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  const [bulkEditing,setBulkEditing]=useState(false);
  const [bulkTaskEditing,setBulkTaskEditing]=useState(false);
  const [mobileBulkMode,setMobileBulkMode]=useState(false);
- const [sort,setSort]=useState({
-   key:tableKey==='activity'?'occurred':
-     tableKey==='documents'||tableKey==='pages'?'updated':
-     tableKey==='tasks'?'due':'name',
-   reverse:tableKey==='documents'||tableKey==='pages'||tableKey==='activity',
- });
+ const defaultSort=()=>{
+  const key=tableKey==='activity'?'occurred':
+    tableKey==='documents'||tableKey==='pages'?'updated':
+    tableKey==='tasks'?'due':'name';
+  return {key,reverse:tableKey==='documents'||tableKey==='pages'||tableKey==='activity'};
+ };
+ const readSort=()=>{
+  const fallback=defaultSort();
+  try{return worktableStoredSort(localStorage.getItem(storage(tableKey,'sort')),
+    fallback,[...columns.map(c=>c.key),fallback.key]);}
+  catch{return fallback;}
+ };
+ // Carry the source table's identity with its sort so changing Records tabs
+ // never applies another directory's saved order or writes over its preference.
+ const [sortState,setSort]=useState(()=>({tableKey,...readSort()}));
+ const sort=sortState.tableKey===tableKey?sortState:{tableKey,...readSort()};
  const [page,setPage]=useState(1);
  const [pageSize,setPageSize]=useState<number>(()=>{
   if(catalogPagination)return DEFAULT_CATALOG_PAGE_SIZE;
@@ -77,6 +88,11 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  });
  useEffect(()=>{if(catalogPagination)setPage(1);},[catalogPagination,catalogPaginationKey]);
  useEffect(()=>{if(!catalogPagination)try{localStorage.setItem(storage(tableKey,'pageSize'),String(pageSize));}catch{/* optional */}},[tableKey,pageSize,catalogPagination]);
+ useEffect(()=>{
+  try{localStorage.setItem(storage(sortState.tableKey,'sort'),
+    JSON.stringify({key:sortState.key,reverse:sortState.reverse}));}
+  catch{/* device-only worktable preference is optional */}
+ },[sortState]);
  const columnsMenuRef=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(columnsMenuRef);
  // Preserve selections across pages, but never act on records removed by a new filter.
@@ -252,7 +268,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
          <th className="connections-pin-cell">Pin</th>
          {visible.map(col=><th key={col.key} aria-sort={sort.key===col.key?(sort.reverse?'descending':'ascending'):'none'}>
            <button type="button" aria-label={'Sort by '+col.label}
-             onClick={()=>{setSort(s=>({key:col.key,reverse:s.key===col.key?!s.reverse:false}));setPage(1);}}>
+             onClick={()=>{setSort({tableKey,key:col.key,
+                reverse:sort.key===col.key?!sort.reverse:false});setPage(1);}}>
              {col.label}<WorkspaceChromeIcon name={sort.key===col.key?(sort.reverse?'sort-desc':'sort-asc'):'sort'}/>
            </button></th>)}
          {hasRowActions&&<th className="connections-row-actions-heading">Quick actions</th>}

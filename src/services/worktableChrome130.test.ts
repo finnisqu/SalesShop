@@ -1,11 +1,28 @@
 import {describe,expect,it} from 'vitest';
 import {readFileSync} from 'node:fs';
+import {worktableStoredSort} from './worktableSortPreference';
 import {worktablePageRange,WORKTABLE_PAGE_SIZES,DEFAULT_WORKTABLE_PAGE_SIZE}
  from '../components/WorktableChrome';
 
 const src=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
+ it('restores only valid table sort preferences and never trusts corrupt saved keys',()=>{
+  const fallback={key:'name',reverse:false};
+  const allowed=['name','stage','updated'];
+  expect(worktableStoredSort('{"key":"stage","reverse":true}',fallback,allowed))
+    .toEqual({key:'stage',reverse:true});
+  for(const bad of [null,'not-json','{"key":"deleted","reverse":true}',
+   '{"key":"stage","reverse":"yes"}','[]','null']){
+    expect(worktableStoredSort(bad,fallback,allowed)).toEqual(fallback);
+  }
+  const table=src('components/ConnectionsTable.tsx');
+  expect(table).toContain("storage(sortState.tableKey,'sort')");
+  expect(table).toContain('sortState.tableKey===tableKey');
+  expect(table).toContain('worktableStoredSort(');
+  const chrome=src('components/WorktableChrome.tsx');
+  expect(chrome).toContain("(item.section??'')+':'+item.label+':'+index");
+ });
  it('clamps stale, fractional and invalid pagination values to valid table slices',()=>{
   expect(worktablePageRange(83,0,50).page).toBe(1);
   expect(worktablePageRange(83,1.9,50).page).toBe(1);
