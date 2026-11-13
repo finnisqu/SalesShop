@@ -112,6 +112,20 @@ describe('CRM interrupted-save recovery',()=>{
   clearPendingCrmSync(scope,second!);
   expect(readPendingCrmSync(scope)).toBeNull();
  });
+ it('does not restore malformed timestamps, including forged new rows',()=>{
+  const cloud=doc([company('known',newer,'Trusted cloud')]);
+  const malformed=doc([
+   company('known','not-a-timestamp','Bad local'),
+   company('created','bad-date','Forged creation'),
+  ]);
+  const merged=mergePendingCrmChanges(cloud,malformed,
+   marker({companies:['known','created']},{companies:['created']}));
+  expect(merged).toEqual(cloud);
+  const invalidServer=doc([company('known','not-a-timestamp','Cloud has invalid date')]);
+  const local=doc([company('known',newer,'Local candidate')]);
+  expect(mergePendingCrmChanges(invalidServer,local,marker({companies:['known']})))
+   .toEqual(invalidServer);
+ });
  it('hydrates before replacing local CRM, then retries in writable workspaces only',()=>{
   const cloudSync=readFileSync(new URL('./cloudSync.ts',import.meta.url),'utf8');
   const auth=readFileSync(new URL('../store/authStore.ts',import.meta.url),'utf8');
@@ -134,13 +148,13 @@ describe('CRM interrupted-save recovery',()=>{
  it('retries only failed, scoped saves when a connection or foreground session returns',()=>{
   const sync=readFileSync(new URL('./cloudSync.ts',import.meta.url),'utf8');
   const auth=readFileSync(new URL('../store/authStore.ts',import.meta.url),'utf8');
-  expect(sync).toContain("window.addEventListener('online',retryFailed)");
+  expect(sync).toContain("window.addEventListener('online',retryWhenOnline)");
   expect(sync).toContain("document.addEventListener('visibilitychange',retryWhenVisible)");
-  expect(sync).toContain("window.removeEventListener('online',retryFailed)");
+  expect(sync).toContain("window.removeEventListener('online',retryWhenOnline)");
   expect(sync).toContain("document.removeEventListener('visibilitychange',retryWhenVisible)");
   expect(sync).toContain('if(!active())return');
   expect(sync).toContain('if(canWriteCrm&&retryableFailures.has(CRM_DOCUMENT_KEY)');
-  expect(sync).toContain('if(Date.now()-lastRecoveryRetry<15000)return');
+  expect(sync).toContain('if(!force&&Date.now()-lastRecoveryRetry<15000)return');
   expect(sync).toContain('if(canWriteCrm&&retryableFailures.has(CRM_DOCUMENT_KEY)');
   expect(sync).toContain('if(canWriteQuotes&&retryableFailures.has(QUOTES_DOCUMENT_KEY)');
   expect(auth).toContain('lastCloudSyncError');
