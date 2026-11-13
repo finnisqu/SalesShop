@@ -1261,6 +1261,19 @@ export function QuotesMobileBeta() {
   return <main ref={quoteWorkspaceRef} className={"quotes-view qmb"+(reviewOpen?" is-review-expanded":"")} aria-label="Quotes mobile beta">
     <div className={'qmb-desktop-frame'+(page==='library'?' is-library':'')+
       (page!=='library'&&quote?.documentType==='quote'?' is-quick-quote-frame':'')}>
+      {/* Library chrome is a full-width frame sibling, not inside the editor
+          workspace. Its grid midpoint now matches the other Records tabs. */}
+      {page==='library'&&
+      <WorkspaceHeader title="Records" help={<WorkspaceHelp page="quotes" section={followUpsTab?'follow-ups':documentFilter}/>} className="qmb-library-workspace-header"
+        mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
+        mobileTabValue="quotes" onMobileTabChange={value=>selectRecordsSection(value as RecordsSection)}
+        tabs={<RecordsSectionNav selected="quotes" onSelect={selectRecordsSection}/>}
+        search={<input type="search" value={search} onChange={event=>setSearch(event.target.value)}
+          aria-label="Search my documents" placeholder="Search documents…" disabled={followUpsTab}/>}
+        primary={<button type="button" disabled={!canManageLibrary}
+          onClick={()=>setShowNewDocument(true)}>+ Document</button>}
+      />
+      }
       {quote&&page!=='library'&&<QuoteBetaDesktopRails
         quote={quote} page={page} quoteTab={quoteTab} areaTab={areaTab} areaId={areaId}
         areaManager={areaManager}
@@ -1297,15 +1310,6 @@ export function QuotesMobileBeta() {
         </div>}
       {page==='area'&&quoteProgress}
     {page==='library'?<>
-      <WorkspaceHeader title="Records" help={<WorkspaceHelp page="quotes" section={followUpsTab?'follow-ups':documentFilter}/>} className="qmb-library-workspace-header"
-        mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
-        mobileTabValue="quotes" onMobileTabChange={value=>selectRecordsSection(value as RecordsSection)}
-        tabs={<RecordsSectionNav selected="quotes" onSelect={selectRecordsSection}/>}
-        search={<input type="search" value={search} onChange={event=>setSearch(event.target.value)}
-          aria-label="Search my documents" placeholder="Search documents…" disabled={followUpsTab}/>}
-        primary={<button type="button" disabled={!canManageLibrary}
-          onClick={()=>setShowNewDocument(true)}>+ Document</button>}
-      />
       <div className="qmb-pad qmb-pagecontent">
         <div className="qmb-library-measure">
          {followUpsTab
