@@ -211,7 +211,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
           {!validSource&&<p className="catalog-quote-error" role="alert">
             This Catalog item or selected variant is inactive or unavailable. Choose an active option, or cancel.
           </p>}
-          {error && <p className="catalog-quote-error" role="alert">{error}</p>
+          {error && <p className="catalog-quote-error" role="alert">{error}</p>}
         </div>
         <footer className="catalog-quote-footer">
           <button type="button" onClick={onClose}>Cancel</button>

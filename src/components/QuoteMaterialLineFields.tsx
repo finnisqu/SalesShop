@@ -380,7 +380,7 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
        <button type="button" className="quote-source-apply-price" onClick={repriceSlabs}>
          Recalculate slab selling total to {money.format(repricePreview)}
        </button>}
-      {sourceError&&<p role="alert" className="quote-source-refresh-error">{sourceError}</p>
+      {sourceError&&<p role="alert" className="quote-source-refresh-error">{sourceError}</p>}
     </div>
   );
 }

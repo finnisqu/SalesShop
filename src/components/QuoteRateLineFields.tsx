@@ -159,7 +159,7 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
           ))}
           {!results.length && <div className="quote-rate-empty">No matching active Rate Book items.</div>}
         </div>
-        {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>
+        {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>}
       </div>
     );
   }
@@ -206,7 +206,7 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
        <button type="button" className="quote-source-apply-price" onClick={applyCatalogPrice}>
          Use Rate Book selling price {money.format(snapshot.sellRate)}
        </button>}
-      {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>
+      {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>}
       {snapshot && !selectedItem && <span className="quote-source-status is-warning">Source unavailable</span>}
       {snapshot && comparison?.changed && currentSnapshot && <span className="quote-source-status">Source updated</span>}
     </div>

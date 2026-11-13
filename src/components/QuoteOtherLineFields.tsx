@@ -89,7 +89,7 @@ export function QuoteOtherLineFields({quoteId,line,disabled=false}:{
    {!hydrated&&<span>Checking Catalog source…</span>}
    {hydrated&&!variant&&<span className="is-warning">
     {loadError?'Catalog lookup unavailable':'Catalog source unavailable'} · quoted values retained
-   </span>
+   </span>}
    {comparison?.changed&&<span>Catalog updated · quote remains unchanged</span>}
    {catalogSellingOverride(line)&&<span>Manual selling price · quoted source retained</span>}
   </div>

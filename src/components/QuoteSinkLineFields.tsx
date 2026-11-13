@@ -235,7 +235,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
        <button type="button" className="quote-source-apply-price" onClick={applyCatalogPrice}>
          Use Catalog selling price {money.format(snapshot.sellPrice)}
        </button>}
-      {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>
+      {sourceError&&<p role="alert" className="quote-source-status is-warning">{sourceError}</p>}
     </div>
   );
 }
