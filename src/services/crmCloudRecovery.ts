@@ -104,7 +104,8 @@ function overlayActivities(remote:Activity[],local:Activity[],changed:string[],c
    if(!newIds.has(row.id))continue;
   }else{
    const localEdit=row.metadata?.editedAt,remoteEdit=server.metadata?.editedAt;
-   if(!localEdit||remoteEdit&&!newer(localEdit,remoteEdit))continue;
+   if(!localEdit||!Number.isFinite(Date.parse(localEdit))||
+       remoteEdit&&!newer(localEdit,remoteEdit))continue;
   }
   byId.set(row.id,row);recovered=true;
  }
