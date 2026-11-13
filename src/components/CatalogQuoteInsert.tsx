@@ -49,7 +49,7 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
   const quotes = useQuoteStore((state) => state.quotes);
   const activeQuoteId = useQuoteStore((state) => state.activeQuoteId);
   const hydrate = useQuoteStore((state) => state.hydrate);
-  const createQuote = useQuoteStore((state) => state.createQuote);
+  const createCatalogQuote = useQuoteStore((state) => state.createCatalogQuote);
   const addCatalogLine = useQuoteStore((state) => state.addCatalogLine);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const eligible = useMemo(() => quotes.filter((quote) =>
@@ -132,16 +132,22 @@ export function CatalogQuoteInsert({ source, onClose }: { source: CatalogQuoteSo
         division: finalTarget?.pricingDivision,
         quantity: quantityValue,
       });
-      const quoteId = finalTarget?.id ?? createQuote({
-        title: newTitle.trim() || `Quote · ${title}`,
-        documentType: 'quote',
-      });
-      const quote = useQuoteStore.getState().quotes.find((item: Quote) => item.id === quoteId);
-      if (!quote || !quoteIsCommerciallyEditable(quote) || quote.documentType === 'pricing-schedule') {
-        setError('That quote is no longer editable. Choose another quote.'); return;
+      const kind=source.kind==='other'?'item':source.kind;
+      let quoteId:string;
+      if(finalTarget){
+        const quote=useQuoteStore.getState().quotes.find((item:Quote)=>item.id===finalTarget.id);
+        if(!quote||!quoteIsCommerciallyEditable(quote)||quote.documentType==='pricing-schedule'){
+          setError('That quote is no longer editable. Choose another quote.');return;
+        }
+        const id=addCatalogLine(quote.id,kind,patch);
+        if(!id){setError('Could not add the line. Check the quote status.');return;}
+        quoteId=quote.id;
+      }else{
+        // One persistence step creates exactly the selected Catalog item;
+        // never leave an empty draft behind after a failed second save.
+        quoteId=createCatalogQuote(newTitle.trim()||`Quote · ${title}`,kind,patch);
+        if(!quoteId){setError('Could not create the Catalog quote.');return;}
       }
-      const id = addCatalogLine(quoteId, source.kind==='other'?'item':source.kind, patch);
-      if (!id) { setError('Could not add the line. Check the quote status.'); return; }
       onClose();
       openQuote(quoteId);
     } catch (reason) {
