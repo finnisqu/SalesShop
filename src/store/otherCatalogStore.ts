@@ -1,4 +1,5 @@
 import {create} from 'zustand';
+import {normalizeCatalogVariantDefaults} from '../services/catalogVariantDefaults';
 import {supabase} from '../lib/supabase';
 import {scopedStorageKey} from '../lib/developerPlayground';
 import {useAuthStore} from './authStore';
@@ -51,7 +52,8 @@ function normalize(raw:unknown):OtherCatalogItem[]{
    active:true,default:true,availableColors:[]});
   return [{id:obj.id,name:obj.name,category:obj.category||'Accessories',
     brand:obj.brand,supplier:obj.supplier,sku:obj.sku,unit:obj.unit,notes:obj.notes,
-    active:obj.active!==false,variants,updatedAt:obj.updatedAt||new Date().toISOString()}];
+    active:obj.active!==false,variants:normalizeCatalogVariantDefaults(variants),
+    updatedAt:obj.updatedAt||new Date().toISOString()}];
  });
 }
 function readLocal(){
@@ -110,22 +112,27 @@ export const useOtherCatalogStore=create<OtherCatalogState>((set,get)=>({
   set({items:next});scheduleSave(next);return id;
  },
  updateItem:(id,patch)=>{
-  const next:OtherCatalogItem[]=get().items.map(item=>item.id===id?{...item,...patch,updatedAt:new Date().toISOString()}:item);
+  const next:OtherCatalogItem[]=get().items.map(item=>item.id===id?{
+   ...item,...patch,variants:normalizeCatalogVariantDefaults(patch.variants??item.variants),
+   updatedAt:new Date().toISOString(),
+  }:item);
   set({items:next});scheduleSave(next);
  },
  addVariant:(id)=>{
   const next:OtherCatalogItem[]=get().items.map(item=>item.id===id?{
    ...item,updatedAt:new Date().toISOString(),
-   variants:[...item.variants,{id:uid('other_variant'),
-    label:'Variant '+(item.variants.length+1),active:true,default:false}],
+   variants:normalizeCatalogVariantDefaults([...item.variants,{id:uid('other_variant'),
+    label:'Variant '+(item.variants.length+1),active:true,default:false}]),
   }:item);
   set({items:next});scheduleSave(next);
  },
  updateVariant:(id,variantId,patch)=>{
   const next:OtherCatalogItem[]=get().items.map(item=>item.id===id?{
    ...item,updatedAt:new Date().toISOString(),
-   variants:item.variants.map(variant=>variant.id===variantId?{...variant,...patch}:
-    patch.default?{...variant,default:false}:variant),
+   variants:normalizeCatalogVariantDefaults(
+    item.variants.map(variant=>variant.id===variantId?{...variant,...patch}:variant),
+    patch.default?variantId:undefined,
+   ),
   }:item);
   set({items:next});scheduleSave(next);
  },
@@ -134,20 +141,17 @@ export const useOtherCatalogStore=create<OtherCatalogState>((set,get)=>({
    if(item.id!==id)return item;
    const source=item.variants.find(variant=>variant.id===variantId);
    if(!source)return item;
-   return {...item,updatedAt:new Date().toISOString(),variants:[
+   return {...item,updatedAt:new Date().toISOString(),variants:normalizeCatalogVariantDefaults([
     ...item.variants,{...structuredClone(source),id:uid('other_variant'),
-      label:source.label+' copy',default:false}]};
+      label:source.label+' copy',default:false}])};
   });
   set({items:next});scheduleSave(next);
  },
  removeVariant:(id,variantId)=>{
   const next:OtherCatalogItem[]=get().items.map(item=>{
    if(item.id!==id||item.variants.length<=1)return item;
-   let variants=item.variants.filter(variant=>variant.id!==variantId);
-   if(!variants.some(v=>v.default&&v.active)){
-    const first=variants.find(v=>v.active);
-    if(first)variants=variants.map(v=>({...v,default:v.id===first.id}));
-   }
+   const variants=normalizeCatalogVariantDefaults(
+    item.variants.filter(variant=>variant.id!==variantId));
    return {...item,variants,updatedAt:new Date().toISOString()};
   });
   set({items:next});scheduleSave(next);
