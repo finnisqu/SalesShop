@@ -37,7 +37,7 @@
 .catalog-product-table tbody tr.is-expanded>td{background:var(--ss-theme-tint);}
 .catalog-product-table .materials-variant-expanded-row>td{padding:0!important;}
 .catalog-product-detail{display:grid;gap:12px;padding:13px;min-width:0;background:var(--ss-theme-base);}
-.catalog-product-detail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.catalog-product-detail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 .catalog-product-detail-head strong{font-size:12px;}
 .catalog-product-detail-head>div{display:grid;gap:4px;min-width:0}
 .catalog-product-default-note{display:block;font:500 11px/1.4 var(--ss-font-body,system-ui,sans-serif);
