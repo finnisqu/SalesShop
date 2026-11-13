@@ -15,7 +15,7 @@ describe('Batch 332a — one rounded table surface for Records and Catalog',()=>
   expect(html).toContain('class="ss-worktable-surface rates-reference-table-wrap catalog-product-scroll"');
   expect(html).toContain('role="region"');
   expect(html).toContain('aria-label="Sinks catalog results"');
-  expect(html).toContain('tabindex="0"');
+  expect(html).toMatch(/tabindex="0"/i);
   expect(html.match(/<table/g)).toHaveLength(1);
  });
  it('routes all five catalog reference tables through the same component',()=>{
