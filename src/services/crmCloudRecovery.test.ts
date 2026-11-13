@@ -71,6 +71,15 @@ describe('CRM interrupted-save recovery',()=>{
    marker({activities:['existing']}));
   expect(latest?.activities[0].metadata?.editedAt).toBe('2026-11-05T12:00:00Z');
  });
+ it('never trusts an invalid CRM activity correction timestamp',()=>{
+  const cloud=doc([],[],[],[activity('call',newer)]);
+  const local=doc([],[],[],[activity('call','not-a-timestamp')]);
+  expect(mergePendingCrmChanges(cloud,local,
+    marker({activities:['call']}))).toEqual(cloud);
+  const prior=doc([],[],[],[activity('call')]);
+  expect(mergePendingCrmChanges(prior,local,
+    marker({activities:['call']}))).toEqual(prior);
+ });
  it('keeps a lightweight, identity-scoped marker and clears only the acknowledged token',()=>{
   const storage=new Map<string,string>();
   vi.stubGlobal('localStorage',{
