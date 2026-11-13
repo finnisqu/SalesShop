@@ -12,10 +12,42 @@ export type CatalogQuoteSource =
   | { kind: 'sink'; model: SinkModel; variantId?: string }
   | { kind: 'rate'; item: RateBookItem };
 
+export function validateCatalogQuoteQuantity(quantity?: number):void{
+  if(quantity!==undefined&&(!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000))
+    throw new Error('Enter a positive quantity no greater than 1,000,000.');
+}
+
+/** Reject an explicit stale/inactive variant instead of silently quoting a
+ * different default option. Unspecified variants may use the active default. */
+export function validateCatalogQuoteSource(source:CatalogQuoteSource,variantId?:string,purchaseOptionId?:string):void{
+  const requestedVariant=variantId??(source.kind==='rate'?undefined:source.variantId);
+  if(source.kind==='material'){
+    if(!source.material.active)throw new Error('This material is inactive. Choose an active catalog item.');
+    const active=(source.material.variants??[]).filter(v=>v.active!==false);
+    if(requestedVariant&&!active.some(v=>v.id===requestedVariant))
+      throw new Error('The selected material variant is inactive or no longer available.');
+    if(purchaseOptionId){
+      const variant=active.find(v=>v.id===requestedVariant)??active.find(v=>v.default)??active[0];
+      if(!variant?.purchaseOptions.some(option=>option.id===purchaseOptionId&&option.active!==false))
+        throw new Error('The selected supplier purchase program is inactive or no longer available.');
+    }
+  }else if(source.kind==='sink'){
+    if(!source.model.active)throw new Error('This sink model is inactive. Choose an active model.');
+    if(requestedVariant&&!source.model.variants.some(v=>v.id===requestedVariant&&v.active))
+      throw new Error('The selected sink variant is inactive or no longer available.');
+    if(!source.model.variants.some(v=>v.active))
+      throw new Error('This sink model has no active variant to quote.');
+  }else if(!source.item.active){
+    throw new Error('This Rate Book item is inactive. Choose an active rate.');
+  }
+}
+
 export function buildCatalogQuoteLinePatch(
   source: CatalogQuoteSource,
   options: { variantId?: string; purchaseOptionId?: string; quantity?: number; division?: RateBookDivision } = {},
 ): Partial<QuoteLine> {
+  validateCatalogQuoteQuantity(options.quantity);
+  validateCatalogQuoteSource(source,options.variantId,options.purchaseOptionId);
   if (source.kind === 'material') {
     const reference = resolveStockMaterialCostReference(source.material, options.variantId ?? source.variantId, options.purchaseOptionId);
     const material = source.material;
