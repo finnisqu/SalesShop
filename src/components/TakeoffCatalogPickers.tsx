@@ -28,7 +28,9 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
   const [variantId,setVariantId]=useState<string|null>(null);
   useEffect(()=>{void hydrate();},[hydrate]);
   useEffect(()=>{if(!open)return;
-    const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node)){setOpen(false);setMaterialId(null);setVariantId(null);}};
+    const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node)){
+      setOpen(false);setSearchTerm('');setMaterialId(null);setVariantId(null);
+    }};
     document.addEventListener('pointerdown',dismiss);
     return()=>document.removeEventListener('pointerdown',dismiss);
   },[open]);
@@ -47,28 +49,42 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
   const variants=(material?.variants??[]).filter(v=>v.active!==false);
   const variant=variants.find(v=>v.id===variantId);
   const complete=(m:StockMaterial,v:MaterialVariant,o?:MaterialPurchaseOption)=>{
+    // Never refresh a quote from an inactive or stale explicit selection.
+    if(!m.active||!m.variants?.some(item=>item.id===v.id&&item.active!==false))return;
+    if(o&&!v.purchaseOptions?.some(item=>item.id===o.id&&item.active!==false))return;
     const resolved=resolveStockMaterialCostReference(m,v.id,o?.id);
+    if(resolved.variant?.id!==v.id||(o&&resolved.purchaseOption?.id!==o.id))return;
     onSelect({
       materialId:m.id,variantId:v.id,purchaseOptionId:resolved.purchaseOption?.id,
       stockProgram:m.stockProgram,pricingSource:'manual-line-rate',
       sourceCostPerSf:resolved.costPerSf,catalogSlabCost:resolved.slabCost,
       snapshot:createQuoteMaterialCostSnapshot(m,resolved),
     },materialLabel(m,v));
-    setOpen(false);setMaterialId(null);setVariantId(null);
+    setOpen(false);setSearchTerm('');setMaterialId(null);setVariantId(null);
+  };
+  const commitCustom=(raw=searchTerm)=>{
+    const name=raw.trim();
+    if(!name)return;
+    onTextChange(name);
+    onCustomCommit?.();
+    setOpen(false);setSearchTerm('');setMaterialId(null);setVariantId(null);
   };
   return <div className="qtl-combobox" ref={root} onKeyDown={event=>{
     if(event.key==='Escape'&&open){
-      event.preventDefault();event.stopPropagation();setOpen(false);setMaterialId(null);setVariantId(null);
+      event.preventDefault();event.stopPropagation();setOpen(false);setSearchTerm('');setMaterialId(null);setVariantId(null);
+    }else if(event.key==='Enter'&&open&&event.target===root.current?.querySelector('input')
+      &&searchTerm.trim()){
+      event.preventDefault();event.stopPropagation();commitCustom();
     }else if(event.key==='ArrowDown'&&open&&event.target===root.current?.querySelector('input')){
       const first=root.current?.querySelector<HTMLButtonElement>('.qtl-combobox-results button');
       if(first){event.preventDefault();first.focus();}
     }
   }}>
     <input type="text" role="combobox" aria-expanded={open} aria-controls={menuId}
-      autoComplete="off" disabled={disabled} value={value} maxLength={300}
-      placeholder="Search catalog colors or type a custom material…"
-      aria-label="Material: type to search Catalog" onFocus={e=>{e.currentTarget.select();setSearchTerm('');setOpen(true);}}
-      onChange={e=>{onTextChange(e.target.value);setSearchTerm(e.target.value);setMaterialId(null);setVariantId(null);setOpen(true);}}/>
+      autoComplete="off" disabled={disabled} value={open?searchTerm:value} maxLength={300}
+      placeholder="Search Catalog or choose a custom material…"
+      aria-label="Material: type to search Catalog" onFocus={()=>{setSearchTerm('');setOpen(true);}}
+      onChange={e=>{setSearchTerm(e.target.value);setMaterialId(null);setVariantId(null);setOpen(true);}}/>
     {open&&<div className="qtl-combobox-menu" id={menuId} role="group" aria-label="Material catalog suggestions">
       {material?<div className="qtl-combobox-results">
         <button type="button" onClick={()=>{if(variant)setVariantId(null);else setMaterialId(null);}}>← Back to {variant?'variants':'materials'}</button>
@@ -83,7 +99,7 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
         {!variants.length&&<p>No active variants available.</p>}
       </div>:<div className="qtl-combobox-results">
         {pinned.filter(p=>!p.reference?.materialId && (!query||p.label.toLowerCase().includes(query))).map(p=>
-          <button type="button" key={p.id} onClick={()=>{onTextChange(p.label);setOpen(false);onCustomCommit?.();}}>
+          <button type="button" key={p.id} onClick={()=>commitCustom(p.label)}>
             <strong>★ {p.label}</strong><small>Project material · Custom</small>
           </button>)}
         {ordered.map(m=><button type="button" key={m.id} onClick={()=>{
@@ -91,8 +107,8 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
         }}><strong>{pinned.some(p=>p.reference?.materialId===m.id)?'★ ':''}{[m.brand,m.name].filter(Boolean).join(' ')}</strong>
           <small>{[m.materialType,m.supplier].filter(Boolean).join(' · ')}</small></button>)}
         {!ordered.length&&<p>No matching Catalog items. Custom names are allowed.</p>}
-        {value.trim()&&<button type="button" onClick={()=>{setOpen(false);onCustomCommit?.();}}>
-          Use custom material “{value.trim()}”</button>}
+        {searchTerm.trim()&&<button type="button" onClick={()=>commitCustom()}>
+          Use custom material “{searchTerm.trim()}”</button>}
       </div>}
     </div>}
     {selected?.materialId&&<small className="qtl-catalog-selected">✓ Linked to Materials Catalog</small>}
@@ -111,7 +127,9 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
   const [searchTerm,setSearchTerm]=useState('');
   useEffect(()=>{void hydrate();},[hydrate]);
   useEffect(()=>{if(!open)return;
-    const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node))setOpen(false);};
+    const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node)){
+      setOpen(false);setSearchTerm('');
+    }};
     document.addEventListener('pointerdown',dismiss);
     return()=>document.removeEventListener('pointerdown',dismiss);
   },[open]);
@@ -131,20 +149,31 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
     onSelect({name:sinkSnapshotDescription(snapshot),category:model.category,
       unitPrice:variant.sellPrice,
       sinkReference:{sinkModelId:model.id,variantId:variant.id,snapshot}});
-    setOpen(false);
+    setOpen(false);setSearchTerm('');
+  };
+  const commitCustom=()=>{
+    const name=searchTerm.trim();
+    if(!name)return;
+    onTextChange(name);
+    setOpen(false);setSearchTerm('');
   };
   return <div className="qtl-combobox" ref={root} onKeyDown={event=>{
-    if(event.key==='Escape'&&open){event.preventDefault();event.stopPropagation();setOpen(false);}
+    if(event.key==='Escape'&&open){
+      event.preventDefault();event.stopPropagation();setOpen(false);setSearchTerm('');
+    }else if(event.key==='Enter'&&open&&event.target===root.current?.querySelector('input')
+      &&searchTerm.trim()){
+      event.preventDefault();event.stopPropagation();commitCustom();
+    }
     else if(event.key==='ArrowDown'&&open&&event.target===root.current?.querySelector('input')){
       const first=root.current?.querySelector<HTMLButtonElement>('.qtl-combobox-results button');
       if(first){event.preventDefault();first.focus();}
     }
   }}>
     <input type="text" role="combobox" aria-expanded={open} aria-controls={menuId}
-      autoComplete="off" disabled={disabled} value={value} maxLength={160}
-      placeholder="Search sink catalog…" aria-label="Sink model: type to search Catalog"
-      onFocus={e=>{e.currentTarget.select();setSearchTerm('');setOpen(true);}}
-      onChange={e=>{onTextChange(e.target.value);setSearchTerm(e.target.value);setOpen(true);}}/>
+      autoComplete="off" disabled={disabled} value={open?searchTerm:value} maxLength={160}
+      placeholder="Search sink Catalog…" aria-label="Sink model: type to search Catalog"
+      onFocus={()=>{setSearchTerm('');setOpen(true);}}
+      onChange={e=>{setSearchTerm(e.target.value);setOpen(true);}}/>
     {open&&<div className="qtl-combobox-menu" id={menuId} role="group" aria-label="Sink catalog suggestions">
       <div className="qtl-combobox-results">
         {results.map(({model,variant})=><button key={variant.id} type="button"
@@ -154,8 +183,8 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
           {variant.sellPrice!==undefined?` · Sell $${variant.sellPrice.toFixed(2)}`:' · Unpriced'}</small>
         </button>)}
         {!results.length&&<p>No matching active catalog sinks. Custom names are allowed.</p>}
-        {value.trim()&&<button type="button" onClick={()=>setOpen(false)}>
-          Use custom sink “{value.trim()}”</button>}
+        {searchTerm.trim()&&<button type="button" onClick={commitCustom}>
+          Use custom sink “{searchTerm.trim()}”</button>}
       </div>
     </div>}
   </div>;
