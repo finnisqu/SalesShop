@@ -33,8 +33,12 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
   setSaving(true);setError('');
   try{
    await action();
+   // Some create actions open a new editor/dialog. Never steal its focus
+   // back to the picker after the async action finishes.
+   const stillInside=Boolean(rootRef.current?.contains(document.activeElement));
    setOpen(false);setQuery('');
-   triggerRef.current?.focus({preventScroll:true});
+   if(stillInside&&triggerRef.current?.isConnected)
+    triggerRef.current.focus({preventScroll:true});
   }catch(e){setError(e instanceof Error?e.message:'Unable to update the record.');}
   finally{pendingRef.current=false;setSaving(false);}
  };
