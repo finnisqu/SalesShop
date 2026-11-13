@@ -35,6 +35,18 @@ describe('Batch 328 — shared Catalog reset semantics',()=>{
    expect(block).not.toContain('setPinnedKeys(');
   }
  });
+ it('recovers directly from empty tables and resets mobile filters through the same handler',()=>{
+  for(const path of paths){
+   const worktable=source(path);
+   expect(worktable).toContain('catalog-product-empty-results');
+   expect(worktable).toContain('onReset={resetCatalogView}');
+  }
+  const materials=source(paths[0]),rates=source(paths[3]);
+  expect(materials).toContain('<MobileCatalogActiveFilters items={activeMobileFilters} onClear={resetCatalogView}');
+  expect(materials).toContain('onReset={catalogViewFilterCount ? resetCatalogView : undefined}');
+  expect(rates).toContain('onClear={resetCatalogView}');
+  expect(rates).toContain('onReset={catalogViewFilterCount ? resetCatalogView : undefined}');
+ });
  it('reaches the shared Catalog page search and preserves top-level navigation',()=>{
   const catalog=source('components/CatalogWorkspace.tsx');
   expect((catalog.match(/onClearExternalQuery=\{\(\)=>setCatalogSearch\(''\)\}/g)||[]).length).toBe(4);

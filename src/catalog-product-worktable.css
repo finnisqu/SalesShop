@@ -1054,3 +1054,22 @@
 :root[data-sales-theme] .sales-app.view-catalog .catalog-card-reset:disabled{
  opacity:.45;cursor:default;
 }
+
+/* Catalog no-match rows reuse the same non-destructive reset as the filter
+   popover. In a genuinely empty Catalog there is nothing to reset. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-product-empty-results{
+ display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;
+ gap:10px;min-width:0;padding:9px 12px;
+ color:var(--ss-theme-muted);font-size:12px;line-height:1.45;
+}
+:root[data-sales-theme] .sales-app.view-catalog .catalog-product-empty-results .catalog-card-reset{
+ flex:0 0 auto;width:auto;min-width:145px;margin:0;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-empty-results{
+  align-items:stretch;flex-direction:column;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-empty-results .catalog-card-reset{
+  align-self:flex-start;min-height:42px;
+ }
+}

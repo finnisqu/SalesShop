@@ -473,7 +473,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
         </div>
       </section>}
       {sectionView === 'catalog' && !editing && (
-        <MobileCatalogActiveFilters items={activeMobileFilters} onClear={() => { setQuery(''); clearFilters(); }} />
+        <MobileCatalogActiveFilters items={activeMobileFilters} onClear={resetCatalogView} />
       )}
 
       {sectionView === 'catalog' && !editing && mobileFilterOpen && (
@@ -677,7 +677,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
                 label="Materials and default purchase costs"
                 empty={!materials.length}
                 emptyMessage="No active materials match the current search and filters."
-                onReset={query.trim() || activeFilterCount ? () => { setQuery(''); clearFilters(); } : undefined}
+                onReset={catalogViewFilterCount ? resetCatalogView : undefined}
               >
                 {pagedMaterials.map((material) => {
                   const reference = resolveStockMaterialCostReference(material);
@@ -740,7 +740,10 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
                       </Fragment>
                     );
                   })}
-                  {!materials.length && <tr><td colSpan={8}><div className="rates-reference-empty">No active materials match the current search and filters.</div></td></tr>}
+                  {!materials.length && <tr><td colSpan={8}><div className="rates-reference-empty catalog-product-empty-results">
+                    <span role="status">No active materials match the current search and filters.</span>
+                    {catalogViewFilterCount>0&&<CatalogFilterReset activeCount={catalogViewFilterCount} onReset={resetCatalogView}/>}
+                  </div></td></tr>}
                 </tbody>
               </table>
             </div>

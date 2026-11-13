@@ -315,7 +315,12 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
         </td></tr>}
        </Fragment>;
       })}
-      {!filtered.length&&<tr><td colSpan={7}>No sink models match. Clear filters or add a sink.</td></tr>}
+      {!filtered.length&&<tr><td colSpan={7}>
+       <div className="catalog-product-empty-results">
+        <span role="status">No sink models match. Clear filters or add a sink.</span>
+        {activeFilterCount>0&&<CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>}
+       </div>
+      </td></tr>}
      </tbody>
     </table>
    </div>

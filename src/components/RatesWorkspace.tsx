@@ -306,7 +306,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
         )}
       </section>
       {!editing && <MobileCatalogActiveFilters items={activeMobileFilters}
-        onClear={() => { setQuery(''); selectCategory('all'); clearReferenceFilters(); }} />}
+        onClear={resetCatalogView} />}
 
       {!editing && !showingMaterialPricing && mobileFilterOpen && (
         <MobileCatalogFilterSheet section="Rates" onClose={() => setMobileFilterOpen(false)}>
@@ -365,9 +365,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
               label="Company rate reference"
               empty={!rateRows.length}
               emptyMessage="No active rates match the current search and filters."
-              onReset={query.trim() || category !== 'all' || activeReferenceFilters ? () => {
-                setQuery(''); selectCategory('all'); clearReferenceFilters();
-              } : undefined}
+              onReset={catalogViewFilterCount ? resetCatalogView : undefined}
             >
               {pagedRates.map((item) => {
                 const expanded = expandedRateId === item.id;
@@ -411,7 +409,10 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
                       <td>{item.effectiveDate || '—'}</td>
                     </tr>
                   ))}
-                  {!rateRows.length && <tr><td colSpan={7}><div className="rates-reference-empty">No active rates match the current search and filters.</div></td></tr>}
+                  {!rateRows.length && <tr><td colSpan={7}><div className="rates-reference-empty catalog-product-empty-results">
+                    <span role="status">No active rates match the current search and filters.</span>
+                    {catalogViewFilterCount>0&&<CatalogFilterReset activeCount={catalogViewFilterCount} onReset={resetCatalogView}/>}
+                  </div></td></tr>}
                 </tbody>
               </table>
             </div>

@@ -268,7 +268,12 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
        </td></tr>}
       </Fragment>;
      })}
-     {!filtered.length&&<tr><td colSpan={7}>No items match. Use + Item to begin your Other catalog.</td></tr>}
+     {!filtered.length&&<tr><td colSpan={7}>
+      <div className="catalog-product-empty-results">
+       <span role="status">No items match. Use + Item to begin your Other catalog.</span>
+       {activeFilterCount>0&&<CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>}
+      </div>
+     </td></tr>}
      </tbody>
     </table>
    </div>
