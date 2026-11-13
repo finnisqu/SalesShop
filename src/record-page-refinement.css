@@ -63,7 +63,8 @@
 .ss-deal-relations .ss-record-unlink-button:hover{border-color:var(--ss-danger,#a43b38);
  color:var(--ss-danger,#a43b38)}
 @media(hover:none){.ss-record-pencil{opacity:.9}}
-@media(max-width:760px){.ss-record-pencil{opacity:1;min-height:36px;flex-basis:36px}
- .ss-record-actions-menu>summary{min-height:40px;min-width:40px}
+@media(max-width:760px){.ss-record-pencil{opacity:1;min-height:44px;flex-basis:44px}
+ .ss-record-actions-menu>summary{min-height:44px;min-width:44px}
  .ss-record-recents-tabs button{padding:6px}
- .ss-record-inline-editor :is(input,select){font-size:16px;min-height:40px}}
+ .ss-record-inline-editor :is(input,select){font-size:16px;min-height:44px}
+ .ss-record-inline-editor button{flex-basis:44px;min-height:44px}}
