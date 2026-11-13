@@ -905,11 +905,11 @@ export function QuotesMobileBeta() {
       onClick:()=>setLibraryMode('team')}]:[]),
   ];
   const libraryActionItems:WorktableActionItem[]=[
+    {label:'Record external quote',onClick:()=>setRecordExternalOpen(true),
+      disabled:!canManageLibrary},
     {label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
-    {label:'Clear search and filters',onClick:resetLibraryFilters,disabled:!hasLibraryFilters},
   ];
   const renderLibraryToolbarMenus=()=> <>
-
     <WorktableActionMenu label="Views" items={libraryViewItems}/>
     <WorktableActionMenu label="Actions" items={libraryActionItems}/>
   </>;
