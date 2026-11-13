@@ -70,6 +70,20 @@ describe('Batch 332e — unified Record inline property editing',()=>{
   expect(source('RecordUnlinkAction.tsx')).toContain("['Draft','Ready'].includes(quote.status)");
   expect(source('RecordTasksPanel.tsx')).toContain('!isProtectedBidTask(task)');
  });
+ it('keeps linked-record navigation separate from compact Unlink buttons in every theme',()=>{
+  const css=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
+  const entity=readFileSync(new URL('../connections-record-pages.css',import.meta.url),'utf8');
+  expect(entity).toContain('.connections-record-entity-list :is(article,button){');
+  expect(css).toContain('grid-template-columns:minmax(0,1fr) auto');
+  expect(css).toContain('.connections-record-entity-list :is(.ss-record-associated-row,article)');
+  expect(css).toContain('.ss-record-unlink-control>.ss-record-unlink-button{');
+  expect(css).toContain('width:auto;min-width:0;min-height:34px;');
+  expect(css).toContain('color:var(--ss-theme-muted);background:var(--ss-theme-card)');
+  expect(css).toContain('min-height:44px}}');
+  for(const name of ['CompanyRecordPage','PersonRecordPage','DealRecordPage','RecordTasksPanel']){
+   expect(source(name+'.tsx')).toContain('className="ss-record-associated-row"');
+  }
+ });
  it('keeps mobile inline editor inputs, Save, Cancel and pencil touch-sized',()=>{
   const css=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
   expect(css).toContain('.ss-record-pencil{opacity:1;min-height:44px;flex-basis:44px}');

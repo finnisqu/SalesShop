@@ -62,6 +62,39 @@
 .ss-record-recent-activity-list button small{font-size:10px;white-space:nowrap;color:var(--ss-theme-muted)}
 /* Unlink actions share one visual and confirmation treatment in all
  * relationship panels, including private Tasks and direct Deal contacts. */
+/* An associated record has one primary navigation target and one compact,
+ * secondary Unlink control. The older entity-list rule makes every button
+ * width:100%; override it only within linked rows and Person cards. */
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-entity-list .ss-record-associated-row{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;
+ align-items:center;gap:8px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-entity-list .ss-record-associated-row>button{
+ min-width:0;max-width:100%;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-entity-list :is(.ss-record-associated-row,article)
+ .ss-record-unlink-control{
+ justify-self:end;align-self:center;min-width:0;max-width:100%;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-entity-list :is(.ss-record-associated-row,article)
+ .ss-record-unlink-control>.ss-record-unlink-button{
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ width:auto;min-width:0;min-height:34px;padding:6px 10px;
+ font:650 11px/1.25 var(--ss-font-body,system-ui,sans-serif);
+ color:var(--ss-theme-muted);background:var(--ss-theme-card);
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-entity-list :is(.ss-record-associated-row,article)
+ .ss-record-unlink-control>.ss-record-unlink-button:not(:disabled):hover{
+ color:var(--ss-danger,#a43b38);border-color:var(--ss-danger,#a43b38);
+ background:var(--ss-theme-card);
+}
 .ss-record-unlink-control{display:inline-flex;flex:0 0 auto;flex-direction:column;
  align-items:flex-start;gap:4px;min-width:0}
 .ss-record-unlink-error{display:block;max-width:210px;color:var(--ss-danger,#a43b38);
@@ -82,7 +115,10 @@
  .ss-record-recents-tabs button{padding:6px}
  .ss-record-inline-editor :is(input,select){font-size:16px;min-height:44px}
  .ss-record-inline-editor button{flex-basis:44px;min-height:44px}
- .ss-record-unlink-control .ss-record-unlink-button{min-height:44px}}
+ .ss-record-unlink-control .ss-record-unlink-button{min-height:44px}
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-record-entity-list :is(.ss-record-associated-row,article)
+  .ss-record-unlink-control>.ss-record-unlink-button{min-height:44px}}
 
 
 /* Programmatic Record section jumps remain visibly discoverable when navigated
