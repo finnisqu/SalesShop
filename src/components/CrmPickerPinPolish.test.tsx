@@ -58,6 +58,13 @@ describe('Unified CRM relationship field and pin polish',()=>{
   expect(parent).toContain("layerRef.current?.querySelector('.ss-unified-picker-panel')");
   expect(css).toContain('max-height:min(25dvh,180px)');
   expect(css).toContain('overscroll-behavior:contain');
+  expect(picker).toContain('aria-busy={saving}');
+  expect(picker).toContain("saving?'Saving…'");
+  expect(picker).toContain('matching.length>matches.length');
+  expect(picker).toContain('Showing {matches.length} of {matching.length}');
+  expect(picker).toContain('if(stillInside)window.requestAnimationFrame');
+  expect(picker).toContain('if(focused!==document.body&&!rootRef.current?.contains(focused))return;');
+  expect(css).toContain('.ss-unified-picker-limit');
  });
  it('renders a symmetric, readable shared pin used by the worktables and Materials',()=>{
   const icon=renderToStaticMarkup(<WorkspaceChromeIcon name="pin"/>);
