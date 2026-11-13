@@ -221,7 +221,17 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
    {pins.length>0&&<div className="connections-pin-tray" aria-label="Pinned comparisons">
      <header><strong><WorkspaceChromeIcon name="pin"/> Pinned ({pins.length})</strong>
        <div className="connections-pin-actions">
-        <button type="button" onClick={()=>setSelected(old=>[...new Set([...old,...pins.map(row=>row.id)])])}>Select pinned</button>
+        <button type="button" onClick={()=>setSelected(old=>[...new Set([...old,...pins.map(row=>row.id)])])}>
+         Select pinned
+        </button>
+        {onBulkTask&&<button type="button" onClick={()=>onBulkTask(pins)}>
+         Create task
+        </button>}
+        {onBulkEdit&&['companies','people','deals'].includes(tableKey)&&
+         <button type="button" onClick={()=>{
+          setSelected(pins.map(row=>row.id));
+          setBulkEditing(true);
+         }}>Bulk edit pins</button>}
         <button type="button" onClick={()=>setPinned([])}>Clear pins</button>
        </div></header>
      <div className="connections-pin-items">{pins.map(item=><div key={item.id}>
