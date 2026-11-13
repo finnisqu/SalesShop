@@ -75,7 +75,7 @@ export function clearPendingCrmSync(scope:CrmRecoveryScope,token:string){
 }
 const newer=(local:string,server:string)=>{
  const a=Date.parse(local),b=Date.parse(server);
- return Number.isFinite(a)&&Number.isFinite(b)?a>b:local>server;
+ return Number.isFinite(a)&&Number.isFinite(b)&&a>b;
 };
 function overlay<T extends {id:string;updatedAt:string}>(
  remote:T[],local:T[],changed:string[],created:string[]
