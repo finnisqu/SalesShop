@@ -267,6 +267,8 @@ export interface QuoteEstimateLineMetadata {
 export interface QuoteLineRateReference {
   rateBookItemId?: string;
   snapshot?: QuoteRateSnapshot;
+  /** OTHER catalog snapshot uses the existing private JSONB reference column. */
+  otherCatalog?:QuoteLineOtherReference;
   /** JSON-backed custom estimate metadata; avoids a production schema migration. */
   estimate?: QuoteEstimateLineMetadata;
 }
