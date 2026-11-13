@@ -36,6 +36,40 @@ describe('mobile Area internal supplier cost comparison',()=>{
     expect(cost.currentCatalogCostPerSf).toBeUndefined();
     expect(cost.quotedCostPerSf).toBe(13.5);
   });
+  it('resolves the exact supplier program from a frozen legacy snapshot when outer IDs are absent',()=>{
+    const ref:QuoteLineMaterialReference={
+      stockProgram:true,pricingSource:'manual-line-rate',sourceCostPerSf:13.5,
+      snapshot:{
+        capturedAt:'2026-11-01T00:00:00Z',materialId:'quartz-one',
+        materialName:'Ashen White',stockProgram:true,
+        variantId:'3cm',purchaseOptionId:'supplier',costPerSf:13.5,
+      },
+    };
+    const result=selectedMaterialCost('Ashen White',ref,materials);
+    expect(result).toMatchObject({
+      quotedCostPerSf:13.5,currentCatalogCostPerSf:14.25,catalogCostChanged:true,
+    });
+  });
+  it('never compares an unspecified saved variant against a default Catalog variant',()=>{
+    const ref:QuoteLineMaterialReference={
+      materialId:'quartz-one',stockProgram:true,
+      pricingSource:'manual-line-rate',sourceCostPerSf:13.5,
+    };
+    const result=selectedMaterialCost('Ashen White',ref,materials);
+    expect(result).toMatchObject({
+      quotedCostPerSf:13.5,currentCatalogCostPerSf:undefined,catalogCostChanged:false,
+    });
+  });
+  it('returns no current supplier cost for an inactive or missing exact purchase program',()=>{
+    const ref={...reference(13.5),purchaseOptionId:'removed'};
+    expect(selectedMaterialCost('Ashen White',ref,materials).currentCatalogCostPerSf)
+      .toBeUndefined();
+    const noOptions:StockMaterial[]=[{
+      ...materials[0],variants:[{...materials[0].variants![0],purchaseOptions:undefined}],
+    }];
+    expect(selectedMaterialCost('Ashen White',ref,noOptions).currentCatalogCostPerSf)
+      .toBeUndefined();
+  });
   it('does not invent a cost for free-text materials or missing supplier prices',()=>{
     expect(selectedMaterialCost('Unlisted Quartz',undefined,materials)).toMatchObject({
       materialName:'Unlisted Quartz',quotedCostPerSf:undefined,
