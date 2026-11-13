@@ -37,6 +37,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
  const hydrated=useOtherCatalogStore(s=>s.hydrated);
  const saving=useOtherCatalogStore(s=>s.saving),error=useOtherCatalogStore(s=>s.error);
  const addItem=useOtherCatalogStore(s=>s.addItem),updateItem=useOtherCatalogStore(s=>s.updateItem);
+ const duplicateItem=useOtherCatalogStore(s=>s.duplicateItem);
  const addVariant=useOtherCatalogStore(s=>s.addVariant),updateVariant=useOtherCatalogStore(s=>s.updateVariant);
  const duplicateVariant=useOtherCatalogStore(s=>s.duplicateVariant);
  const removeVariant=useOtherCatalogStore(s=>s.removeVariant);
@@ -104,6 +105,12 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
    if(a<0||b<0||b>=old.length)return old;
    const copy=[...old];[copy[a],copy[b]]=[copy[b],copy[a]];return copy;
   });
+ };
+ const duplicateCatalogItem=(itemId:string)=>{
+  const id=duplicateItem(itemId);
+  if(!id)return;
+  setQuery('');setCategory('all');setShowInactive(false);setSort('category');
+  onClearExternalQuery?.();setExpanded(id);setEditing(true);
  };
  const update=(item:OtherCatalogItem,field:keyof OtherCatalogItem,value:unknown)=>
   updateItem(item.id,{[field]:value});
@@ -196,7 +203,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
         <td>{item.category}</td>
         <td className="rates-reference-item"><button type="button" className="materials-name-toggle"
          aria-expanded={open} onClick={()=>setExpanded(open?null:item.id)}><strong>{item.name}</strong></button>
-         <small>{item.sku||'No SKU'}{!item.active?' · Inactive':''}</small></td>
+         <small>{item.sku||'No SKU'}{!item.active?' · Archived':''}</small></td>
         <td>{item.brand||item.supplier||'—'}</td><td>{item.unit||'each'}</td>
         <td>{defaultVariant?.internalCost===undefined?'—':money.format(defaultVariant.internalCost)}</td>
         <td>{defaultVariant?.sellPrice===undefined?'—':money.format(defaultVariant.sellPrice)}</td>
@@ -216,13 +223,17 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
           <label className="catalog-product-property"><span>General notes</span>
            <textarea rows={2} value={item.notes??''} onChange={event=>update(item,'notes',event.target.value)}/>
           </label>
-          <label className="catalog-product-property"><span>Active</span><input type="checkbox"
-           checked={item.active} onChange={event=>update(item,'active',event.target.checked)}/></label>
+          <label className="catalog-product-property"><span>Active in catalog</span><input type="checkbox"
+           checked={item.active} onChange={event=>update(item,'active',event.target.checked)}/>
+           <small className="catalog-product-default-note">Uncheck to archive; saved quotes keep their original selections.</small></label>
          </div>}
          <div className="catalog-product-detail-head"><div><strong>Item variants</strong>
            {editing&&<small className="catalog-product-default-note">
             Choose an active variant as default for new selections.</small>}</div>
-          {editing&&<button type="button" onClick={()=>addVariant(item.id)}>+ Variant</button>}
+          {editing&&<span className="catalog-product-variant-operations">
+            <button type="button" onClick={()=>duplicateCatalogItem(item.id)}>Duplicate item</button>
+            <button type="button" onClick={()=>addVariant(item.id)}>+ Variant</button>
+           </span>}
          </div>
          <div className="catalog-product-variant-list">
           {item.variants.filter(v=>showInactive||v.active).map(variant=>{
