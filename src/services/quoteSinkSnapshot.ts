@@ -32,6 +32,13 @@ export function createQuoteSinkSnapshot(
     sellPrice: variant.sellPrice,
     effectiveDate: variant.effectiveDate,
     sourceUpdatedAt: model.updatedAt,
+    finish:variant.finish,cornerRadiusIn:variant.cornerRadiusIn,
+    bowlWidthIn:variant.bowlWidthIn,bowlLengthIn:variant.bowlLengthIn,
+    bowlHeightIn:variant.bowlHeightIn,
+    totalWidthIn:variant.totalWidthIn??model.widthIn,
+    totalLengthIn:variant.totalLengthIn??model.depthIn,
+    totalHeightIn:variant.totalHeightIn??model.heightIn,
+    availableColors:(variant.availableColors?.length?variant.availableColors:model.availableColors)?.slice(),
   };
 }
 
@@ -54,7 +61,16 @@ export function compareQuoteSinkSnapshot(
     || quoted.variantCode !== current.variantCode
     || quoted.configuration !== current.configuration
     || quoted.ada !== current.ada
-    || quoted.effectiveDate !== current.effectiveDate;
+    || quoted.effectiveDate !== current.effectiveDate
+    || quoted.finish !== current.finish
+    || quoted.cornerRadiusIn !== current.cornerRadiusIn
+    || quoted.bowlWidthIn !== current.bowlWidthIn
+    || quoted.bowlLengthIn !== current.bowlLengthIn
+    || quoted.bowlHeightIn !== current.bowlHeightIn
+    || quoted.totalWidthIn !== current.totalWidthIn
+    || quoted.totalLengthIn !== current.totalLengthIn
+    || quoted.totalHeightIn !== current.totalHeightIn
+    || JSON.stringify(quoted.availableColors??[])!==JSON.stringify(current.availableColors??[]);
 
   return {
     changed: sellPriceChanged || internalCostChanged || sourceChanged,
