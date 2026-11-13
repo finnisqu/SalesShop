@@ -2,7 +2,7 @@ import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import type {Quote,QuoteLine,QuoteSection,QuoteTakeoffSink} from '../types/quote';
 import {quoteLineAmount,quoteTotal} from '../types/quote';
-import {catalogSellingOverride} from '../services/quoteCatalogLineEditing';
+import {QuoteOtherLineFields} from './QuoteOtherLineFields';
 import {useQuoteStore} from '../store/quoteStore';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
@@ -362,13 +362,10 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
      {(detail.kind==='specialty'||!section&&detail.kind==='total')&&<>
       <p>Specialty charges, products, freight and discounts. Each line remains independently editable.</p>
       {extras.map(line=><section key={line.id} className="qqs-item-card">
-       {line.otherReference&&<small className="qqs-catalog-source" aria-label="Saved product catalog reference">
-        Catalog source · {line.otherReference.snapshot.itemName} · {line.otherReference.snapshot.variantLabel}
-        {catalogSellingOverride(line)?' · Manual selling override':''}
-        {' · '}Private unit cost {(line.unitCost??line.otherReference.snapshot.internalCost)===undefined
-          ?'not recorded':amount(line.unitCost??line.otherReference.snapshot.internalCost??0)}
-        {line.internalCost!==undefined?' · Private total cost overridden':''}
-       </small>}
+       {line.otherReference&&<QuoteOtherLineFields
+        quoteId={quote.id} line={line} disabled={!editable}/>}
+       {line.otherReference&&line.internalCost!==undefined&&
+        <small className="qqs-catalog-source">Private total cost manually overridden</small>}
        <label>Description
         <input type="text" disabled={!editable} value={line.description}
          onChange={e=>changeLine(line,{description:e.target.value})}/>
