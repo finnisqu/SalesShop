@@ -369,3 +369,14 @@
  .qtl-combobox>input{font-size:16px;}
  .qtl-combobox-menu .qtl-combobox-results>button{min-height:44px;}
 }
+
+/* Preserve a saved Material reference if Catalog no longer has its exact
+ * variant/program. Always display the warning outside collapsed cost details. */
+.qmb-material-picker .qmb-material-source-warning{
+ margin:6px 0;min-width:0;padding:7px 9px;
+ border:1px solid var(--ss-theme-border,#d1dad2);
+ border-radius:7px;background:var(--ss-theme-base,#fffdfa);
+ color:var(--ss-danger,#b44e43);
+ font:600 11px/1.5 system-ui,sans-serif;
+ overflow-wrap:anywhere;
+}
