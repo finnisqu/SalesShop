@@ -2,6 +2,8 @@ import { createQuoteMaterialCostSnapshot } from './quoteMaterialSnapshot';
 import { createQuoteRateSnapshot, rateSnapshotLinePatch } from './quoteRateSnapshot';
 import { createQuoteSinkSnapshot, sinkSnapshotLinePatch } from './quoteSinkSnapshot';
 import { createQuoteOtherSnapshot, otherSnapshotLinePatch } from './quoteOtherSnapshot';
+import {activeCatalogDefaultVariant} from './catalogVariantDefaults';
+import {defaultSinkVariant} from '../types/sink';
 import type {OtherCatalogItem} from '../store/otherCatalogStore';
 import { resolveStockMaterialCostReference, type StockMaterial } from '../types/settings';
 import type { SinkModel } from '../types/sink';
@@ -99,8 +101,7 @@ export function buildCatalogQuoteLinePatch(
   }
   if (source.kind === 'sink') {
     const variant = source.model.variants.find((item) => item.id === (options.variantId ?? source.variantId) && item.active)
-      ?? source.model.variants.find((item) => item.active && item.default)
-      ?? source.model.variants.find((item) => item.active);
+      ?? defaultSinkVariant(source.model);
     if (!variant) throw new Error('This sink model has no active variant to quote.');
     const patch = sinkSnapshotLinePatch(createQuoteSinkSnapshot(source.model, variant));
     return { ...patch, quantity: options.quantity ?? 1 };
@@ -108,8 +109,7 @@ export function buildCatalogQuoteLinePatch(
   if(source.kind==='other'){
     const requested=options.variantId??source.variantId;
     const variant=(requested?source.item.variants.find(item=>item.id===requested&&item.active):undefined)
-      ??source.item.variants.find(item=>item.default&&item.active)
-      ??source.item.variants.find(item=>item.active);
+      ??activeCatalogDefaultVariant(source.item.variants);
     if(!variant)throw new Error('This Other catalog item has no active variant to quote.');
     return {...otherSnapshotLinePatch(createQuoteOtherSnapshot(source.item,variant)),
       quantity:options.quantity??1};
