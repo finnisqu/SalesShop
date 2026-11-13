@@ -103,16 +103,18 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(headerIndex).toBeGreaterThan(frameIndex);
   expect(mainIndex).toBeGreaterThan(headerIndex);
   expect(quotes).toContain("{page==='library'&&");
-  // The desktop nav spans the full header grid, never only grid column 2.
-  // This prevents the former grid-relative 50% offset in Quotes.
+  // All Records sections, including Quotes, use the SAME desktop
+  // navigation placement. Centering Quotes alone did not match Deals.
   const navCss=src('workspace-tab-nav.css');
-  expect(navCss).toContain('.qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tabs');
+  expect(navCss).toContain('.sales-app:is(.view-dashboard,.view-quotes)');
+  expect(navCss).toContain('.ss-workspace-header:has(>.ss-workspace-header__tabs>.records-section-nav)');
   expect(navCss).toContain('grid-column:1 / -1!important');
   expect(navCss).toContain('position:absolute!important');
   expect(navCss).toContain('inset:0!important');
   expect(navCss).toContain('pointer-events:none');
   expect(navCss).toContain('>.ss-workspace-header__tabs>.records-section-nav{\n  pointer-events:auto;');
   expect(navCss).not.toContain('left:50%!important');
+  expect(navCss).not.toContain('/* Quotes: center the Records tabs against the ENTIRE desktop header.');
   expect(quotes).not.toContain('more={<WorkspaceMoreMenu compact label="Quote actions"');
   expect(quotes).toContain('tabs={<RecordsSectionNav selected="quotes"');
   expect(quotes).toContain('toolbarControls={renderLibraryToolbarMenus()}');
