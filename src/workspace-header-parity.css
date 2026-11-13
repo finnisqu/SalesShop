@@ -182,31 +182,3 @@
   grid-row:2;grid-column:1/-1;
  }
 }
-
-/* Quotes is a Records view with an additional action-More in its right
- * tools group. Do not absolutely position a grid child: its grid placement
- * creates a separate containing block, so left:50% moves the tab group
- * away from the viewport center and into the right-hand tools.
- * Use the same symmetric three-column grid as the other workspace headers. */
-@media(min-width:1400px){
- :root[data-sales-theme] .sales-app.view-quotes
- .qmb-library-workspace-header.ss-workspace-header{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) minmax(0,440px) minmax(0,1fr)!important;
-  align-items:center!important;
- }
- :root[data-sales-theme] .sales-app.view-quotes
- .qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tabs{
-  position:static!important;
-  grid-column:2!important;grid-row:1!important;
-  transform:none!important;
-  width:100%!important;max-width:100%!important;
-  min-width:0!important;margin:0!important;
-  justify-self:center!important;justify-content:center!important;
- }
- :root[data-sales-theme] .sales-app.view-quotes
- .qmb-library-workspace-header.ss-workspace-header>.ss-workspace-header__tools{
-  grid-column:3!important;grid-row:1!important;
-  justify-self:end!important;
- }
-}
