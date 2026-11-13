@@ -148,4 +148,36 @@ describe('Batch 333 — persisted Sink and OTHER variant management',()=>{
   useOtherCatalogStore.getState().updateVariant('other333','retired',{active:true});
   expect(defaults(otherVariants())).toEqual(['retired']);
  });
+ it('archives and restores a Sink model without deleting variants or repricing quotes',()=>{
+  const store=useSinkCatalogStore.getState();
+  const before=structuredClone(store.models[0]);
+  const quoted=createQuoteSinkSnapshot(before,before.variants[0]);
+  store.updateModel('sink333',{active:false});
+  expect(useSinkCatalogStore.getState().models[0].active).toBe(false);
+  expect(useSinkCatalogStore.getState().models[0].variants).toEqual(before.variants);
+  store.updateVariant('sink333','chrome',{active:false});
+  expect(defaults(sinkVariants())).toEqual(['black']);
+  store.updateModel('sink333',{active:true});
+  store.updateVariant('sink333','chrome',{active:true});
+  expect(defaults(sinkVariants())).toEqual(['black']);
+  expect(sinkVariants().map(v=>v.id)).toEqual(before.variants.map(v=>v.id));
+  expect(quoted).toMatchObject({sinkModelId:'sink333',variantId:'chrome',sellPrice:220,internalCost:110});
+  expect(saved.has('salesshop-sink-catalog-v1')).toBe(true);
+ });
+ it('archives and restores OTHER without silently reclaiming the active default',()=>{
+  const store=useOtherCatalogStore.getState();
+  const before=structuredClone(store.items[0]);
+  const quoted=createQuoteOtherSnapshot(before,before.variants[0]);
+  store.updateItem('other333',{active:false});
+  expect(useOtherCatalogStore.getState().items[0].active).toBe(false);
+  expect(useOtherCatalogStore.getState().items[0].variants).toEqual(before.variants);
+  store.updateVariant('other333','chrome',{active:false});
+  expect(defaults(otherVariants())).toEqual(['black']);
+  store.updateItem('other333',{active:true});
+  store.updateVariant('other333','chrome',{active:true});
+  expect(defaults(otherVariants())).toEqual(['black']);
+  expect(otherVariants().map(v=>v.id)).toEqual(before.variants.map(v=>v.id));
+  expect(quoted).toMatchObject({itemId:'other333',variantId:'chrome',sellPrice:65,internalCost:30});
+  expect(saved.has('salesshop-catalog-other-v1')).toBe(true);
+ });
 });
