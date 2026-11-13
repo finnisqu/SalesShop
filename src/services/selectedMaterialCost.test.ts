@@ -30,11 +30,13 @@ describe('mobile Area internal supplier cost comparison',()=>{
     expect(cost.quotedCostPerSf).toBe(13.5);
     expect(cost.currentCatalogCostPerSf).toBeUndefined();
     expect(cost.catalogCostChanged).toBe(false);
+    expect(cost.catalogSourceUnavailable).toBe(true);
   });
   it('does not substitute a default variant cost for a missing exact variant',()=>{
     const cost=selectedMaterialCost('Ashen White',{...reference(13.5),variantId:'missing'},materials);
     expect(cost.currentCatalogCostPerSf).toBeUndefined();
     expect(cost.quotedCostPerSf).toBe(13.5);
+    expect(cost.catalogSourceUnavailable).toBe(true);
   });
   it('resolves the exact supplier program from a frozen legacy snapshot when outer IDs are absent',()=>{
     const ref:QuoteLineMaterialReference={
@@ -48,6 +50,7 @@ describe('mobile Area internal supplier cost comparison',()=>{
     const result=selectedMaterialCost('Ashen White',ref,materials);
     expect(result).toMatchObject({
       quotedCostPerSf:13.5,currentCatalogCostPerSf:14.25,catalogCostChanged:true,
+      catalogSourceUnavailable:false,
     });
   });
   it('never compares an unspecified saved variant against a default Catalog variant',()=>{
@@ -58,6 +61,7 @@ describe('mobile Area internal supplier cost comparison',()=>{
     const result=selectedMaterialCost('Ashen White',ref,materials);
     expect(result).toMatchObject({
       quotedCostPerSf:13.5,currentCatalogCostPerSf:undefined,catalogCostChanged:false,
+      catalogSourceUnavailable:true,
     });
   });
   it('returns no current supplier cost for an inactive or missing exact purchase program',()=>{
@@ -74,6 +78,7 @@ describe('mobile Area internal supplier cost comparison',()=>{
     expect(selectedMaterialCost('Unlisted Quartz',undefined,materials)).toMatchObject({
       materialName:'Unlisted Quartz',quotedCostPerSf:undefined,
       currentCatalogCostPerSf:undefined,catalogCostChanged:false,
+      catalogSourceUnavailable:false,
     });
   });
   it('uses current Catalog cost only as a separate reference for old quoted materials',()=>{
