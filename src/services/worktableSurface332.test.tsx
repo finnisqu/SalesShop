@@ -37,6 +37,16 @@ describe('Batch 332a — one rounded table surface for Records and Catalog',()=>
   expect(source('SuppliersWorkspace')).toContain('<WorktableSurface className="supplier-directory-table-scroll"');
  });
 
+ it('uses one trigger style for shared Filters and Actions menus',()=>{
+  const css=readFileSync(new URL('../worktable-chrome.css',import.meta.url),'utf8');
+  expect(css).toContain(':is(.ss-worktable-action-menu,.ss-worktable-filter-menu)>summary{');
+  expect(css).toContain('min-height:var(--ss-worktable-control-size)');
+  expect(css).toContain(':is(.ss-worktable-action-menu,.ss-worktable-filter-menu)[open]>summary');
+  expect(css).toContain('.ss-worktable-surface:focus-visible');
+  expect(css).toContain('outline-offset:-2px');
+  expect(css).not.toContain('.ss-worktable-filter-menu>summary{');
+  expect(css).not.toContain('.ss-worktable-action-menu>summary{');
+ });
  it('follows the shared workbook density for Catalog headings and ordinary rows',()=>{
   const css=readFileSync(new URL('../catalog-product-worktable.css',import.meta.url),'utf8');
   const shared=readFileSync(new URL('../workbook-table-foundation.css',import.meta.url),'utf8');

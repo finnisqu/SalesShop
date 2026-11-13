@@ -130,16 +130,21 @@
  flex:0 0 auto;min-width:0;margin:0;z-index:15;
 }
 :root[data-sales-theme] .sales-app .ss-worktable-action-menu[open]{z-index:115}
-:root[data-sales-theme] .sales-app .ss-worktable-action-menu>summary{
+/* A shared trigger across Actions and Filters prevents height/font/border
+ * drift between CRM, Quotes and the five Catalog worktable menus. */
+:root[data-sales-theme] .sales-app
+ :is(.ss-worktable-action-menu,.ss-worktable-filter-menu)>summary{
  box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
- gap:7px;min-height:36px;padding:7px 11px;
+ gap:6px;min-height:var(--ss-worktable-control-size);padding:7px 11px;
  border:1px solid var(--ss-theme-border);border-radius:8px;
  background:var(--ss-theme-card);color:var(--ss-theme-ink);
  font:750 11px/1.2 var(--ss-font-body,system-ui,sans-serif);
  white-space:nowrap;list-style:none;cursor:pointer;
 }
-:root[data-sales-theme] .sales-app .ss-worktable-action-menu>summary::-webkit-details-marker{display:none}
-:root[data-sales-theme] .sales-app .ss-worktable-action-menu[open]>summary{
+:root[data-sales-theme] .sales-app
+ :is(.ss-worktable-action-menu,.ss-worktable-filter-menu)>summary::-webkit-details-marker{display:none}
+:root[data-sales-theme] .sales-app
+ :is(.ss-worktable-action-menu,.ss-worktable-filter-menu)[open]>summary{
  background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
 }
 :root[data-sales-theme] .sales-app .ss-worktable-action-chevron{
@@ -212,19 +217,6 @@
  flex:0 0 auto;min-width:0;margin:0;z-index:15;
 }
 :root[data-sales-theme] .sales-app .ss-worktable-filter-menu[open]{z-index:115}
-:root[data-sales-theme] .sales-app .ss-worktable-filter-menu>summary{
- box-sizing:border-box;display:inline-flex;align-items:center;
- justify-content:center;gap:5px;min-height:36px;
- padding:7px 11px;border:1px solid var(--ss-theme-border);
- border-radius:8px;background:var(--ss-theme-card);
- color:var(--ss-theme-ink);list-style:none;cursor:pointer;
- font:750 11px/1.2 var(--ss-font-body,system-ui,sans-serif);
- white-space:nowrap;
-}
-:root[data-sales-theme] .sales-app .ss-worktable-filter-menu>summary::-webkit-details-marker{display:none}
-:root[data-sales-theme] .sales-app .ss-worktable-filter-menu[open]>summary{
- background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
-}
 :root[data-sales-theme] .sales-app .ss-worktable-filter-count{
  min-width:17px;min-height:17px;padding:2px 4px;
  display:inline-grid;place-items:center;
@@ -427,10 +419,19 @@
 }
 :root[data-sales-theme] .sales-app .ss-worktable-filter-panel :is(input,select):focus-visible,
 :root[data-sales-theme] .sales-app .ss-worktable-pagination :is(select,button):focus-visible,
-:root[data-sales-theme] .sales-app .ss-worktable-filter-menu>summary:focus-visible{
+:root[data-sales-theme] .sales-app :is(
+ .ss-worktable-filter-menu,.ss-worktable-action-menu
+ )>summary:focus-visible{
  outline:2px solid var(--ss-theme-accent);outline-offset:2px;
 }
 
+
+/* The shared WorktableSurface is keyboard-scrollable; keep the focus ring
+ * inside the rounded, clipped edge so it remains visible in every theme. */
+:root[data-sales-theme] .sales-app .ss-worktable-surface:focus-visible{
+ outline:2px solid var(--ss-theme-accent);
+ outline-offset:-2px;
+}
 
 /* Hotfix #131: native details content must stay hidden until the trigger opens.
  * Explicitly guard against higher-specificity author display:grid overriding
