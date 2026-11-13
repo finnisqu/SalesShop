@@ -69,7 +69,28 @@ describe('quote sink snapshots', () => {
       sellPrice: 220,
       effectiveDate: '2026-10-01',
       sourceUpdatedAt: '2026-10-01T12:00:00.000Z',
+      totalWidthIn:32,
+      totalLengthIn:18,
     });
+  });
+
+  it('freezes variant geometry, finish and colors even when the Catalog changes later',()=>{
+    const original=variant({finish:'Satin',cornerRadiusIn:0.25,
+      bowlWidthIn:29,bowlLengthIn:15,bowlHeightIn:8,
+      totalWidthIn:31,totalLengthIn:18,totalHeightIn:9,
+      availableColors:['Black','Gray']});
+    const quoted=createQuoteSinkSnapshot(model({variants:[original]}),original);
+    expect(quoted).toMatchObject({finish:'Satin',cornerRadiusIn:0.25,
+      bowlWidthIn:29,bowlLengthIn:15,bowlHeightIn:8,
+      totalWidthIn:31,totalLengthIn:18,totalHeightIn:9,
+      availableColors:['Black','Gray']});
+    const modified=variant({...original,finish:'Gloss',cornerRadiusIn:0.5,
+      totalWidthIn:32,availableColors:['White']});
+    const current=createQuoteSinkSnapshot(model({variants:[modified]}),modified);
+    expect(compareQuoteSinkSnapshot(quoted,current)).toMatchObject({
+      changed:true,sellPriceChanged:false,internalCostChanged:false,sourceChanged:true,
+    });
+    expect(quoted.availableColors).toEqual(['Black','Gray']);
   });
 
   it('creates a practical each-priced quote line with quantity one', () => {
