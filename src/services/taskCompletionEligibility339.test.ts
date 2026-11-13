@@ -56,6 +56,8 @@ describe('Batch 339 — Task completion matches checklist and bid guards',()=>{
   expect(tasks).toContain("plan.checklistBlocked?plan.checklistBlocked+' task(s) still have unfinished checklist items.");
   expect(tasks).toContain('unfinished checklist items.');
   expect(tasks).toContain('record an external quote');
+  expect(tasks).toContain("disabled={!isDone&&(Boolean(taskCompletionBlocker(task))||task.status==='canceled')}");
+  expect(tasks).toContain("else if(!taskCompletionBlocker(task)&&task.status!=='canceled')complete(task.id)");
   const store=src('store/personalTaskStore.ts');
   expect(store).toContain("deriveSubtaskStatus(patch.status??task.status??'open'");
   expect(store).toContain("isProtectedBidTask(task)&&!task.submissionConfirmedAt");
