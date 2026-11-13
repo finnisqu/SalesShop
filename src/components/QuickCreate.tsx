@@ -8,6 +8,10 @@ import { useNavigationStore } from '../store/navigationStore';
 import { useNotebookStore } from '../store/notebookStore';
 import {requestTaskModal} from './TaskModalHost';
 import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
+import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
+import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {canEditTeamArea} from '../services/teamDepartments';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import {useDealPeopleStore} from '../store/dealPeopleStore';
@@ -19,12 +23,13 @@ export function contextTaskAssociation(context:RecordCreateContext):TaskAssociat
   const type=context.kind==='deal'?'project':context.kind==='person'?'contact':'company';
   return {type,id:context.id,label:(context.kind==='deal'?'Deal':context.kind==='person'?'Person':'Company')+' · '+context.name};
 }
-type QuickCreateGlyph = 'quote'|'task'|'activity'|'deal'|'account'|'notebook';
+type QuickCreateGlyph = 'quote'|'external'|'task'|'activity'|'deal'|'account'|'notebook';
 function CreateGlyph({kind}:{kind:QuickCreateGlyph}){
  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
   stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
   strokeLinejoin="round" aria-hidden="true">
   {kind==='quote'?<><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></>:
+   kind==='external'?<><rect x="3" y="7" width="12" height="14" rx="2"/><path d="M7 11h4M7 15h4M15 3h6v6M21 3l-8 8"/></>:
    kind==='task'?<><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></>:
    kind==='activity'?<><path d="M5 3h3l2.1 5.2-2.3 2.1a16 16 0 0 0 6 6l2.1-2.3L21 16v3.1a2 2 0 0 1-2.2 2C10.6 20.4 3.6 13.4 3 5.2A2 2 0 0 1 5 3Z"/></>:
    kind==='deal'?<><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></>:
@@ -37,6 +42,15 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
   const [open, setOpen] = useState(false);
   const [namedMode, setNamedMode] = useState<NamedCreateMode>(null);
   const [name, setName] = useState('');
+  const [recordExternalOpen,setRecordExternalOpen]=useState(false);
+  const authMode=useAuthStore(s=>s.mode);
+  const organizationId=useAuthStore(s=>s.organizationId);
+  const userId=useAuthStore(s=>s.user?.id);
+  const teamRole=useAuthStore(s=>s.teamRole);
+  const department=useAuthStore(s=>s.teamDepartment);
+  const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
+  const canRecordExternal=authMode==='local'||(!previewRole&&
+    Boolean(organizationId&&userId&&canEditTeamArea(teamRole,department,'crm')));
 
   const createProject = useCrmStore((state) => state.createProject);
   const setProjectCompany = useCrmStore((state)=>state.setProjectCompany);
@@ -58,6 +72,12 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
   const openDocumentPicker = () => {
     close();
     openGuidedQuoteCreation(context);
+  };
+
+  const startExternalQuote = () => {
+    if(!canRecordExternal)return;
+    close();
+    setRecordExternalOpen(true);
   };
 
   const startTask = () => {
@@ -135,9 +155,14 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
           <div className="quick-create-options ss-mobile-sheet-body">
             <button type="button" className="quick-create-option quick-create-option-primary" onClick={openDocumentPicker}>
               <span className="quick-create-icon"><CreateGlyph kind="quote"/></span>
-              <span><strong>New Quote / Schedule</strong><small>Choose a template, then follow the guided editor.</small></span>
+              <span><strong>New SalesShop Quote</strong><small>Create a Quick Quote or pricing schedule.</small></span>
               <b>›</b>
             </button>
+            {canRecordExternal&&<button type="button" className="quick-create-option quick-create-option-primary" onClick={startExternalQuote}>
+              <span className="quick-create-icon"><CreateGlyph kind="external"/></span>
+              <span><strong>Record External Quote</strong><small>Log a bid sent through a builder platform or outside SalesShop.</small></span>
+              <b>›</b>
+            </button>}
             <button type="button" className="quick-create-option compact" onClick={startTask}>
               <span className="quick-create-icon"><CreateGlyph kind="task"/></span>
               <span><strong>New Task</strong><small>Open the task editor immediately.</small></span><b>›</b>
@@ -165,6 +190,10 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
         {launcherLabel??'+'}
       </button>
       {sheet}
+      {recordExternalOpen&&<ExternalQuoteBackfillDialog
+        initialDealId={context?.kind==='deal'?context.id:undefined}
+        onClose={()=>setRecordExternalOpen(false)}
+        onRecorded={()=>setRecordExternalOpen(false)}/>} 
     </>
   );
 }
