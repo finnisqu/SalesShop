@@ -250,7 +250,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
    });
   });
   return()=>window.cancelAnimationFrame(frame);
- },[activeFocus,selected,expandedHistory,focusKeys]);
+ },[activeFocus,selected,focusKeys]);
+ // Expanding/collapsing another On this day group must not scroll the agenda
+ // back to a previously selected badge. Scroll only when focus itself changes.
  const recentQuotes=useMemo(()=>homeRecentQuoteEntries(ownQuotes,sources.activities,5),
   [ownQuotes,sources.activities]);
  const recentItems=useMemo(()=>recentHomeItems(ownTasks,sources.activities,ownQuotes,personal,8),
