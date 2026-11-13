@@ -35,6 +35,9 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(viewport).toContain(':root[data-ss-mobile-keyboard="open"] .sales-app .qmb.qqs-overlay');
   expect(viewport).toContain('.qmb .qmb-quick-area-footer');
   expect(viewport).toContain('scroll-padding-bottom:76px');
+  expect(viewport).toContain('.qtl-combobox-menu{');
+  expect(viewport).toContain('var(--ss-mobile-visual-height,100dvh) * .50');
+  expect(viewport).toContain('.qtl-combobox-results{');
  });
  it('scopes Escape to a non-editing focused control in the active detail sheet',()=>{
   const shared=source('src/services/quoteSheetEscape.ts');

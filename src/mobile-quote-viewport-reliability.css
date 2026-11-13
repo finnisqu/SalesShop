@@ -153,3 +153,23 @@
   scroll-margin-block:12px 76px;
  }
 }
+
+/* Catalog pickers remain inside their sheet scrollports. Cap suggestion
+   height by the available visual viewport so the last option stays reachable
+   above the keyboard instead of extending under it. */
+@media (max-width:700px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app .qmb
+ :is(.qqs-panel-body,.qqt-panel-body,.qmb-quick-area-body)
+ .qtl-combobox-menu{
+  max-height:min(320px,calc(var(--ss-mobile-visual-height,100dvh) * .50));
+  overflow-y:auto;
+  overscroll-behavior:contain;
+ }
+ :root[data-sales-theme] .sales-app .qmb
+ :is(.qqs-panel-body,.qqt-panel-body,.qmb-quick-area-body)
+ .qtl-combobox-results{
+  max-height:min(210px,calc(var(--ss-mobile-visual-height,100dvh) * .35));
+  overflow-y:auto;
+  overscroll-behavior:contain;
+ }
+}
