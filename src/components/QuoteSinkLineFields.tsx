@@ -97,9 +97,12 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
   const selectedModel = line.sinkReference?.sinkModelId
     ? activeModels.find((model) => model.id === line.sinkReference?.sinkModelId)
     : undefined;
-  const selectedVariant = selectedModel && line.sinkReference?.variantId
-    ? selectedModel.variants.find((variant) => variant.id === line.sinkReference?.variantId && variant.active)
-    : selectedModel ? defaultSinkVariant(selectedModel) : undefined;
+  // Legacy quotes may carry a snapshot ID but no top-level variant ID.
+  // Never silently refresh an existing selection to the default variant.
+  const selectedVariantId=line.sinkReference?.variantId??snapshot?.variantId;
+  const selectedVariant=selectedModel&&selectedVariantId
+    ?selectedModel.variants.find(v=>v.id===selectedVariantId&&v.active)
+    :selectedModel&&!snapshot?defaultSinkVariant(selectedModel):undefined;
 
   const currentSnapshot = selectedModel && selectedVariant
     ? createQuoteSinkSnapshot(selectedModel, selectedVariant)
@@ -217,6 +220,7 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
         <button type="button" className="quote-source-pencil" onClick={() => {
           window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
           setSearch('');
+          setSourceError('');
           setSearching(true);
         }} title="Change sink" aria-label="Change sink">✎</button>
       </div>
