@@ -10,6 +10,7 @@ import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 import {activeCatalogDefaultVariant} from '../services/catalogVariantDefaults';
+import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
 
 const PIN_KEY=scopedStorageKey('salesshop-catalog-other-pins-v1');
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
@@ -112,6 +113,14 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
   setQuery('');setCategory('all');setShowInactive(false);setSort('category');
   onClearExternalQuery?.();setExpanded(id);setEditing(true);
  };
+ const setItemActive=(item:OtherCatalogItem,active:boolean)=>{
+  if(!active)setShowInactive(true);
+  updateItem(item.id,{active});
+ };
+ const setVariantActive=(item:OtherCatalogItem,variant:OtherCatalogVariant,active:boolean)=>{
+  if(!active)setShowInactive(true);
+  updateVariant(item.id,variant.id,{active});
+ };
  const update=(item:OtherCatalogItem,field:keyof OtherCatalogItem,value:unknown)=>
   updateItem(item.id,{[field]:value});
  const updateV=(item:OtherCatalogItem,variant:OtherCatalogVariant,field:keyof OtherCatalogVariant,value:unknown)=>
@@ -172,8 +181,8 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
         <option value="all">All categories</option>
         {categories.map(value=><option key={value} value={value}>{value}</option>)}
        </select></label>
-       {editing&&<label className="catalog-card-checkbox"><input type="checkbox"
-        checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Show inactive</label>}
+       <label className="catalog-card-checkbox"><input type="checkbox"
+         checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Include archived</label>
       </div>
      <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
       <select aria-label="Sort other items" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
@@ -203,12 +212,12 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
         <td>{item.category}</td>
         <td className="rates-reference-item"><button type="button" className="materials-name-toggle"
          aria-expanded={open} onClick={()=>setExpanded(open?null:item.id)}><strong>{item.name}</strong></button>
-         <small>{item.sku||'No SKU'}{!item.active?' · Archived':''}</small></td>
+         <small>{item.sku||'No SKU'} <CatalogLifecycleStatus active={item.active}/></small></td>
         <td>{item.brand||item.supplier||'—'}</td><td>{item.unit||'each'}</td>
         <td>{defaultVariant?.internalCost===undefined?'—':money.format(defaultVariant.internalCost)}</td>
         <td>{defaultVariant?.sellPrice===undefined?'—':money.format(defaultVariant.sellPrice)}</td>
         <td><button type="button" onClick={()=>setExpanded(open?null:item.id)}>
-         {open?'Hide':'Variants · '+item.variants.filter(v=>v.active).length}
+         {open?'Hide':'Variants · '+item.variants.filter(v=>editing||showInactive||v.active).length}
         </button></td>
        </tr>
        {open&&<tr className="materials-variant-expanded-row"><td colSpan={7}>
@@ -224,24 +233,26 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
            <textarea rows={2} value={item.notes??''} onChange={event=>update(item,'notes',event.target.value)}/>
           </label>
           <label className="catalog-product-property"><span>Active in catalog</span><input type="checkbox"
-           checked={item.active} onChange={event=>update(item,'active',event.target.checked)}/>
+           checked={item.active} onChange={event=>setItemActive(item,event.target.checked)}/>
            <small className="catalog-product-default-note">Uncheck to archive; saved quotes keep their original selections.</small></label>
          </div>}
          <div className="catalog-product-detail-head"><div><strong>Item variants</strong>
            {editing&&<small className="catalog-product-default-note">
-            Choose an active variant as default for new selections.</small>}</div>
+            Choose an active variant as default for new selections.</small>}
+            {!item.active&&<small className="catalog-product-default-note">
+             Item archived — restore it to include variants in new quotes.</small>}</div>
           {editing&&<span className="catalog-product-variant-operations">
             <button type="button" onClick={()=>duplicateCatalogItem(item.id)}>Duplicate item</button>
             <button type="button" onClick={()=>addVariant(item.id)}>+ Variant</button>
            </span>}
          </div>
          <div className="catalog-product-variant-list">
-          {item.variants.filter(v=>showInactive||v.active).map(variant=>{
+          {item.variants.filter(v=>editing||showInactive||v.active).map(variant=>{
            const pinned=pins.includes(item.id+':'+variant.id);
            return <article key={variant.id} className="materials-variant-line catalog-sink-variant">
             <div className="catalog-product-variant-heading">
              <div><strong>{variant.label}</strong><small>{variant.sku||item.sku||'No SKU'}
-              {variant.default?' · Default':''}{variant.active?'':' · Inactive'}</small></div>
+               <CatalogLifecycleStatus active={variant.active} isDefault={variant.default}/></small></div>
              <button type="button" className={'materials-pin-button'+(pinned?' is-pinned':'')}
               aria-pressed={pinned} onClick={()=>pin(item.id,variant.id)}>{pinned?'Pinned':'Pin'}</button>
              {item.active&&variant.active&&<CatalogQuoteLauncher
@@ -263,7 +274,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
              <label className="catalog-product-property"><span>Variant notes</span>
               <textarea rows={2} value={variant.notes??''}
                onChange={event=>updateV(item,variant,'notes',event.target.value)}/></label>
-             {(['default','active'] as const).map(key=><label key={key} className="catalog-product-property">
+             {(['default'] as const).map(key=><label key={key} className="catalog-product-property">
               <span>{key==='default'?'Default variant':'Active'}</span>
               <input type="checkbox" checked={variant[key]}
                disabled={key==='default'&&(!variant.active||variant.default)}
@@ -273,9 +284,13 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
                onChange={event=>updateV(item,variant,key,event.target.checked)}/>
              </label>)}
              <div className="catalog-product-variant-operations">
-              <button type="button" onClick={()=>duplicateVariant(item.id,variant.id)}>Duplicate</button>
+              <button type="button" className={variant.active?'catalog-product-archive-action':'catalog-product-restore-action'}
+                aria-label={(variant.active?'Archive ':'Restore ')+variant.label}
+                onClick={()=>setVariantActive(item,variant,!variant.active)}>
+                {variant.active?'Archive variant':'Restore variant'}</button>
+               <button type="button" onClick={()=>duplicateVariant(item.id,variant.id)}>Duplicate</button>
               <button type="button" className="is-danger" disabled={item.variants.length<=1}
-               onClick={()=>{if(window.confirm('Delete variant?'))removeVariant(item.id,variant.id);}}>Delete</button>
+               onClick={()=>{if(window.confirm('Delete this variant? Saved quotes retain their historical snapshots.'))removeVariant(item.id,variant.id);}}>Delete</button>
              </div>
             </div>:<dl className="catalog-product-facts">
              <div><dt>Specification</dt><dd>{variant.specification||'—'}</dd></div>
