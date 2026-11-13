@@ -43,7 +43,7 @@ describe('Home calendar custom badges',()=>{
   expect(readHomeCalendarSettings(two).countDownCompletedTasks).toBe(true);
  });
  it('keeps live due work separate from logged history metrics',()=>{
-  const history=[
+  const history:Activity[]=[
    activity('manual-touchpoint','call','call'),
    activity('manual-touchpoint','email','email'),
    activity('manual-touchpoint','text','text'),

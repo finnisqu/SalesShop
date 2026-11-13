@@ -731,7 +731,7 @@ export const useCrmStore = create<CrmState>((set, get) => ({
           .eq('stage',current.stage)
           .select('id,stage,amount,due_date');
         if(dealError)throw new Error('External quote was recorded, but the Deal update failed: '+dealError.message);
-        let confirmedDeal=updatedRows?.[0];
+        let confirmedDeal:unknown=updatedRows?.[0];
         if(!confirmedDeal){
           // A lost response on an earlier attempt can leave the remote Deal
           // correctly updated. Verify that state rather than rewriting it or

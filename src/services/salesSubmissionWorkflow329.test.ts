@@ -20,8 +20,10 @@ const nativeQuote:Quote={
  projectId:nativeDeal.id,companyId:'co-1',companyName:'Builder',
  ownerUserId:'rep-1',documentType:'quote',lines:[],sections:[],history:[],
  customerColumns:{quantity:true,rate:true,lineAmount:true},
- updatedAt:'2026-11-10T15:00:00Z',
-} as Quote;
+ originalQuoteDate:'2026-11-10',quoteDate:'2026-11-10',
+ customerNotes:'',internalNotes:'',
+ createdAt:'2026-11-10T15:00:00Z',updatedAt:'2026-11-10T15:00:00Z',
+};
 const issued:Activity={id:'issued',type:'quote-sent',summary:'Q-123 issued',
  quoteId:nativeQuote.id,projectId:nativeDeal.id,
  occurredAt:'2026-11-10T15:00:00Z',
@@ -100,7 +102,7 @@ describe('Batch 329 Deal to native/external submission workflow',()=>{
   expect(isCustomerQuoteSubmission(historical)).toBe(true);
   expect(confirmedBidSubmissionDealIds([historical])).toEqual(new Set());
   expect(buildSalesQuoteRegistry([], [historical],
-   [{...nativeDeal,id:'deal-closed',stage:'Closed Won'}])[0].sentDate).toBe('2024-09-01');
+   [{...nativeDeal,id:'deal-closed'}])[0].sentDate).toBe('2024-09-01');
   const badges=buildCalendarBadgeIndex([],[],[historical],[],[],
    DEFAULT_HOME_CALENDAR_SETTINGS);
   expect(metricCount(badges,'2024-09-01','quotes-sent')).toBe(1);
