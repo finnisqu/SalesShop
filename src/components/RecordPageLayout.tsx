@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from 'react';
+import {RecordInlineEditScope} from './RecordInlineEditScope';
 
 /** Section jump animation respects browser accessibility preferences. */
 export function recordJumpScrollBehavior(reducedMotion:boolean):ScrollBehavior{
@@ -20,9 +21,11 @@ export function RecordProperty({ label, children }: { label: string; children: R
 
 /** Reusable entity record shell: one scroll surface, three responsive information regions. */
 export function RecordPageLayout({
-  entityType, recordTypeLabel, collectionLabel, title, subtitle, badge, actions, onBack, backLabel='Records', left, center, right,
+  entityType, recordKey, recordTypeLabel, collectionLabel, title, subtitle, badge, actions, onBack, backLabel='Records', left, center, right,
 }: {
   entityType: 'company' | 'person' | 'project';
+  /** Stable database ID: reset editor state on record changes, not renaming. */
+  recordKey?:string;
   recordTypeLabel?: string;
   collectionLabel?: string;
   title: string;
@@ -47,7 +50,7 @@ export function RecordPageLayout({
     // visual scroll. preventScroll preserves the smooth navigation animation.
     element.focus({ preventScroll: true });
   };
-  return <section className="connections-record-page" data-record-type={entityType} aria-label={(recordTypeLabel ?? (entityType === 'project' ? 'Deal' : entityType)) + ' record'}>
+  return <RecordInlineEditScope key={entityType+':'+(recordKey??title)}><section className="connections-record-page" data-record-type={entityType} aria-label={(recordTypeLabel ?? (entityType === 'project' ? 'Deal' : entityType)) + ' record'}>
     <nav className="connections-record-breadcrumb" aria-label="Breadcrumb">
       <button type="button" onClick={onBack}>← {backLabel}</button>
       <span aria-hidden="true">/</span>
@@ -74,5 +77,5 @@ export function RecordPageLayout({
       <div ref={recordsRef} className="connections-record-center" role="region" aria-label="Linked records" tabIndex={-1}>{center}</div>
       <aside ref={relatedRef} className="connections-record-related" aria-label="Related records" tabIndex={-1}>{right}</aside>
     </div>
-  </section>;
+  </section></RecordInlineEditScope>;
 }
