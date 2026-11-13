@@ -26,7 +26,7 @@ export function useViewportBoundDetails(ref:RefObject<HTMLDetailsElement|null>){
  useEffect(()=>{
   const menu=ref.current;if(!menu)return;
   const panel=menu.querySelector<HTMLElement>(
-   '.ss-worktable-filter-panel,.ss-worktable-action-panel,.connections-columns-popover'
+   '.ss-worktable-filter-panel,.ss-worktable-action-panel,.connections-columns-popover,.ss-record-actions-popover'
   );
   if(!panel)return;
   const position=()=>{

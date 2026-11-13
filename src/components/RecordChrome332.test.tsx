@@ -36,6 +36,19 @@ describe('Batch 332e — unified Record inline property editing',()=>{
   expect(editor).toContain('if(saving)return');
   expect(editor).toContain('try{await onSave(draft);restoreFocus.current=true;setEditing(false);}');
  });
+ it('reuses the mobile viewport menu and returns focus after record actions',()=>{
+  const menu=source('RecordActionsMenu.tsx');
+  const helper=source('useViewportBoundDetails.ts');
+  const css=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
+  expect(menu).toContain('useViewportBoundDetails(ref)');
+  expect(helper).toContain('.ss-record-actions-popover');
+  expect(menu).toContain('closeMenu();onUnlink()');
+  expect(menu).toContain('try{await onDelete();closeMenu();}');
+  expect(menu).toContain("querySelector<HTMLElement>('summary')?.focus({preventScroll:true})");
+  expect(css).toContain('.ss-record-actions-menu[data-worktable-side="above"]>.ss-record-actions-popover');
+  expect(css).toContain('transform:translateX(var(--ss-worktable-menu-shift-x,0px))');
+  expect(css).toContain('.ss-record-actions-popover button{min-height:44px}');
+ });
  it('keeps mobile inline editor inputs, Save, Cancel and pencil touch-sized',()=>{
   const css=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
   expect(css).toContain('.ss-record-pencil{opacity:1;min-height:44px;flex-basis:44px}');
