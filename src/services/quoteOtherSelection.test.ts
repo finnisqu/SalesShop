@@ -14,12 +14,10 @@ const item:OtherCatalogItem={
  variants:[original],updatedAt:'2026-11-12T12:00:00Z',
 };
 const quoted=():QuoteLine=>({
- id:'quote-line',kind:'item',description:'Customer-specified drain',
- pricingMode:'quantity-rate',quantity:3,rate:125,internalCost:140,
- customerVisible:true,includeInTotal:true,
+ id:'quote-line',kind:'item',customerVisible:true,includeInTotal:true,
  ...otherSnapshotLinePatch(createQuoteOtherSnapshot(item,original,'2026-11-12T12:00:00Z')),
  // This seller-edited rate and manual total cost are independent of Catalog.
- quantity:3,rate:125,internalCost:140,
+ pricingMode:'quantity-rate',quantity:3,rate:125,internalCost:140,
  description:'Customer-specified drain',
 });
 
