@@ -58,6 +58,20 @@ describe('Batch 338 — shared worktable accessibility and mobile parity',()=>{
    expect(table).toContain('onChange={checked=>pageSelection.selectPage(checked)}');
   }
  });
+ it('keeps conditional Catalog row checkbox cells syntactically closed',()=>{
+  // An unclosed {selecting&&...} in the OTHER row previously broke the
+  // entire Cloudflare TypeScript build (TS2657 / TS1005).
+  const sinks=src('components/CatalogSinksWorktable.tsx');
+  const other=src('components/CatalogOtherWorktable.tsx');
+  expect(sinks).toContain(
+   'onChange={event=>pageSelection.selectRow(model.id,event.target.checked)}/></td>}');
+  expect(other).toContain(
+   'onChange={event=>pageSelection.selectRow(item.id,event.target.checked)}/></td>}');
+  for(const table of [sinks,other]){
+   expect(table).toContain('colSpan={selecting?8:7}');
+   expect(table).toContain('<WorktableSelectPageCheckbox');
+  }
+ });
  it('announces current Catalog sort with the proper column semantics',()=>{
   const sinks=src('components/CatalogSinksWorktable.tsx');
   const other=src('components/CatalogOtherWorktable.tsx');
