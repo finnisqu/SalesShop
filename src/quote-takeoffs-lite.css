@@ -342,3 +342,30 @@
   .qtl-piece-actions>.qtl-add{flex:1 1 125px}
   .qtl-split-actions{flex:1 1 100%}
 }
+
+/* Search drafts must never look like committed changes to an Area's material
+ * or sink. Show the preserved selection above the scrolling result list. */
+.qtl-combobox-menu .qtl-search-preserved{
+ display:grid;gap:3px;min-width:0;margin:5px 4px 7px;
+ padding:7px 9px;border:1px solid var(--qt-border);
+ border-radius:7px;background:var(--qt-panel,var(--qt-card));
+ color:var(--qt-ink);overflow-wrap:anywhere;
+}
+.qtl-combobox-menu .qtl-search-preserved strong{
+ font-size:11px;font-weight:730;line-height:1.4;
+}
+.qtl-combobox-menu .qtl-search-preserved small{
+ color:var(--qt-muted);font-size:10px;line-height:1.4;
+}
+.qtl-combobox-menu .qtl-combobox-results{
+ overscroll-behavior:contain;
+ scrollbar-gutter:stable;
+}
+@media(max-width:760px){
+ .qtl-combobox-menu .qtl-combobox-results{
+  max-height:min(29dvh,210px);
+  -webkit-overflow-scrolling:touch;
+ }
+ .qtl-combobox>input{font-size:16px;}
+ .qtl-combobox-menu .qtl-combobox-results>button{min-height:44px;}
+}
