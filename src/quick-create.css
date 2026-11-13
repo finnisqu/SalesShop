@@ -330,7 +330,7 @@
 /* Both quote routes are equal, first-row choices in Quick Create.
  * Retain the one-column mobile sheet; on desktop they sit side by side. */
 @media(min-width:761px){
- .quick-create-options.ss-mobile-sheet-body>.quick-create-option-primary{
+ .quick-create-options.ss-mobile-sheet-body.has-external-quote>.quick-create-option-primary{
   grid-column:auto!important;
   min-width:0;
  }
