@@ -11,6 +11,14 @@ describe('Cloud sync reconnect and stale-session safety contract',()=>{
     expect(cloud).toContain('const operation=(inFlight.get(key)??Promise.resolve()).catch(()=>{}).then(()=>');
     expect(cloud).toContain('if(!active())return');
   });
+  it('skips quote navigation-only saves but never skips a failed or marked retry',()=>{
+    expect(cloud).toContain("if(key===QUOTES_DOCUMENT_KEY&&!readPendingQuoteSync(scope)&&");
+    expect(cloud).toContain("!retryableFailures.has(key)&&");
+    expect(cloud).toContain("!quoteHasUnsavedContent(scope,document,baselineQuotes))return;");
+    expect(cloud).toContain("if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('pending')");
+    expect(cloud).toContain("if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('syncing')");
+    expect(cloud).toContain("if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('error',message)");
+  });
   it('retries private notebooks when a viewer reconnects, without shared writes',()=>{
     expect(cloud).toContain('if(retryableFailures.has(PRIVATE_DOCUMENT_KEY))');
     expect(cloud).toContain('if(canWriteCrm&&retryableFailures.has(CRM_DOCUMENT_KEY)');
