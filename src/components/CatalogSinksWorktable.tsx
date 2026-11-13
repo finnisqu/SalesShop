@@ -250,7 +250,9 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
            <label className="catalog-product-property"><span>Available</span><input type="checkbox" checked={model.active}
              onChange={event=>update(model,'active',event.target.checked)}/></label>
           </div>}
-          <div className="catalog-product-detail-head"><strong>Variants and bowls</strong>
+          <div className="catalog-product-detail-head"><div><strong>Variants and bowls</strong>
+            {editing&&<small className="catalog-product-default-note">
+             Choose an available variant as default for new selections.</small>}</div>
            {editing&&<button type="button" onClick={()=>addVariant(model.id)}>+ Variant</button>}
           </div>
           <div className="catalog-product-variant-list">
@@ -290,7 +292,12 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
               <TextField label="Notes" value={variant.notes} onChange={value=>updateV(model,variant,'notes',value)}/>
               {(['ada','default','active'] as const).map(key=><label key={key} className="catalog-product-property">
                 <span>{key==='ada'?'ADA':key==='default'?'Default variant':'Available'}</span>
-                <input type="checkbox" checked={variant[key]} onChange={event=>updateV(model,variant,key,event.target.checked)}/>
+                <input type="checkbox" checked={variant[key]}
+                 disabled={key==='default'&&(!variant.active||variant.default)}
+                 title={key==='default'?variant.active?
+                  'Choose another available variant to change the default':
+                  'Make this variant available before setting it as default':undefined}
+                 onChange={event=>updateV(model,variant,key,event.target.checked)}/>
                </label>)}
               <div className="catalog-product-variant-operations">
                <button type="button" onClick={()=>duplicateVariant(model.id,variant.id)}>Duplicate variant</button>

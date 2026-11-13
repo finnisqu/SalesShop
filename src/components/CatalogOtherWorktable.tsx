@@ -213,7 +213,9 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
           <label className="catalog-product-property"><span>Active</span><input type="checkbox"
            checked={item.active} onChange={event=>update(item,'active',event.target.checked)}/></label>
          </div>}
-         <div className="catalog-product-detail-head"><strong>Item variants</strong>
+         <div className="catalog-product-detail-head"><div><strong>Item variants</strong>
+           {editing&&<small className="catalog-product-default-note">
+            Choose an active variant as default for new selections.</small>}</div>
           {editing&&<button type="button" onClick={()=>addVariant(item.id)}>+ Variant</button>}
          </div>
          <div className="catalog-product-variant-list">
@@ -246,7 +248,12 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
                onChange={event=>updateV(item,variant,'notes',event.target.value)}/></label>
              {(['default','active'] as const).map(key=><label key={key} className="catalog-product-property">
               <span>{key==='default'?'Default variant':'Active'}</span>
-              <input type="checkbox" checked={variant[key]} onChange={event=>updateV(item,variant,key,event.target.checked)}/>
+              <input type="checkbox" checked={variant[key]}
+               disabled={key==='default'&&(!variant.active||variant.default)}
+               title={key==='default'?variant.active?
+                'Choose another active variant to change the default':
+                'Activate this variant before setting it as default':undefined}
+               onChange={event=>updateV(item,variant,key,event.target.checked)}/>
              </label>)}
              <div className="catalog-product-variant-operations">
               <button type="button" onClick={()=>duplicateVariant(item.id,variant.id)}>Duplicate</button>
