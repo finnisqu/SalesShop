@@ -274,6 +274,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
   const scheduledRevision=new Map<CloudDocumentKey,number>();
   let lastRecoveryRetry=0;
   let baselineCrm=readLocalDocument(CRM_DOCUMENT_KEY) as CrmDocument|null;
+  let baselineQuotes=readLocalDocument(QUOTES_DOCUMENT_KEY) as QuoteDocument|null;
   let baselineNotebook=readLocalDocument(PRIVATE_DOCUMENT_KEY) as NotebookDocument|null;
   const setQuoteSaveStatus=useQuoteCloudStatusStore.getState().setStatus;
   setQuoteSaveStatus(canWriteQuotes&&readPendingQuoteSync(scope)?'pending':'saved');
@@ -284,7 +285,7 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
     if(previous)window.clearTimeout(previous);
     // Local quote data already exists; persist an identity-scoped marker
     // BEFORE the debounce, so a refresh cannot silently erase a draft.
-    const token=key===QUOTES_DOCUMENT_KEY?markPendingQuoteSync(scope,document)
+    const token=key===QUOTES_DOCUMENT_KEY?markPendingQuoteSync(scope,document,baselineQuotes)
       :key===CRM_DOCUMENT_KEY?markPendingCrmSync(scope,document,baselineCrm)
       :key===PRIVATE_DOCUMENT_KEY?markPendingNotebookSync(scope,document,baselineNotebook):null;
     if(key===QUOTES_DOCUMENT_KEY)setQuoteSaveStatus('pending');
@@ -317,6 +318,8 @@ export function startCloudSync(orgId: string, userId: string, onError?: (message
         const recoveredFailure=retryableFailures.delete(key);
         if(key===CRM_DOCUMENT_KEY&&!readPendingCrmSync(scope))
           baselineCrm=document as CrmDocument;
+        if(key===QUOTES_DOCUMENT_KEY&&!readPendingQuoteSync(scope))
+          baselineQuotes=document as QuoteDocument;
         if(key===PRIVATE_DOCUMENT_KEY&&!readPendingNotebookSync(scope))
           baselineNotebook=document as NotebookDocument;
         // A recovery marker can fail to persist (storage quota/private mode).
