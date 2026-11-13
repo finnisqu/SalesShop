@@ -27,20 +27,21 @@ export function selectedMaterialCost(
 ):SelectedMaterialCostReference {
   const quotedCostPerSf=validCost(reference?.sourceCostPerSf)
     ??validCost(reference?.snapshot?.costPerSf);
-  const material=reference?.materialId
-    ?materials.find(item=>item.id===reference.materialId&&item.active):undefined;
-  const variant=reference?.variantId
-    ?material?.variants?.find(item=>item.id===reference.variantId&&item.active!==false):undefined;
-  // A deleted/replaced variant or purchase option must not silently resolve
-  // to the Catalog default and present the wrong supplier price.
-  const variantMissing=!!reference?.variantId&&!variant;
-  const optionMissing=!!reference?.purchaseOptionId
-    &&(!variant||!variant.purchaseOptions.some(option=>
-      option.id===reference.purchaseOptionId&&option.active!==false));
+  // Use the frozen snapshot's exact variant/program for older quote records
+  // that do not carry those IDs in the outer reference object.
+  const materialId=reference?.materialId??reference?.snapshot?.materialId;
+  const variantId=reference?.variantId??reference?.snapshot?.variantId;
+  const purchaseOptionId=reference?.purchaseOptionId??reference?.snapshot?.purchaseOptionId;
+  const material=materialId?materials.find(item=>item.id===materialId&&item.active):undefined;
+  const variant=variantId?material?.variants?.find(item=>
+    item.id===variantId&&item.active!==false):undefined;
+  // Never compare a saved quote against an unrelated default variant/program.
+  const variantMissing=Boolean(material?.variants?.length&&!variant);
+  const optionMissing=Boolean(purchaseOptionId&&
+    !variant?.purchaseOptions?.some(option=>option.id===purchaseOptionId&&option.active!==false));
   const currentCatalogCostPerSf=material&&!variantMissing&&!optionMissing
     ?validCost(resolveStockMaterialCostReference(
-      material,reference?.variantId,reference?.purchaseOptionId).costPerSf)
-    :undefined;
+      material,variantId,purchaseOptionId).costPerSf):undefined;
   return {
     materialName:materialName.trim()||reference?.snapshot?.materialName||'Material not selected',
     quotedCostPerSf,
