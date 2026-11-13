@@ -1,22 +1,22 @@
 /* Reusable OTHER Catalog source actions in private Quick Quote editors. */
-.sales-app .qmb .quote-other-source{
+:root[data-sales-theme] .qmb .quote-other-source{
  display:grid;gap:7px;min-width:0;padding:9px 10px;
  border:1px solid var(--qmb-border,var(--ss-theme-border));
  border-radius:8px;background:var(--qmb-card,var(--ss-theme-card));
  color:var(--qmb-ink,var(--ss-theme-ink));
 }
-.sales-app .qmb .quote-other-source-main{
+:root[data-sales-theme] .qmb .quote-other-source-main{
  display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;
 }
-.sales-app .qmb .quote-other-source-title{display:grid;gap:4px;min-width:0;}
-.sales-app .qmb .quote-other-source-title strong{
+:root[data-sales-theme] .qmb .quote-other-source-title{display:grid;gap:4px;min-width:0;}
+:root[data-sales-theme] .qmb .quote-other-source-title strong{
  font-size:11px;font-weight:770;overflow-wrap:anywhere;
 }
-.sales-app .qmb .quote-other-source-title small{
+:root[data-sales-theme] .qmb .quote-other-source-title small{
  font-size:10px;line-height:1.4;color:var(--qmb-muted,var(--ss-theme-muted));
  overflow-wrap:anywhere;
 }
-.sales-app .qmb .quote-other-source :is(
+:root[data-sales-theme] .qmb .quote-other-source :is(
  .quote-other-source-change,.quote-other-source-refresh,.quote-other-source-price){
  min-height:32px;padding:6px 9px;border-radius:7px;
  border:1px solid var(--qmb-border,var(--ss-theme-border));
@@ -24,68 +24,68 @@
  color:var(--qmb-accent,var(--ss-theme-accent));
  font-size:11px;font-weight:740;cursor:pointer;
 }
-.sales-app .qmb .quote-other-source button:disabled{
+:root[data-sales-theme] .qmb .quote-other-source button:disabled{
  cursor:default;opacity:.5;
 }
-.sales-app .qmb .quote-other-source :is(button,input):focus-visible{
+:root[data-sales-theme] .qmb .quote-other-source :is(button,input):focus-visible{
  outline:2px solid var(--qmb-accent,var(--ss-theme-accent));
  outline-offset:2px;
 }
-.sales-app .qmb .quote-other-source-status{
+:root[data-sales-theme] .qmb .quote-other-source-status{
  display:flex;align-items:center;flex-wrap:wrap;gap:5px;
 }
-.sales-app .qmb .quote-other-source-status span{
+:root[data-sales-theme] .qmb .quote-other-source-status span{
  font-size:10px;color:var(--qmb-muted,var(--ss-theme-muted));line-height:1.4;
 }
-.sales-app .qmb .quote-other-source-status .is-warning{
+:root[data-sales-theme] .qmb .quote-other-source-status .is-warning{
  color:var(--ss-danger,#b44e43);
 }
-.sales-app .qmb .quote-other-source-picker{
+:root[data-sales-theme] .qmb .quote-other-source-picker{
  display:grid;gap:8px;min-width:0;padding-top:8px;
  border-top:1px solid var(--qmb-border,var(--ss-theme-border));
 }
-.sales-app .qmb .quote-other-source-picker>p{
+:root[data-sales-theme] .qmb .quote-other-source-picker>p{
  margin:0;font-size:11px;line-height:1.5;
  color:var(--qmb-muted,var(--ss-theme-muted));
 }
-.sales-app .qmb .quote-other-source-search input{
+:root[data-sales-theme] .qmb .quote-other-source-search input{
  display:block;min-height:38px;width:100%;min-width:0;box-sizing:border-box;
  padding:6px 10px;border:1px solid var(--qmb-border,var(--ss-theme-border));
  border-radius:7px;background:var(--qmb-card,var(--ss-theme-card));
  color:var(--qmb-ink,var(--ss-theme-ink));
 }
-.sales-app .qmb .quote-other-source-results{
+:root[data-sales-theme] .qmb .quote-other-source-results{
  display:grid;gap:3px;max-height:min(30dvh,245px);
  overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
 }
-.sales-app .qmb .quote-other-source-results button{
+:root[data-sales-theme] .qmb .quote-other-source-results button{
  display:flex;align-items:center;justify-content:space-between;
  gap:10px;text-align:left;border:1px solid transparent;
  border-radius:6px;background:transparent;color:inherit;padding:7px 8px;
 }
-.sales-app .qmb .quote-other-source-results button:not(:disabled):hover,
-.sales-app .qmb .quote-other-source-results button:focus-visible{
+:root[data-sales-theme] .qmb .quote-other-source-results button:not(:disabled):hover,
+:root[data-sales-theme] .qmb .quote-other-source-results button:focus-visible{
  background:var(--qmb-tint,var(--ss-theme-tint));
  border-color:var(--qmb-border,var(--ss-theme-border));
 }
-.sales-app .qmb .quote-other-source-results button>span{
+:root[data-sales-theme] .qmb .quote-other-source-results button>span{
  display:grid;gap:3px;min-width:0;
 }
-.sales-app .qmb .quote-other-source-results strong{
+:root[data-sales-theme] .qmb .quote-other-source-results strong{
  font-size:11px;font-weight:760;overflow-wrap:anywhere;
 }
-.sales-app .qmb .quote-other-source-results small{
+:root[data-sales-theme] .qmb .quote-other-source-results small{
  font-size:10px;line-height:1.3;color:var(--qmb-muted,var(--ss-theme-muted));
 }
-.sales-app .qmb .quote-other-source-error{
+:root[data-sales-theme] .qmb .quote-other-source-error{
  color:var(--ss-danger,#b44e43)!important;
 }
 @media(max-width:760px){
- .sales-app .qmb .quote-other-source-main{align-items:stretch;flex-wrap:wrap;}
- .sales-app .qmb .quote-other-source-change{flex:1 0 auto;}
- .sales-app .qmb .quote-other-source-search input{
+ :root[data-sales-theme] .qmb .quote-other-source-main{align-items:stretch;flex-wrap:wrap;}
+ :root[data-sales-theme] .qmb .quote-other-source-change{flex:1 0 auto;}
+ :root[data-sales-theme] .qmb .quote-other-source-search input{
   font-size:16px;min-height:44px;
  }
- .sales-app .qmb .quote-other-source-results{max-height:min(25dvh,180px);}
- .sales-app .qmb .quote-other-source-results button{min-height:44px;}
+ :root[data-sales-theme] .qmb .quote-other-source-results{max-height:min(25dvh,180px);}
+ :root[data-sales-theme] .qmb .quote-other-source-results button{min-height:44px;}
 }
