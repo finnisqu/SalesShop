@@ -5,7 +5,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
@@ -232,11 +232,11 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
    <WorktableSurface className="rates-reference-table-wrap catalog-product-scroll" label="Other catalog worktable">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr>{selecting&&<th className="catalog-product-select-cell" scope="col">
-      <input type="checkbox" aria-label="Select all other items on this page"
-       checked={pageSelection.allSelected} disabled={!pagedItems.length}
-       onChange={event=>pageSelection.selectPage(event.target.checked)}/></th>}
-      <th>Category</th><th>Item</th><th>Brand / supplier</th>
-      <th>Unit</th><th>Default cost</th><th>Customer price</th><th>Variants</th></tr></thead>
+      <WorktableSelectPageCheckbox label="Select all other items on this page"
+       allSelected={pageSelection.allSelected} someSelected={selectedIds.length>0}
+       disabled={!pagedItems.length} onChange={checked=>pageSelection.selectPage(checked)}/></th>}
+      <th scope="col">Category</th><th scope="col">Item</th><th scope="col">Brand / supplier</th>
+      <th scope="col">Unit</th><th scope="col">Default cost</th><th scope="col">Customer price</th><th scope="col">Variants</th></tr></thead>
      <tbody>{pagedItems.map(item=>{
       const open=expanded===item.id,defaultVariant=activeCatalogDefaultVariant(item.variants);
       return <Fragment key={item.id}>
