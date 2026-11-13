@@ -21,6 +21,7 @@ interface OtherCatalogState{
  items:OtherCatalogItem[];hydrated:boolean;saving:boolean;error:string|null;
  hydrate:()=>Promise<void>;
  addItem:()=>string;
+ duplicateItem:(itemId:string)=>string|null;
  updateItem:(id:string,patch:Partial<OtherCatalogItem>)=>void;
  addVariant:(id:string)=>void;
  updateVariant:(id:string,variantId:string,patch:Partial<OtherCatalogVariant>)=>void;
@@ -109,6 +110,22 @@ export const useOtherCatalogStore=create<OtherCatalogState>((set,get)=>({
    id,name:'New catalog item',category:'Accessories',unit:'each',active:true,updatedAt:time,
    variants:[{id:uid('other_variant'),label:'Standard',active:true,default:true}],
   }];
+  set({items:next});scheduleSave(next);return id;
+ },
+ // A copy is a new sellable Catalog identity. Clear duplicated SKUs while
+ // retaining dimensions/specifications and current selling prices.
+ duplicateItem:(itemId)=>{
+  const source=get().items.find(item=>item.id===itemId);
+  if(!source)return null;
+  const id=uid('other_item');
+  const copy:OtherCatalogItem={
+   ...structuredClone(source),id,name:`${source.name} copy`,
+   sku:undefined,active:true,updatedAt:new Date().toISOString(),
+   variants:normalizeCatalogVariantDefaults(source.variants.map(variant=>({
+    ...structuredClone(variant),id:uid('other_variant'),sku:undefined,
+   }))),
+  };
+  const next=[...get().items,copy];
   set({items:next});scheduleSave(next);return id;
  },
  updateItem:(id,patch)=>{
