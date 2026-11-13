@@ -85,6 +85,11 @@ describe('Home badge drilldowns',()=>{
   expect(entries).toHaveLength(1);
   expect(entries[0]).toMatchObject({kind:'activity',id:'external'});
  });
+ it('does not scroll the selected-day agenda again when another history group changes',()=>{
+  const calendar=readFileSync(join(process.cwd(),'src/components/SalesCalendarLauncher.tsx'),'utf8');
+  expect(calendar).toContain('},[activeFocus,selected,focusKeys]);');
+  expect(calendar).not.toContain('},[activeFocus,selected,expandedHistory,focusKeys]);');
+ });
  it('keeps badge selection visible until the user changes or clears it',()=>{
   const calendar=readFileSync(join(process.cwd(),'src/components/SalesCalendarLauncher.tsx'),'utf8');
   const css=readFileSync(join(process.cwd(),'src/components/sales-calendar.css'),'utf8');
