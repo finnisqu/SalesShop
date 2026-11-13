@@ -59,6 +59,14 @@ export function compareQuoteSinkSnapshot(
     || quoted.modelCode !== current.modelCode
     || quoted.variantLabel !== current.variantLabel
     || quoted.variantCode !== current.variantCode
+    || quoted.brand !== current.brand
+    || quoted.supplier !== current.supplier
+    || quoted.category !== current.category
+    || quoted.material !== current.material
+    || quoted.mountType !== current.mountType
+    || quoted.widthIn !== current.widthIn
+    || quoted.depthIn !== current.depthIn
+    || quoted.sourceUpdatedAt !== current.sourceUpdatedAt
     || quoted.configuration !== current.configuration
     || quoted.ada !== current.ada
     || quoted.effectiveDate !== current.effectiveDate
