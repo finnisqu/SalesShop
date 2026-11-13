@@ -3,6 +3,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {requestTaskModal} from './TaskModalHost';
 import {RecordCard} from './RecordPageLayout';
+import {RecordUnlinkButton} from './RecordUnlinkButton';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import type {RelatedEntityKind} from './RecordRelatedActions';
 
@@ -32,11 +33,10 @@ export function RecordTasksPanel({kind,id,name,editing=false}:{kind:RelatedEntit
        {subtaskProgress(task).total?' · '+subtaskProgress(task).done+'/'+subtaskProgress(task).total+' subtasks':''} →</small>
      </button>
      {editing&&!preview&&storedScope===scope&&!isProtectedBidTask(task)&&
-       <button type="button" className="ss-record-unlink-button" onClick={()=>{
-        if(!window.confirm('Unlink this Task from '+name+'? The Task and its other linked records will remain.'))return;
-        updateTask(task.id,{associations:normalizedTaskAssociations(task).filter(link=>
-          !(link.type===linkType&&link.id===id))});
-       }} aria-label={'Unlink Task '+task.title}>Unlink</button>}
+       <RecordUnlinkButton ariaLabel={'Unlink Task '+task.title}
+        confirmation={'Unlink this Task from '+name+'? The Task and its other linked records will remain.'}
+        onUnlink={()=>updateTask(task.id,{associations:normalizedTaskAssociations(task).filter(link=>
+          !(link.type===linkType&&link.id===id))})}/>}
     </div>)}
    {!related.length&&<p className="connections-record-empty">No tasks linked yet.</p>}
   </div>

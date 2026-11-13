@@ -60,7 +60,13 @@
  background:var(--ss-theme-base);border-radius:7px;color:var(--ss-theme-ink);cursor:pointer}
 .ss-record-recent-activity-list button strong{font-size:12px;font-weight:600;overflow-wrap:anywhere}
 .ss-record-recent-activity-list button small{font-size:10px;white-space:nowrap;color:var(--ss-theme-muted)}
-/* Unlink actions share one visual treatment in all relationship subpanels. */
+/* Unlink actions share one visual and confirmation treatment in all
+ * relationship panels, including private Tasks and direct Deal contacts. */
+.ss-record-unlink-control{display:inline-flex;flex:0 0 auto;flex-direction:column;
+ align-items:flex-start;gap:4px;min-width:0}
+.ss-record-unlink-error{display:block;max-width:210px;color:var(--ss-danger,#a43b38);
+ font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+
 .ss-record-associated-row .ss-record-unlink-button,.ss-deal-relations .ss-record-unlink-button{
  box-sizing:border-box;flex:0 0 auto;align-self:center;min-height:30px;
  padding:5px 8px;border:1px solid var(--ss-theme-border);
@@ -75,4 +81,5 @@
  .ss-record-actions-popover button{min-height:44px}
  .ss-record-recents-tabs button{padding:6px}
  .ss-record-inline-editor :is(input,select){font-size:16px;min-height:44px}
- .ss-record-inline-editor button{flex-basis:44px;min-height:44px}}
+ .ss-record-inline-editor button{flex-basis:44px;min-height:44px}
+ .ss-record-unlink-control .ss-record-unlink-button{min-height:44px}}

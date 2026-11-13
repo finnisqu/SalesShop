@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {RecordUnlinkButton} from './RecordUnlinkButton';
 import {useCrmStore} from '../store/crmStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {useAuthStore} from '../store/authStore';
@@ -25,7 +25,6 @@ export function RecordUnlinkAction({source,target}:{
  const people=useCrmStore(s=>s.contacts);
  const deals=useCrmStore(s=>s.projects);
  const quotes=useQuoteStore(s=>s.quotes);
- const [error,setError]=useState('');
  const person=people.find(p=>p.id===(source.kind==='person'?source.id:target.kind==='person'?target.id:''));
  const deal=deals.find(d=>d.id===(source.kind==='deal'?source.id:target.kind==='deal'?target.id:''));
  const quote=quotes.find(q=>q.id===target.id);
@@ -47,9 +46,6 @@ export function RecordUnlinkAction({source,target}:{
   (target.kind!=='quote'||editableQuote));
  if(!safe)return null;
  const unlink=()=>{
-  if(!window.confirm('Unlink '+target.name+' from '+source.name+'?\n\nThe record, logged Activities, and previously issued Quotes will be preserved.'))return;
-  setError('');
-  try{
    if(source.kind==='company'&&target.kind==='person')updateContact(target.id,{companyId:undefined});
    else if(source.kind==='company'&&target.kind==='deal')setProjectCompany(target.id,undefined);
    else if(source.kind==='person'&&target.kind==='company')updateContact(source.id,{companyId:undefined});
@@ -60,12 +56,10 @@ export function RecordUnlinkAction({source,target}:{
     else if(source.kind==='person')updateQuote(target.id,{contactId:undefined,contactName:undefined,contactEmail:undefined});
     else if(source.kind==='deal')updateQuote(target.id,{projectId:undefined});
    }else throw new Error('This link must be edited in its source record.');
-  }catch(e){setError(e instanceof Error?e.message:'Could not unlink this record.');}
  };
- return <span className="ss-record-unlink-control">
-  <button type="button" className="ss-record-unlink-button"
-    aria-label={'Unlink '+target.name+' from '+source.name}
-    title="Remove link, keep records and history" onClick={unlink}>Unlink</button>
-  {error&&<small role="alert" className="ss-record-unlink-error">{error}</small>}
- </span>;
+ return <RecordUnlinkButton
+  ariaLabel={'Unlink '+target.name+' from '+source.name}
+  confirmation={'Unlink '+target.name+' from '+source.name+
+   '?\n\nThe record, logged Activities, and previously issued Quotes will be preserved.'}
+  onUnlink={unlink}/>;
 }

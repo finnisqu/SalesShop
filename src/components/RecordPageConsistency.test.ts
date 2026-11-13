@@ -38,7 +38,9 @@ describe('CRM record page action and relationship parity',()=>{
   expect(unlink).toContain('const direct=');
   expect(unlink).toContain("['Draft','Ready'].includes(quote.status)");
   expect(unlink).toContain("!(target.kind==='person'&&internal)");
-  expect(unlink).toContain('window.confirm(');
+  const common=source('src/components/RecordUnlinkButton.tsx');
+  expect(common).toContain('window.confirm(confirmation)');
+  expect(unlink).toContain('<RecordUnlinkButton');
   expect(unlink).toContain('setProjectCompany(target.id,undefined)');
   expect(unlink).toContain("updateContact(target.id,{companyId:undefined})");
   expect(unlink).toContain("updateQuote(target.id,{projectId:undefined})");

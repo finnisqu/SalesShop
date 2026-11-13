@@ -1,5 +1,6 @@
 import {useEffect,useState} from 'react';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
+import {RecordUnlinkButton} from './RecordUnlinkButton';
 import {useCrmStore} from '../store/crmStore';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
 import {useAuthStore} from '../store/authStore';
@@ -68,10 +69,10 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
         await manager.setRole(dealId,person.id,editedRole);setEditingRole(null);
        })}>Save</button></>:<button type="button"
        onClick={()=>{setEditingRole(person.id);setEditedRole(link.role??'');}}>Role</button>}
-      {editing&&<button type="button" disabled={busy} onClick={()=>{
-       if(!window.confirm('Remove '+person.name+' from this Deal? Their Person record and Activities stay intact.'))return;
-       void update(()=>manager.remove(dealId,person.id));
-      }} className="ss-record-unlink-button">Unlink</button>}
+      {editing&&<RecordUnlinkButton disabled={busy}
+       ariaLabel={'Unlink '+person.name+' from Deal'}
+       confirmation={'Remove '+person.name+' from this Deal? Their Person record and Activities stay intact.'}
+       onUnlink={()=>update(()=>manager.remove(dealId,person.id))}/>}
      </div>}
     </div>;
    })}
@@ -135,10 +136,10 @@ export function PersonDealRelationships({personId,deals,onOpenDeal,editing=false
       <button type="button" className="ss-deal-relations-name" onClick={()=>onOpenDeal(deal.id)}>
        <strong>{deal.name}</strong><small>{link.role||'Direct contact'} · Open Deal →</small>
       </button>
-      {editing&&manager.editable&&<button type="button" disabled={busy} onClick={()=>{
-       if(!window.confirm('Unlink this Deal? Existing Quotes and Activities are preserved.'))return;
-       void apply(()=>manager.remove(deal.id,personId));
-      }} className="ss-record-unlink-button">Unlink</button>}
+      {editing&&manager.editable&&<RecordUnlinkButton disabled={busy}
+       ariaLabel={'Unlink Deal '+deal.name}
+       confirmation={'Unlink this Deal? Existing Quotes and Activities are preserved.'}
+       onUnlink={()=>apply(()=>manager.remove(deal.id,personId))}/>}
      </div>:null;
    })}
    {!direct.length&&<p className="connections-record-empty">Not assigned directly to any Deals.</p>}

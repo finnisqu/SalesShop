@@ -2,6 +2,7 @@ import {describe,expect,it} from 'vitest';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {readFileSync} from 'node:fs';
 import {RecordInlineProperty} from './RecordInlineProperty';
+import {RecordUnlinkButton} from './RecordUnlinkButton';
 
 const source=(name:string)=>readFileSync(new URL('./'+name,import.meta.url),'utf8');
 
@@ -48,6 +49,26 @@ describe('Batch 332e — unified Record inline property editing',()=>{
   expect(css).toContain('.ss-record-actions-menu[data-worktable-side="above"]>.ss-record-actions-popover');
   expect(css).toContain('transform:translateX(var(--ss-worktable-menu-shift-x,0px))');
   expect(css).toContain('.ss-record-actions-popover button{min-height:44px}');
+ });
+ it('reuses one confirmed Unlink button across CRM, private Tasks and direct Deal contacts',()=>{
+  const html=renderToStaticMarkup(<RecordUnlinkButton
+   ariaLabel="Unlink Task Prepare submittal"
+   confirmation="Confirm unlink?" onUnlink={()=>{}}/>);
+  expect(html).toContain('class="ss-record-unlink-button"');
+  expect(html).toContain('aria-label="Unlink Task Prepare submittal"');
+  expect(html).toContain('>Unlink</button>');
+  const disabled=renderToStaticMarkup(<RecordUnlinkButton
+   ariaLabel="Unlink Deal" confirmation="Confirm unlink?" disabled onUnlink={()=>{}}/>);
+  expect(disabled).toContain('disabled=""');
+  const button=source('RecordUnlinkButton.tsx');
+  expect(button).toContain('window.confirm(confirmation)');
+  expect(button).toContain('try{await onUnlink();}');
+  expect(button).toContain("reason instanceof Error?reason.message:'Could not unlink this record.'");
+  for(const file of ['RecordUnlinkAction','RecordTasksPanel','DealPersonRelationships']){
+   expect(source(file+'.tsx')).toContain('<RecordUnlinkButton');
+  }
+  expect(source('RecordUnlinkAction.tsx')).toContain("['Draft','Ready'].includes(quote.status)");
+  expect(source('RecordTasksPanel.tsx')).toContain('!isProtectedBidTask(task)');
  });
  it('keeps mobile inline editor inputs, Save, Cancel and pencil touch-sized',()=>{
   const css=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
