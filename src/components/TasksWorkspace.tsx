@@ -473,7 +473,8 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
         className={filter===key?'active':''} onClick={()=>setFilter(key)}>{label}</button>)}
     </nav>}
     {!embedded&&<section className="tasks-directory-controls" aria-label="Task directory controls">
-      <p className="tasks-directory-caption">{visible.length} {visible.length===1?'task':'tasks'} · {counts.active} open · {counts.today} due today · {counts.overdue} overdue</p>
+      {/* The shared worktable toolbar already shows task count and selection;
+          detailed Open/Today/Overdue counts live in its Filters popover. */}
       <div className="tasks-toolbar-slot" ref={setTaskToolbarHost}/>
       <div className="tasks-mobile-controls">
         <div className="tasks-summary" aria-label="Task counts">
