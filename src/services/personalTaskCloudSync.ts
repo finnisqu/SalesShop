@@ -19,11 +19,35 @@ export function taskWinsMerge(candidate:PersonalTask,existing:PersonalTask):bool
   if(Boolean(candidate.deletedAt)!==Boolean(existing.deletedAt))return Boolean(candidate.deletedAt);
   return false; // Stable tie: retain existing remote record
 }
+/** Submission confirmation is monotonic evidence. A different device can
+ * update a protected bid Task's title/due date with a later timestamp but
+ * must not erase proof already recorded by a confirmed customer submission.
+ * Keep the winning record's status/checklist/tombstone and only restore
+ * proof for the exact same Task, Deal and workspace. */
+export function preserveBidSubmissionProof(
+ winner:PersonalTask,other:PersonalTask,
+):PersonalTask{
+ if(winner.deletedAt||other.deletedAt||
+  !winner.sourceObjectId?.startsWith('deal-submit:')||
+  winner.sourceObjectId!==other.sourceObjectId||
+  (winner.workspaceScope&&other.workspaceScope&&
+   winner.workspaceScope!==other.workspaceScope))return winner;
+ const evidence=[winner.submissionConfirmedAt,other.submissionConfirmedAt]
+  .filter((value):value is string=>typeof value==='string'&&
+   Number.isFinite(Date.parse(value)))
+  .sort((a,b)=>Date.parse(a)-Date.parse(b))[0];
+ return evidence&&winner.submissionConfirmedAt!==evidence
+  ?{...winner,submissionConfirmedAt:evidence}:winner;
+}
+
 export function mergePrivateTasks(local:readonly PersonalTask[],remote:readonly PersonalTask[]):PersonalTask[]{
   const all=new Map<string,PersonalTask>();
   for(const task of [...remote,...local]){
     const old=all.get(task.id);
-    if(!old||taskWinsMerge(task,old))all.set(task.id,task);
+    if(!old){all.set(task.id,task);continue;}
+    const winner=taskWinsMerge(task,old)?task:old;
+    const loser=winner===task?old:task;
+    all.set(task.id,preserveBidSubmissionProof(winner,loser));
   }
   return Array.from(all.values()).sort((a,b)=>
     b.updatedAt.localeCompare(a.updatedAt)||a.id.localeCompare(b.id));
