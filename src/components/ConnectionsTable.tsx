@@ -13,7 +13,7 @@ import {useViewportBoundDetails} from './useViewportBoundDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
 import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE,CATALOG_PAGE_SIZES,catalogPageRange} from './CatalogPagination';
-import {WorktableFilterMenu,WorktablePagination,WorktableSurface} from './WorktableChrome';
+import {WorktableFilterMenu,WorktablePagination,WorktableSurface,WorktableSelectPageCheckbox} from './WorktableChrome';
 import {worktableStoredSort} from '../services/worktableSortPreference';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;readOnly?:boolean;isSelfCompany?:boolean;}
@@ -60,7 +60,6 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  const [pinned,setPinned]=useState<string[]>(()=>read(storage(tableKey,'pins')));
  const [selected,setSelected]=useState<string[]>([]);
  const [density,setDensity]=useWorkbookTableDensity();
- const selectPageRef=useRef<HTMLInputElement>(null);
  const [bulkEditing,setBulkEditing]=useState(false);
  const [bulkTaskEditing,setBulkTaskEditing]=useState(false);
  const [mobileBulkMode,setMobileBulkMode]=useState(false);
@@ -129,9 +128,6 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  const chosen=useMemo(()=>rows.filter(row=>selection.has(row.id)),[rows,selection]);
  const allOnPage=display.length>0&&display.every(x=>selection.has(x.id));
  const someOnPage=display.some(x=>selection.has(x.id));
- useEffect(()=>{
-  if(selectPageRef.current)selectPageRef.current.indeterminate=someOnPage&&!allOnPage;
- },[someOnPage,allOnPage]);
  const pins=useMemo(()=>{
    const pinnedIds=new Set(pinned);
    return rows.filter(row=>pinnedIds.has(row.id));
@@ -262,19 +258,21 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
    <WorktableSurface className="connections-table-scroll" label={tableKey+" worktable"}>
      <table className="connections-data-table">
        <thead><tr>
-         <th className="connections-check-cell"><input ref={selectPageRef} type="checkbox" checked={allOnPage}
-           aria-label="Select all on page" onChange={event=>{
-             const ids=new Set(display.map(row=>row.id));
-             setSelected(old=>event.target.checked?[...new Set([...old,...ids])]:old.filter(id=>!ids.has(id)));
+         <th className="connections-check-cell" scope="col">
+          <WorktableSelectPageCheckbox label={'Select all '+tableKey+' on this page'}
+           allSelected={allOnPage} someSelected={someOnPage} disabled={!display.length}
+           onChange={checked=>{
+            const ids=new Set(display.map(row=>row.id));
+            setSelected(old=>checked?[...new Set([...old,...ids])]:old.filter(id=>!ids.has(id)));
            }}/></th>
-         <th className="connections-pin-cell">Pin</th>
-         {visible.map(col=><th key={col.key} aria-sort={sort.key===col.key?(sort.reverse?'descending':'ascending'):'none'}>
+         <th className="connections-pin-cell" scope="col">Pin</th>
+         {visible.map(col=><th key={col.key} scope="col" aria-sort={sort.key===col.key?(sort.reverse?'descending':'ascending'):'none'}>
            <button type="button" aria-label={'Sort by '+col.label}
              onClick={()=>{setSort({tableKey,key:col.key,
                 reverse:sort.key===col.key?!sort.reverse:false});setPage(1);}}>
              {col.label}<WorkspaceChromeIcon name={sort.key===col.key?(sort.reverse?'sort-desc':'sort-asc'):'sort'}/>
            </button></th>)}
-         {hasRowActions&&<th className="connections-row-actions-heading">Quick actions</th>}
+         {hasRowActions&&<th className="connections-row-actions-heading" scope="col">Quick actions</th>}
        </tr></thead>
        <tbody>{display.map(row=><tr key={row.id} className={selection.has(row.id)?'is-selected':''}>
          <td className="connections-check-cell"><input type="checkbox" checked={selection.has(row.id)}
