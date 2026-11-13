@@ -79,8 +79,9 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
   }, [line.id, snapshot]);
 
   const activeItems = useMemo(() => items.filter((item) => item.active && allowedCategories.includes(item.category)), [items]);
-  const selectedItem = line.rateReference?.rateBookItemId
-    ? activeItems.find((item) => item.id === line.rateReference?.rateBookItemId)
+  const selectedRateId=line.rateReference?.rateBookItemId??snapshot?.rateBookItemId;
+  const selectedItem = selectedRateId
+    ? activeItems.find((item) => item.id === selectedRateId)
     : undefined;
   const currentSnapshot = selectedItem ? createQuoteRateSnapshot(selectedItem, quote.pricingDivision) : undefined;
   const comparison = snapshot && currentSnapshot ? compareQuoteRateSnapshot(snapshot, currentSnapshot) : undefined;
@@ -190,6 +191,7 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
         <button type="button" className="quote-source-pencil" onClick={() => {
           window.dispatchEvent(new CustomEvent('sales-shop:quote-close-pricing', { detail: { lineId: line.id } }));
           setSearch('');
+          setSourceError('');
           setSearching(true);
         }} title="Change rate" aria-label="Change rate">✎</button>
       </div>
