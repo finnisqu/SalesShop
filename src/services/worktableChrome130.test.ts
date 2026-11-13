@@ -93,7 +93,7 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(styles).toContain('--ss-worktable-head-fill:');
   for(const name of ['MaterialsWorkspace','RatesWorkspace',
    'CatalogSinksWorktable','CatalogOtherWorktable']){
-   expect(src('components/'+name+'.tsx')).toContain('ss-worktable-surface');
+   expect(src('components/'+name+'.tsx')).toContain('<WorktableSurface');
   }
  });
  it('shares the same light tab capsule and label scale across Records and Catalog',()=>{

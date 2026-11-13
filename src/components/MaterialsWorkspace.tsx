@@ -25,7 +25,7 @@ import { SuppliersWorkspace } from './SuppliersWorkspace';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { CatalogPagination } from './CatalogPagination';
-import {WorktableFilterMenu} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import { restoreScrollAnchor } from '../lib/scrollAnchor';
@@ -701,7 +701,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
                 })}
               </MobileCatalogReferenceList>
             ) : (
-            <div className="rates-reference-table-wrap ss-worktable-surface">
+            <WorktableSurface className="rates-reference-table-wrap" label="Materials catalog worktable">
               <table className="rates-reference-table materials-reference-table">
                 <thead><tr><th>Brand</th><th>Name</th><th>Type</th><th>Program</th><th>Default cost</th><th>Default spec</th><th>Product</th><th>Variants</th></tr></thead>
                 <tbody>
@@ -746,7 +746,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
                   </div></td></tr>}
                 </tbody>
               </table>
-            </div>
+            </WorktableSurface>
             )}
           </section>
         </div>

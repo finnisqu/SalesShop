@@ -8,7 +8,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
@@ -207,7 +207,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
     page={pagination.page} pageSize={pagination.pageSize}
     onPageChange={next=>{pagination.setPage(next);setExpanded(null);}}
     onPageSizeChange={size=>{pagination.setPageSize(size);setExpanded(null);}}/>
-   <div className="rates-reference-table-wrap catalog-product-scroll ss-worktable-surface">
+   <WorktableSurface className="rates-reference-table-wrap catalog-product-scroll" label="Sinks catalog worktable">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr><th>Brand</th><th>Model</th><th>Category</th><th>Material</th><th>Mount</th>
       <th>Total W × L × H</th><th>Variants</th></tr></thead>
@@ -323,7 +323,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       </td></tr>}
      </tbody>
     </table>
-   </div>
+   </WorktableSurface>
   </section>
  </section>;
 }

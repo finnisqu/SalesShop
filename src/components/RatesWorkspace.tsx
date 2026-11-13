@@ -19,7 +19,7 @@ import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogTool
 import { RateBook } from './RateBook';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 
@@ -393,7 +393,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
                 );
               })}
             </MobileCatalogReferenceList>
-            <div className="rates-reference-table-wrap ss-worktable-surface">
+            <WorktableSurface className="rates-reference-table-wrap" label="Rates catalog worktable">
               <table className="rates-reference-table">
                 <thead><tr><th>Item</th><th>Category</th><th>Cost</th><th>Suggested sell</th><th>Unit</th><th>Margin</th><th>Effective</th></tr></thead>
                 <tbody>
@@ -415,7 +415,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
                   </div></td></tr>}
                 </tbody>
               </table>
-            </div>
+            </WorktableSurface>
           </section>
         ) : (
           <section className="rates-reference-card rates-material-pricing-card">
@@ -458,7 +458,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
                 );
               })}
             </MobileCatalogReferenceList>
-            <div className="rates-reference-table-wrap ss-worktable-surface">
+            <WorktableSurface className="rates-reference-table-wrap" label="Material pricing worktable">
               <table className="rates-reference-table rates-material-pricing-table">
                 <thead><tr><th>Level</th><th>Material cost ceiling</th><th>Standard customer price</th><th>Meaning</th></tr></thead>
                 <tbody>
@@ -473,7 +473,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
                   {!materialPricingRows.length && <tr><td colSpan={4}><div className="rates-reference-empty">No active material pricing levels match this search.</div></td></tr>}
                 </tbody>
               </table>
-            </div>
+            </WorktableSurface>
             <footer className="rates-material-pricing-footer">
               <strong>Premium slab review</strong>
               <span>Above {money.format(guide.slabPricingThresholdCostPerSf)}/SF material cost, SalesShop switches from standard levels to actual slab cost × {guide.slabPricingMultiplier}.</span>
