@@ -96,8 +96,12 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   expect(store).toContain("meta.recordedByUserId!==actorId");
   expect(store).toContain("meta.recordedAt!==activity.metadata?.recordedAt");
   const externalStore=store.slice(store.indexOf('recordExternalQuoteSent:async'));
-  expect(externalStore.indexOf(".select('id,type,project_id,metadata')"))
-    .toBeLessThan(externalStore.indexOf('persist(get().companies,get().contacts,projects,activities)'));
+  const activityAck=externalStore.indexOf(".select('id,type,project_id,metadata')");
+  const dealAck=externalStore.indexOf('if(!confirmedExternalQuoteDeal(confirmedDeal,projectId,intended.stage,amount))');
+  const localCommit=externalStore.indexOf('persist(latest.companies,latest.contacts,liveProjects,activities)');
+  expect(activityAck).toBeGreaterThanOrEqual(0);
+  expect(dealAck).toBeGreaterThan(activityAck);
+  expect(localCommit).toBeGreaterThan(dealAck);
   expect(form).toContain('const saved=await recordExternalQuoteSent(');
   expect(form).toContain('submissionId.current,recordedAt.current');
   expect(form).toContain('onRecorded?.(bidSentDate)');
@@ -106,7 +110,8 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
   expect(store).toContain("if(!confirmedExternalQuoteDeal(confirmedDeal,projectId,intended.stage,amount))");
   expect(store).toContain("if(!historical){");
   expect(store.indexOf("if(!confirmedExternalQuoteDeal(confirmedDeal,projectId,intended.stage,amount))"))
-    .toBeLessThan(store.indexOf("const activities=get().activities.some(item=>item.id===activity.id)"));
+    .toBeLessThan(store.indexOf("const latest=get();"));
+  expect(store).toContain('reconcileExternalQuoteDealAfterAck(');
   expect(file('src/components/SalesCalendarLauncher.tsx')).toContain(
    "setBadgeFocus({date,metric:'quotes-sent'})");
  });
