@@ -108,7 +108,7 @@ describe('Batch 333 — persisted Sink and OTHER variant management',()=>{
   expect(useSinkCatalogStore.getState().models[0]).toEqual(before);
   useSinkCatalogStore.getState().updateVariant(copy.id,copy.variants[0].id,{sellPrice:777});
   expect(useSinkCatalogStore.getState().models[0].variants[0].sellPrice).toBe(220);
-  expect(historical).toMatchObject({modelId:'sink333',variantId:'chrome',sellPrice:220});
+  expect(historical).toMatchObject({sinkModelId:'sink333',variantId:'chrome',sellPrice:220});
   expect(saved.has('salesshop-sink-catalog-v1')).toBe(true);
  });
  it('duplicates archived OTHER items without sharing IDs, SKUs or mutable variants',()=>{
