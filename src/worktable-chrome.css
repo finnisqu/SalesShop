@@ -67,7 +67,7 @@
  margin-right:6px;color:var(--ss-theme-accent);font-size:16px;
 }
 @media(max-width:760px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
- :root[data-sales-theme] .sales-app.view-catalog .ss-worktable-horizontal-hint{
+ :root[data-sales-theme] .sales-app .ss-worktable-horizontal-hint{
   display:flex;align-items:center;gap:3px;
  }
  :root[data-sales-theme] .sales-app.view-catalog .catalog-product-scroll{
