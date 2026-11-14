@@ -27,9 +27,25 @@ export function nextQuickGridCell(cells:readonly QuickGridCell[],
  * Mobile Areas intentionally collapse some desktop columns; these hidden
  * buttons must not steal Prev/Next or keyboard focus. */
 export function quickGridControlIsNavigable(control:HTMLElement):boolean{
- return control.getClientRects().length>0&&
-  !control.matches(':disabled,[aria-disabled="true"]')&&
-  !control.closest('[inert],[hidden],[aria-hidden="true"]');
+ if(control.getClientRects().length===0||
+    control.matches(':disabled,[aria-disabled="true"],[readonly]')||
+    control.closest('[inert],[hidden],[aria-hidden="true"],[aria-disabled="true"]'))
+  return false;
+ // visibility:hidden can still report a nonempty DOMRect. Do not send a
+ // phone keyboard to an invisible column or temporarily hidden editor.
+ const view=control.ownerDocument?.defaultView;
+ return !view||!['hidden','collapse'].includes(view.getComputedStyle(control).visibility);
+}
+
+/** The mobile keyboard toolbar shares the same filter as Tab/Enter. Its
+ * disabled Prev/Next buttons must never include collapsed desktop columns. */
+export function quickGridLinearNeighborAvailable(
+ root:HTMLElement,from:HTMLElement,direction:'previous'|'next',
+):boolean{
+ const controls=Array.from(root.querySelectorAll<HTMLElement>('[data-quick-grid-editable]'))
+  .filter(quickGridControlIsNavigable);
+ const index=controls.findIndex(el=>el===from||el.contains(from));
+ return index>=0&&(direction==='previous'?index>0:index<controls.length-1);
 }
 
 /** Navigate by stable row/column identity, even when React exchanges an
@@ -84,9 +100,28 @@ export function moveQuickGridFocus(root:HTMLElement,from:HTMLElement,
 }
 
 type GridKeyEvent={
- key:string;shiftKey:boolean;ctrlKey:boolean;metaKey:boolean;target:EventTarget|null;
+ key:string;shiftKey:boolean;ctrlKey:boolean;metaKey:boolean;
+ altKey?:boolean;isComposing?:boolean;target:EventTarget|null;
  preventDefault:()=>void;
 };
+/** Only one-line spreadsheet inputs use Enter for navigation.
+ * Shift+Enter travels backward, while multiline editors, IME composition
+ * and browser modifier shortcuts keep their native keyboard behavior. */
+export function quickGridKeyDirection(
+ event:Pick<GridKeyEvent,'key'|'shiftKey'|'ctrlKey'|'metaKey'|'altKey'|'isComposing'>,
+ editing:boolean,singleLineInput:boolean,
+):QuickGridDirection|undefined{
+ if(event.isComposing||event.ctrlKey||event.metaKey||event.altKey)return undefined;
+ if(event.key==='Tab')return event.shiftKey?'previous':'next';
+ if(event.key==='Enter')return editing&&singleLineInput
+  ?(event.shiftKey?'previous':'next'):undefined;
+ if(editing)return undefined;
+ if(event.key==='ArrowRight')return 'right';
+ if(event.key==='ArrowLeft')return 'left';
+ if(event.key==='ArrowDown')return 'down';
+ if(event.key==='ArrowUp')return 'up';
+ return undefined;
+}
 /** Called on the worksheet root, on the capture phase.
  * Tab and Enter commit the active input before focusing the next editable cell.
  * Arrow keys navigate display cells, not text within active inputs. */
@@ -106,13 +141,7 @@ export function handleQuickGridKey(event:GridKeyEvent,root:HTMLElement):void{
   }
   return;
  }
- const direction:QuickGridDirection|undefined=
-  event.key==='Tab'?(event.shiftKey?'previous':'next'):
-  event.key==='Enter'&&editing?'next':
-  !editing&&event.key==='ArrowRight'?'right':
-  !editing&&event.key==='ArrowLeft'?'left':
-  !editing&&event.key==='ArrowDown'?'down':
-  !editing&&event.key==='ArrowUp'?'up':undefined;
+ const direction=quickGridKeyDirection(event,editing,target.matches('input'));
  if(!direction)return;
  if(moveQuickGridFocus(root,target,direction,editing&&event.key==='Enter'))event.preventDefault();
 }
