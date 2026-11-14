@@ -78,6 +78,31 @@ describe('18F frozen revision reconstruction and signatures',()=>{
     expect(preview.projectMaterials).toEqual([]);
     expect(preview.attachSelectionsSheet).toBe(false);
   });
+  it('historical print and signatures never inherit absent optional fields from newer Quote state',()=>{
+    const q=original();
+    const legacy=createQuoteRevisionSnapshot(q,t,'Sent');
+    delete legacy.documentType;
+    const newer:Quote={...q,revision:1,status:'Draft',
+      documentType:'pricing-schedule',companyName:'Later private builder',
+      companyId:'later-company',projectId:'later-deal',parentQuoteId:'later-parent',
+      changeOrderNumber:4,contactId:'later-person',
+      contactName:'Later contact',contactEmail:'private@example.com',
+      address:'Later private address',
+      history:[legacy],
+    };
+    const historical=historicalCustomerQuote(newer,legacy);
+    expect(historical.documentType).toBe('quote');
+    expect(historical.companyId).toBe('company-1');
+    expect(historical.companyName).toBe('Initial Builder');
+    for(const key of ['projectId','parentQuoteId','changeOrderNumber',
+      'contactId','contactName','contactEmail','address'] as const)
+      expect(historical[key]).toBeUndefined();
+    const receipt=buildAcceptedQuoteSnapshot(historical);
+    expect(receipt.documentType).toBe('quote');
+    expect(receipt.companyName).toBe('Initial Builder');
+    expect(receipt.contactEmail).toBeUndefined();
+    expect(JSON.stringify(receipt)).not.toMatch(/private@example|Later private|later-parent/);
+  });
   it('accepted receipt prices, customer scope and terms bind to the frozen issued revision',()=>{
     const issued=original();
     issued.history=[createQuoteRevisionSnapshot(issued,t,'Sent')];
