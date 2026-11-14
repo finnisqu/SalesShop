@@ -189,9 +189,9 @@ describe('Batch 346b — existing Quote Catalog reselection and margin preservat
  });
  it('rejects removed, retired or stale active selections across Sink, Rate and OTHER',()=>{
   const archivedSink={...sink(),active:false};
-  expect(()=>liveSinkSelection([archivedSink],'sink','black')).toThrow(/not.*active/);
+  expect(()=>liveSinkSelection([archivedSink],'sink','black')).toThrow(/no longer active/);
   expect(()=>liveSinkSelection([sink()],'sink','missing')).toThrow(/Sink variant/);
-  expect(()=>liveRateSelection([{...rate(),active:false}],'labor')).toThrow(/not.*active/);
+  expect(()=>liveRateSelection([{...rate(),active:false}],'labor')).toThrow(/no longer active/);
   expect(()=>liveOtherSelection([other()],'drain','missing')).toThrow(/OTHER variant/);
   expect(()=>liveOtherSelection([],'drain','matte')).toThrow(/OTHER product/);
  });
