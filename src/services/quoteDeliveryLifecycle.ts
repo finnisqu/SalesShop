@@ -6,6 +6,50 @@ export const QUOTE_DELIVERY_METHOD_LABELS:Record<QuoteDeliveryMethod,string>={
   email:'Email',text:'Text message','in-person':'In person',other:'Other method',
 };
 
+/** A revised Activity keeps its ID. Reconcile cloud/cache copies before
+ * asking whether that ID still proves delivery. The edited timestamp is
+ * authoritative when present, followed by the recording and event times.
+ * Equal-version conflicting copies fail closed: unconfirmed evidence wins. */
+function nativeActivityVersion(activity:Activity):number {
+ for(const value of [activity.metadata?.editedAt,activity.metadata?.recordedAt,
+  activity.occurredAt]){
+  if(typeof value==='string'){
+   const time=Date.parse(value);
+   if(Number.isFinite(time))return time;
+  }
+ }
+ return Number.NEGATIVE_INFINITY;
+}
+const nativeDeliveryProof=(activity:Activity):boolean=>
+ activity.type==='quote-sent'&&activity.metadata?.source==='manual'&&
+ activity.metadata.deliveryConfirmed===true&&
+ Number.isInteger(activity.metadata.revision)&&
+ (activity.metadata.revision??-1)>=0;
+
+export function dedupeNativeQuoteActivities<T extends Activity>(
+ activities:readonly T[],
+):T[]{
+ const result:T[]=[];
+ const indexById=new Map<string,number>();
+ for(const activity of activities){
+  if(!activity.quoteId||!activity.id){result.push(activity);continue;}
+  const index=indexById.get(activity.id);
+  if(index===undefined){
+   indexById.set(activity.id,result.length);
+   result.push(activity);
+   continue;
+  }
+  const existing=result[index];
+  const version=nativeActivityVersion(activity);
+  const previousVersion=nativeActivityVersion(existing);
+  if(version>previousVersion||
+    (version===previousVersion&&nativeDeliveryProof(existing)&&!nativeDeliveryProof(activity))){
+   result[index]=activity;
+  }
+ }
+ return result;
+}
+
 /** Manual confirmation, not a proof inferred from link creation or copying.
  * A quote-sent activity without this marker is an older issuance event. */
 export function confirmedQuoteDeliveries(
@@ -14,16 +58,10 @@ export function confirmedQuoteDeliveries(
   // The same CRM Activity may arrive twice during local/cloud hydration.
   // Deduplicate by immutable Activity ID, not by date or revision: distinct
   // genuine delivery confirmations must remain individually auditable.
-  const byId=new Map<string,Activity>();
-  for(const item of activities){
-    if(item.quoteId!==quote.id||item.type!=='quote-sent'||
-      item.metadata?.source!=='manual'||
-      item.metadata?.deliveryConfirmed!==true||
-      item.metadata?.revision!==quote.revision)continue;
-    const existing=byId.get(item.id);
-    if(!existing||item.occurredAt>existing.occurredAt)byId.set(item.id,item);
-  }
-  return [...byId.values()].sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
+  return dedupeNativeQuoteActivities(activities).filter(item=>
+    item.quoteId===quote.id&&nativeDeliveryProof(item)&&
+    item.metadata?.revision===quote.revision
+  ).sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
 }
 
 export function quoteIssued(quote:Pick<Quote,'status'>):boolean{
