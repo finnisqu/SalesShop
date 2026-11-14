@@ -5,6 +5,7 @@ import {
 } from '../services/quoteSinkSnapshot';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
+import {liveSinkSelection} from '../services/quoteCatalogLiveReselection';
 import {
  catalogSellingOverride,quoteSinkSourcePatch,quoteSinkCatalogPricePatch,
 } from '../services/quoteCatalogLineEditing';
@@ -126,9 +127,10 @@ export function QuoteSinkLineFields({ quoteId, line }: { quoteId: string; line: 
 
   const apply = (model: SinkModel, variant: SinkVariant) => {
     try {
-      if(!model.active||!variant.active||!model.variants.some(v=>v.id===variant.id&&v.active))
-        throw new Error('Choose an active Sink Catalog variant.');
-      const nextSnapshot = createQuoteSinkSnapshot(model, variant);
+      const live=liveSinkSelection(
+        useSinkCatalogStore.getState().models,model.id,variant.id,
+      );
+      const nextSnapshot = createQuoteSinkSnapshot(live.model, live.variant);
       updateLine(quoteId,line.id,quoteSinkSourcePatch(line,nextSnapshot));
       setSourceError('');
       setSearch('');
