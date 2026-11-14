@@ -19,7 +19,7 @@ import { MobileCatalogActiveFilters, MobileCatalogFilterSheet, MobileCatalogTool
 import { RateBook } from './RateBook';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface,WorktableSortButton} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 
@@ -181,6 +181,9 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
     Number(category!=='all')+
     Number(Boolean(query.trim()||externalQuery?.trim()))+
     Number(rateSort!=='category');
+  const chooseRateSort=(next:RateSort)=>{
+    setExpandedRateId(null);setExpandedLevelId(null);setRateSort(next);
+  };
   const resetCatalogView=()=>{
     setQuery('');selectCategory('all');clearReferenceFilters();
     setRateSort('category');setExpandedRateId(null);setExpandedLevelId(null);
@@ -395,7 +398,14 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
             </MobileCatalogReferenceList>
             <WorktableSurface className="rates-reference-table-wrap" label="Rates catalog worktable">
               <table className="rates-reference-table">
-                <thead><tr><th>Item</th><th>Category</th><th>Cost</th><th>Suggested sell</th><th>Unit</th><th>Margin</th><th>Effective</th></tr></thead>
+                <thead><tr>
+                  <th scope="col" aria-sort={rateSort==='name'?'ascending':undefined}><WorktableSortButton label="Item" active={rateSort==='name'} onSort={()=>chooseRateSort('name')}/></th>
+                  <th scope="col" aria-sort={rateSort==='category'?'ascending':undefined}><WorktableSortButton label="Category" active={rateSort==='category'} onSort={()=>chooseRateSort('category')}/></th>
+                  <th scope="col" aria-sort={rateSort==='cost-asc'?'ascending':undefined}><WorktableSortButton label="Cost" active={rateSort==='cost-asc'} onSort={()=>chooseRateSort('cost-asc')}/></th>
+                  <th scope="col" aria-sort={rateSort==='sell-asc'?'ascending':rateSort==='sell-desc'?'descending':undefined}><WorktableSortButton label="Suggested sell" active={rateSort==='sell-asc'||rateSort==='sell-desc'} direction={rateSort==='sell-desc'?'descending':'ascending'} onSort={()=>chooseRateSort(rateSort==='sell-asc'?'sell-desc':'sell-asc')}/></th>
+                  <th scope="col">Unit</th><th scope="col">Margin</th>
+                  <th scope="col" aria-sort={rateSort==='effective-desc'?'descending':undefined}><WorktableSortButton label="Effective" active={rateSort==='effective-desc'} direction="descending" onSort={()=>chooseRateSort('effective-desc')}/></th>
+                </tr></thead>
                 <tbody>
                   {pagedRates.map((item) => (
                     <tr key={item.id}>
