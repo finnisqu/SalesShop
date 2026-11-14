@@ -26,11 +26,11 @@ export function useMobileQuoteCatalogMenuViewport(
     const bottom=top+(visual?.height??window.innerHeight);
     const field=trigger.getBoundingClientRect();
     const body=scrollport.getBoundingClientRect();
+    // Static-flow menus cannot flip upward and must use below-space sizing.
+    const absolute=window.getComputedStyle(menu).position==='absolute';
     const placement=quoteSheetCatalogMenuPlacement(
-     field.top,field.bottom,body.top,body.bottom,top,bottom);
-    // Do not move static-flow menus above: their layout does not support it.
-    const above=placement.side==='above'&&
-     window.getComputedStyle(menu).position==='absolute';
+     field.top,field.bottom,body.top,body.bottom,top,bottom,absolute);
+    const above=placement.side==='above';
     menu.style.maxHeight=placement.maxHeight+'px';
     menu.style.overflowY='auto';
     if(above){
