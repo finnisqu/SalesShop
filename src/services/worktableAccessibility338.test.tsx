@@ -67,8 +67,11 @@ describe('Batch 338 — shared worktable accessibility and mobile parity',()=>{
    'onChange={event=>pageSelection.selectRow(model.id,event.target.checked)}/></td>}');
   expect(other).toContain(
    'onChange={event=>pageSelection.selectRow(item.id,event.target.checked)}/></td>}');
+  // Sinks gained two price columns in 349a (9 data columns);
+  // OTHER still has seven. Both must span the optional selection cell.
+  expect(sinks).toContain('colSpan={selecting?10:9}');
+  expect(other).toContain('colSpan={selecting?8:7}');
   for(const table of [sinks,other]){
-   expect(table).toContain('colSpan={selecting?8:7}');
    expect(table).toContain('<WorktableSelectPageCheckbox');
   }
  });
