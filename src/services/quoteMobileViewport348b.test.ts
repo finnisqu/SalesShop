@@ -43,6 +43,8 @@ describe('Batch 348b — keyboard-safe Quote sheets and Catalog menus',()=>{
   expect(hook).toContain('body.scrollTop=Math.max(0,Math.min(maximum,body.scrollTop+shift))');
   expect(hook).not.toContain('active.scrollIntoView(');
   expect(hook).toContain("window.visualViewport?.addEventListener('resize',reveal)");
+  const css=source('src/mobile-quote-viewport-reliability.css');
+  expect(css).toContain('padding-bottom:max(88px,env(safe-area-inset-bottom,0px))!important;');
  });
  it('positions both Catalog pickers within the visual viewport and cleans up listeners',()=>{
   const hook=source('src/lib/useMobileQuoteCatalogMenuViewport.ts');
