@@ -50,9 +50,9 @@ describe('Batch 336 — Catalog page-scoped selection and filter parity',()=>{
   const other=source('components/CatalogOtherWorktable.tsx');
   expect(sinks).toContain('SINK_CATEGORY_LABELS[model.category]');
   expect(sinks).toContain('SINK_CONFIGURATION_LABELS[variant.configuration]');
-  expect(other).toContain("sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort)");
-  expect(sinks).toContain("sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort)");
-  expect(sinks).toContain('<option value="price">Customer price · low first</option>');
-  expect(other).toContain('<option value="price">Customer price · low first</option>');
+  expect(other).toContain("sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort,sortDirection)");
+  expect(sinks).toContain("sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort,sortDirection)");
+  expect(sinks).toContain('<option value="price">Customer price</option>');
+  expect(other).toContain('<option value="price">Customer price</option>');
  });
 });
