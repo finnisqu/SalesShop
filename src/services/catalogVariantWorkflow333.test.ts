@@ -27,7 +27,7 @@ describe('Batch 333 — Catalog creation remains visible and variant management 
  it('uses active default pricing rather than retired first variants',()=>{
   const sinks=source('components/CatalogSinksWorktable.tsx');
   const other=source('components/CatalogOtherWorktable.tsx');
-  expect(sinks).toContain("sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort)");
+  expect(sinks).toContain("sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort,sortDirection)");
   expect(sinks).toContain("catalogDefaultVariantPrice(model,'cost')");
   expect(sinks).toContain("catalogDefaultVariantPrice(model,'price')");
   expect(other).toContain('defaultVariant=activeCatalogDefaultVariant(item.variants)');
