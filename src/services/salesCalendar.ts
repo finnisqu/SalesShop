@@ -73,9 +73,13 @@ export function personalCalendarTasks(
  if(!userId)return [];
  const assignedElsewhere=new Set(deals.filter(deal=>
   deal.assignedUserId&&deal.assignedUserId!==userId).map(deal=>deal.id));
- return active.filter(task=>!task.sourceObjectId?.startsWith('deal-submit:')||
-  task.status==='completed'||task.status==='canceled'||Boolean(task.completedAt)||
-  !assignedElsewhere.has(task.sourceObjectId.slice('deal-submit:'.length)));
+ return active.filter(task=>{
+  const source=task.sourceObjectId;
+  if(!source?.startsWith('deal-submit:')||
+     task.status==='completed'||task.status==='canceled'||Boolean(task.completedAt))
+   return true;
+  return !assignedElsewhere.has(source.slice('deal-submit:'.length));
+ });
 }
 /** Keep Home personal. CRM Activity remains available in the Recent history
  * surface but never contributes to the pending-work calendar badges. */
