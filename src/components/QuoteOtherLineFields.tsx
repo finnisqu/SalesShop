@@ -2,6 +2,7 @@ import {useEffect,useMemo,useRef,useState} from 'react';
 import type {QuoteLine} from '../types/quote';
 import type {OtherCatalogItem,OtherCatalogVariant} from '../store/otherCatalogStore';
 import {useOtherCatalogStore} from '../store/otherCatalogStore';
+import {liveOtherSelection} from '../services/quoteCatalogLiveReselection';
 import {useQuoteStore} from '../store/quoteStore';
 import {catalogSellingOverride} from '../services/quoteCatalogLineEditing';
 import {compareQuoteOtherSnapshot,createQuoteOtherSnapshot} from '../services/quoteOtherSnapshot';
@@ -57,9 +58,12 @@ export function QuoteOtherLineFields({quoteId,line,disabled=false}:{
     a.variant.label.localeCompare(b.variant.label)).slice(0,24);
  },[items,query]);
 
- const change=(nextItem:OtherCatalogItem,nextVariant:OtherCatalogVariant)=>{
+ const change=(selectedItem:OtherCatalogItem,selectedVariant:OtherCatalogVariant)=>{
   if(disabled)return;
   try{
+   const {item:nextItem,variant:nextVariant}=liveOtherSelection(
+    useOtherCatalogStore.getState().items,selectedItem.id,selectedVariant.id,
+   );
    update(quoteId,line.id,quoteOtherSourcePatch(line,nextItem,nextVariant));
    setOpen(false);setQuery('');setError('');
   }catch(cause){
