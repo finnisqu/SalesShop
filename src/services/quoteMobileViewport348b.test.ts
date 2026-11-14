@@ -29,6 +29,9 @@ describe('Batch 348b — keyboard-safe Quote sheets and Catalog menus',()=>{
    .toEqual({side:'below',maxHeight:153});
   expect(quoteSheetCatalogMenuPlacement(70,85,0,100,0,100))
    .toEqual({side:'above',maxHeight:58});
+  // Static-flow menus cannot use the room above the trigger.
+  expect(quoteSheetCatalogMenuPlacement(70,85,0,100,0,100,false))
+   .toEqual({side:'below',maxHeight:3});
   expect(quoteSheetCatalogMenuPlacement(70,85,0,100,150,175))
    .toEqual({side:'below',maxHeight:0});
   expect(quoteSheetCatalogMenuPlacement(40,60,0,200,0,1000))
