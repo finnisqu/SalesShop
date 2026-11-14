@@ -7,7 +7,7 @@ import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
 import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
-import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose} from '../services/quoteMobileSheetDismissal';
+import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose,quoteSheetBackdropShouldClose} from '../services/quoteMobileSheetDismissal';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
@@ -254,9 +254,18 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const title=rowRef.kind==='splash'&&rowRef.edge
   ?edgeNames[rowRef.edge]+' splash · '+(piece?.name||'Piece')
   :piece?.name||sink?.name||line?.description||'Row details';
- return createPortal(<div className="qmb qqt-overlay" onPointerDown={e=>{
-  if(e.target===e.currentTarget)onClose();
- }}>
+ return createPortal(<div className="qmb qqt-overlay" onPointerDown={event=>{
+   if(event.target!==event.currentTarget)return;
+   const active=document.activeElement;
+   const typing=active instanceof HTMLElement&&Boolean(ref.current?.contains(active))&&
+    active.matches('input,textarea,select,[contenteditable="true"],[role="combobox"]');
+   if(!quoteSheetBackdropShouldClose(
+     document.documentElement.dataset.ssMobileKeyboard==='open',typing)){
+    if(active instanceof HTMLElement)active.blur();
+    return;
+   }
+   onClose();
+  }}>
    <div className="qqt-panel" role="dialog" aria-modal="true" ref={ref} aria-label={'Edit '+title}>
     <button type="button" className="qqt-drag-handle" aria-label="Resize details sheet"
      aria-expanded={sheetExpanded}
