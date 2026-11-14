@@ -200,6 +200,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       </div>
       <span>{model.brand||model.supplier||'Unbranded'} · {SINK_CATEGORY_LABELS[model.category]}</span>
       <strong>{model.name}</strong><b>{variant.label}</b>
+      <CatalogLifecycleStatus active={model.active&&variant.active} isDefault={variant.default}/>
       <dl>
        <div><dt>Bowl W × L × H</dt><dd>{size(variant.bowlWidthIn,variant.bowlLengthIn,variant.bowlHeightIn)}</dd></div>
        <div><dt>Total W × L × H</dt><dd>{size(variant.totalWidthIn??model.widthIn,
