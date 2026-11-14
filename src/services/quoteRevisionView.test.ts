@@ -114,7 +114,15 @@ describe('18F frozen revision reconstruction and signatures',()=>{
     expect(receipt.acceptedTotal).toBe(1170);
     expect(receipt.title).toBe('Kitchen 1');
     expect(receipt.customerNotes).toBe('Original payment terms');
-    expect(receipt.lines.find(l=>l.id==='top')?.rate).toBe(50);
+    // The hidden, included sink is rolled into its own Area's public
+    // material charge; the selling rate is no longer separately displayed.
+    const top=receipt.lines.find(l=>l.id==='top');
+    expect(top).toMatchObject({pricingMode:'direct',amount:1220});
+    expect(top?.rate).toBeUndefined();
+    expect(issued.history[0].lines.find(l=>l.id==='top')?.rate).toBe(50);
+    expect(receipt.lines.reduce((total,line)=>
+      total+(line.includeInTotal?(line.kind==='discount'?-1:1)*
+       (line.amount??(line.quantity??0)*(line.rate??0)):0),0)).toBe(1170);
     expect(receipt.lines.some(l=>l.id==='sink')).toBe(false);
     expect(receipt.revision).toBe(0);
     expect(receipt.quoteNumber).toBe('WS-230');
