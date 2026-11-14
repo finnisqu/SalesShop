@@ -4,6 +4,7 @@ import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {MobileSheetHandle} from './MobileSheetHandle';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {useCrmStore} from '../store/crmStore';
+import {useNavigationStore} from '../store/navigationStore';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {isOurCompany} from '../services/companyRelationship';
 import {recordNameKey} from '../services/recordNameKey';
@@ -13,10 +14,17 @@ import './board-quick-create-mobile.css';
 export interface BoardDealCreateDetails{
  companyId?:string;newCompanyName?:string;personIds:string[];newPeopleNames:string[];dueDate?:string;
 }
-/** Name-first Board creation with optional detail section; no navigation. */
+/** A Deal may be created before an optional Company/Person link fails. Keep
+ * that record's ID so the UI cannot accidentally create a duplicate on retry. */
+export interface BoardPartialCreate{
+ id:string;warning:string;
+}
+type BoardCreateOutcome=string|null|undefined|BoardPartialCreate;
+/** Name-first Board creation with optional details; navigation only for
+ * explicit recovery of a record already created with partial links. */
 export function BoardQuickCreate({kind,onCreate}:{
   kind:'Deal'|'Company'|'Account';
-  onCreate:(name:string,details?:BoardDealCreateDetails)=>string|null|undefined|Promise<string|null|undefined>;
+  onCreate:(name:string,details?:BoardDealCreateDetails)=>BoardCreateOutcome|Promise<BoardCreateOutcome>;
 }) {
   const companies=useCrmStore(state=>state.companies);
   const people=useCrmStore(state=>state.contacts);
@@ -27,20 +35,30 @@ export function BoardQuickCreate({kind,onCreate}:{
   const [dueDate,setDueDate]=useState('');
   const [name,setName]=useState('');
   const [error,setError]=useState('');
+  const [pendingCreated,setPendingCreated]=useState<string|null>(null);
+  const openProject=useNavigationStore(state=>state.openProject);
+  const openCompany=useNavigationStore(state=>state.openCompany);
   const savingRef=useRef(false);
   const trigger=useRef<HTMLButtonElement>(null);
   const inputId=useId();
   const reset=()=>{
     setOpen(false);setName('');setError('');setMore(false);
     setCompanyId('');setNewCompanyName('');setPersonIds([]);setNewPeopleNames([]);setDueDate('');
-    trigger.current?.focus();
+    setPendingCreated(null);trigger.current?.focus();
   };
   const close=()=>{if(!savingRef.current)reset();};
+  const openPendingCreated=()=>{
+    if(!pendingCreated)return;
+    const id=pendingCreated;
+    reset();
+    if(kind==='Deal')openProject(id);
+    else openCompany(id);
+  };
   useModalScrollLock(open);
   const sheetRef=useDismissibleLayer<HTMLFormElement>(open,close);
   const submit=async(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
-    const clean=name.trim();if(!clean||savingRef.current)return;
+    const clean=name.trim();if(!clean||savingRef.current||pendingCreated)return;
     // Block a second Enter or click before React paints the disabled button.
     savingRef.current=true;setSaving(true);setError('');
     try{
@@ -48,8 +66,13 @@ export function BoardQuickCreate({kind,onCreate}:{
         ...(companyId?{companyId}:{}),...(newCompanyName?{newCompanyName}:{}),
         personIds,newPeopleNames,...(dueDate?{dueDate}:{}),
       };
-      const id=await onCreate(clean,kind==='Deal'&&more?details:undefined);
-      if(!id){setError('This name could not be saved. Check for duplicates and try again.');return;}
+      const result=await onCreate(clean,kind==='Deal'&&more?details:undefined);
+      if(!result){setError('This name could not be saved. Check for duplicates and try again.');return;}
+      if(typeof result==='object'){
+        setPendingCreated(result.id);
+        setError(result.warning);
+        return;
+      }
       reset();
     }catch(reason){setError(reason instanceof Error?reason.message:'Unable to create the record.');}
     finally{savingRef.current=false;setSaving(false);}
@@ -57,7 +80,7 @@ export function BoardQuickCreate({kind,onCreate}:{
   return <>
     <button type="button" ref={trigger} className="board-add-button"
       aria-haspopup="dialog" aria-expanded={open}
-      onClick={()=>{setError('');setOpen(true);}}>+ {kind}</button>
+      onClick={()=>{setError('');setPendingCreated(null);setOpen(true);}}>+ {kind}</button>
     {open&&createPortal(
       <div className="board-create-backdrop ss-mobile-sheet-backdrop" onPointerDown={event=>{
         if(event.target===event.currentTarget)close();
@@ -72,7 +95,7 @@ export function BoardQuickCreate({kind,onCreate}:{
           </header>
           <div className="board-create-fields ss-mobile-sheet-body">
             <label htmlFor={inputId}>{kind} name</label>
-            <input id={inputId} className="board-create-name-input" disabled={saving}
+            <input id={inputId} className="board-create-name-input" disabled={saving||Boolean(pendingCreated)}
               autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
               data-dialog-initial-focus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches?true:undefined}
               required value={name}
@@ -137,9 +160,13 @@ export function BoardQuickCreate({kind,onCreate}:{
           </div>
           <footer className="ss-mobile-sheet-actions">
             <button type="button" onClick={close} disabled={saving}>Cancel</button>
-            <button type="submit" className="is-primary" disabled={!name.trim()||saving}>
-              {saving?'Creating…':'Create '+kind.toLowerCase()}
-            </button>
+            {pendingCreated?
+              <button type="button" className="is-primary" onClick={openPendingCreated}>
+                Open created {kind.toLowerCase()}
+              </button>:
+              <button type="submit" className="is-primary" disabled={!name.trim()||saving}>
+                {saving?'Creating…':'Create '+kind.toLowerCase()}
+              </button>}
           </footer>
         </form>
       </div>,document.body)}
