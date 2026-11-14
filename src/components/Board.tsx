@@ -11,7 +11,7 @@ import { Button } from '../design-system/components';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
-import {BoardQuickCreate,type BoardDealCreateDetails} from './BoardQuickCreate';
+import {BoardQuickCreate,type BoardDealCreateDetails,type BoardPartialCreate} from './BoardQuickCreate';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
 import {useAuthStore} from '../store/authStore';
 import {PreviewPanelHeading,PreviewPanelClose} from './PreviewPanelChrome';
@@ -388,29 +388,41 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
       pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
     });
     if(!id)return null;
-    let companyId=details?.companyId;
-    if(details?.newCompanyName){
-      const next=resolveCompany(details.newCompanyName,'customer');
-      if(!next)throw new Error('Deal created; Company could not be created. Open the Deal to add it.');
-      const createdCompany=useCrmStore.getState().companies.find(c=>c.id===next);
-      if(createdCompany)updateCompany(next,companyRelationshipPatch(createdCompany,'prospect'));
-      companyId=next;
+    // From this point on the Deal exists. Never throw away its ID: a retry
+    // from the create form would make a duplicate Deal after a partial link.
+    try{
+      let companyId=details?.companyId;
+      if(details?.newCompanyName){
+        const next=resolveCompany(details.newCompanyName,'customer');
+        if(!next)throw new Error('The new Company could not be created.');
+        const createdCompany=useCrmStore.getState().companies.find(c=>c.id===next);
+        if(createdCompany)updateCompany(next,companyRelationshipPatch(createdCompany,'prospect'));
+        companyId=next;
+      }
+      if(companyId)setProjectCompany(id,companyId);
+      if(details?.dueDate)updateProject(id,{dueDate:details.dueDate});
+      const personIds=[...(details?.personIds??[])];
+      const failed:string[]=[];
+      for(const newName of details?.newPeopleNames??[]){
+        const personId=createContact({name:newName,companyId});
+        if(personId)personIds.push(personId);
+        else failed.push(newName+' (Person creation failed)');
+      }
+      for(const personId of personIds){
+        try{await useDealPeopleStore.getState().add(id,personId);}
+        catch(reason){
+          const display=useCrmStore.getState().contacts.find(p=>p.id===personId)?.name||personId;
+          failed.push(display+' ('+(reason instanceof Error?reason.message:'link failed')+')');
+        }
+      }
+      if(failed.length)return {id,warning:'Deal created, but these People still need linking: '+
+        failed.join(', ')+'. Open the existing Deal to finish.'} satisfies BoardPartialCreate;
+      return id;
+    }catch(reason){
+      return {id,warning:'Deal created, but related details could not all be saved. '+
+        (reason instanceof Error?reason.message:'Open the Deal to review its relationships.')+
+        ' Open the existing Deal; do not create it again.'} satisfies BoardPartialCreate;
     }
-    if(companyId)setProjectCompany(id,companyId);
-    if(details?.dueDate)updateProject(id,{dueDate:details.dueDate});
-    const personIds=[...(details?.personIds??[])];
-    for(const newName of details?.newPeopleNames??[]){
-      const personId=createContact({name:newName,companyId});
-      if(personId)personIds.push(personId);
-    }
-    const failed:string[]=[];
-    for(const personId of personIds){
-      try{await useDealPeopleStore.getState().add(id,personId);}
-      catch{failed.push(useCrmStore.getState().contacts.find(p=>p.id===personId)?.name||personId);}
-    }
-    if(failed.length)window.alert('Deal created, but these People could not be linked: '+
-      failed.join(', ')+'. Link them from the Deal People panel.');
-    return id;
   };
   const focusedProjectId = useNavigationStore((state) => state.focusedProjectId);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
