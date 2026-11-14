@@ -32,8 +32,14 @@ describe('CRM proof for generated bid Tasks',()=>{
  it('recognizes customer delivery of an actual linked quote',()=>{
   expect([...confirmedBidSubmissionDealIds([
    activity('delivered',{projectId:'deal-1',quoteId:'quote-1',
-    metadata:{source:'manual',deliveryConfirmed:true,deliveryMethod:'email'}}),
+    metadata:{source:'manual',deliveryConfirmed:true,deliveryMethod:'email',revision:0}}),
   ])]).toEqual(['deal-1']);
+  // A legacy manual event lacking a revision must not unlock a protected
+  // bid Task because it cannot prove which issued Quote was delivered.
+  expect([...confirmedBidSubmissionDealIds([
+   activity('legacy',{projectId:'deal-1',quoteId:'quote-1',
+    metadata:{source:'manual',deliveryConfirmed:true,deliveryMethod:'email'}}),
+  ])]).toEqual([]);
  });
  it('recognizes genuine external bids but not historical closed-Deal backfills',()=>{
   expect([...confirmedBidSubmissionDealIds([
