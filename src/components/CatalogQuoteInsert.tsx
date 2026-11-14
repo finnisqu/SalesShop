@@ -7,6 +7,8 @@ import { useDismissibleLayer } from '../lib/useDismissibleLayer';
 import { useNavigationStore } from '../store/navigationStore';
 import { useQuoteStore } from '../store/quoteStore';
 import {useSinkCatalogStore} from '../store/sinkCatalogStore';
+import {useCompanySettingsStore} from '../store/companySettingsStore';
+import {useRateBookStore} from '../store/rateBookStore';
 import {useOtherCatalogStore} from '../store/otherCatalogStore';
 import {resolveCatalogQuoteLiveSource} from '../services/catalogQuoteLiveSource';
 import {activeCatalogDefaultVariant} from '../services/catalogVariantDefaults';
@@ -51,11 +53,17 @@ export function CatalogQuoteLauncher({source,label='Add to quote'}:{
 export function CatalogQuoteInsert({ source: initialSource, onClose }: { source: CatalogQuoteSource; onClose: () => void }) {
   // Read the live Catalog while the dialog is open, not just the row snapshot
   // from when the launcher was clicked. Removed SKUs must never be revived.
+  const materials=useCompanySettingsStore(state=>state.settings.stockMaterials);
+  const materialsHydrated=useCompanySettingsStore(state=>state.hydrated);
+  const rates=useRateBookStore(state=>state.items);
+  const ratesHydrated=useRateBookStore(state=>state.hydrated);
   const sinkModels=useSinkCatalogStore(state=>state.models);
   const sinkHydrated=useSinkCatalogStore(state=>state.hydrated);
   const otherItems=useOtherCatalogStore(state=>state.items);
   const otherHydrated=useOtherCatalogStore(state=>state.hydrated);
   const currentSource=resolveCatalogQuoteLiveSource(initialSource,{
+    materials:materialsHydrated?materials:undefined,
+    rateItems:ratesHydrated?rates:undefined,
     sinkModels:sinkHydrated?sinkModels:undefined,
     otherItems:otherHydrated?otherItems:undefined,
   });
@@ -149,14 +157,17 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
     if(!validDestination){setError('That quote is no longer editable. Choose another destination.');return;}
     insertPending.current=true;setInserting(true);
     const finalTarget = eligible.find((quote) => quote.id === targetId);
-    if(targetId!==TARGET_NEW&&!finalTarget){
-      setError('That quote is no longer editable. Choose another destination.');return;
-    }
     let committed=false;
     try {
+      if(targetId!==TARGET_NEW&&!finalTarget)
+        throw new Error('That quote is no longer editable. Choose another destination.');
       // Re-read store state at the exact commit boundary, including changes
       // that occur before React can re-render this dialog.
       const latestSource=resolveCatalogQuoteLiveSource(initialSource,{
+        materials:useCompanySettingsStore.getState().hydrated
+          ?useCompanySettingsStore.getState().settings.stockMaterials:undefined,
+        rateItems:useRateBookStore.getState().hydrated
+          ?useRateBookStore.getState().items:undefined,
         sinkModels:useSinkCatalogStore.getState().hydrated?useSinkCatalogStore.getState().models:undefined,
         otherItems:useOtherCatalogStore.getState().hydrated?useOtherCatalogStore.getState().items:undefined,
       });
@@ -168,8 +179,11 @@ export function CatalogQuoteInsert({ source: initialSource, onClose }: { source:
         source.kind==='material'||source.kind==='sink'||source.kind==='other'?variantId||undefined:undefined,
         source.kind==='material'?purchaseOptionId||undefined:undefined);
       const patch = buildCatalogQuoteLinePatch(source, {
-        variantId: source.kind === 'material' ? materialVariant?.id : source.kind === 'sink' || source.kind === 'other' ? variantId||undefined : undefined,
-        purchaseOptionId: source.kind === 'material' ? selectedOption?.id : undefined,
+        // Resolve material defaults from the *latest* Catalog snapshot.
+        // A dialog-open default may have been retired or repriced meanwhile.
+        variantId: source.kind === 'material' ? variantId||undefined :
+          source.kind === 'sink' || source.kind === 'other' ? variantId||undefined : undefined,
+        purchaseOptionId: source.kind === 'material' ? purchaseOptionId||undefined : undefined,
         division: finalTarget?.pricingDivision,
         quantity: quantityValue,
       });
