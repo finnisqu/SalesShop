@@ -15,8 +15,12 @@ const deal=(assignedUserId?:string):Project=>({
 });
 const quote:Quote={id:'quote-former',projectId:'deal-a',ownerUserId:'former',
  status:'Sent',title:'Earlier native proposal',revision:0,
+ quoteNumber:'Q-344',documentType:'quote',
+ originalQuoteDate:'2026-11-12',quoteDate:'2026-11-12',
+ customerNotes:'',internalNotes:'',
+ customerColumns:{quantity:false,rate:false,lineAmount:true},
  createdAt:date,updatedAt:date,lines:[],sections:[],history:[],
-} as Quote;
+};
 const nativeDelivery:Activity={
  id:'native-delivered',type:'quote-sent',projectId:'deal-a',quoteId:'quote-former',
  summary:'Delivered earlier proposal',occurredAt:date,
