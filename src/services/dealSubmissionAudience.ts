@@ -25,7 +25,7 @@ export function visibleSubmissionDeals(
  // counts: neither an Activity label nor an ordinary quote issuance does.
  activities.filter(activity=>activity.metadata?.recordedByUserId===userId&&
   (activity.type==='project-created'||(
-   activity.type==='quote-sent'&&activity.metadata.externalQuoteSent===true&&
+   activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true&&
    !activity.quoteId&&Boolean(activity.projectId)
   ))).forEach(activity=>{
    if(activity.projectId)relevant.add(activity.projectId);
