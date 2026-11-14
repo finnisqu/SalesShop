@@ -10,6 +10,7 @@ import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 import {activeCatalogDefaultVariant} from '../services/catalogVariantDefaults';
+import {compareCatalogVariantPrice} from '../services/catalogVariantPriceSort';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
 import {CatalogBulkActions,useCatalogPageSelection} from './CatalogBulkSelection';
 
@@ -74,10 +75,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
      ...(v.availableColors??[])])],query,externalQuery))
    .sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):
     sort==='brand'?(a.brand??'').localeCompare(b.brand??'')||a.name.localeCompare(b.name):
-    sort==='cost'?(activeCatalogDefaultVariant(a.variants)?.internalCost??Infinity)-
-     (activeCatalogDefaultVariant(b.variants)?.internalCost??Infinity)||a.name.localeCompare(b.name):
-    sort==='price'?(activeCatalogDefaultVariant(a.variants)?.sellPrice??Infinity)-
-     (activeCatalogDefaultVariant(b.variants)?.sellPrice??Infinity)||a.name.localeCompare(b.name):
+    sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort):
     a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
  },[items,category,query,externalQuery,showInactive,sort]);
  const activeFilterCount=Number(category!=='all')+
