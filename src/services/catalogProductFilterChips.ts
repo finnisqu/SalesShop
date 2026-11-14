@@ -14,6 +14,7 @@ export interface CatalogProductFilterState{
  includeArchived:boolean;
  sort:string;
  defaultSort:string;
+ sortDirection?:'ascending'|'descending';
  sortLabel:string;
  clearLocalQuery:()=>void;
  clearHeaderQuery:()=>void;
@@ -34,7 +35,8 @@ export function catalogProductFilterChips(
   label:'Type: '+state.categoryLabel,onRemove:state.clearCategory});
  if(state.includeArchived)chips.push({key:'archived',label:'Including archived',
   onRemove:state.clearArchived});
- if(state.sort!==state.defaultSort)chips.push({key:'sort',
-  label:'Sort: '+state.sortLabel,onRemove:state.clearSort});
+ if(state.sort!==state.defaultSort||state.sortDirection==='descending')chips.push({key:'sort',
+  label:'Sort: '+state.sortLabel+(state.sortDirection==='descending'?' ↓':''),
+  onRemove:state.clearSort});
  return chips;
 }
