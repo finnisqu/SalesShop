@@ -13,6 +13,7 @@ import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox} from '
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
+import {catalogDefaultVariantPrice,compareCatalogVariantPrice} from '../services/catalogVariantPriceSort';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
 import {CatalogBulkActions,useCatalogPageSelection} from './CatalogBulkSelection';
 
@@ -69,7 +70,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
  const [query,setQuery]=useState('');
  const [category,setCategory]=useState<'all'|SinkCategory>('all');
  const [showInactive,setShowInactive]=useState(false);
- const [sort,setSort]=useState<'name'|'brand'|'category'|'cost'>('brand');
+ const [sort,setSort]=useState<'name'|'brand'|'category'|'cost'|'price'>('brand');
  const [pins,setPins]=useState<string[]>(readPins);
  const [dragging,setDragging]=useState<string|null>(null);
  useEffect(()=>{void hydrate();},[hydrate]);
@@ -119,8 +120,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       ...(variant.availableColors??[])])],query,externalQuery))
    .sort((a,b)=>sort==='category'?a.category.localeCompare(b.category)||a.name.localeCompare(b.name):
      sort==='name'?a.name.localeCompare(b.name):
-     sort==='cost'?(defaultSinkVariant(a)?.internalCost??Infinity)-
-      (defaultSinkVariant(b)?.internalCost??Infinity)||a.name.localeCompare(b.name):
+     sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort):
      (a.brand??a.supplier??'').localeCompare(b.brand??b.supplier??'')||a.name.localeCompare(b.name));
  },[models,showInactive,category,query,externalQuery,sort]);
  const activeFilterCount=Number(category!=='all')+
@@ -236,6 +236,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       <select aria-label="Sort sinks" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
        <option value="brand">Brand / name</option><option value="name">Name A–Z</option>
        <option value="category">Category</option><option value="cost">Cost · low first</option>
+       <option value="price">Customer price · low first</option>
       </select>
      </label>
      <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
@@ -263,7 +264,10 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       <th scope="col" aria-sort={sort==='name'?'ascending':undefined}>Model</th>
       <th scope="col" aria-sort={sort==='category'?'ascending':undefined}>Category</th>
       <th scope="col">Material</th><th scope="col">Mount</th>
-      <th scope="col">Total W × L × H</th><th scope="col">Variants</th></tr></thead>
+      <th scope="col">Total W × L × H</th>
+      <th scope="col" aria-sort={sort==='cost'?'ascending':undefined}>Default cost</th>
+      <th scope="col" aria-sort={sort==='price'?'ascending':undefined}>Customer price</th>
+      <th scope="col">Variants</th></tr></thead>
      <tbody>
       {pagedModels.map(model=>{
        const open=expanded===model.id,variants=model.variants.filter(v=>editing||showInactive||v.active);
@@ -279,10 +283,14 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
            <small>{model.modelCode||'No SKU'} <CatalogLifecycleStatus active={model.active}/></small></td>
          <td>{SINK_CATEGORY_LABELS[model.category]}</td><td>{model.material||'—'}</td>
          <td>{model.mountType||'—'}</td><td>{size(model.widthIn,model.depthIn,model.heightIn)}</td>
+         <td className="catalog-product-currency-cell">{catalogDefaultVariantPrice(model,'cost')===undefined
+          ?'—':money.format(catalogDefaultVariantPrice(model,'cost')!)}</td>
+         <td className="catalog-product-currency-cell">{catalogDefaultVariantPrice(model,'price')===undefined
+          ?'—':money.format(catalogDefaultVariantPrice(model,'price')!)}</td>
          <td><button type="button" className={open?'active':''} onClick={()=>setExpanded(open?null:model.id)}>
            {open?'Hide':'Variants · '+variants.length}</button></td>
         </tr>
-        {open&&<tr className="materials-variant-expanded-row"><td colSpan={selecting?8:7}>
+        {open&&<tr className="materials-variant-expanded-row"><td colSpan={selecting?10:9}>
          <div className="catalog-product-detail">
           {editing&&<div className="catalog-product-properties">
            <TextField label="Model name" value={model.name} onChange={value=>update(model,'name',value)}/>
@@ -389,7 +397,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
         </td></tr>}
        </Fragment>;
       })}
-      {!filtered.length&&<tr><td colSpan={selecting?8:7}>
+      {!filtered.length&&<tr><td colSpan={selecting?10:9}>
        <div className="catalog-product-empty-results">
         <span role="status">No sink models match. Clear filters or add a sink.</span>
         {activeFilterCount>0&&<CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>}
