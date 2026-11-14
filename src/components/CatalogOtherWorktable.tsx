@@ -5,7 +5,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton,WorktableHorizontalHint} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableFilterSection,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton,WorktableHorizontalHint} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {MobileCatalogActiveFilters} from './MobileCatalogTools';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
@@ -219,19 +219,27 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
     <div className="catalog-card-actions">
      <span className="catalog-card-hint">Open a row for variants, costs and specifications.</span>
      <WorktableFilterMenu className="catalog-card-filter"
-      activeCount={activeFilterCount}>
-      <div className="catalog-card-filter-panel">
-       <label>Find items<input type="search" placeholder="Accessories, SKUs, suppliers…" aria-label="Find Other catalog items"
+      activeCount={activeFilterCount} mobileDone>
+      <WorktableFilterSection title="Find">
+       <div className="catalog-card-filter-panel">
+        <label>Find items<input type="search" placeholder="Accessories, SKUs, suppliers…" aria-label="Find Other catalog items"
         value={query} onChange={event=>setQuery(event.target.value)}/></label>
-       <label>Category<select aria-label="Other category" value={category}
+       </div>
+      </WorktableFilterSection>
+      <WorktableFilterSection title="Visibility">
+       <div className="catalog-card-filter-panel">
+        <label>Category<select aria-label="Other category" value={category}
         onChange={event=>setCategory(event.target.value)}>
         <option value="all">All categories</option>
         {categories.map(value=><option key={value} value={value}>{value}</option>)}
        </select></label>
        <label className="catalog-card-checkbox"><input type="checkbox"
          checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Include archived</label>
-      </div>
-     <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
+       </div>
+      </WorktableFilterSection>
+      <WorktableFilterSection title="Sort">
+       <div className="ss-worktable-filter-sort-grid">
+        <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
       <select aria-label="Sort other items" value={sort} onChange={event=>chooseSort(event.target.value as typeof sort)}>
        <option value="category">Category / name</option><option value="name">Name</option>
        <option value="brand">Brand / supplier</option><option value="cost">Default cost</option>
@@ -244,7 +252,9 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
        <option value="ascending">Ascending</option><option value="descending">Descending</option>
       </select>
      </label>
-     <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
+       </div>
+      </WorktableFilterSection>
+      <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
      </WorktableFilterMenu>
      {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Sync issue: '+error:'Saving…'}</small>}
      {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>{pageSelection.clear();setEditing(e=>!e);}}>
