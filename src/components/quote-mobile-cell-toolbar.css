@@ -53,6 +53,11 @@
   font:750 12px/1.1 system-ui,sans-serif;
   cursor:pointer;
  }
+ .qqt-mobile-cell-toolbar>button:disabled{
+  opacity:.44;
+  cursor:default;
+  background:var(--ss-theme-card,#fffaf0);
+ }
  .qqt-mobile-cell-toolbar>button.is-done{
   background:var(--ss-theme-accent,#917246);
   border-color:var(--ss-theme-accent,#917246);
