@@ -57,6 +57,23 @@
  :root[data-sales-theme] .sales-app.view-catalog .ss-worktable-surface table thead th
   .ss-worktable-sort-button{min-height:44px;}
 }
+/* Catalog Sinks/OTHER remain horizontally scrollable spreadsheets on phones.
+ * Give a lightweight hint outside the sole scroll region, without cards. */
+:root[data-sales-theme] .sales-app .ss-worktable-horizontal-hint{
+ display:none;margin:0;padding:6px 10px;
+ color:var(--ss-theme-muted);font:600 11px/1.4 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app .ss-worktable-horizontal-hint span{
+ margin-right:6px;color:var(--ss-theme-accent);font-size:16px;
+}
+@media(max-width:760px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-catalog .ss-worktable-horizontal-hint{
+  display:flex;align-items:center;gap:3px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-scroll{
+  overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+ }
+}
 /* A solid frozen row should mask rows beneath it, not create an
  * oversized pseudo-element extending above the table into the toolbar.
  * Clip the table's scrolling surface to its own rounded boundary instead. */
