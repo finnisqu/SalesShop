@@ -177,6 +177,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
      </div>
      <span>{item.category} · {item.brand||item.supplier||'Unbranded'}</span>
      <strong>{item.name}</strong><b>{variant.label}</b>
+     <CatalogLifecycleStatus active={item.active&&variant.active} isDefault={variant.default}/>
      <dl><div><dt>Specification</dt><dd>{variant.specification||'—'}</dd></div>
       <div><dt>Material / finish</dt><dd>{[variant.material,variant.finish].filter(Boolean).join(' · ')||'—'}</dd></div>
       <div><dt>Cost</dt><dd>{variant.internalCost===undefined?'—':money.format(variant.internalCost)}</dd></div>
