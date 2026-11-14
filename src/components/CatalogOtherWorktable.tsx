@@ -94,6 +94,9 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
   clearSort:()=>setSort('category'),
  });
  const activeFilterCount=filterChips.length;
+ // Sorting closes an expanded editor so its page-follow effect cannot
+ // override the newly selected sorted page.
+ const chooseSort=(next:typeof sort)=>{setExpanded(null);setSort(next);};
  const resetCatalogView=()=>{
   setQuery('');setCategory('all');setShowInactive(false);setSort('category');
   setExpanded(null);onClearExternalQuery?.();
@@ -216,7 +219,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
          checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Include archived</label>
       </div>
      <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
-      <select aria-label="Sort other items" value={sort} onChange={event=>setSort(event.target.value as typeof sort)}>
+      <select aria-label="Sort other items" value={sort} onChange={event=>chooseSort(event.target.value as typeof sort)}>
        <option value="category">Category / name</option><option value="name">Name A–Z</option>
        <option value="brand">Brand / supplier</option><option value="cost">Cost · low first</option>
         <option value="price">Customer price · low first</option>
@@ -243,12 +246,12 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
       <WorktableSelectPageCheckbox label="Select all other items on this page"
        allSelected={pageSelection.allSelected} someSelected={selectedIds.length>0}
        disabled={!pagedItems.length} onChange={checked=>pageSelection.selectPage(checked)}/></th>}
-      <th scope="col" aria-sort={sort==='category'?'ascending':undefined}><WorktableSortButton label="Category" active={sort==='category'} onSort={()=>setSort('category')}/></th>
-      <th scope="col" aria-sort={sort==='name'?'ascending':undefined}><WorktableSortButton label="Item" active={sort==='name'} onSort={()=>setSort('name')}/></th>
-      <th scope="col" aria-sort={sort==='brand'?'ascending':undefined}><WorktableSortButton label="Brand / supplier" active={sort==='brand'} onSort={()=>setSort('brand')}/></th>
+      <th scope="col" aria-sort={sort==='category'?'ascending':undefined}><WorktableSortButton label="Category" active={sort==='category'} onSort={()=>chooseSort('category')}/></th>
+      <th scope="col" aria-sort={sort==='name'?'ascending':undefined}><WorktableSortButton label="Item" active={sort==='name'} onSort={()=>chooseSort('name')}/></th>
+      <th scope="col" aria-sort={sort==='brand'?'ascending':undefined}><WorktableSortButton label="Brand / supplier" active={sort==='brand'} onSort={()=>chooseSort('brand')}/></th>
       <th scope="col">Unit</th>
-      <th scope="col" aria-sort={sort==='cost'?'ascending':undefined}><WorktableSortButton label="Default cost" active={sort==='cost'} onSort={()=>setSort('cost')}/></th>
-      <th scope="col" aria-sort={sort==='price'?'ascending':undefined}><WorktableSortButton label="Customer price" active={sort==='price'} onSort={()=>setSort('price')}/></th>
+      <th scope="col" aria-sort={sort==='cost'?'ascending':undefined}><WorktableSortButton label="Default cost" active={sort==='cost'} onSort={()=>chooseSort('cost')}/></th>
+      <th scope="col" aria-sort={sort==='price'?'ascending':undefined}><WorktableSortButton label="Customer price" active={sort==='price'} onSort={()=>chooseSort('price')}/></th>
       <th scope="col">Variants</th></tr></thead>
      <tbody>{pagedItems.map(item=>{
       const open=expanded===item.id,defaultVariant=activeCatalogDefaultVariant(item.variants);
