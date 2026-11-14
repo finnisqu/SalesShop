@@ -20,10 +20,11 @@ const quote=(projectId:string):Quote=>({
  id:'quote-'+projectId,title:'SalesShop estimate',quoteNumber:'Q-343',
  revision:0,status:'Sent',projectId,ownerUserId:'rep-a',
  companyId:'builder',companyName:'Builder LLC',
- documentType:'quote',lines:[],sections:[],history:[],
+ documentType:'quote',originalQuoteDate:'2026-11-12',quoteDate:'2026-11-12',
+ customerNotes:'',internalNotes:'',lines:[],sections:[],history:[],
  customerColumns:{quantity:false,rate:false,lineAmount:true},
  createdAt:'2026-11-12T10:00:00.000Z',updatedAt:'2026-11-12T10:00:00.000Z',
-}) as Quote;
+});
 const activity=(id:string,projectId:string,metadata:Activity['metadata'],quoteId?:string):Activity=>({
  id,type:'quote-sent',projectId,...(quoteId?{quoteId}:{}),
  summary:id,occurredAt:'2026-11-13T15:00:00.000Z',metadata,
