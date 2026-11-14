@@ -52,6 +52,12 @@ export function useDismissibleLayer<T extends HTMLElement>(
         const nestedPicker=event.target instanceof Element
           ?event.target.closest('.ss-unified-record-picker'):null;
         if(nestedPicker?.querySelector('.ss-unified-picker-panel'))return;
+        // Material/Sink comboboxes must handle their own first Escape.
+        // This is a capture listener: if the dialog closes here, the
+        // combobox's bubble listener never gets a chance to clear its menu.
+        const catalogPicker=event.target instanceof Element
+          ?event.target.closest('.qtl-combobox'):null;
+        if(catalogPicker?.querySelector('.qtl-combobox-menu'))return;
         event.preventDefault();
         event.stopPropagation();
         closeRef.current();
