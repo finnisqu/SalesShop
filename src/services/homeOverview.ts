@@ -31,8 +31,12 @@ export function homeRecentQuoteEntries(quotes:readonly Quote[],activities:readon
    kind:'external',id:'external:'+activity.id,recordId:activity.id,
    title:activity.summary,
    detail:'Outside SalesShop · Sent '+(activity.metadata?.bidSentDate??activity.occurredAt.slice(0,10)),
-   timestamp:activity.metadata?.recordedAt&&Number.isFinite(Date.parse(activity.metadata.recordedAt))
-    ?activity.metadata.recordedAt:activity.occurredAt,
+   // A correction is a real update to the same first-class external Quote.
+   // Sort Home's Quote list by the same version as the Quotes registry.
+   timestamp:activity.metadata?.editedAt&&Number.isFinite(Date.parse(activity.metadata.editedAt))
+    ?activity.metadata.editedAt:
+    activity.metadata?.recordedAt&&Number.isFinite(Date.parse(activity.metadata.recordedAt))
+     ?activity.metadata.recordedAt:activity.occurredAt,
   }));
  // Keep a small, explicitly labeled external history visible even for
  // legacy backfills that predate recordedAt metadata. They cannot safely be
