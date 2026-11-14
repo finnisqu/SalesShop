@@ -4,8 +4,6 @@ import type {StockMaterial} from '../types/settings';
 import type {RateBookItem} from '../types/rateBook';
 import {resolveCatalogQuoteLiveSource} from './catalogQuoteLiveSource';
 import {buildCatalogQuoteLinePatch} from './catalogQuoteInsertion';
-import {quoteTotal,type QuoteLine} from '../types/quote';
-import {summarizeQuoteInternalPricing} from './quoteInternalPricing';
 
 const date='2026-11-14T00:00:00.000Z';
 const stock:StockMaterial={
