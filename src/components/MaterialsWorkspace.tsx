@@ -28,6 +28,8 @@ import { CatalogPagination } from './CatalogPagination';
 import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
+import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
+import {reorderCatalogPins,shiftCatalogPin} from '../services/catalogComparisonOrder';
 import { restoreScrollAnchor } from '../lib/scrollAnchor';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -306,29 +308,11 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
   };
 
   const reorderPinned = (sourceKey: string, targetKey: string, position: 'before' | 'after' = 'before') => {
-    if (!sourceKey || sourceKey === targetKey) return;
-    setPinnedKeys((current) => {
-      const sourceIndex = current.indexOf(sourceKey);
-      const targetIndex = current.indexOf(targetKey);
-      if (sourceIndex < 0 || targetIndex < 0) return current;
-      const next = [...current];
-      const [moved] = next.splice(sourceIndex, 1);
-      const adjustedTargetIndex = next.indexOf(targetKey);
-      const insertionIndex = position === 'after' ? adjustedTargetIndex + 1 : adjustedTargetIndex;
-      next.splice(insertionIndex, 0, moved);
-      return next;
-    });
+    setPinnedKeys((current) => reorderCatalogPins(current, sourceKey, targetKey, position));
   };
 
   const nudgePinned = (key: string, offset: -1 | 1) => {
-    setPinnedKeys((current) => {
-      const index = current.indexOf(key);
-      const targetIndex = index + offset;
-      if (index < 0 || targetIndex < 0 || targetIndex >= current.length) return current;
-      const next = [...current];
-      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
-      return next;
-    });
+    setPinnedKeys((current) => shiftCatalogPin(current, key, offset));
   };
 
   // The desktop table and compact mobile cards share exactly the same variant details.
@@ -537,7 +521,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
         </div>
       ) : (
         <div className="materials-reference-host">
-          {pinnedVariants.length > 0 && <section className="materials-comparison-board has-pins" aria-label="Pinned material comparison">
+          {pinnedVariants.length > 0 && <section className="materials-comparison-board has-pins catalog-product-pin-board" aria-label="Pinned material comparison">
             <header>
               <div>
                 <span className="board-eyebrow">Comparison board</span>
@@ -547,12 +531,15 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
               <button type="button" onClick={() => setPinnedKeys([])}>Clear all</button>
             </header>
             <div className="materials-comparison-strip">
-                {pinnedVariants.map(({ material, variant }) => {
+                {pinnedVariants.map(({ material, variant }, index) => {
                   const option = defaultMaterialPurchaseOption(variant);
                   const costPerSf = materialPurchaseCostPerSf(variant, option);
                   const slabCost = materialPurchaseSlabCost(variant, option);
                   const area = materialVariantAreaSf(variant);
                   const key = pinKey(material.id, variant.id);
+                  const active=material.active&&variant.active!==false;
+                  const retiredPrograms=Boolean(variant.purchaseOptions?.length&&
+                    !activePurchaseOptions(variant).length);
                   return (
                     <article
                       className={[
@@ -625,10 +612,21 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
                           }
                         }}
                       >⠿</button>
-                      <button type="button" className="materials-unpin" onClick={() => togglePin(material.id, variant.id)} aria-label={`Unpin ${material.name} ${variantSpec(variant)}`}>×</button>
+                      <div className="catalog-product-pin-actions materials-comparison-pin-actions">
+                        <button type="button" disabled={index===0}
+                          aria-label={`Move ${material.name} ${variantSpec(variant)} left`}
+                          onClick={()=>nudgePinned(key,-1)}>←</button>
+                        <button type="button" disabled={index===pinnedVariants.length-1}
+                          aria-label={`Move ${material.name} ${variantSpec(variant)} right`}
+                          onClick={()=>nudgePinned(key,1)}>→</button>
+                        <button type="button" className="materials-unpin"
+                          onClick={() => togglePin(material.id, variant.id)}
+                          aria-label={`Unpin ${material.name} ${variantSpec(variant)}`}>×</button>
+                      </div>
                       <span>{material.brand || material.supplier || 'Unknown brand'} · {material.materialType || resolvedMaterialFamily(material)}</span>
                       <strong>{material.name}</strong>
                       <b>{variantSpec(variant)}</b>
+                      <CatalogLifecycleStatus active={active} isDefault={variant.default}/>
                       <dl>
                         <div><dt>Size</dt><dd>{variantSize(variant)}</dd></div>
                         <div><dt>Area</dt><dd>{area === undefined ? '—' : `${area.toFixed(2)} SF`}</dd></div>
@@ -636,7 +634,10 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
                         <div><dt>Slab cost</dt><dd>{slabCost === undefined ? '—' : money.format(slabCost)}</dd></div>
                       </dl>
                       <small>{option?.label || 'No default price program'} · {availabilityLabel(variant.availability)}</small>
-                      {material.active&&variant.active!==false&&<CatalogQuoteLauncher
+                      {active&&retiredPrograms&&<small role="status">
+                        Supplier programs inactive · reactivate one before quoting
+                      </small>}
+                      {active&&!retiredPrograms&&<CatalogQuoteLauncher
                         source={{kind:'material',material,variantId:variant.id}}/>}
                     </article>
                   );
