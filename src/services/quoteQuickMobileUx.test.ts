@@ -55,6 +55,10 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(areas).toContain("event.target.closest('.qqt-mobile-cell-toolbar')");
   expect(accessory).toContain("onClick={()=>advance('next')}");
   expect(accessory).toContain("onClick={()=>advance('previous')}");
+  expect(accessory).toContain('disabled={!neighbors.previous}');
+  expect(accessory).toContain('disabled={!neighbors.next}');
+  expect(accessory).toContain("quickGridLinearNeighborAvailable(root,target,'previous')");
+  expect(accessory).toContain("quickGridLinearNeighborAvailable(root,target,'next')");
   expect(accessory).toContain('onClick={finish}');
   expect(accessoryCss).toContain('scroll-padding-bottom:64px');
   expect(source('src/services/quoteGridNavigation.ts')).toContain(
