@@ -20,8 +20,14 @@ export function visibleSubmissionDeals(
  quotes.filter(quote=>!quote.archivedAt&&quote.ownerUserId===userId).forEach(quote=>{
   if(quote.projectId)relevant.add(quote.projectId);
  });
- activities.filter(activity=>activity.type==='project-created'&&
-  activity.metadata?.recordedByUserId===userId).forEach(activity=>{
+ // An external builder-portal submission is as much evidence of a rep's
+ // involvement as a SalesShop quote. Only the actual, recorded submission
+ // counts: neither an Activity label nor an ordinary quote issuance does.
+ activities.filter(activity=>activity.metadata?.recordedByUserId===userId&&
+  (activity.type==='project-created'||(
+   activity.type==='quote-sent'&&activity.metadata.externalQuoteSent===true&&
+   !activity.quoteId&&Boolean(activity.projectId)
+  ))).forEach(activity=>{
    if(activity.projectId)relevant.add(activity.projectId);
  });
  tasks.filter(task=>!task.deletedAt).forEach(task=>{
