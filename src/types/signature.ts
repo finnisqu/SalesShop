@@ -81,40 +81,45 @@ export interface SignatureInput {
 
 export function buildAcceptedQuoteSnapshot(quote: Quote): AcceptedQuoteSnapshot {
   const frozen = quote.history.find((revision) => revision.revision === quote.revision);
-  const documentType = frozen?.documentType ?? quote.documentType;
-  const sections = frozen?.sections ?? quote.sections;
-  const lines = frozen?.lines ?? quote.lines;
-  const customerColumns = frozen?.customerColumns ?? quote.customerColumns;
-  const customerNotes = frozen?.customerNotes ?? quote.customerNotes;
-  const scheduleItems = frozen?.pricingSchedule?.customerItems ?? quote.pricingSchedule?.customerItems ?? [];
+  // After issuance, an absent optional field means ABSENT. Never fill it from
+  // later unapproved Quote state (not even for legacy frozen revisions).
+  const source = frozen ?? quote;
+  const documentType = frozen ? (frozen.documentType ?? 'quote') : quote.documentType;
+  const sections = source.sections;
+  const lines = source.lines;
+  const customerColumns = source.customerColumns;
+  const scheduleItems = source.pricingSchedule?.customerItems ?? [];
 
   return {
     quoteId: quote.id,
-    quoteNumber: displayQuoteNumber(quote),
+    quoteNumber: displayQuoteNumber({
+      quoteNumber: quote.quoteNumber, documentType, revision: source.revision,
+    }),
     documentType,
-    parentQuoteId: frozen?.parentQuoteId ?? quote.parentQuoteId,
-    changeOrderNumber: frozen?.changeOrderNumber ?? quote.changeOrderNumber,
-    revision: frozen?.revision ?? quote.revision,
-    revisionLabel: frozen?.label ?? quote.revisionLabel,
-    quoteDate: frozen?.quoteDate ?? quote.quoteDate,
-    title: frozen?.title ?? quote.title,
-    projectId: frozen?.projectId ?? quote.projectId,
-    companyId: frozen?.companyId ?? quote.companyId,
-    companyName: frozen?.companyName ?? quote.companyName,
-    contactId: frozen?.contactId ?? quote.contactId,
-    contactName: frozen?.contactName ?? quote.contactName,
-    contactEmail: frozen?.contactEmail ?? quote.contactEmail,
-    address: frozen?.address ?? quote.address,
-    // Receipt payload is immutable customer evidence, not an internal quote
-    // document. Never persist supplier costs, Area scope or source snapshots.
+    parentQuoteId: source.parentQuoteId,
+    changeOrderNumber: source.changeOrderNumber,
+    revision: source.revision,
+    revisionLabel: frozen ? frozen.label : quote.revisionLabel,
+    quoteDate: source.quoteDate,
+    title: source.title,
+    projectId: source.projectId,
+    companyId: source.companyId,
+    companyName: source.companyName,
+    contactId: source.contactId,
+    contactName: source.contactName,
+    contactEmail: source.contactEmail,
+    address: source.address,
+    // Only persist approved public fields; never serialize supplier references
+    // or imported spreadsheet metadata in the signed receipt.
     sections: customerReceiptSections(sections),
     lines: customerReceiptLines(lines,sections),
     customerColumns: {quantity:customerColumns.quantity,rate:customerColumns.rate,
       lineAmount:customerColumns.lineAmount},
-    customerNotes,
+    customerNotes: source.customerNotes,
     pricingSchedule: documentType === 'pricing-schedule'
       ? { customerItems: customerReceiptScheduleItems(scheduleItems) }
       : undefined,
-    acceptedTotal: frozen?.customerTotal ?? quoteLinesTotal(lines),
+    acceptedTotal: frozen && Number.isFinite(frozen.customerTotal)
+      ? frozen.customerTotal : quoteLinesTotal(lines),
   };
 }
