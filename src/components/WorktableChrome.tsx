@@ -132,6 +132,16 @@ export function WorktableSortButton({label,active,onSort,direction='ascending'}:
  </button>;
 }
 
+/** Visible on narrow Catalog spreadsheets so horizontal columns are
+ * discoverable. The actual WorktableSurface stays the single scroll region. */
+export function WorktableHorizontalHint({label}:{
+ label:string;
+}){
+ return <p className="ss-worktable-horizontal-hint">
+  <span aria-hidden="true">↔</span> Swipe sideways to view more {label} columns
+ </p>;
+}
+
 /** Shared rounded table surface used by CRM, Quotes and Catalog rows. */
 export function WorktableSurface({children,className='',label}:{
  children:ReactNode;className?:string;label:string;
