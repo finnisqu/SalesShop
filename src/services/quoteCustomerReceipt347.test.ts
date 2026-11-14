@@ -67,6 +67,38 @@ describe('Batch 347 — signed customer receipt privacy and price integrity',()=
   expect(q.history[0].lines[0].materialReference?.snapshot?.costPerSf).toBe(45);
   expect(q.lines[0].internalCost).toBe(900);
  });
+ it('only signs public pricing schedule fields and preserves the issued worksheet revision',()=>{
+  const q=quote([line('rate',{amount:800})]);
+  q.documentType='pricing-schedule';
+  q.customerColumns={quantity:true,rate:true,lineAmount:true,
+   supplierCostColumn:true} as Quote['customerColumns'];
+  q.pricingSchedule={route:'rate-sheet',sourceFileName:'private buying workbook.xlsx',
+   customerItems:[{
+    sourceRow:7,series:'Townhome',planNumber:'A-1',
+    description:'Customer countertop package',customerPrice:800,
+    colors:['Ivory'],details:['Standard sink included'],
+    internalCost:250,supplierName:'Secret wholesale partner',
+    sourcePayload:{supplierUnitCost:25},
+   } as NonNullable<Quote['pricingSchedule']>['customerItems'][number]]};
+  q.history=[createQuoteRevisionSnapshot(q,when,'Sent')];
+  // Later workbook edits cannot change the receipt for the issued revision.
+  q.pricingSchedule.customerItems[0].customerPrice=9000;
+  const accepted=buildAcceptedQuoteSnapshot(q);
+  expect(accepted.pricingSchedule?.customerItems).toMatchObject([{
+   sourceRow:7,series:'Townhome',planNumber:'A-1',
+   description:'Customer countertop package',customerPrice:800,
+   colors:['Ivory'],details:['Standard sink included'],
+  }]);
+  expect(accepted.customerColumns).toEqual({
+   quantity:true,rate:true,lineAmount:true,
+  });
+  expect(accepted.acceptedTotal).toBe(800);
+  const serialized=JSON.stringify(accepted);
+  for(const secret of ['private buying workbook','internalCost','supplierName',
+   'Secret wholesale partner','sourcePayload','supplierUnitCost','supplierCostColumn'])
+   expect(serialized).not.toContain(secret);
+  expect(JSON.parse(serialized).pricingSchedule.customerItems[0].customerPrice).toBe(800);
+ });
  it('rolls hidden billable work into the visible material and reconciles receipt total',()=>{
   const rows=[
    line('top',{kind:'material',pricingMode:'quantity-rate',quantity:2,rate:500,
