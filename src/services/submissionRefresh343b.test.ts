@@ -40,9 +40,11 @@ const native=(projectId:string):Quote=>({
  id:'quote-'+projectId,title:'Proposal',revision:0,status:'Sent',
  projectId,ownerUserId:'rep-a',companyId:'builder',
  lines:[],sections:[],history:[],documentType:'quote',
+ quoteNumber:'Q-343B',originalQuoteDate:'2026-11-11',quoteDate:'2026-11-11',
+ customerNotes:'',internalNotes:'',
  customerColumns:{quantity:false,rate:false,lineAmount:true},
  createdAt:earlier,updatedAt:earlier,
-}) as Quote;
+});
 beforeEach(()=>usePersonalTaskStore.setState({
  scope,tasks:[],syncStatus:'saved',syncError:null,
 }));
