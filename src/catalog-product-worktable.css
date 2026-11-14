@@ -1203,3 +1203,19 @@
  .materials-comparison-card .materials-comparison-pin-actions>button:focus-visible{
  outline:2px solid var(--ss-theme-accent);outline-offset:2px;
 }
+
+
+/* Batch 349c touch comparison parity: all three Catalog pin boards use
+   reachable controls even when a board is horizontally scrollable. */
+:root[data-sales-theme] .sales-app.view-catalog .catalog-product-pin-board
+ .catalog-product-pin-actions>button{
+ min-width:36px;min-height:36px;width:36px;height:36px;
+}
+@media(max-width:760px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-pin-board
+ .catalog-product-pin-actions>button,
+ :root[data-sales-theme] .sales-app.view-catalog .materials-comparison-board.catalog-product-pin-board
+ .materials-comparison-card .materials-comparison-pin-actions>button{
+  min-width:44px;min-height:44px;width:44px;height:44px;
+ }
+}
