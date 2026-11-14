@@ -33,7 +33,7 @@ describe('External Quote Sent: calendar + CRM + Recents',()=>{
  it('serializes repeated form submissions and closes the chooser after confirmed success',()=>{
   const form=file('src/components/ExternalQuoteSentForm.tsx');
   const dialog=file('src/components/ExternalQuoteBackfillDialog.tsx');
-  expect(form).toContain('if(savingRef.current)return');
+  expect(form).toContain('if(savingRef.current||recorded)return');
   expect(form).toContain('savingRef.current=true;setSaving(true)');
   expect(form).toContain('finally{savingRef.current=false;setSaving(false);}');
   expect(form).toContain('validExternalQuoteSentDate(bidSentDate,localToday())');
