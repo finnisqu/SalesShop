@@ -8,7 +8,7 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
 import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
-import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose} from '../services/quoteMobileSheetDismissal';
+import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose,quoteSheetBackdropShouldClose} from '../services/quoteMobileSheetDismissal';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from '../services/quoteQuickAreaSummary';
@@ -212,8 +212,17 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
  const changeLine=(line:QuoteLine,patch:Partial<QuoteLine>)=>
   store.updateLine(quote.id,line.id,patch);
  return createPortal(<div className="qmb qqs-overlay" onPointerDown={event=>{
-  if(event.target===event.currentTarget)onClose();
- }}>
+   if(event.target!==event.currentTarget)return;
+   const active=document.activeElement;
+   const typing=active instanceof HTMLElement&&Boolean(input.current?.contains(active))&&
+    active.matches('input,textarea,select,[contenteditable="true"],[role="combobox"]');
+   if(!quoteSheetBackdropShouldClose(
+     document.documentElement.dataset.ssMobileKeyboard==='open',typing)){
+    if(active instanceof HTMLElement)active.blur();
+    return;
+   }
+   onClose();
+  }}>
    <div className="qqs-panel" role="dialog" aria-modal="true"
     aria-label={detailName[detail.kind]+' for '+title} ref={input}>
     <header onTouchStart={event=>{
