@@ -15,6 +15,7 @@ import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 import {catalogDefaultVariantPrice,compareCatalogVariantPrice} from '../services/catalogVariantPriceSort';
 import {catalogProductFilterChips} from '../services/catalogProductFilterChips';
+import {reorderCatalogPins,shiftCatalogPin} from '../services/catalogComparisonOrder';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
 import {CatalogBulkActions,useCatalogPageSelection} from './CatalogBulkSelection';
 
@@ -106,11 +107,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
   return model&&variant?[{model,variant,key}]:[];
  }),[pins,models]);
  const shiftPin=(key:string,direction:-1|1)=>{
-  setPins(current=>{
-   const index=current.indexOf(key),nextIndex=index+direction;
-   if(index<0||nextIndex<0||nextIndex>=current.length)return current;
-   const copy=[...current];[copy[index],copy[nextIndex]]=[copy[nextIndex],copy[index]];return copy;
-  });
+  setPins(current=>shiftCatalogPin(current,key,direction));
  };
  const filtered=useMemo(()=>{
   return models.filter(model=>(showInactive||model.active)&&
@@ -198,11 +195,9 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       onDragStart={()=>setDragging(key)}
       onDragOver={event=>event.preventDefault()}
       onDrop={event=>{
-       event.preventDefault();if(!dragging||dragging===key)return;
-       setPins(current=>{
-        const copy=current.filter(item=>item!==dragging),position=copy.indexOf(key);
-        copy.splice(position,0,dragging);return copy;
-       });setDragging(null);
+       event.preventDefault();
+       if(dragging)setPins(current=>reorderCatalogPins(current,dragging,key));
+       setDragging(null);
       }}
       onDragEnd={()=>setDragging(null)}>
       <div className="catalog-product-pin-actions">
