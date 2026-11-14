@@ -1,4 +1,4 @@
-import {customerReceiptLines,customerReceiptSections} from '../services/quoteCustomerReceipt';
+import {customerReceiptLines,customerReceiptScheduleItems,customerReceiptSections} from '../services/quoteCustomerReceipt';
 import {
   displayQuoteNumber,
   quoteLinesTotal,
@@ -109,10 +109,11 @@ export function buildAcceptedQuoteSnapshot(quote: Quote): AcceptedQuoteSnapshot 
     // document. Never persist supplier costs, Area scope or source snapshots.
     sections: customerReceiptSections(sections),
     lines: customerReceiptLines(lines,sections),
-    customerColumns: { ...customerColumns },
+    customerColumns: {quantity:customerColumns.quantity,rate:customerColumns.rate,
+      lineAmount:customerColumns.lineAmount},
     customerNotes,
     pricingSchedule: documentType === 'pricing-schedule'
-      ? { customerItems: structuredClone(scheduleItems) }
+      ? { customerItems: customerReceiptScheduleItems(scheduleItems) }
       : undefined,
     acceptedTotal: frozen?.customerTotal ?? quoteLinesTotal(lines),
   };
