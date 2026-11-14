@@ -1153,3 +1153,28 @@
   min-height:40px;padding:7px 8px;
  }
 }
+
+
+/* Batch 349b: shared phone filter summaries for Sinks and OTHER.
+   Header search and worktable Find remain separate, removable constraints. */
+.catalog-product-mobile-filters{display:none;min-width:0;}
+@media(max-width:760px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-mobile-filters{
+  display:block;min-width:0;width:100%;padding:0 2px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-mobile-filters
+ .mobile-catalog-active-filters{
+  display:flex;flex-wrap:nowrap;align-items:center;gap:6px;
+  overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;
+  padding:2px 0 6px;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-mobile-filters
+ .mobile-catalog-active-filters>button{
+  flex:0 0 auto;max-width:min(80vw,320px);min-height:36px;
+  white-space:nowrap;
+ }
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-product-mobile-filters
+ .mobile-catalog-active-filters>button span{
+  overflow:hidden;text-overflow:ellipsis;
+ }
+}
