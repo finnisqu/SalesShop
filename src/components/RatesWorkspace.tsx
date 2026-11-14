@@ -216,7 +216,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
             onOverrideChange={setOverrideFilter} onClear={clearReferenceFilters} />
         </div>
         <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
-          <select value={rateSort} onChange={event=>setRateSort(event.target.value as RateSort)}
+          <select value={rateSort} onChange={event=>chooseRateSort(event.target.value as RateSort)}
            aria-label="Sort rate reference">
             <option value="category">Category / item</option>
             <option value="name">Item A–Z</option>
@@ -294,7 +294,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
                 <Button variant="secondary" className="mobile-catalog-filter-trigger" aria-haspopup="dialog" onClick={() => setMobileFilterOpen(true)}>Filter{activeReferenceFilters ? ` · ${activeReferenceFilters}` : ''}</Button>
                 <label className="rates-sort-control">
                   <span>Sort</span>
-                  <select value={rateSort} onChange={(event) => setRateSort(event.target.value as RateSort)} aria-label="Sort rate reference">
+                  <select value={rateSort} onChange={(event) => chooseRateSort(event.target.value as RateSort)} aria-label="Sort rate reference">
                     <option value="category">Category / item</option>
                     <option value="name">Item A–Z</option>
                     <option value="sell-asc">Suggested sell · low to high</option>
@@ -332,7 +332,7 @@ export function RatesWorkspace({ embedded = false,externalQuery,onClearExternalQ
           {editing && !showingMaterialPricing && <section><span className="rates-mobile-tools-label">Maintenance</span><button type="button" className="rates-mobile-add" onClick={() => { addCurrentRate(); setMobileToolsOpen(false); }}>+ Add rate row</button></section>}
           {!editing && !showingMaterialPricing && <section>
             <span className="rates-mobile-tools-label">Sort rates</span>
-            <select className="rates-mobile-sort-select" aria-label="Sort rates on mobile" value={rateSort} onChange={(event) => setRateSort(event.target.value as RateSort)}>
+            <select className="rates-mobile-sort-select" aria-label="Sort rates on mobile" value={rateSort} onChange={(event) => chooseRateSort(event.target.value as RateSort)}>
               <option value="category">Category / item</option>
               <option value="name">Item A–Z</option>
               <option value="sell-asc">Sell price · low to high</option>
