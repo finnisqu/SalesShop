@@ -56,6 +56,22 @@ describe('Batch 346 — live Catalog pricing snapshots before Quote insertion',(
   });
   expect(patch.rate).toBeUndefined();
  });
+ it('resolves a changed supplier default but rejects a retired explicit purchase option',()=>{
+  const changed:StockMaterial={...stock,variants:stock.variants!.map(variant=>
+   variant.id==='polished'?{...variant,purchaseOptions:[
+    {...variant.purchaseOptions[0],default:false,active:false},
+    {id:'supplier-current',label:'New live purchasing',active:true,
+     default:true,pricingBasis:'sf' as const,costPerSf:40},
+   ]}:variant)};
+  const source=resolveCatalogQuoteLiveSource(materialSource,{materials:[changed]});
+  expect(buildCatalogQuoteLinePatch(source!)).toMatchObject({
+   materialReference:{variantId:'polished',purchaseOptionId:'supplier-current',
+    snapshot:{costPerSf:40}},
+  });
+  expect(()=>buildCatalogQuoteLinePatch(source!,{purchaseOptionId:'supplier-a'}))
+   .toThrow(/selected supplier purchase program is inactive/);
+  expect(stock.variants![0].purchaseOptions[0].active).toBe(true);
+ });
  it('rejects a removed/retired Material variant or supplier program instead of silently switching',()=>{
   const edited:StockMaterial={...stock,variants:stock.variants!.map(variant=>
    variant.id==='polished'?{...variant,active:false}:variant)};
