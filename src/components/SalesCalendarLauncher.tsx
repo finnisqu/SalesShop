@@ -19,7 +19,7 @@ import {RecordPreviewDrawer,type PreviewRecord} from './RecordPreviewDrawer';
 import {homeRecentQuoteEntries} from '../services/homeOverview';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {ExternalQuoteBackfillDialog} from './ExternalQuoteBackfillDialog';
-import {buildSalesCalendarEvents,personalCalendarSources,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
+import {buildSalesCalendarEvents,personalCalendarSources,personalCalendarTasks,recentHomeItems,calendarDayCounts,calendarMonthDays,calendarCompactMonthDays,calendarWeekDays,localDateKey,
  type SalesCalendarEvent} from '../services/salesCalendar';
 import {homeCalendarScope,useHomeCalendarSettings,badgeColor,badgeLabel,type CalendarBadgeMetric} from '../store/homeCalendarSettings';
 import {buildCalendarBadgeIndex,metricCount} from '../services/homeCalendarBadges';
@@ -191,7 +191,8 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   try{localStorage.setItem(prefKey,next);}catch{/* optional preference */}
  };
  const ownTasks=useMemo(()=>!preview&&!!personal&&storedScope===personal
-  ?tasks.filter(t=>!t.deletedAt):[],[preview,personal,storedScope,tasks]);
+  ?personalCalendarTasks(mode,userId,tasks,deals):[],
+  [preview,personal,storedScope,tasks,mode,userId,deals]);
  const ownQuotes=useMemo(()=>quotes.filter(q=>!q.archivedAt&&(mode!=='cloud'||q.ownerUserId===userId)),
   [quotes,mode,userId]);
  const sources=useMemo(()=>personalCalendarSources(mode,userId,ownQuotes,ownTasks,deals,activities),
