@@ -259,4 +259,35 @@ describe('Batch 347 — signed customer receipt privacy and price integrity',()=
   expect(JSON.stringify(accepted)).not.toContain('internalCost');
   expect(updated.history[0].lines[0].internalCost).toBe(600);
  });
+ it('does not borrow optional fields from a newer draft when a legacy frozen revision omits them',()=>{
+  const original=quote([line('approved',{amount:400})]);
+  const saved=createQuoteRevisionSnapshot(original,when,'Sent');
+  // Legacy snapshots can lack document type and optional contact/CO metadata.
+  delete saved.documentType;
+  const edited:Quote={...original,revision:0,status:'Sent',
+   documentType:'pricing-schedule',title:'Unapproved change',
+   companyId:'other-company',companyName:'Private builder name',
+   contactName:'Later prospect',contactEmail:'later@example.com',
+   address:'New work address',parentQuoteId:'later-parent',
+   changeOrderNumber:5,customerNotes:'Later terms',
+   pricingSchedule:{customerItems:[{sourceRow:1,description:'Later price',
+    customerPrice:9000}]},
+   history:[saved],
+  };
+  const accepted=buildAcceptedQuoteSnapshot(edited);
+  expect(accepted).toMatchObject({
+   quoteNumber:'Q-347',documentType:'quote',
+   companyId:'company-a',title:'Accepted project',
+   customerNotes:'Approved payment terms',acceptedTotal:400,
+  });
+  expect(accepted.companyName).toBeUndefined();
+  expect(accepted.contactName).toBeUndefined();
+  expect(accepted.contactEmail).toBeUndefined();
+  expect(accepted.address).toBeUndefined();
+  expect(accepted.parentQuoteId).toBeUndefined();
+  expect(accepted.changeOrderNumber).toBeUndefined();
+  expect(accepted.pricingSchedule).toBeUndefined();
+  expect(quoteLinesTotal(accepted.lines)).toBe(400);
+  expect(JSON.stringify(accepted)).not.toMatch(/later@example|Private builder|Later price|Later terms/);
+ });
 });
