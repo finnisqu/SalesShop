@@ -126,15 +126,19 @@ describe('Batch 343b — cross-page submission consistency after cloud rehydrate
   expect(recent[0].timestamp).toBe(registry[0].updatedAt);
   // Correcting the send date moves the historical sent badge but does not
   // duplicate the Activity identity or manufacture a SalesShop quote.
+  // A mixed stale+corrected cache must select the later correction even
+  // when the stale copy is encountered first during cloud rehydration.
+  expect(buildSalesQuoteRegistry([],[record,corrected],[project]))
+   .toMatchObject([{id:'external:outside-corrected',value:92000,
+    sentDate:'2026-11-11'}]);
+  expect(homeRecentQuoteEntries([],[record,corrected]))
+   .toMatchObject([{timestamp:'2026-11-13T19:00:00.000Z'}]);
+  expect(recentHomeItems([],[record,corrected],[],null)).toHaveLength(1);
   const badges=buildCalendarBadgeIndex([],[],[record,corrected],[],[],
    DEFAULT_HOME_CALENDAR_SETTINGS);
-  // A mixed stale+corrected cache should resolve to the updated Activity.
+  expect(metricCount(badges,'2026-11-11','quotes-sent')).toBe(1);
+  expect(metricCount(badges,'2026-11-12','quotes-sent')).toBe(0);
   expect(buildSalesQuoteRegistry([],[corrected,corrected],[project])).toHaveLength(1);
-  const correctedOnly=buildCalendarBadgeIndex([],[],[corrected],[],[],
-   DEFAULT_HOME_CALENDAR_SETTINGS);
-  expect(metricCount(correctedOnly,'2026-11-11','quotes-sent')).toBe(1);
-  expect(metricCount(correctedOnly,'2026-11-12','quotes-sent')).toBe(0);
-  expect(badges.size).toBeGreaterThanOrEqual(1);
  });
  it('keeps a native delivery and an external submission separate after duplicate cache rehydrate',()=>{
   const project=deal('shared'),submission=external('outside-shared',project.id);
