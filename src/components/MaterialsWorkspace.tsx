@@ -25,7 +25,7 @@ import { SuppliersWorkspace } from './SuppliersWorkspace';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import { WorkspaceLoadingState } from './WorkspaceLoadingState';
 import { CatalogPagination } from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface,WorktableSortButton} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
@@ -258,6 +258,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
   const catalogViewFilterCount=activeFilterCount+
     Number(Boolean(query.trim()||externalQuery?.trim()))+
     Number(sort!=='stock-brand');
+  const chooseSort=(next:MaterialSort)=>{setExpandedMaterialId(null);setSort(next);};
   const resetCatalogView=()=>{
     setQuery('');clearFilters();setSort('stock-brand');
     setExpandedMaterialId(null);onClearExternalQuery?.();
@@ -659,7 +660,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
                   <label className="catalog-card-sort">
                     <span className="catalog-control-label">Sort</span>
                     <select aria-label="Sort material library" value={sort}
-                      onChange={event=>setSort(event.target.value as MaterialSort)}>
+                      onChange={event=>chooseSort(event.target.value as MaterialSort)}>
                       <option value="stock-brand">STOCK / brand</option>
                       <option value="name">Name A–Z</option><option value="brand">Brand A–Z</option>
                       <option value="type">Material type</option>
@@ -704,7 +705,14 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
             ) : (
             <WorktableSurface className="rates-reference-table-wrap" label="Materials catalog worktable">
               <table className="rates-reference-table materials-reference-table">
-                <thead><tr><th>Brand</th><th>Name</th><th>Type</th><th>Program</th><th>Default cost</th><th>Default spec</th><th>Product</th><th>Variants</th></tr></thead>
+                <thead><tr>
+                  <th scope="col" aria-sort={sort==='brand'?'ascending':undefined}><WorktableSortButton label="Brand" active={sort==='brand'} onSort={()=>chooseSort('brand')}/></th>
+                  <th scope="col" aria-sort={sort==='name'?'ascending':undefined}><WorktableSortButton label="Name" active={sort==='name'} onSort={()=>chooseSort('name')}/></th>
+                  <th scope="col" aria-sort={sort==='type'?'ascending':undefined}><WorktableSortButton label="Type" active={sort==='type'} onSort={()=>chooseSort('type')}/></th>
+                  <th scope="col">Program</th>
+                  <th scope="col" aria-sort={sort==='cost-asc'?'ascending':sort==='cost-desc'?'descending':undefined}><WorktableSortButton label="Default cost" active={sort==='cost-asc'||sort==='cost-desc'} direction={sort==='cost-desc'?'descending':'ascending'} onSort={()=>chooseSort(sort==='cost-asc'?'cost-desc':'cost-asc')}/></th>
+                  <th scope="col">Default spec</th><th scope="col">Product</th><th scope="col">Variants</th>
+                </tr></thead>
                 <tbody>
                   {pagedMaterials.map((material) => {
                     const reference = resolveStockMaterialCostReference(material);
