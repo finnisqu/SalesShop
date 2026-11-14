@@ -51,6 +51,12 @@
  .ss-worktable-sort-button:focus-visible{
  outline:2px solid var(--ss-theme-accent);outline-offset:0;
 }
+/* Large, reachable sort targets on touch-sized Sinks/OTHER grids.
+ * Materials/Rates use their existing mobile reference cards instead. */
+@media(max-width:760px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app.view-catalog .ss-worktable-surface table thead th
+  .ss-worktable-sort-button{min-height:44px;}
+}
 /* A solid frozen row should mask rows beneath it, not create an
  * oversized pseudo-element extending above the table into the toolbar.
  * Clip the table's scrolling surface to its own rounded boundary instead. */
