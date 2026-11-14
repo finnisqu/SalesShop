@@ -96,7 +96,7 @@ describe('Batch 347 — signed customer receipt privacy and price integrity',()=
   ];
   const accepted=buildAcceptedQuoteSnapshot(quote(rows));
   expect(accepted.lines).toEqual([{
-   id:'accepted-included-work',kind:'item',description:'Included work',
+   id:'accepted-included-work-1',kind:'item',description:'Included work',
    pricingMode:'direct',amount:950,customerVisible:true,includeInTotal:true,
   }]);
   expect(quoteLinesTotal(accepted.lines)).toBe(950);
@@ -118,9 +118,34 @@ describe('Batch 347 — signed customer receipt privacy and price integrity',()=
    line('secret-area',{sectionId:'private',customerVisible:true,
     amount:200,description:'Internal-only Area purchase',supplierName:'Private'})];
   const accepted=customerReceiptLines(rows,sections);
-  expect(accepted).toMatchObject([{id:'top',amount:600}]);
+  expect(accepted).toMatchObject([
+   {id:'top',sectionId:'kitchen',amount:400},
+   {id:'accepted-included-work-1',description:'Included work',amount:200},
+  ]);
   expect(quoteLinesTotal(accepted)).toBe(600);
+  expect(accepted[1].sectionId).toBeUndefined();
+  expect(JSON.stringify(accepted)).not.toContain('Private');
   expect(customerReceiptSections(sections).map(s=>s.id)).toEqual(['kitchen']);
+ });
+ it('does not move hidden bathroom prices into the kitchen accepted total',()=>{
+  const areas=[...sections,{id:'bathroom',title:'Bathroom',
+   customerVisible:true,customerDisplayMode:'detail' as const}];
+  const rows=[
+   line('kitchen-top',{kind:'material',amount:600}),
+   line('kitchen-labor',{amount:100,customerVisible:false}),
+   line('bath-top',{kind:'material',sectionId:'bathroom',amount:300}),
+   line('bath-sink',{kind:'sink',sectionId:'bathroom',
+    description:'Secret supplier bowl',amount:75,customerVisible:false,
+    internalCost:25}),
+  ];
+  const accepted=customerReceiptLines(rows,areas);
+  expect(accepted.map(x=>({id:x.id,sectionId:x.sectionId,amount:x.amount})))
+   .toEqual([
+    {id:'kitchen-top',sectionId:'kitchen',amount:700},
+    {id:'bath-top',sectionId:'bathroom',amount:375},
+   ]);
+  expect(quoteLinesTotal(accepted)).toBe(1075);
+  expect(JSON.stringify(accepted)).not.toContain('Secret supplier bowl');
  });
  it('keeps a negative hidden discount in the signed customer total',()=>{
   const rows=[
