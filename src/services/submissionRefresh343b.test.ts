@@ -1,4 +1,5 @@
 import {beforeEach,describe,expect,it} from 'vitest';
+import {readFileSync} from 'node:fs';
 import type {Project,Activity} from '../types/crm';
 import type {Quote} from '../types/quote';
 import {personalCalendarSources,buildSalesCalendarEvents,recentHomeItems} from './salesCalendar';
@@ -139,6 +140,23 @@ describe('Batch 343b — cross-page submission consistency after cloud rehydrate
   expect(metricCount(badges,'2026-11-11','quotes-sent')).toBe(1);
   expect(metricCount(badges,'2026-11-12','quotes-sent')).toBe(0);
   expect(buildSalesQuoteRegistry([],[corrected,corrected],[project])).toHaveLength(1);
+ });
+ it('opens external Calendar records as Activity, native delivery as Quote',()=>{
+  const project=deal('two-channels'),submission=external('external-history',project.id);
+  const quote=native(project.id);
+  const delivery:Activity={...submission,id:'native-history',quoteId:quote.id,
+   metadata:{source:'manual',deliveryConfirmed:true,revision:0}};
+  const entries=homeCalendarBadgeEntries('quotes-sent','2026-11-12',[],[],
+   [submission,delivery],[],[],DEFAULT_HOME_CALENDAR_SETTINGS);
+  expect(entries.map(e=>({kind:e.kind,id:e.id}))).toEqual([
+   {kind:'activity',id:'external-history'},
+   {kind:'quote',id:quote.id},
+  ]);
+  const launcher=readFileSync(new URL('../components/SalesCalendarLauncher.tsx',import.meta.url),'utf8');
+  expect(launcher).toContain("onClick={()=>q.kind==='external'");
+  expect(launcher).toContain("?setActivityPreview(q.recordId):setRecordPreview({kind:'quote',id:q.recordId})");
+  expect(launcher).toContain("if(record.kind==='activity'){setActivityPreview(record.id);return;}");
+  expect(launcher).toContain("if(record.kind==='task'){requestTaskModal({mode:'preview',id:record.id});return;}");
  });
  it('keeps a native delivery and an external submission separate after duplicate cache rehydrate',()=>{
   const project=deal('shared'),submission=external('outside-shared',project.id);
