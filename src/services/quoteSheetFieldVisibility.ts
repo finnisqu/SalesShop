@@ -31,7 +31,7 @@ export function quoteSheetFieldScrollDelta(
  * more pixels than the intersected sheet + visual viewport can show. */
 export function quoteSheetCatalogMenuPlacement(
  triggerTop:number,triggerBottom:number,scrollportTop:number,scrollportBottom:number,
- visualTop:number,visualBottom:number,
+ visualTop:number,visualBottom:number,allowAbove=true,
 ):{side:'above'|'below';maxHeight:number}{
  const top=Math.max(scrollportTop+8,visualTop+8);
  const bottom=Math.min(scrollportBottom-8,visualBottom-8);
@@ -39,6 +39,6 @@ export function quoteSheetCatalogMenuPlacement(
   return {side:'below',maxHeight:0};
  const below=Math.max(0,bottom-triggerBottom-4);
  const above=Math.max(0,triggerTop-top-4);
- const side=below<144&&above>below+40?'above':'below';
+ const side=allowAbove&&below<144&&above>below+40?'above':'below';
  return {side,maxHeight:Math.floor(Math.min(320,side==='above'?above:below))};
 }
