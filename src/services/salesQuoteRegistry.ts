@@ -27,16 +27,37 @@ export function isExternalQuoteActivity(activity:Activity):boolean{
  return activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true&&
   Boolean(activity.projectId)&&!activity.quoteId;
 }
-/** Retry/hydration caches can contain repeated copies of one submission.
- * De-duplicate by immutable Activity ID without touching native quote events. */
+/** A confirmed correction keeps its immutable Activity ID but advances
+ * editedAt. Prefer the freshest reliable copy when cloud/local caches differ.
+ * An older unedited record is never allowed to replace that correction. */
+function externalActivityVersion(activity:Activity):number{
+ for(const timestamp of [activity.metadata?.editedAt,activity.metadata?.recordedAt,
+  activity.occurredAt]){
+  if(typeof timestamp==='string'){
+   const date=Date.parse(timestamp);
+   if(Number.isFinite(date))return date;
+  }
+ }
+ return Number.NEGATIVE_INFINITY;
+}
+/** Retry/hydration caches can contain repeated copies of one external bid.
+ * Preserve its position, but retain the most recently updated Activity with
+ * that immutable ID so Quotes, Calendar, and Home agree after a correction.
+ * Never dedupe or rewrite native SalesShop quote lifecycle activities. */
 export function dedupeExternalQuoteActivities<T extends Activity>(activities:readonly T[]):T[]{
- const seen=new Set<string>();
- return activities.filter(activity=>{
-  if(!isExternalQuoteActivity(activity))return true;
-  if(seen.has(activity.id))return false;
-  seen.add(activity.id);
-  return true;
- });
+ const result:T[]=[];
+ const indexById=new Map<string,number>();
+ for(const activity of activities){
+  if(!isExternalQuoteActivity(activity)){result.push(activity);continue;}
+  const index=indexById.get(activity.id);
+  if(index===undefined){
+   indexById.set(activity.id,result.length);
+   result.push(activity);
+  }else if(externalActivityVersion(activity)>externalActivityVersion(result[index])){
+   result[index]=activity;
+  }
+ }
+ return result;
 }
 export function externalQuoteActivities(activities:readonly Activity[]):Activity[]{
  return dedupeExternalQuoteActivities(activities).filter(isExternalQuoteActivity);
