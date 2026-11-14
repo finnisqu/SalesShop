@@ -19,6 +19,40 @@ describe('private deal submission task audience',()=>{
    [quote('q','from-quote','rep')],[]);
   expect(visible.map(d=>d.id)).toEqual(['mine','from-quote']);
  });
+ it('gives an external-quote rep the same unassigned Deal audience as a native quote owner',()=>{
+  const outside=deal('builder-portal');
+  const sent:Activity={id:'outside-1',projectId:outside.id,type:'quote-sent',
+   occurredAt:'2026-11-12T12:00:00Z',summary:'External quote sent',
+   metadata:{externalQuoteSent:true,recordedByUserId:'rep-a',source:'manual',
+    bidSentDate:'2026-11-12',amount:50000}};
+  const rows=visibleSubmissionDeals('cloud','member','rep-a',[outside],[sent],[],[]);
+  expect(rows.map(item=>item.id)).toEqual(['builder-portal']);
+  expect(visibleSubmissionDeals('cloud','member','rep-b',[outside],[sent],[],[]))
+   .toEqual([]);
+ });
+ it('does not infer task ownership from an unconfirmed or native-issued Activity',()=>{
+  const outside=deal('builder-portal');
+  const base:Activity={id:'outside-1',projectId:outside.id,type:'quote-sent',
+   occurredAt:'2026-11-12T12:00:00Z',summary:'Quote issued',
+   metadata:{source:'quote',recordedByUserId:'rep-a'}};
+  const misleading:Activity={...base,id:'other',metadata:{
+   ...base.metadata,externalQuoteSent:true},quoteId:'native-q'};
+  expect(visibleSubmissionDeals('cloud','member','rep-a',[outside],[base,misleading],[],[]))
+   .toEqual([]);
+  expect(visibleSubmissionDeals('cloud','viewer','rep-a',[outside],[{
+   ...base,metadata:{...base.metadata,externalQuoteSent:true},
+  }],[],[])).toEqual([]);
+ });
+ it('keeps explicit Deal assignment authoritative over a rep who sent an external quote',()=>{
+  const assigned={...deal('assigned'),assignedUserId:'rep-b'};
+  const sent:Activity={id:'outside-2',projectId:assigned.id,type:'quote-sent',
+   occurredAt:'2026-11-12T12:00:00Z',summary:'External quote sent',
+   metadata:{externalQuoteSent:true,recordedByUserId:'rep-a'}};
+  expect(visibleSubmissionDeals('cloud','member','rep-a',[assigned],[sent],[],[]))
+   .toEqual([]);
+  expect(visibleSubmissionDeals('cloud','member','rep-b',[assigned],[sent],[],[]))
+   .toEqual([assigned]);
+ });
  it('routes an explicitly assigned Deal only to its salesperson, never to the creator or an admin',()=>{
   const assigned={...deal('assigned'),assignedUserId:'rep-a'};
   const history=[created('assigned','rep-b')];
