@@ -444,7 +444,7 @@ export function MaterialsWorkspace({embedded=false,externalQuery,onClearExternal
               <Button variant="secondary" className="mobile-catalog-filter-trigger" aria-haspopup="dialog" onClick={() => setMobileFilterOpen(true)}>Filter{activeFilterCount ? ` · ${activeFilterCount}` : ''}</Button>
               <label className="rates-sort-control materials-sort-control">
                 <span>Sort by</span>
-                <select value={sort} onChange={(event) => setSort(event.target.value as MaterialSort)} aria-label="Sort material library">
+                <select value={sort} onChange={(event) => chooseSort(event.target.value as MaterialSort)} aria-label="Sort material library">
                   <option value="stock-brand">{isMobileReference ? 'STOCK · Brand' : 'STOCK / brand'}</option>
                   <option value="name">Color A–Z</option>
                   <option value="brand">Brand A–Z</option>
