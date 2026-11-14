@@ -13,6 +13,7 @@ import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 import {activeCatalogDefaultVariant} from '../services/catalogVariantDefaults';
 import {compareCatalogVariantPrice} from '../services/catalogVariantPriceSort';
 import {catalogProductFilterChips} from '../services/catalogProductFilterChips';
+import {reorderCatalogPins,shiftCatalogPin} from '../services/catalogComparisonOrder';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
 import {CatalogBulkActions,useCatalogPageSelection} from './CatalogBulkSelection';
 
@@ -134,11 +135,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
   const key=itemId+':'+variantId;setPins(old=>old.includes(key)?old.filter(x=>x!==key):[...old,key]);
  };
  const shift=(key:string,direction:-1|1)=>{
-  setPins(old=>{
-   const a=old.indexOf(key),b=a+direction;
-   if(a<0||b<0||b>=old.length)return old;
-   const copy=[...old];[copy[a],copy[b]]=[copy[b],copy[a]];return copy;
-  });
+  setPins(current=>shiftCatalogPin(current,key,direction));
  };
  const duplicateCatalogItem=(itemId:string)=>{
   const id=duplicateItem(itemId);
@@ -175,12 +172,9 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
      onDragStart={event=>event.dataTransfer.setData('text/plain',key)}
      onDragOver={event=>event.preventDefault()}
      onDrop={event=>{
-      event.preventDefault();const source=event.dataTransfer.getData('text/plain');
-      if(source===key)return;
-      setPins(old=>{
-       if(!old.includes(source))return old;
-       const next=old.filter(x=>x!==source);next.splice(next.indexOf(key),0,source);return next;
-      });
+      event.preventDefault();
+      const source=event.dataTransfer.getData('text/plain');
+      setPins(current=>reorderCatalogPins(current,source,key));
      }}>
      <div className="catalog-product-pin-actions">
       <button type="button" disabled={index===0} onClick={()=>shift(key,-1)}
