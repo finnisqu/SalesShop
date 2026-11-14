@@ -91,7 +91,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
   clearHeaderQuery:()=>onClearExternalQuery?.(),
   clearCategory:()=>setCategory('all'),
   clearArchived:()=>setShowInactive(false),
-  clearSort:()=>setSort('category'),
+  clearSort:()=>{setExpanded(null);setSort('category');},
  });
  const activeFilterCount=filterChips.length;
  // Sorting closes an expanded editor so its page-follow effect cannot
