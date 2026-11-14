@@ -28,6 +28,29 @@
 :root[data-sales-theme] .sales-app .ss-worktable-surface table thead th:last-child{
  border-top-right-radius:var(--ss-worktable-corner);
 }
+/* Catalog reference headings now use the same keyboard-operable sorting
+ * affordance as Records. The enclosing th retains the actual aria-sort state. */
+:root[data-sales-theme] .sales-app .ss-worktable-surface table thead th
+ .ss-worktable-sort-button{
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:space-between;
+ gap:7px;width:100%;min-width:0;min-height:34px;padding:3px 0;
+ border:0;border-radius:5px;background:transparent;
+ color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;
+ text-align:left;white-space:nowrap;cursor:pointer;
+}
+:root[data-sales-theme] .sales-app .ss-worktable-surface table thead th
+ .ss-worktable-sort-button .ss-worktable-sort-indicator{
+ flex:0 0 auto;font-size:14px;line-height:1;font-weight:800;
+ opacity:.6;text-transform:none;
+}
+:root[data-sales-theme] .sales-app .ss-worktable-surface table thead th[aria-sort]
+ .ss-worktable-sort-indicator{opacity:1;color:var(--ss-theme-accent);}
+:root[data-sales-theme] .sales-app .ss-worktable-surface table thead th
+ .ss-worktable-sort-button:hover{color:var(--ss-theme-accent);}
+:root[data-sales-theme] .sales-app .ss-worktable-surface table thead th
+ .ss-worktable-sort-button:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:0;
+}
 /* A solid frozen row should mask rows beneath it, not create an
  * oversized pseudo-element extending above the table into the toolbar.
  * Clip the table's scrolling surface to its own rounded boundary instead. */
