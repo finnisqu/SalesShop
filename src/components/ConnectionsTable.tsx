@@ -1,9 +1,9 @@
-import {useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
+import {Fragment,useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import type {TaskDuePreset} from '../services/taskSchedule';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import '../connections-table.css';
-import {visibleConnectionColumns,compareConnectionSortValues} from '../services/connectionsTablePreferences';
+import {visibleConnectionColumns,orderedConnectionColumnChoices,compareConnectionSortValues} from '../services/connectionsTablePreferences';
 import {ConnectionsBulkEditDialog,type BulkEditChange} from './ConnectionsBulkEditDialog';
 import type {Company} from '../types/crm';
 import {TaskBulkEditDialog,type TaskBulkChange} from './TaskBulkEditDialog';
@@ -132,6 +132,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
    return active.map(key=>byKey.get(key))
      .filter((col):col is ConnectionColumn=>Boolean(col));
  },[active,columns]);
+ const columnChoices=useMemo(()=>orderedConnectionColumnChoices(columns,active),[columns,active]);
  const sorted=useMemo(()=>[...rows].sort((a,b)=>{
    const diff=compareConnectionSortValues(
      a.sortValues?.[sort.key]??a.values[sort.key],
@@ -194,8 +195,11 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        onPageSizeChange={size=>{setPageSize(size);setPage(1);}}/>}
      <details className="connections-columns-menu" ref={columnsMenuRef}><summary><WorkspaceChromeIcon name="columns"/> Columns</summary>
        <div className="connections-columns-popover"><strong>Columns</strong>
-         <small>Choose and reorder. Saved on this device.</small>
-         {columns.map(col=><div key={col.key} className="connections-column-choice">
+         <small>{visible.length} visible · {columns.length-visible.length} hidden · Saved on this device</small>
+         {columnChoices.map((col,index)=><Fragment key={col.key}>
+           {index===0&&<span className="connections-columns-section-title">Visible · left to right</span>}
+           {index===visible.length&&<span className="connections-columns-section-title">Hidden</span>}
+           <div className="connections-column-choice">
            <label><input type="checkbox" checked={active.includes(col.key)}
              disabled={col.key==='name'||(active.length===1&&active.includes(col.key))}
              onChange={()=>toggleColumn(col.key)}/>{col.label}</label>
@@ -203,7 +207,8 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
              onClick={()=>move(col.key,-1)} aria-label={'Move '+col.label+' left'}>←</button>
            <button type="button" disabled={!active.includes(col.key)||active.indexOf(col.key)===active.length-1}
              onClick={()=>move(col.key,1)} aria-label={'Move '+col.label+' right'}>→</button>
-         </div>)}
+         </div>
+         </Fragment>)}
          <button type="button" onClick={()=>setKeys(columns.map(c=>c.key))}>Reset columns</button>
          <fieldset className="connections-density-setting">
            <legend>Row spacing · all workbooks</legend>
@@ -212,6 +217,12 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
              <button type="button" aria-pressed={density==='comfortable'} onClick={()=>setDensity('comfortable')}>Comfortable</button>
            </div>
          </fieldset>
+         <div className="connections-columns-done">
+           <button type="button" onClick={()=>{
+             if(columnsMenuRef.current)columnsMenuRef.current.open=false;
+             columnsMenuRef.current?.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
+           }}>Done · View table</button>
+         </div>
        </div>
      </details>
    </div>
