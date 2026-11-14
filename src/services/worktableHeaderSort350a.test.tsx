@@ -33,10 +33,11 @@ describe('Batch 350a — accessible sortable Catalog headings',()=>{
   for(const table of [sinks(),other()]){
    expect((table.match(/<WorktableSortButton /g)||[]).length).toBe(5);
    for(const name of ['brand','name','category','cost','price']){
-    expect(table).toContain("active={sort==='"+name+"'} onSort={()=>chooseSort('"+name+"')}");
-    expect(table).toContain("sort==='"+name+"'?'ascending':undefined");
+    expect(table).toContain("active={sort==='"+name+"'} direction={sortDirection} onSort={()=>chooseSort('"+name+"',true)}");
+    expect(table).toContain("sort==='"+name+"'?sortDirection:undefined");
    }
-   expect(table).toContain("const chooseSort=(next:typeof sort)=>{setExpanded(null);setSort(next);};");
+   expect(table).toContain('const chooseSort=(next:typeof sort,toggleCurrent=false)=>{');
+   expect(table).toContain("current==='ascending'?'descending':'ascending'");
    expect(table).toContain('onChange={event=>chooseSort(event.target.value as typeof sort)}');
   }
  });
