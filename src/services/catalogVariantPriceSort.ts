@@ -1,6 +1,7 @@
 import {activeCatalogDefaultVariant,type CatalogDefaultVariant} from './catalogVariantDefaults';
 
 export type CatalogVariantPriceKind='cost'|'price';
+export type CatalogSortDirection='ascending'|'descending';
 export type CatalogPricedVariant=CatalogDefaultVariant&{
  internalCost?:number;sellPrice?:number;
 };
@@ -21,12 +22,12 @@ export function catalogDefaultVariantPrice(
 }
 export function compareCatalogVariantPrice(
  left:CatalogVariantPriceRecord,right:CatalogVariantPriceRecord,
- kind:CatalogVariantPriceKind,
+ kind:CatalogVariantPriceKind,direction:CatalogSortDirection='ascending',
 ):number{
  const a=catalogDefaultVariantPrice(left,kind);
  const b=catalogDefaultVariantPrice(right,kind);
  if(a===undefined&&b===undefined)return left.name.localeCompare(right.name);
  if(a===undefined)return 1;
  if(b===undefined)return -1;
- return a-b||left.name.localeCompare(right.name);
+ return (direction==='descending'?b-a:a-b)||left.name.localeCompare(right.name);
 }
