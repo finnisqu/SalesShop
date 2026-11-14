@@ -4,6 +4,7 @@ import {isoLocalDay,outstandingTask,type SalesCalendarEvent} from './salesCalend
 import type {CalendarBadgeMetric,HomeCalendarSettings} from '../store/homeCalendarSettings';
 import {dedupeExternalQuoteActivities,isExternalQuoteActivity} from './salesQuoteRegistry';
 import {isCustomerQuoteSubmission} from './confirmedBidSubmissions';
+import {dedupeNativeQuoteActivities} from './quoteDeliveryLifecycle';
 
 export type HomeBadgeRecordKind='task'|'deal'|'quote'|'activity'|'company'|'person';
 export interface HomeBadgeRecord{
@@ -57,7 +58,7 @@ export function homeCalendarBadgeEntries(
     title:contact.name,detail:'Customer / prospect person created'});
   }
  }else{
-  for(const activity of dedupeExternalQuoteActivities(activities)){
+  for(const activity of dedupeNativeQuoteActivities(dedupeExternalQuoteActivities(activities))){
    const date=activity.metadata?.externalQuoteSent&&activity.metadata.bidSentDate
     ?activity.metadata.bidSentDate:isoLocalDay(activity.occurredAt);
    if(date!==day)continue;
