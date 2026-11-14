@@ -88,13 +88,19 @@ export function personalCalendarSources(
     (!deal.assignedUserId&&ownExternalDealIds.has(deal.id)))
    relatedDealIds.add(deal.id);
  });
+ // An explicit reassignment overrides old quote/task associations for
+ // current Home bid obligations. The previous rep keeps their own historical
+ // Quote and Activity records, but not the new owner's Deal-wide activity.
+ const personalDeals=deals.filter(deal=>deal.assignedUserId
+  ?deal.assignedUserId===userId:relatedDealIds.has(deal.id));
+ const personalDealIds=new Set(personalDeals.map(deal=>deal.id));
  return {
-  deals:deals.filter(deal=>relatedDealIds.has(deal.id)),
+  deals:personalDeals,
   activities:dedupeExternalQuoteActivities(activities.filter(activity=>
    (!activity.quoteId||quoteIds.has(activity.quoteId))&&
    (activity.metadata?.recordedByUserId===userId||
     !!(activity.quoteId&&quoteIds.has(activity.quoteId))||
-    !!(activity.projectId&&relatedDealIds.has(activity.projectId)))
+    !!(activity.projectId&&personalDealIds.has(activity.projectId)))
   )),
  };
 }
