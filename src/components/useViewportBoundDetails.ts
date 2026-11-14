@@ -26,6 +26,28 @@ export function placeWorktableMenu(g:WorktableMenuGeometry):WorktableMenuPlaceme
  // smaller than 40px. A constrained menu may be tiny, but never spill.
  return {shiftX,side,maxHeight:Math.max(0,Math.min(540,Math.floor(available)))};
 }
+/** The shared Filters, Actions and Columns controls are one menu family.
+ * Native details do not mutually dismiss when a second menu is opened with
+ * the keyboard or by code, unlike the existing outside-pointer behavior.
+ * Close only open peers in the same SalesShop surface; do not change focus,
+ * inputs, or nested non-worktable details. */
+export const OPEN_WORKTABLE_DETAILS_SELECTOR=[
+ 'details.ss-worktable-filter-menu[open]',
+ 'details.ss-worktable-action-menu[open]',
+ 'details.connections-columns-menu[open]',
+].join(',');
+
+export function closeOtherOpenWorktableDetails(opened:HTMLDetailsElement):number{
+ if(!opened.open||!opened.matches(OPEN_WORKTABLE_DETAILS_SELECTOR))return 0;
+ const scope=opened.closest('.sales-app')??document;
+ let closed=0;
+ scope.querySelectorAll<HTMLDetailsElement>(OPEN_WORKTABLE_DETAILS_SELECTOR).forEach(menu=>{
+  if(menu===opened||!menu.open||menu.contains(opened)||opened.contains(menu))return;
+  menu.open=false;closed++;
+ });
+ return closed;
+}
+
 /** Positions an open native-details menu without introducing a scroll parent.
  * The existing dismissal and Escape behavior remain with useDismissibleDetails. */
 export function useViewportBoundDetails(ref:RefObject<HTMLDetailsElement|null>){
@@ -63,7 +85,11 @@ export function useViewportBoundDetails(ref:RefObject<HTMLDetailsElement|null>){
    panel.style.setProperty('--ss-worktable-menu-shift-x',next.shiftX+'px');
    panel.style.maxHeight=next.maxHeight+'px';
   };
-  const toggle=()=>{if(menu.open)position();};
+  const toggle=()=>{
+   if(!menu.open)return;
+   closeOtherOpenWorktableDetails(menu);
+   position();
+  };
   // Wheel/touch scrolling INSIDE the panel never moves its anchor. Avoid
   // a synchronous geometry pass on every item-list scroll event.
   const outsideScroll=(event:Event)=>{
