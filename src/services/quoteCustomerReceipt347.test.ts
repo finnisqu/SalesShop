@@ -95,8 +95,11 @@ describe('Batch 347 — signed customer receipt privacy and price integrity',()=
     amount:150}),
   ];
   const accepted=buildAcceptedQuoteSnapshot(quote(rows));
+  // The visible Kitchen Area is safe to identify. Only entirely hidden
+  // Areas must have their section identity removed from receipt rows.
   expect(accepted.lines).toEqual([{
-   id:'accepted-included-work-1',kind:'item',description:'Included work',
+   id:'accepted-included-work-1',sectionId:'kitchen',
+   kind:'item',description:'Included work',
    pricingMode:'direct',amount:950,customerVisible:true,includeInTotal:true,
   }]);
   expect(quoteLinesTotal(accepted.lines)).toBe(950);
