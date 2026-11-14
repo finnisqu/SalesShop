@@ -13,7 +13,7 @@ import {CatalogFilterReset} from './CatalogFilterReset';
 import {MobileCatalogActiveFilters} from './MobileCatalogTools';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
-import {catalogDefaultVariantPrice,compareCatalogVariantPrice} from '../services/catalogVariantPriceSort';
+import {catalogDefaultVariantPrice,compareCatalogVariantPrice,type CatalogSortDirection} from '../services/catalogVariantPriceSort';
 import {catalogProductFilterChips} from '../services/catalogProductFilterChips';
 import {reorderCatalogPins,shiftCatalogPin} from '../services/catalogComparisonOrder';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
@@ -73,6 +73,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
  const [category,setCategory]=useState<'all'|SinkCategory>('all');
  const [showInactive,setShowInactive]=useState(false);
  const [sort,setSort]=useState<'name'|'brand'|'category'|'cost'|'price'>('brand');
+ const [sortDirection,setSortDirection]=useState<CatalogSortDirection>('ascending');
  const [pins,setPins]=useState<string[]>(readPins);
  const [dragging,setDragging]=useState<string|null>(null);
  useEffect(()=>{void hydrate();},[hydrate]);
@@ -84,6 +85,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
    // before opening the record. Otherwise its edit row can stay hidden.
    const selectedCategory=category==='all'?'kitchen':category;
    setQuery('');setCategory('all');setShowInactive(false);setSort('brand');
+  setSortDirection('ascending');
    onClearExternalQuery?.();
    const id=addModel(selectedCategory);
    setExpanded(id);setEditing(true);
@@ -95,6 +97,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
   const id=duplicateModel(modelId);
   if(!id)return;
   setQuery('');setCategory('all');setShowInactive(false);setSort('brand');
+  setSortDirection('ascending');
   onClearExternalQuery?.();setExpanded(id);setEditing(true);
  };
  const togglePin=(modelId:string,variantId:string)=>{
@@ -109,6 +112,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
  const shiftPin=(key:string,direction:-1|1)=>{
   setPins(current=>shiftCatalogPin(current,key,direction));
  };
+ const sortMultiplier=sortDirection==='descending'?-1:1;
  const filtered=useMemo(()=>{
   return models.filter(model=>(showInactive||model.active)&&
    (category==='all'||model.category===category)&&
@@ -116,37 +120,48 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
     model.material,model.mountType,model.notes,SINK_CATEGORY_LABELS[model.category],...(model.availableColors??[]),
     ...model.variants.flatMap(variant=>[variant.label,variant.code,SINK_CONFIGURATION_LABELS[variant.configuration],variant.finish,variant.notes,
       ...(variant.availableColors??[])])],query,externalQuery))
-   .sort((a,b)=>sort==='category'?a.category.localeCompare(b.category)||a.name.localeCompare(b.name):
-     sort==='name'?a.name.localeCompare(b.name):
-     sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort):
-     (a.brand??a.supplier??'').localeCompare(b.brand??b.supplier??'')||a.name.localeCompare(b.name));
- },[models,showInactive,category,query,externalQuery,sort]);
+   .sort((a,b)=>sort==='category'?
+     (a.category.localeCompare(b.category)||a.name.localeCompare(b.name))*sortMultiplier:
+     sort==='name'?a.name.localeCompare(b.name)*sortMultiplier:
+     sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort,sortDirection):
+     ((a.brand??a.supplier??'').localeCompare(b.brand??b.supplier??'')||
+       a.name.localeCompare(b.name))*sortMultiplier);
+ },[models,showInactive,category,query,externalQuery,sort,sortDirection]);
  const filterChips=catalogProductFilterChips({
   localQuery:query,headerQuery:externalQuery,
   category,categoryLabel:category==='all'?'All sink types':SINK_CATEGORY_LABELS[category],
-  includeArchived:showInactive,sort,defaultSort:'brand',
-  sortLabel:sort==='name'?'Name A–Z':sort==='category'?'Category':
-   sort==='cost'?'Cost · low first':sort==='price'?'Customer price · low first':'Brand / name',
+  includeArchived:showInactive,sort,defaultSort:'brand',sortDirection,
+  sortLabel:sort==='name'?'Name':sort==='category'?'Category':
+   sort==='cost'?'Default cost':sort==='price'?'Customer price':'Brand / name',
   clearLocalQuery:()=>setQuery(''),
   clearHeaderQuery:()=>onClearExternalQuery?.(),
   clearCategory:()=>setCategory('all'),
   clearArchived:()=>setShowInactive(false),
-  clearSort:()=>{setExpanded(null);setSort('brand');},
+  clearSort:()=>{setExpanded(null);setSort('brand');setSortDirection('ascending');},
  });
  const activeFilterCount=filterChips.length;
  // Sorting closes an expanded editor so its page-follow effect cannot
  // override the newly selected sorted page.
- const chooseSort=(next:typeof sort)=>{setExpanded(null);setSort(next);};
+ const chooseSort=(next:typeof sort,toggleCurrent=false)=>{
+  setExpanded(null);
+  setSortDirection(current=>toggleCurrent&&next===sort?
+   (current==='ascending'?'descending':'ascending'):'ascending');
+  setSort(next);
+ };
+ const chooseSortDirection=(next:CatalogSortDirection)=>{
+  setExpanded(null);setSortDirection(next);
+ };
  const resetCatalogView=()=>{
   setQuery('');setCategory('all');setShowInactive(false);setSort('brand');
+  setSortDirection('ascending');
   setExpanded(null);onClearExternalQuery?.();
  };
  const pagination=useCatalogPagination(filtered.length,
-  JSON.stringify([query,externalQuery,category,showInactive,sort]));
+  JSON.stringify([query,externalQuery,category,showInactive,sort,sortDirection]));
  const pagedModels=filtered.slice(pagination.start,pagination.end);
  const selecting=canEdit&&editing;
  const pageSelection=useCatalogPageSelection(pagedModels,
-  JSON.stringify([query,externalQuery,category,showInactive,sort,pagination.page,pagination.pageSize,selecting]));
+  JSON.stringify([query,externalQuery,category,showInactive,sort,sortDirection,pagination.page,pagination.pageSize,selecting]));
  const selectedIds=pageSelection.selectedPageIds;
  const bulkArchive=()=>{
   if(!selecting||!pageSelection.activeIds.length)return;
@@ -247,9 +262,15 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       </div>
      <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
       <select aria-label="Sort sinks" value={sort} onChange={event=>chooseSort(event.target.value as typeof sort)}>
-       <option value="brand">Brand / name</option><option value="name">Name A–Z</option>
-       <option value="category">Category</option><option value="cost">Cost · low first</option>
-       <option value="price">Customer price · low first</option>
+       <option value="brand">Brand / name</option><option value="name">Name</option>
+       <option value="category">Category</option><option value="cost">Default cost</option>
+       <option value="price">Customer price</option>
+      </select>
+     </label>
+     <label className="catalog-card-sort"><span className="catalog-control-label">Direction</span>
+      <select aria-label="Sort sinks direction" value={sortDirection}
+       onChange={event=>chooseSortDirection(event.target.value as CatalogSortDirection)}>
+       <option value="ascending">Ascending</option><option value="descending">Descending</option>
       </select>
      </label>
      <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
@@ -273,13 +294,13 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       <WorktableSelectPageCheckbox label="Select all sink models on this page"
        allSelected={pageSelection.allSelected} someSelected={selectedIds.length>0}
        disabled={!pagedModels.length} onChange={checked=>pageSelection.selectPage(checked)}/></th>}
-      <th scope="col" aria-sort={sort==='brand'?'ascending':undefined}><WorktableSortButton label="Brand" active={sort==='brand'} onSort={()=>chooseSort('brand')}/></th>
-      <th scope="col" aria-sort={sort==='name'?'ascending':undefined}><WorktableSortButton label="Model" active={sort==='name'} onSort={()=>chooseSort('name')}/></th>
-      <th scope="col" aria-sort={sort==='category'?'ascending':undefined}><WorktableSortButton label="Category" active={sort==='category'} onSort={()=>chooseSort('category')}/></th>
+      <th scope="col" aria-sort={sort==='brand'?sortDirection:undefined}><WorktableSortButton label="Brand" active={sort==='brand'} direction={sortDirection} onSort={()=>chooseSort('brand',true)}/></th>
+      <th scope="col" aria-sort={sort==='name'?sortDirection:undefined}><WorktableSortButton label="Model" active={sort==='name'} direction={sortDirection} onSort={()=>chooseSort('name',true)}/></th>
+      <th scope="col" aria-sort={sort==='category'?sortDirection:undefined}><WorktableSortButton label="Category" active={sort==='category'} direction={sortDirection} onSort={()=>chooseSort('category',true)}/></th>
       <th scope="col">Material</th><th scope="col">Mount</th>
       <th scope="col">Total W × L × H</th>
-      <th scope="col" aria-sort={sort==='cost'?'ascending':undefined}><WorktableSortButton label="Default cost" active={sort==='cost'} onSort={()=>chooseSort('cost')}/></th>
-      <th scope="col" aria-sort={sort==='price'?'ascending':undefined}><WorktableSortButton label="Customer price" active={sort==='price'} onSort={()=>chooseSort('price')}/></th>
+      <th scope="col" aria-sort={sort==='cost'?sortDirection:undefined}><WorktableSortButton label="Default cost" active={sort==='cost'} direction={sortDirection} onSort={()=>chooseSort('cost',true)}/></th>
+      <th scope="col" aria-sort={sort==='price'?sortDirection:undefined}><WorktableSortButton label="Customer price" active={sort==='price'} direction={sortDirection} onSort={()=>chooseSort('price',true)}/></th>
       <th scope="col">Variants</th></tr></thead>
      <tbody>
       {pagedModels.map(model=>{
