@@ -1,5 +1,7 @@
 import {useEffect,useRef,useState,type ReactNode,type FormEvent} from 'react';
 import {useRecordInlineEditScope} from './RecordInlineEditScope';
+import {MOBILE_SHEET_MEDIA_QUERY} from '../lib/mobileSheetViewport';
+import {recordInlineScrollDelta} from '../services/recordInlineViewport';
 /** One-at-a-time editing that preserves the About panel's property positions. */
 export function RecordInlineProperty({label,value,display,type='text',options,onSave,
  disabled=false,placeholder='Not set',validate}:{
@@ -12,6 +14,7 @@ export function RecordInlineProperty({label,value,display,type='text',options,on
  const [editing,setEditing]=useState(false),[draft,setDraft]=useState(value),
   [saving,setSaving]=useState(false),[error,setError]=useState('');
  const pencilRef=useRef<HTMLButtonElement>(null);
+ const formRef=useRef<HTMLFormElement>(null);
  const restoreFocus=useRef(false);
  const {id,activeId,claim,release}=useRecordInlineEditScope();
  const anotherFieldEditing=activeId!==null&&activeId!==id;
@@ -28,6 +31,41 @@ export function RecordInlineProperty({label,value,display,type='text',options,on
   }
  },[disabled,editing,saving,value,release,id]);
  useEffect(()=>{if(!editing)setDraft(value);},[value,editing]);
+ // On mobile Safari the keyboard can open AFTER autofocus, shrinking the
+ // visual viewport. Keep the active inline field above the keyboard without
+ // scrolling the entire Record when no field has focus.
+ useEffect(()=>{
+  if(!editing||!window.matchMedia?.(MOBILE_SHEET_MEDIA_QUERY).matches)return;
+  const control=formRef.current?.querySelector<HTMLInputElement|HTMLSelectElement>('input,select');
+  if(!control)return;
+  const visual=window.visualViewport;
+  const ensureVisible=()=>{
+   if(document.activeElement!==control)return;
+   const rect=control.getBoundingClientRect();
+   const delta=recordInlineScrollDelta(rect,{
+    top:visual?.offsetTop??0,height:visual?.height??window.innerHeight,
+   });
+   if(!delta)return;
+   let parent:HTMLElement|null=control.parentElement;
+   while(parent){
+    const overflow=window.getComputedStyle(parent).overflowY;
+    if((overflow==='auto'||overflow==='scroll')&&parent.scrollHeight>parent.clientHeight+2)break;
+    parent=parent.parentElement;
+   }
+   if(parent)parent.scrollTop+=delta;
+   else window.scrollBy({top:delta,behavior:'auto'});
+  };
+  const frame=window.requestAnimationFrame(ensureVisible);
+  visual?.addEventListener('resize',ensureVisible);
+  visual?.addEventListener('scroll',ensureVisible);
+  window.addEventListener('resize',ensureVisible);
+  return()=>{
+   window.cancelAnimationFrame(frame);
+   visual?.removeEventListener('resize',ensureVisible);
+   visual?.removeEventListener('scroll',ensureVisible);
+   window.removeEventListener('resize',ensureVisible);
+  };
+ },[editing]);
  // Restore keyboard focus to the same property after saving or cancellation,
  // rather than sending Tab navigation back to the start of the record.
  useEffect(()=>{
@@ -66,7 +104,7 @@ export function RecordInlineProperty({label,value,display,type='text',options,on
       <path d="m16 4 4 4-11 11-5 1 1-5L16 4Z"/><path d="m14 6 4 4"/>
      </svg>
    </button>}
-  </div>:<form className="ss-record-inline-editor" aria-busy={saving}
+  </div>:<form ref={formRef} className="ss-record-inline-editor" aria-busy={saving}
     onSubmit={event=>void submit(event)}
     onKeyDown={event=>{
      // Escape works for both native select and input fields, but must not
