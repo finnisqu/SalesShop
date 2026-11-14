@@ -37,7 +37,7 @@ describe('Batch 336 — Catalog page-scoped selection and filter parity',()=>{
    expect(table).toContain('pageSelection.clear();');
    expect(table).toContain('if(!window.confirm(');
    expect(table).toContain('setShowInactive(true)');
-   expect(table).toContain('colSpan={selecting?8:7}');
+   expect(table).toContain('colSpan={selecting?'+(table===sinks?'10:9':'8:7')+'}');
    expect(table).toContain('extraActions={selecting&&selectedIds.length>0&&');
   }
   expect(sinks).toContain('setModelsActive(pageSelection.activeIds,false)');
@@ -50,8 +50,9 @@ describe('Batch 336 — Catalog page-scoped selection and filter parity',()=>{
   const other=source('components/CatalogOtherWorktable.tsx');
   expect(sinks).toContain('SINK_CATEGORY_LABELS[model.category]');
   expect(sinks).toContain('SINK_CONFIGURATION_LABELS[variant.configuration]');
-  expect(other).toContain("sort==='cost'?(activeCatalogDefaultVariant(a.variants)?.internalCost??Infinity)");
-  expect(other).toContain("sort==='price'?(activeCatalogDefaultVariant(a.variants)?.sellPrice??Infinity)");
+  expect(other).toContain("sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort)");
+  expect(sinks).toContain("sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort)");
+  expect(sinks).toContain('<option value="price">Customer price · low first</option>');
   expect(other).toContain('<option value="price">Customer price · low first</option>');
  });
 });
