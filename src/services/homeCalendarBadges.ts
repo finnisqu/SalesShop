@@ -4,6 +4,7 @@ import {outstandingTask,isoLocalDay,type SalesCalendarEvent} from './salesCalend
 import type {CalendarBadgeMetric,HomeCalendarSettings} from '../store/homeCalendarSettings';
 import {dedupeExternalQuoteActivities} from './salesQuoteRegistry';
 import {isCustomerQuoteSubmission} from './confirmedBidSubmissions';
+import {dedupeNativeQuoteActivities} from './quoteDeliveryLifecycle';
 
 export type CalendarBadgeDayCounts=Partial<Record<CalendarBadgeMetric,number>>;
 export type CalendarBadgeIndex=Map<string,CalendarBadgeDayCounts>;
@@ -39,7 +40,7 @@ export function buildCalendarBadgeIndex(
    add(index,task.dueDate,'due-dates');
   }
  }
- for(const activity of dedupeExternalQuoteActivities(activities)){
+ for(const activity of dedupeNativeQuoteActivities(dedupeExternalQuoteActivities(activities))){
   const date=activity.metadata?.externalQuoteSent&&activity.metadata.bidSentDate
    ?activity.metadata.bidSentDate:isoLocalDay(activity.occurredAt);
   if(isCustomerQuoteSubmission(activity)){
