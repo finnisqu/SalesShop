@@ -61,6 +61,8 @@ describe('Batch 350c — shared compact filter groups and mobile dismissal',()=>
   expect(records).toContain('<WorktableSurface className="connections-table-scroll"');
   expect(records).toContain('useViewportBoundDetails(columnsMenuRef)');
   expect(records).toContain('useDismissibleDetails(columnsMenuRef)');
+  expect(records).toContain('{visible.length>3&&<WorktableHorizontalHint label="record"/>}');
+  expect(records).toContain('<WorktableSurface className="connections-table-scroll"');
  });
  it('retains shared viewport clipping and native dismissal behavior',()=>{
   const bounds=source('src/components/useViewportBoundDetails.ts');
