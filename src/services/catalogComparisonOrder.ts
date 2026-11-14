@@ -1,14 +1,15 @@
-/** Shared comparison-board order for Catalog Sinks and OTHER.
+/** Shared comparison-board order for Catalog Materials, Sinks and OTHER.
  * Dragging a stale/deleted key must NEVER recreate a ghost pin. */
 export function reorderCatalogPins(
  current:string[],sourceKey:string,targetKey:string,
+ position:'before'|'after'='before',
 ):string[]{
  if(!sourceKey||sourceKey===targetKey||
   !current.includes(sourceKey)||!current.includes(targetKey))return current;
  const reordered=current.filter(key=>key!==sourceKey);
  const target=reordered.indexOf(targetKey);
  if(target<0)return current;
- reordered.splice(target,0,sourceKey);
+ reordered.splice(target+(position==='after'?1:0),0,sourceKey);
  return reordered;
 }
 
