@@ -70,5 +70,9 @@ describe('Batch 349a — Sinks/OTHER Catalog worktable price parity',()=>{
   expect(sinks).toContain("catalogDefaultVariantPrice(model,'price')");
   expect(sinks).toContain('colSpan={selecting?10:9}');
   expect(other).toContain('colSpan={selecting?8:7}');
+  expect(sinks).toContain('CatalogLifecycleStatus active={model.active&&variant.active}');
+  expect(other).toContain('CatalogLifecycleStatus active={item.active&&variant.active}');
+  expect(sinks).toContain('model.active&&variant.active&&<CatalogQuoteLauncher');
+  expect(other).toContain('item.active&&variant.active&&<CatalogQuoteLauncher');
  });
 });
