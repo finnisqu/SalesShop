@@ -14,7 +14,7 @@ import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
 import type {TaskAssociation} from '../store/personalTaskStore';
-import {useDealPeopleStore} from '../store/dealPeopleStore';
+import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
 import {setNotebookRelatedRecord} from '../services/notebookProjectContext';
 
 export type RecordCreateContext={kind:'company'|'person'|'deal';id:string;name:string};
@@ -113,7 +113,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     else openCompany(saved.id);
   };
 
-  const submitNamedCreate = (event: FormEvent) => {
+  const submitNamedCreate = async (event: FormEvent) => {
     event.preventDefault();
     // Do not create a second record from Enter + click before the dialog closes.
     if(namedCreatePending.current||pendingCreated)return;
@@ -124,6 +124,22 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     let createdId:string|undefined;
     try{
       if(namedMode==='project'){
+        // A contextual Deal started from a Person must not appear linked
+        // until the shared Deal-Person row is available and acknowledged.
+        // Preload the store before creating anything to avoid orphan Deals.
+        let personLinkScope:string|null=null;
+        if(context?.kind==='person'){
+          if(!useCrmStore.getState().contacts.some(item=>item.id===context.id))
+            throw new Error('This Person is no longer available. Reopen their record and try again.');
+          personLinkScope=dealPeopleScope(authMode,organizationId);
+          if(!personLinkScope)throw new Error('The Person link workspace is unavailable.');
+          const current=useDealPeopleStore.getState();
+          if(current.scope!==personLinkScope||!current.loaded)
+            await current.load(personLinkScope);
+          const latest=useDealPeopleStore.getState();
+          if(latest.scope!==personLinkScope||!latest.loaded)
+            throw new Error(latest.error||'Deal contacts are unavailable. Retry after they load.');
+        }
         const projectId=createProject(clean);
         if(!projectId)throw new Error('Could not create the Deal. Check its name and try again.');
         createdId=projectId;
@@ -132,7 +148,9 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
           const person=useCrmStore.getState().contacts.find(item=>item.id===context.id);
           if(person?.companyId)setProjectCompany(projectId,person.companyId);
           const links=useDealPeopleStore.getState();
-          if(links.loaded&&links.scope)void links.add(projectId,context.id).catch(()=>{/* Also available under Deal People */});
+          if(!personLinkScope||links.scope!==personLinkScope||!links.loaded)
+            throw new Error('Deal contacts changed workspace. Open the new Deal and link this Person.');
+          await links.add(projectId,context.id);
         }
         if(context?.kind==='deal'){
           const parent=useCrmStore.getState().projects.find(item=>item.id===context.id);
@@ -173,7 +191,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
         </header>
 
         {namedMode ? (
-          <form className="quick-create-name-form ss-mobile-sheet-body" onSubmit={submitNamedCreate}>
+          <form className="quick-create-name-form ss-mobile-sheet-body" onSubmit={event=>{void submitNamedCreate(event);}}>
             <label>
               <span>{namedMode === 'project' ? 'Deal name' : 'Account / company name'}</span>
               <input autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
