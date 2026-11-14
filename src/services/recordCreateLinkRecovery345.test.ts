@@ -76,6 +76,9 @@ describe('Batch 345 — record creation links and recoverable partial saves',()=
   expect(quick).toContain('await current.load(personLinkScope)');
   expect(quick).toContain('if(latest.scope!==personLinkScope||!latest.loaded)');
   expect(quick).toContain('await links.add(projectId,context.id)');
+  expect(quick).toContain('if(namedCreatePending.current&&!pendingCreated)return;');
+  expect(quick).toContain('setNamedCreateSaving(true)');
+  expect(quick).toContain('finally{setNamedCreateSaving(false);}');
   expect(quick).not.toContain('void links.add(projectId,context.id).catch');
   expect(quick).toContain('setPendingCreated({id:createdId,kind:namedMode})');
  });
@@ -86,6 +89,8 @@ describe('Batch 345 — record creation links and recoverable partial saves',()=
   expect(dialog).toContain("if(typeof result==='object')");
   expect(dialog).toContain('setPendingCreated(result.id)');
   expect(dialog).toContain('setError(result.warning)');
+  expect(dialog).toContain('const formLocked=saving||Boolean(pendingCreated)');
+  expect(dialog).toContain('disabled={formLocked}');
   expect(dialog).toContain('Open created {kind.toLowerCase()}');
   expect(dialog).toContain('onClick={openPendingCreated}');
   expect(board).toContain('} satisfies BoardPartialCreate');
