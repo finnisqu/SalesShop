@@ -4,6 +4,8 @@ import {quoteLinesTotal} from '../types/quote';
 import {buildAcceptedQuoteSnapshot} from '../types/signature';
 import {createQuoteRevisionSnapshot} from './quoteIntegrity';
 import {customerReceiptLines,customerReceiptSections} from './quoteCustomerReceipt';
+import {confirmedQuoteDeliveries,quoteDeliveryLabel} from './quoteDeliveryLifecycle';
+import type {Activity} from '../types/crm';
 
 const when='2026-11-14T10:00:00.000Z';
 const line=(id:string,overrides:Partial<QuoteLine>={}):QuoteLine=>({
@@ -128,6 +130,29 @@ describe('Batch 347 — signed customer receipt privacy and price integrity',()=
   expect(accepted.acceptedTotal).toBe(900);
   expect(quoteLinesTotal(accepted.lines)).toBe(900);
   expect(accepted.lines[0]).toMatchObject({id:'top',amount:900});
+ });
+ it('deduplicates cached delivery Activity copies but retains separate genuine confirmations',()=>{
+  const event:Activity={
+   id:'delivery-a',type:'quote-sent',quoteId:'quote-347',
+   summary:'Delivered to customer',occurredAt:'2026-11-14T12:00:00.000Z',
+   metadata:{source:'manual',revision:0,deliveryConfirmed:true,deliveryMethod:'email'},
+  };
+  const repeated={...event,occurredAt:'2026-11-14T12:01:00.000Z'};
+  const second={...event,id:'delivery-b',occurredAt:'2026-11-14T13:00:00.000Z'};
+  const ignored={...event,id:'issue-only',metadata:{
+   source:'quote' as const,revision:0,deliveryConfirmed:false,
+  }};
+  const oldRevision={...event,id:'older-revision',metadata:{
+   source:'manual' as const,revision:1,deliveryConfirmed:true,
+  }};
+  const delivered=confirmedQuoteDeliveries({id:'quote-347',revision:0},[
+   event,repeated,second,ignored,oldRevision,
+  ]);
+  expect(delivered.map(item=>item.id)).toEqual(['delivery-b','delivery-a']);
+  expect(delivered[1].occurredAt).toBe('2026-11-14T12:01:00.000Z');
+  expect(quoteDeliveryLabel({status:'Sent'},delivered)).toBe('Customer delivery confirmed');
+  expect(confirmedQuoteDeliveries({id:'quote-347',revision:2},[event]))
+   .toEqual([]);
  });
  it('freezes the issued revision instead of borrowing later draft prices or notes',()=>{
   const original=quote([line('approved',{amount:1000,internalCost:600})]);
