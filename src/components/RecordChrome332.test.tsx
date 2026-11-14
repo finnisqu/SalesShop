@@ -96,7 +96,7 @@ describe('Batch 332e — unified Record inline property editing',()=>{
  it('keeps mobile inline editor inputs, Save, Cancel and pencil touch-sized',()=>{
   const css=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
   expect(css).toContain('.ss-record-pencil{opacity:1;min-height:44px;flex-basis:44px}');
-  expect(css).toContain('.ss-record-inline-editor button{flex-basis:44px;min-height:44px}');
+  expect(css).toContain('flex:0 0 44px;min-height:44px;');
   expect(css).not.toContain('.qwt-');
  });
 });
