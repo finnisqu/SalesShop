@@ -64,8 +64,9 @@ export function WorktablePagination({label,total,page,pageSize,onPageChange,onPa
 
 /** A single reusable filter trigger and bounded, keyboard-dismissable panel.
  * Filters remain mounted so changing views does not reset draft selections. */
-export function WorktableFilterMenu({children,activeCount=0,label='Filters',className=''}:{
+export function WorktableFilterMenu({children,activeCount=0,label='Filters',className='',mobileDone=false}:{
  children:ReactNode;activeCount?:number;label?:string;className?:string;
+ mobileDone?:boolean;
 }){
  const ref=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(ref);
@@ -76,8 +77,24 @@ export function WorktableFilterMenu({children,activeCount=0,label='Filters',clas
   </summary>
   <div className="ss-worktable-filter-panel" role="group" aria-label={label+' options'}>
    {children}
+   {mobileDone&&<div className="ss-worktable-filter-done">
+    <button type="button" onClick={()=>{
+     if(ref.current)ref.current.open=false;
+     ref.current?.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
+    }}>Done · View results</button>
+   </div>}
   </div>
  </details>;
+}
+
+/** A semantic group within the single shared Filters popover. */
+export function WorktableFilterSection({title,children}:{
+ title:string;children:ReactNode;
+}){
+ return <section className="ss-worktable-filter-section" aria-label={title}>
+  <strong className="ss-worktable-filter-section-heading">{title}</strong>
+  <div className="ss-worktable-filter-section-fields">{children}</div>
+ </section>;
 }
 
 /** Reusable action/view dropdown for worktable toolbars. Separated from Filters
