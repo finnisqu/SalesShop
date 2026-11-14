@@ -80,12 +80,12 @@ describe('Batch 338 — shared worktable accessibility and mobile parity',()=>{
   const other=src('components/CatalogOtherWorktable.tsx');
   for(const state of ['brand','name','category']){
    const file=state==='brand'?'brand':'name';
-   expect(sinks).toContain("sort==='"+state+"'?'ascending':undefined");
-   expect(other).toContain("sort==='"+state+"'?'ascending':undefined");
+   expect(sinks).toContain("sort==='"+state+"'?sortDirection:undefined");
+   expect(other).toContain("sort==='"+state+"'?sortDirection:undefined");
    expect(file).toBeTruthy();
   }
-  expect(other).toContain("sort==='cost'?'ascending':undefined");
-  expect(other).toContain("sort==='price'?'ascending':undefined");
+  expect(other).toContain("sort==='cost'?sortDirection:undefined");
+  expect(other).toContain("sort==='price'?sortDirection:undefined");
  });
  it('retains the shared darker header, visible focus and touch-friendly checkboxes',()=>{
   const chrome=src('worktable-chrome.css');
