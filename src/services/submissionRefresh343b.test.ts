@@ -6,6 +6,7 @@ import {buildCalendarBadgeIndex,metricCount} from './homeCalendarBadges';
 import {homeCalendarBadgeEntries} from './homeCalendarDrilldown';
 import {DEFAULT_HOME_CALENDAR_SETTINGS} from '../store/homeCalendarSettings';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from './salesQuoteRegistry';
+import {homeRecentQuoteEntries} from './homeOverview';
 import {confirmedBidSubmissionDealIds} from './confirmedBidSubmissions';
 import {usePersonalTaskStore,type PersonalTask} from '../store/personalTaskStore';
 import {mergePrivateTasks} from './personalTaskCloudSync';
@@ -109,6 +110,31 @@ describe('Batch 343b — cross-page submission consistency after cloud rehydrate
    .toMatchObject([{id:'external:outside-shared'}]);
   expect(recentHomeItems(restored,sources.activities,[],scope).some(x=>
    x.kind==='completed-task'&&x.recordId==='auto-task')).toBe(true);
+ });
+ it('shows external corrections as recently updated without creating a second Quote',()=>{
+  const project=deal('corrected'),record=external('outside-corrected',project.id);
+  const corrected:Activity={...record,metadata:{...record.metadata,
+   editedAt:'2026-11-13T19:00:00.000Z',bidSentDate:'2026-11-11',amount:92000}};
+  const registry=buildSalesQuoteRegistry([], [corrected],[project]);
+  expect(registry).toMatchObject([{id:'external:outside-corrected',
+   value:92000,sentDate:'2026-11-11',
+   updatedAt:'2026-11-13T19:00:00.000Z'}]);
+  const home=homeRecentQuoteEntries([], [corrected]);
+  expect(home).toMatchObject([{id:'external:outside-corrected',
+   timestamp:registry[0].updatedAt}]);
+  const recent=recentHomeItems([],[corrected],[],null);
+  expect(recent[0].timestamp).toBe(registry[0].updatedAt);
+  // Correcting the send date moves the historical sent badge but does not
+  // duplicate the Activity identity or manufacture a SalesShop quote.
+  const badges=buildCalendarBadgeIndex([],[],[record,corrected],[],[],
+   DEFAULT_HOME_CALENDAR_SETTINGS);
+  // A mixed stale+corrected cache should resolve to the updated Activity.
+  expect(buildSalesQuoteRegistry([],[corrected,corrected],[project])).toHaveLength(1);
+  const correctedOnly=buildCalendarBadgeIndex([],[],[corrected],[],[],
+   DEFAULT_HOME_CALENDAR_SETTINGS);
+  expect(metricCount(correctedOnly,'2026-11-11','quotes-sent')).toBe(1);
+  expect(metricCount(correctedOnly,'2026-11-12','quotes-sent')).toBe(0);
+  expect(badges.size).toBeGreaterThanOrEqual(1);
  });
  it('keeps a native delivery and an external submission separate after duplicate cache rehydrate',()=>{
   const project=deal('shared'),submission=external('outside-shared',project.id);
