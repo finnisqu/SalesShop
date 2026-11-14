@@ -8,7 +8,7 @@ describe('Global header Quick Create Activity action',()=>{
  it('serializes Board name-first creation before the saving rerender',()=>{
   const board=source('src/components/BoardQuickCreate.tsx');
   expect(board).toContain('const savingRef=useRef(false)');
-  expect(board).toContain('if(!clean||savingRef.current)return');
+  expect(board).toContain('if(!clean||savingRef.current||pendingCreated)return');
   expect(board).toContain('savingRef.current=true;setSaving(true)');
   expect(board).toContain('finally{savingRef.current=false;setSaving(false);}');
   expect(board).toContain("This Person is already in the pending selection.");
