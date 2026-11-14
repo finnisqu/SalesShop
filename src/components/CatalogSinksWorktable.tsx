@@ -8,7 +8,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton,WorktableHorizontalHint} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableFilterSection,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton,WorktableHorizontalHint} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {MobileCatalogActiveFilters} from './MobileCatalogTools';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
@@ -248,19 +248,27 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
     <div className="catalog-card-actions">
      <span className="catalog-card-hint">Expand models to compare sink dimensions and variants.</span>
      <WorktableFilterMenu className="catalog-card-filter"
-      activeCount={activeFilterCount}>
-      <div className="catalog-card-filter-panel">
-       <label>Find models<input type="search" aria-label="Find sink models" placeholder="Model, finish or SKU…"
+      activeCount={activeFilterCount} mobileDone>
+      <WorktableFilterSection title="Find">
+       <div className="catalog-card-filter-panel">
+        <label>Find models<input type="search" aria-label="Find sink models" placeholder="Model, finish or SKU…"
         value={query} onChange={event=>setQuery(event.target.value)}/></label>
-       <label>Sink type<select aria-label="Filter sink category" value={category}
+       </div>
+      </WorktableFilterSection>
+      <WorktableFilterSection title="Visibility">
+       <div className="catalog-card-filter-panel">
+        <label>Sink type<select aria-label="Filter sink category" value={category}
         onChange={event=>setCategory(event.target.value as typeof category)}>
         <option value="all">All sink types</option>
         {SINK_CATEGORIES.map(key=><option key={key} value={key}>{SINK_CATEGORY_LABELS[key]}</option>)}
        </select></label>
        <label className="catalog-card-checkbox"><input type="checkbox"
          checked={showInactive} onChange={event=>setShowInactive(event.target.checked)}/> Include archived</label>
-      </div>
-     <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
+       </div>
+      </WorktableFilterSection>
+      <WorktableFilterSection title="Sort">
+       <div className="ss-worktable-filter-sort-grid">
+        <label className="catalog-card-sort"><span className="catalog-control-label">Sort</span>
       <select aria-label="Sort sinks" value={sort} onChange={event=>chooseSort(event.target.value as typeof sort)}>
        <option value="brand">Brand / name</option><option value="name">Name</option>
        <option value="category">Category</option><option value="cost">Default cost</option>
@@ -273,7 +281,9 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
        <option value="ascending">Ascending</option><option value="descending">Descending</option>
       </select>
      </label>
-     <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
+       </div>
+      </WorktableFilterSection>
+      <CatalogFilterReset activeCount={activeFilterCount} onReset={resetCatalogView}/>
      </WorktableFilterMenu>
      {(saving||error)&&<small className="catalog-product-save" role="status">{error?'Cloud issue: '+error:'Saving…'}</small>}
      {canEdit&&<button type="button" className="catalog-card-edit" onClick={()=>{pageSelection.clear();setEditing(x=>!x);}}>
