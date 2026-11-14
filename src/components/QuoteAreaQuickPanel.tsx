@@ -7,6 +7,7 @@ import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {PHONE_LAYOUT_QUERY} from '../lib/mobileViewport';
 import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
+import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose} from '../services/quoteMobileSheetDismissal';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {useQuoteStore} from '../store/quoteStore';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
@@ -32,7 +33,7 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
  const areas=quote.sections.filter(a=>!isGeneralTakeoffSection(a));
  const index=areas.findIndex(a=>a.id===areaId);
  const [showFullNote,setShowFullNote]=useState(false);
- const sheetSwipeStart=useRef<number|null>(null);
+ const sheetSwipeStart=useRef<{x:number;y:number}|null>(null);
  const sheetBodyRef=useRef<HTMLDivElement>(null);
  useEffect(()=>{
    if(window.matchMedia(PHONE_LAYOUT_QUERY).matches&&sheetBodyRef.current)
@@ -48,12 +49,19 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
    <aside ref={ref} role="dialog" aria-modal="true" aria-label={'Quick edit Area '+section.title}
      className="qmb-quick-area-panel">
      <header className="qmb-quick-area-header" onTouchStart={event=>{
-      if((event.target as HTMLElement).closest('button,input,select'))return;
-      sheetSwipeStart.current=event.touches[0]?.clientY??null;
-     }} onTouchEnd={event=>{
-      const start=sheetSwipeStart.current;sheetSwipeStart.current=null;
-      if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
-     }}>
+       sheetSwipeStart.current=null;
+       if(!quoteSheetSwipeCanStart(event.target instanceof Element?event.target:null,
+         document.documentElement.dataset.ssMobileKeyboard==='open',event.touches.length))return;
+       const touch=event.touches[0];
+       sheetSwipeStart.current={x:touch.clientX,y:touch.clientY};
+      }} onTouchEnd={event=>{
+       const start=sheetSwipeStart.current;
+       sheetSwipeStart.current=null;
+       if(event.changedTouches.length!==1)return;
+       const touch=event.changedTouches[0];
+       if(quoteSheetSwipeShouldClose(start,{x:touch.clientX,y:touch.clientY},
+        document.documentElement.dataset.ssMobileKeyboard==='open'))onClose();
+      }} onTouchCancel={()=>{sheetSwipeStart.current=null;}}>
        <PreviewPanelHeading eyebrow="QUOTE BUILDER · AREA" title={section.title||'Untitled Area'}
          detail={<>{sf.format(section.scope?.countertopSf??0)} SF · {money.format(total)}</>}/>
        <PreviewPanelClose onClose={onClose} label="Close Area quick editor"/>
