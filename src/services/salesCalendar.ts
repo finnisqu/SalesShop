@@ -2,7 +2,7 @@ import type {Activity,Company,Contact,Project} from '../types/crm';
 import {dealNeedsSubmission,type PersonalTask,type TaskAssociation,normalizedTaskAssociations} from '../store/personalTaskStore';
 import {completedTaskActivityId} from './taskActivityWorkflow';
 import type {Quote} from '../types/quote';
-import {dedupeExternalQuoteActivities} from './salesQuoteRegistry';
+import {dedupeExternalQuoteActivities,isExternalQuoteActivity} from './salesQuoteRegistry';
 
 /** A calendar count represents unfinished obligations, not CRM history. */
 export type SalesCalendarKind='task'|'bid';
@@ -77,9 +77,17 @@ export function personalCalendarSources(
    if(link.type==='project')relatedDealIds.add(link.id);
   });
  });
- // Assigned Deals remain visible to their owner even when no linked native
- // Quote or open bid Task exists, including independently sent external quotes.
- deals.forEach(deal=>{if(deal.assignedUserId===userId)relatedDealIds.add(deal.id);});
+ // A confirmed external quote counts as genuine historical participation
+ // even if this rep has no native SalesShop Quote or personal Task for it.
+ // Explicit Deal assignment stays authoritative for the personal Deal list.
+ const ownExternalDealIds=new Set(activities.filter(activity=>
+  isExternalQuoteActivity(activity)&&activity.metadata?.recordedByUserId===userId
+ ).map(activity=>activity.projectId!));
+ deals.forEach(deal=>{
+  if(deal.assignedUserId===userId||
+    (!deal.assignedUserId&&ownExternalDealIds.has(deal.id)))
+   relatedDealIds.add(deal.id);
+ });
  return {
   deals:deals.filter(deal=>relatedDealIds.has(deal.id)),
   activities:dedupeExternalQuoteActivities(activities.filter(activity=>
