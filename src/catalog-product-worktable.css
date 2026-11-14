@@ -31,6 +31,10 @@
 .catalog-product-card>header{display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .catalog-product-scroll{width:100%;min-width:0;overflow-x:auto;}
 .catalog-product-table{width:100%;border-collapse:collapse;min-width:800px;}
+/* Sinks now expose the same active-default cost and customer-price columns
+   as OTHER; keep values readable rather than crushing model specifications. */
+.sales-app.view-catalog .catalog-section-sinks .catalog-product-table{min-width:1040px;}
+.catalog-product-currency-cell{white-space:nowrap;font-variant-numeric:tabular-nums;}
 .catalog-product-table th{white-space:nowrap;}
 .catalog-product-table td{vertical-align:middle;}
 .catalog-product-table .rates-reference-item>button{text-align:left;}
