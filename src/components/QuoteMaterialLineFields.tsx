@@ -6,6 +6,7 @@ import {
   createQuoteMaterialCostSnapshot,
 } from '../services/quoteMaterialSnapshot';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
+import {liveMaterialSelection} from '../services/quoteCatalogLiveReselection';
 import { useMaterialLevelGuideStore } from '../store/materialLevelGuideStore';
 import { useQuoteStore } from '../store/quoteStore';
 import type { QuoteLine, QuoteLineMaterialReference } from '../types/quote';
@@ -164,13 +165,16 @@ export function QuoteMaterialLineFields({ quoteId, line }: { quoteId: string; li
 
   const applyMaterial = (material: StockMaterial, variantId: string, purchaseOptionId?: string) => {
     try {
+      const live=liveMaterialSelection(
+        useCompanySettingsStore.getState().settings.stockMaterials,
+        material.id,variantId,purchaseOptionId,
+      );
       const patch=quoteMaterialSourcePatch(
-        line,material,variantId,purchaseOptionId,guide.slabPricingMultiplier,
+        line,live.material,live.variant.id,purchaseOptionId,guide.slabPricingMultiplier,
       );
       updateLine(quoteId,line.id,patch);
       if(patch.materialReference){
-        const variant=(material.variants??[]).find(v=>v.id===variantId);
-        pinMaterial(quoteId,materialCustomerDescription(material,variant),patch.materialReference);
+        pinMaterial(quoteId,materialCustomerDescription(live.material,live.variant),patch.materialReference);
       }
       setSourceError('');
       setSearch('');
