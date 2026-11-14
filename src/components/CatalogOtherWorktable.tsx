@@ -5,7 +5,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton,WorktableHorizontalHint} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {MobileCatalogActiveFilters} from './MobileCatalogTools';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
@@ -259,6 +259,7 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
      <CatalogBulkActions label="Other items" selectedCount={selectedIds.length}
       activeCount={pageSelection.activeIds.length} archivedCount={pageSelection.archivedIds.length}
       onArchive={bulkArchive} onRestore={bulkRestore} onClear={pageSelection.clear}/>}/>
+   <WorktableHorizontalHint label="OTHER"/>
    <WorktableSurface className="rates-reference-table-wrap catalog-product-scroll" label="Other catalog worktable">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr>{selecting&&<th className="catalog-product-select-cell" scope="col">
