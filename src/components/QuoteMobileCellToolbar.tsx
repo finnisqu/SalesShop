@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState,type RefObject} from 'react';
 import {createPortal} from 'react-dom';
 import {PHONE_LAYOUT_QUERY} from '../lib/mobileViewport';
-import {moveQuickGridFocus,type QuickGridDirection} from '../services/quoteGridNavigation';
+import {moveQuickGridFocus,quickGridLinearNeighborAvailable,type QuickGridDirection} from '../services/quoteGridNavigation';
 import './quote-mobile-cell-toolbar.css';
 
 /** A keyboard accessory for editable Quick Quote cells. In particular, the
@@ -12,6 +12,7 @@ export function QuoteMobileCellToolbar({grid}:{grid:RefObject<HTMLElement|null>}
  const current=useRef<HTMLInputElement|null>(null);
  const [label,setLabel]=useState<string|null>(null);
  const [isPhone,setIsPhone]=useState(false);
+ const [neighbors,setNeighbors]=useState({previous:false,next:false});
  useEffect(()=>{
   const query=window.matchMedia(PHONE_LAYOUT_QUERY);
   const update=()=>setIsPhone(query.matches);
@@ -29,6 +30,10 @@ export function QuoteMobileCellToolbar({grid}:{grid:RefObject<HTMLElement|null>}
     !target.matches('[data-quick-grid-editable].is-editing'))return;
    current.current=target;
    setLabel(target.getAttribute('aria-label')||'Cell');
+   setNeighbors({
+    previous:quickGridLinearNeighborAvailable(root,target,'previous'),
+    next:quickGridLinearNeighborAvailable(root,target,'next'),
+   });
    scheduleReveal();
   };
   const focusOut=()=>{
@@ -39,6 +44,7 @@ export function QuoteMobileCellToolbar({grid}:{grid:RefObject<HTMLElement|null>}
        !root.contains(active)||
        !active.matches('[data-quick-grid-editable].is-editing')){
      current.current=null;setLabel(null);
+     setNeighbors({previous:false,next:false});
     }
    });
   };
@@ -73,10 +79,9 @@ export function QuoteMobileCellToolbar({grid}:{grid:RefObject<HTMLElement|null>}
   const root=grid.current;
   const active=current.current;
   if(!root||!active)return;
-  if(!moveQuickGridFocus(root,active,direction,true)){
-   active.blur();
-   current.current=null;setLabel(null);
-  }
+  // At the first/last editable cell, leave the unsaved editor alone.
+  // Done is the explicit action for committing and dismissing the keyboard.
+  moveQuickGridFocus(root,active,direction,true);
  };
  const finish=()=>{
   current.current?.blur();
@@ -87,9 +92,11 @@ export function QuoteMobileCellToolbar({grid}:{grid:RefObject<HTMLElement|null>}
  return createPortal(<div className="qqt-mobile-cell-toolbar" role="toolbar"
    aria-label="Quick Quote cell editing controls">
    <span className="qqt-mobile-cell-toolbar-label" title={label}>{label}</span>
-   <button type="button" onPointerDown={e=>e.preventDefault()}
+   <button type="button" disabled={!neighbors.previous}
+    onPointerDown={e=>e.preventDefault()}
     onClick={()=>advance('previous')} aria-label="Previous editable cell">‹ <span>Prev</span></button>
-   <button type="button" onPointerDown={e=>e.preventDefault()}
+   <button type="button" disabled={!neighbors.next}
+    onPointerDown={e=>e.preventDefault()}
     onClick={()=>advance('next')} aria-label="Next editable cell">Next <span aria-hidden="true">›</span></button>
    <button type="button" className="is-done" onPointerDown={e=>e.preventDefault()}
     onClick={finish}>Done</button>
