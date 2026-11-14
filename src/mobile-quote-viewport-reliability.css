@@ -148,6 +148,13 @@
  :root[data-sales-theme] .sales-app .qmb :is(.qqs-panel-body,.qqt-panel-body,.qmb-quick-area-body){
   scroll-padding-bottom:76px;
  }
+ /* scroll-padding does not create a scrollable tail. With the keyboard up,
+    reserve real space after the last input so the sheet (not the page)
+    can move that input above the accessory and Safari keyboard. */
+ :root[data-ss-mobile-keyboard="open"] .sales-app .qmb
+ :is(.qqs-panel-body,.qqt-panel-body,.qmb-quick-area-body){
+  padding-bottom:max(88px,env(safe-area-inset-bottom,0px))!important;
+ }
  :root[data-sales-theme] .sales-app .qmb :is(.qqs-panel-body,.qqt-panel-body,.qmb-quick-area-body)
  :is(input,textarea,select,[contenteditable="true"]){
   scroll-margin-block:12px 76px;
