@@ -35,6 +35,7 @@ import {DealAssigneeSelect} from '../services/dealAssignees';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {isOurCompany,companyRelationshipPatch} from '../services/companyRelationship';
+import {recordNameKey} from '../services/recordNameKey';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const PROJECT_BOARD_POSITION_KEY = 'salesshop-mobile-board-projects-v1';
@@ -367,12 +368,12 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
     if(details?.companyId&&!existing.some(c=>c.id===details.companyId))
       throw new Error('The chosen Company is no longer available.');
     if(details?.newCompanyName&&existing.some(c=>
-      c.name.trim().toLowerCase()===details.newCompanyName!.trim().toLowerCase()))
+      recordNameKey(c.name)===recordNameKey(details.newCompanyName!)))
       throw new Error('This Company already exists. Choose it from search.');
     for(const id of details?.personIds??[])
       if(!crm.contacts.some(p=>p.id===id))throw new Error('A chosen Person is no longer available.');
     for(const personName of details?.newPeopleNames??[])
-      if(crm.contacts.some(p=>p.name.trim().toLowerCase()===personName.toLowerCase()))
+      if(crm.contacts.some(p=>recordNameKey(p.name)===recordNameKey(personName)))
         throw new Error('Person '+personName+' already exists. Choose them from search.');
     const auth=useAuthStore.getState();
     if((details?.personIds.length??0)||(details?.newPeopleNames.length??0)){
