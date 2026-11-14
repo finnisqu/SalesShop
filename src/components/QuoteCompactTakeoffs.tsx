@@ -7,6 +7,7 @@ import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
 import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
+import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose} from '../services/quoteMobileSheetDismissal';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
@@ -104,7 +105,7 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
  const editable=quoteIsCommerciallyEditable(quote),store=useQuoteStore.getState();
  const ref=useRef<HTMLDivElement>(null);
  useMobileQuoteSheetFieldReveal(ref);
- const sheetSwipeStart=useRef<number|null>(null);
+ const sheetSwipeStart=useRef<{x:number;y:number}|null>(null);
  const sheetMode=useRef<'expanded'|'compact'>('expanded');
  const [sheetExpanded,setSheetExpanded]=useState(true);
  const dragGesture=useRef<{pointerId:number;startY:number;startTop:number;lastTop:number}|null>(null);
@@ -272,13 +273,18 @@ function DetailPopup({quote,section,piece,sink,line,rowRef,onClose,onDuplicate,o
       <span aria-hidden="true"/>
     </button>
     <header onTouchStart={event=>{
-      if((event.target as HTMLElement).closest('button,input,select'))return;
-      sheetSwipeStart.current=event.touches[0]?.clientY??null;
-     }} onTouchEnd={event=>{
-      const start=sheetSwipeStart.current;
       sheetSwipeStart.current=null;
-      if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
-     }}><div><small>{section?.title??'General'}</small><h2>{title||'Untitled item'}</h2></div>
+      if(!quoteSheetSwipeCanStart(event.target instanceof Element?event.target:null,
+        document.documentElement.dataset.ssMobileKeyboard==='open',event.touches.length))return;
+      const touch=event.touches[0];
+      sheetSwipeStart.current={x:touch.clientX,y:touch.clientY};
+     }} onTouchEnd={event=>{
+      const start=sheetSwipeStart.current;sheetSwipeStart.current=null;
+      if(event.changedTouches.length!==1)return;
+      const touch=event.changedTouches[0];
+      if(quoteSheetSwipeShouldClose(start,{x:touch.clientX,y:touch.clientY},
+        document.documentElement.dataset.ssMobileKeyboard==='open'))onClose();
+     }} onTouchCancel={()=>{sheetSwipeStart.current=null;}}><div><small>{section?.title??'General'}</small><h2>{title||'Untitled item'}</h2></div>
      <button className="qqt-close" type="button" onClick={onClose} aria-label="Close line details">×</button></header>
     <div className="qqt-panel-body">
      <div className="qqt-detail-facts" aria-label="Takeoff row information">
