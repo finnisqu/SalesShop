@@ -12,6 +12,7 @@ import {
 } from '../services/quoteRateSnapshot';
 import { useQuoteStore } from '../store/quoteStore';
 import { useRateBookStore } from '../store/rateBookStore';
+import {liveRateSelection} from '../services/quoteCatalogLiveReselection';
 import {
   catalogSellingOverride,quoteRateSourcePatch,quoteRateCatalogPricePatch,
 } from '../services/quoteCatalogLineEditing';
@@ -97,9 +98,10 @@ export function QuoteRateLineFields({ quote, line }: { quote: Quote; line: Quote
 
   const apply = (item: RateBookItem) => {
     try {
-      if(!item.active||!allowedCategories.includes(item.category))
-        throw new Error('Choose an active Rate Book item.');
-      const nextSnapshot = createQuoteRateSnapshot(item, quote.pricingDivision);
+      const current=liveRateSelection(useRateBookStore.getState().items,item.id);
+      if(!allowedCategories.includes(current.category))
+        throw new Error('This Rate Book category is not available for this charge.');
+      const nextSnapshot = createQuoteRateSnapshot(current, quote.pricingDivision);
       updateLine(quote.id,line.id,quoteRateSourcePatch(line,nextSnapshot));
       setSourceError('');
       setSearching(false);
