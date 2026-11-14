@@ -7,10 +7,12 @@ import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
+import {MobileCatalogActiveFilters} from './MobileCatalogTools';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 import {activeCatalogDefaultVariant} from '../services/catalogVariantDefaults';
 import {compareCatalogVariantPrice} from '../services/catalogVariantPriceSort';
+import {catalogProductFilterChips} from '../services/catalogProductFilterChips';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
 import {CatalogBulkActions,useCatalogPageSelection} from './CatalogBulkSelection';
 
@@ -78,9 +80,19 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
     sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort):
     a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
  },[items,category,query,externalQuery,showInactive,sort]);
- const activeFilterCount=Number(category!=='all')+
-  Number(Boolean(query.trim()||externalQuery.trim()))+
-  Number(showInactive)+Number(sort!=='category');
+ const filterChips=catalogProductFilterChips({
+  localQuery:query,headerQuery:externalQuery,
+  category,categoryLabel:category,
+  includeArchived:showInactive,sort,defaultSort:'category',
+  sortLabel:sort==='name'?'Name A–Z':sort==='brand'?'Brand / supplier':
+   sort==='cost'?'Cost · low first':sort==='price'?'Customer price · low first':'Category / name',
+  clearLocalQuery:()=>setQuery(''),
+  clearHeaderQuery:()=>onClearExternalQuery?.(),
+  clearCategory:()=>setCategory('all'),
+  clearArchived:()=>setShowInactive(false),
+  clearSort:()=>setSort('category'),
+ });
+ const activeFilterCount=filterChips.length;
  const resetCatalogView=()=>{
   setQuery('');setCategory('all');setShowInactive(false);setSort('category');
   setExpanded(null);onClearExternalQuery?.();
@@ -148,6 +160,9 @@ export function CatalogOtherWorktable({externalQuery='',onClearExternalQuery}:{
   updateVariant(item.id,variant.id,{[field]:value});
  if(!hydrated)return <section className="catalog-product-worktable" role="status">Loading Other catalog…</section>;
  return <section className="catalog-product-worktable catalog-other-worktable">
+  {filterChips.length>0&&<div className="catalog-product-mobile-filters">
+   <MobileCatalogActiveFilters items={filterChips} onClear={resetCatalogView}/>
+  </div>}
   {!!selectedPins.length&&<section className="materials-comparison-board has-pins catalog-product-pin-board"
    aria-label="Pinned other catalog comparison">
    <header><div><span className="board-eyebrow">Comparison board</span>
