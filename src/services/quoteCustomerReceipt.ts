@@ -20,6 +20,7 @@ export function customerReceiptLines(
   rows.push(line);grouped.set(key,rows);
  }
  const result:QuoteLine[]=[];
+ let anonymousRow=0;
  for(const [sectionId,areaLines] of grouped){
   const sectionVisible=!sectionId||!hiddenSections.has(sectionId);
   const projected:QuoteLine[]=areaLines
@@ -46,7 +47,7 @@ export function customerReceiptLines(
     };
    }else{
     projected.push({
-     id:'accepted-included-work-'+(sectionId||'general'),
+     id:'accepted-included-work-'+(++anonymousRow),
      // A hidden Area must not reveal its identity in the customer receipt.
      ...(sectionVisible&&sectionId?{sectionId}:{}),
      kind:'item',description:'Included work',
