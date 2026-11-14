@@ -2,7 +2,7 @@ import {describe,expect,it} from 'vitest';
 import {readFileSync} from 'node:fs';
 import type {Activity,Project} from '../types/crm';
 import type {Quote} from '../types/quote';
-import type {PersonalTask} from '../store/personalTaskStore';
+import {usePersonalTaskStore,type PersonalTask} from '../store/personalTaskStore';
 import {buildSalesCalendarEvents,personalCalendarSources,personalCalendarTasks,
  recentHomeItems} from './salesCalendar';
 import {visibleSubmissionDeals} from './dealSubmissionAudience';
@@ -94,6 +94,31 @@ describe('Batch 344 release gate: reassigned Deal Home ownership and history',()
    .toHaveLength(1);
   expect(visibleSubmissionDeals('cloud','member','former',[unassigned],
    [external],[quote],[])).toEqual([unassigned]);
+ });
+ it('reconciles automatic Task ownership across a rep reassignment',()=>{
+  const original=task();
+  usePersonalTaskStore.setState({
+   scope:'org:shop:user:former',tasks:[original],
+   syncStatus:'saved',syncError:null,
+  });
+  usePersonalTaskStore.getState().syncDealSubmissionTasks([]);
+  expect(usePersonalTaskStore.getState().tasks).toMatchObject([
+   {id:original.id,status:'canceled'},
+  ]);
+  // The new assignee's private workspace independently creates one stable
+  // obligation from the same Deal. No old task is copied across accounts.
+  usePersonalTaskStore.setState({
+   scope:'org:shop:user:current',tasks:[],syncStatus:'saved',syncError:null,
+  });
+  usePersonalTaskStore.getState().syncDealSubmissionTasks([deal('current')]);
+  const current=usePersonalTaskStore.getState().tasks;
+  expect(current).toMatchObject([{
+   id:'task_deal_submit_deal-a',status:'open',
+   sourceObjectId:'deal-submit:deal-a',
+   workspaceScope:'org:shop:user:current',
+  }]);
+  usePersonalTaskStore.getState().syncDealSubmissionTasks([deal('current')]);
+  expect(usePersonalTaskStore.getState().tasks).toHaveLength(1);
  });
  it('matches the central Home launcher and the exact assignment precedence contract',()=>{
   const launch=readFileSync(new URL('../components/SalesCalendarLauncher.tsx',import.meta.url),'utf8');
