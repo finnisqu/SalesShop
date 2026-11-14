@@ -28,8 +28,16 @@ assert(contains(quick,[
   'recordNameKey(p.name)===recordNameKey(clean)',
   'recordNameKey(n)===recordNameKey(clean)',
   'setNewPeopleNames(names=>[...names,clean])',
-  'const id=await onCreate('
-]),'Board Deal quick-create details are incomplete');
+  // #345 returns a typed partial-create result when the Deal exists but a
+  // Company/Person link failed. Do not restore the old ID-only contract.
+  'const result=await onCreate(',
+  "if(typeof result==='object')",
+  'setPendingCreated(result.id)',
+  'setError(result.warning)',
+  'if(!clean||savingRef.current||pendingCreated)return',
+  'onClick={openPendingCreated}',
+  'Open created {kind.toLowerCase()}'
+]),'Board Deal quick-create details or partial-save recovery changed');
 
 const board=source('src/components/Board.tsx');
 assert(contains(board,[
