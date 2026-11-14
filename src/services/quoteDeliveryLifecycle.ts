@@ -11,11 +11,19 @@ export const QUOTE_DELIVERY_METHOD_LABELS:Record<QuoteDeliveryMethod,string>={
 export function confirmedQuoteDeliveries(
   quote:Pick<Quote,'id'|'revision'>,activities:readonly Activity[],
 ):Activity[]{
-  return activities.filter(item=>item.quoteId===quote.id &&
-    item.type==='quote-sent' && item.metadata?.source==='manual' &&
-    item.metadata?.deliveryConfirmed===true &&
-    item.metadata?.revision===quote.revision)
-    .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
+  // The same CRM Activity may arrive twice during local/cloud hydration.
+  // Deduplicate by immutable Activity ID, not by date or revision: distinct
+  // genuine delivery confirmations must remain individually auditable.
+  const byId=new Map<string,Activity>();
+  for(const item of activities){
+    if(item.quoteId!==quote.id||item.type!=='quote-sent'||
+      item.metadata?.source!=='manual'||
+      item.metadata?.deliveryConfirmed!==true||
+      item.metadata?.revision!==quote.revision)continue;
+    const existing=byId.get(item.id);
+    if(!existing||item.occurredAt>existing.occurredAt)byId.set(item.id,item);
+  }
+  return [...byId.values()].sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
 }
 
 export function quoteIssued(quote:Pick<Quote,'status'>):boolean{
