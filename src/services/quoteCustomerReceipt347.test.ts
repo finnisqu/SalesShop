@@ -34,7 +34,7 @@ describe('Batch 347 — signed customer receipt privacy and price integrity',()=
    costCategory:'product',supplierName:'Distributor private',unitCost:45,
    internalOnlyCost:true,productCode:'PRIVATE-SKU',unitLabel:'sheet',
    takeoffSinkId:'sink-private',quantitySource:{
-    kind:'area-scope',sectionId:'kitchen',field:'piece-sf',
+    kind:'area-scope',sectionId:'kitchen',field:'countertopSf',
     capturedValue:20,appliedAt:when,
    } as QuoteLine['quantitySource'],
    materialReference:{materialId:'mat',variantId:'special',purchaseOptionId:'tier',
