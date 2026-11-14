@@ -52,6 +52,30 @@ describe('Batch 330: cross-device bid submission proof integrity',()=>{
    status:'canceled',submissionConfirmedAt:proof,
   });
  });
+ it('prefers trustworthy Task versions over malformed timestamps on either device',()=>{
+  const valid=task('clock',{updatedAt:'2026-11-13T12:00:00.000Z',
+   title:'Known good cloud edit'});
+  const malformed=task('clock',{updatedAt:'zzzz-invalid',
+   title:'Corrupt local clock'});
+  expect(taskWinsMerge(malformed,valid)).toBe(false);
+  expect(taskWinsMerge(valid,malformed)).toBe(true);
+  expect(mergePrivateTasks([malformed],[valid])[0].title)
+   .toBe('Known good cloud edit');
+  expect(mergePrivateTasks([valid],[malformed])[0].title)
+   .toBe('Known good cloud edit');
+ });
+ it('treats equivalent instants as ties and keeps deletion precedence',()=>{
+  const utc=task('clock',{updatedAt:'2026-11-13T12:00:00.000Z'});
+  const offset=task('clock',{updatedAt:'2026-11-13T07:00:00.000-05:00',
+   title:'Same moment from another timezone'});
+  expect(taskWinsMerge(offset,utc)).toBe(false);
+  expect(taskWinsMerge(utc,offset)).toBe(false);
+  const deleted=task('clock',{...offset,deletedAt:'2026-11-13T12:00:00.000Z'});
+  expect(taskWinsMerge(deleted,utc)).toBe(true);
+  expect(taskWinsMerge(utc,deleted)).toBe(false);
+  expect(mergePrivateTasks([utc],[deleted])[0].deletedAt)
+   .toBe('2026-11-13T12:00:00.000Z');
+ });
  it('ignores invalid proof timestamps on stale copies',()=>{
   const malformed=task('t1',{submissionConfirmedAt:'not-a-date'});
   const winner=task('t1',{updatedAt:newer});
