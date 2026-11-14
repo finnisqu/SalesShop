@@ -1,4 +1,5 @@
 import { useEffect,useId,useMemo,useRef,useState } from 'react';
+import {useMobileQuoteCatalogMenuViewport} from '../lib/useMobileQuoteCatalogMenuViewport';
 import { useCompanySettingsStore } from '../store/companySettingsStore';
 import { useSinkCatalogStore } from '../store/sinkCatalogStore';
 import { createQuoteMaterialCostSnapshot } from '../services/quoteMaterialSnapshot';
@@ -26,6 +27,8 @@ export function TakeoffMaterialCatalog({disabled,value,selected,pinned,onSelect,
   const [searchTerm,setSearchTerm]=useState('');
   const [materialId,setMaterialId]=useState<string|null>(null);
   const [variantId,setVariantId]=useState<string|null>(null);
+  useMobileQuoteCatalogMenuViewport(root,open,
+    searchTerm+'|'+(materialId??'')+'|'+(variantId??''));
   useEffect(()=>{void hydrate();},[hydrate]);
   useEffect(()=>{if(!open)return;
     const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node)){
@@ -129,6 +132,7 @@ export function TakeoffSinkCatalog({disabled,value,onSelect,onTextChange}:{
   const menuId=useId();
   const [open,setOpen]=useState(false);
   const [searchTerm,setSearchTerm]=useState('');
+  useMobileQuoteCatalogMenuViewport(root,open,searchTerm);
   useEffect(()=>{void hydrate();},[hydrate]);
   useEffect(()=>{if(!open)return;
     const dismiss=(e:PointerEvent)=>{if(!root.current?.contains(e.target as Node)){
