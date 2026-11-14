@@ -13,7 +13,7 @@ import {useViewportBoundDetails} from './useViewportBoundDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 import {TrashIcon} from './TrashIcon';
 import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE,CATALOG_PAGE_SIZES,catalogPageRange} from './CatalogPagination';
-import {WorktableFilterMenu,WorktablePagination,WorktableSurface,WorktableSelectPageCheckbox} from './WorktableChrome';
+import {WorktableFilterMenu,WorktablePagination,WorktableSurface,WorktableSelectPageCheckbox,WorktableHorizontalHint} from './WorktableChrome';
 import {worktableStoredSort} from '../services/worktableSortPreference';
 import {useWorktableDirectoryState} from './useWorktableDirectoryState';
 export interface ConnectionColumn {key:string;label:string;}
@@ -275,6 +275,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        </button><button type="button" onClick={()=>togglePin(item.id)} aria-label={'Unpin '+item.name}>×</button>
      </div>)}</div>
    </div>}
+   {visible.length>3&&<WorktableHorizontalHint label="record"/>}
    <WorktableSurface className="connections-table-scroll" label={tableKey+" worktable"}>
      <table className="connections-data-table">
        <thead><tr>
