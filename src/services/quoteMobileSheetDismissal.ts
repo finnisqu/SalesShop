@@ -20,3 +20,11 @@ export function quoteSheetSwipeCanStart(
  return !keyboardOpen&&touchCount===1&&Boolean(target)&&
   !target!.closest('button,input,textarea,select,a,[role="button"],[contenteditable="true"]');
 }
+
+/** A first tap outside an editor while typing dismisses the keyboard, not
+ * the whole sheet. Another tap, once typing has stopped, may close it. */
+export function quoteSheetBackdropShouldClose(
+ keyboardOpen:boolean,editingInSheet:boolean,
+):boolean{
+ return !(keyboardOpen&&editingInSheet);
+}
