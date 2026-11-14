@@ -3,6 +3,7 @@ import type {Quote,QuoteLine,QuoteSection} from '../types/quote';
 import {quoteLinesTotal} from '../types/quote';
 import {buildAcceptedQuoteSnapshot} from '../types/signature';
 import {createQuoteRevisionSnapshot} from './quoteIntegrity';
+import {historicalCustomerQuote} from './quoteRevisionView';
 import {customerReceiptLines,customerReceiptSections} from './quoteCustomerReceipt';
 import {confirmedQuoteDeliveries,quoteDeliveryLabel} from './quoteDeliveryLifecycle';
 import type {Activity} from '../types/crm';
@@ -153,6 +154,36 @@ describe('Batch 347 — signed customer receipt privacy and price integrity',()=
   expect(quoteDeliveryLabel({status:'Sent'},delivered)).toBe('Customer delivery confirmed');
   expect(confirmedQuoteDeliveries({id:'quote-347',revision:2},[event]))
    .toEqual([]);
+ });
+ it('survives a serialized frozen-revision reload and still redacts private Catalog details',()=>{
+  const rows=[
+   line('material',{kind:'material',pricingMode:'quantity-rate',quantity:10,
+    rate:125,amount:undefined,internalCost:380,
+    materialReference:{materialId:'quartz',stockProgram:true,
+     pricingSource:'manual-line-rate',sourceCostPerSf:38,
+     snapshot:{capturedAt:when,materialId:'quartz',materialName:'Private Quartz',
+      materialType:'Quartz',stockProgram:true,costPerSf:38}}},
+   ),
+   line('sink',{kind:'sink',customerVisible:false,amount:230,
+    internalCost:85,description:'Private sink model 3218'}),
+  ];
+  const issued=quote(rows);
+  const serialized=JSON.stringify(createQuoteRevisionSnapshot(issued,when,'Sent'));
+  const saved=JSON.parse(serialized) as Quote['history'][number];
+  const later={...issued,revision:1,status:'Draft' as const,
+   lines:rows.map(row=>({...row,rate:999,amount:9999,internalCost:15})),
+   customerNotes:'Terms of a later unapproved version',history:[saved]};
+  const old=historicalCustomerQuote(later,saved);
+  const accepted=buildAcceptedQuoteSnapshot(old);
+  expect(accepted.acceptedTotal).toBe(1480);
+  expect(quoteLinesTotal(accepted.lines)).toBe(1480);
+  expect(accepted.lines).toMatchObject([{id:'material',pricingMode:'direct',
+   amount:1480,customerVisible:true}]);
+  expect(accepted.customerNotes).toBe('Approved payment terms');
+  const payload=JSON.stringify(accepted);
+  expect(payload).not.toMatch(/internalCost|sourceCostPerSf|materialReference|Private sink model|Private Quartz/);
+  expect(saved.lines[0].materialReference?.snapshot?.costPerSf).toBe(38);
+  expect(later.lines[0].rate).toBe(999);
  });
  it('freezes the issued revision instead of borrowing later draft prices or notes',()=>{
   const original=quote([line('approved',{amount:1000,internalCost:600})]);
