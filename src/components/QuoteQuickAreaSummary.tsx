@@ -8,6 +8,7 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
 import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
+import {useQuoteSheetFocusReturn} from '../lib/useQuoteSheetFocusReturn';
 import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose,quoteSheetBackdropShouldClose} from '../services/quoteMobileSheetDismissal';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
@@ -180,6 +181,7 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
  const title=section?.title??'General';
  const input=useRef<HTMLDivElement>(null);
  useMobileQuoteSheetFieldReveal(input);
+ useQuoteSheetFocusReturn(input);
  const sheetSwipeStart=useRef<{x:number;y:number}|null>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
