@@ -31,7 +31,9 @@ describe('Quick Quote dedicated phone usability contract',()=>{
   expect(areas).toContain('useMobileQuoteSheetFieldReveal(input)');
   expect(takeoffs).toContain('useMobileQuoteSheetFieldReveal(ref)');
   expect(reveal).toContain("window.visualViewport?.addEventListener('resize',reveal)");
-  expect(reveal).toContain("active.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'})");
+  expect(reveal).toContain('quoteSheetFieldScrollDelta(');
+  expect(reveal).toContain('body.scrollTop=Math.max(0,Math.min(maximum,body.scrollTop+shift))');
+  expect(reveal).not.toContain('active.scrollIntoView(');
   expect(viewport).toContain(':root[data-ss-mobile-keyboard="open"] .sales-app .qmb.qqs-overlay');
   expect(viewport).toContain('.qmb .qmb-quick-area-footer');
   expect(viewport).toContain('scroll-padding-bottom:76px');
