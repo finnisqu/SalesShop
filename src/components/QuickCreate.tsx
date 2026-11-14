@@ -45,6 +45,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
   const [namedCreateError,setNamedCreateError]=useState('');
   const [pendingCreated,setPendingCreated]=useState<{id:string;kind:'project'|'account'}|null>(null);
   const namedCreatePending=useRef(false);
+  const [namedCreateSaving,setNamedCreateSaving]=useState(false);
   const [recordExternalOpen,setRecordExternalOpen]=useState(false);
   const authMode=useAuthStore(s=>s.mode);
   const organizationId=useAuthStore(s=>s.organizationId);
@@ -65,6 +66,9 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
   const setView = useNavigationStore((state) => state.setView);
 
   const close = () => {
+    // A Deal and its direct Person link are one user-facing operation.
+    // Prevent dismissing this dialog before the async link result is known.
+    if(namedCreatePending.current&&!pendingCreated)return;
     setOpen(false);
     setNamedMode(null);
     setName('');
@@ -120,6 +124,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     const clean=name.trim();
     if(!clean||!namedMode)return;
     namedCreatePending.current=true;
+    setNamedCreateSaving(true);
     setNamedCreateError('');
     let createdId:string|undefined;
     try{
@@ -156,6 +161,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
           const parent=useCrmStore.getState().projects.find(item=>item.id===context.id);
           if(parent?.companyId)setProjectCompany(projectId,parent.companyId);
         }
+        namedCreatePending.current=false;
         close();
         openProject(projectId);
         return;
@@ -165,6 +171,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
       createdId=companyId;
       if(context?.kind==='person')updateContact(context.id,{companyId});
       if(context?.kind==='deal')setProjectCompany(context.id,companyId);
+      namedCreatePending.current=false;
       close();
       openCompany(companyId);
     }catch(reason){
@@ -178,16 +185,16 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
         namedCreatePending.current=false;
         setNamedCreateError(message);
       }
-    }
+    }finally{setNamedCreateSaving(false);}
   };
 
   const sheet = open ? createPortal(
     <div className="quick-create-backdrop ss-mobile-sheet-backdrop" role="presentation" onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}>
       <section ref={sheetRef} className="quick-create-sheet ss-mobile-sheet" role="dialog" aria-modal="true" aria-label="Create in SalesShop">
-        <MobileSheetHandle onClose={close}/>
+        <MobileSheetHandle onClose={close} disabled={namedCreateSaving}/>
         <header className="quick-create-header">
           <div><span>Quick create</span><strong>{namedMode ? `New ${namedMode === 'project' ? 'deal' : 'account'}` : 'What are you working on?'}</strong></div>
-          <button type="button" onClick={close} aria-label="Close quick create">×</button>
+          <button type="button" onClick={close} disabled={namedCreateSaving} aria-label="Close quick create">×</button>
         </header>
 
         {namedMode ? (
@@ -195,19 +202,21 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
             <label>
               <span>{namedMode === 'project' ? 'Deal name' : 'Account / company name'}</span>
               <input autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
-                value={name} disabled={Boolean(pendingCreated)}
+                value={name} disabled={namedCreateSaving||Boolean(pendingCreated)}
                 onChange={(event) => {setName(event.target.value);setNamedCreateError('');}}
                 placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : 'e.g. DeVane Builders'} />
             </label>
             {namedCreateError&&<p className="quick-create-error" role="alert">{namedCreateError}</p>}
             <div>
               <button type="button" className="quick-create-secondary"
-                onClick={() => pendingCreated?close():(setNamedMode(null),setName(''),setNamedCreateError(''))}>
+                onClick={() => pendingCreated?close():(setNamedMode(null),setName(''),setNamedCreateError(''))}
+                disabled={namedCreateSaving}>
                 {pendingCreated?'Close':'Back'}
               </button>
               {pendingCreated?
                 <button type="button" className="quick-create-primary" onClick={openPendingCreated}>Open created record</button>:
-                <button type="submit" className="quick-create-primary" disabled={!name.trim()}>Create & open</button>}
+                <button type="submit" className="quick-create-primary" disabled={!name.trim()||namedCreateSaving}>
+                 {namedCreateSaving?'Creating…':'Create & open'}</button>}
             </div>
           </form>
         ) : (
