@@ -1,3 +1,4 @@
+import {customerReceiptLines,customerReceiptSections} from '../services/quoteCustomerReceipt';
 import {
   displayQuoteNumber,
   quoteLinesTotal,
@@ -104,8 +105,10 @@ export function buildAcceptedQuoteSnapshot(quote: Quote): AcceptedQuoteSnapshot 
     contactName: frozen?.contactName ?? quote.contactName,
     contactEmail: frozen?.contactEmail ?? quote.contactEmail,
     address: frozen?.address ?? quote.address,
-    sections: structuredClone(sections.filter((section) => section.customerVisible)),
-    lines: structuredClone(lines.filter((line) => line.customerVisible)),
+    // Receipt payload is immutable customer evidence, not an internal quote
+    // document. Never persist supplier costs, Area scope or source snapshots.
+    sections: customerReceiptSections(sections),
+    lines: customerReceiptLines(lines,sections),
     customerColumns: { ...customerColumns },
     customerNotes,
     pricingSchedule: documentType === 'pricing-schedule'
