@@ -10,9 +10,11 @@ import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
 import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
+import {MobileCatalogActiveFilters} from './MobileCatalogTools';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
 import {matchesCatalogSearch} from '../services/catalogWorktableSearch';
 import {catalogDefaultVariantPrice,compareCatalogVariantPrice} from '../services/catalogVariantPriceSort';
+import {catalogProductFilterChips} from '../services/catalogProductFilterChips';
 import {CatalogLifecycleStatus} from './CatalogLifecycleStatus';
 import {CatalogBulkActions,useCatalogPageSelection} from './CatalogBulkSelection';
 
@@ -122,9 +124,19 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
      sort==='cost'||sort==='price'?compareCatalogVariantPrice(a,b,sort):
      (a.brand??a.supplier??'').localeCompare(b.brand??b.supplier??'')||a.name.localeCompare(b.name));
  },[models,showInactive,category,query,externalQuery,sort]);
- const activeFilterCount=Number(category!=='all')+
-  Number(Boolean(query.trim()||externalQuery.trim()))+
-  Number(showInactive)+Number(sort!=='brand');
+ const filterChips=catalogProductFilterChips({
+  localQuery:query,headerQuery:externalQuery,
+  category,categoryLabel:category==='all'?'All sink types':SINK_CATEGORY_LABELS[category],
+  includeArchived:showInactive,sort,defaultSort:'brand',
+  sortLabel:sort==='name'?'Name A–Z':sort==='category'?'Category':
+   sort==='cost'?'Cost · low first':sort==='price'?'Customer price · low first':'Brand / name',
+  clearLocalQuery:()=>setQuery(''),
+  clearHeaderQuery:()=>onClearExternalQuery?.(),
+  clearCategory:()=>setCategory('all'),
+  clearArchived:()=>setShowInactive(false),
+  clearSort:()=>setSort('brand'),
+ });
+ const activeFilterCount=filterChips.length;
  const resetCatalogView=()=>{
   setQuery('');setCategory('all');setShowInactive(false);setSort('brand');
   setExpanded(null);onClearExternalQuery?.();
@@ -170,6 +182,9 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
   updateVariant(model.id,variant.id,{[key]:value});
  if(!hydrated)return <WorkspaceLoadingState title="Opening Sinks" detail="Loading sink models, variants and supplier costs…"/>;
  return <section className="catalog-product-worktable sinks-product-worktable">
+  {filterChips.length>0&&<div className="catalog-product-mobile-filters">
+   <MobileCatalogActiveFilters items={filterChips} onClear={resetCatalogView}/>
+  </div>}
   {pinRows.length>0&&<section className="materials-comparison-board has-pins catalog-product-pin-board"
     aria-label="Pinned sink comparison">
    <header><div><span className="board-eyebrow">Comparison board</span>
