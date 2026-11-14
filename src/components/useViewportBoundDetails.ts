@@ -10,15 +10,21 @@ export interface WorktableMenuPlacement{
 /** Pure geometry for Filters, Actions and Columns, including the visible
  * viewport when pinch-zoom or the mobile keyboard changes screen bounds. */
 export function placeWorktableMenu(g:WorktableMenuGeometry):WorktableMenuPlacement{
- const margin=12,edgeLeft=g.viewportLeft+margin;
- const edgeRight=g.viewportLeft+g.viewportWidth-margin;
- const shiftX=g.panelLeft<edgeLeft?edgeLeft-g.panelLeft:
-  g.panelRight>edgeRight?edgeRight-g.panelRight:0;
+ const margin=12;
+ const edgeLeft=g.viewportLeft+margin;
+ const edgeRight=g.viewportLeft+Math.max(0,g.viewportWidth)-margin;
+ const panelWidth=Math.max(0,g.panelRight-g.panelLeft);
+ // When a pane has a legacy CSS min-width bigger than the visible screen,
+ // favor the safe left edge. Otherwise clamp both sides in one operation.
+ const maxLeft=Math.max(edgeLeft,edgeRight-panelWidth);
+ const shiftX=Math.min(Math.max(g.panelLeft,edgeLeft),maxLeft)-g.panelLeft;
  const below=Math.max(0,g.viewportTop+g.viewportHeight-g.triggerBottom-margin-7);
  const above=Math.max(0,g.triggerTop-g.viewportTop-margin-7);
  const side:WorktableMenuPlacement['side']=below<220&&above>below?'above':'below';
  const available=side==='above'?above:below;
- return {shiftX,side,maxHeight:Math.max(40,Math.min(540,Math.floor(available)))};
+ // A 40px floor used to force menus below the keyboard when space was
+ // smaller than 40px. A constrained menu may be tiny, but never spill.
+ return {shiftX,side,maxHeight:Math.max(0,Math.min(540,Math.floor(available)))};
 }
 /** Positions an open native-details menu without introducing a scroll parent.
  * The existing dismissal and Escape behavior remain with useDismissibleDetails. */
@@ -39,7 +45,12 @@ export function useViewportBoundDetails(ref:RefObject<HTMLDetailsElement|null>){
    // Reset the preceding shift before measuring, so scroll/resize callbacks
    // cannot compound the panel's translation across viewport changes.
    panel.style.setProperty('--ss-worktable-menu-shift-x','0px');
-   panel.style.maxWidth=Math.max(100,Math.floor(viewportWidth-24))+'px';
+   const usableWidth=Math.max(1,Math.floor(viewportWidth-24));
+   panel.style.maxWidth=usableWidth+'px';
+   // A legacy min-width must not win over the visible viewport on very
+   // narrow devices or when the user pinches in.
+   if(viewportWidth<240)panel.style.minWidth='0px';
+   else panel.style.removeProperty('min-width');
    const box=panel.getBoundingClientRect();
    const trigger=menu.querySelector<HTMLElement>('summary')?.getBoundingClientRect();
    if(!trigger)return;
