@@ -13,7 +13,21 @@ export function historicalCustomerQuote(quote:Quote,snapshot:QuoteRevisionSnapsh
     revision:snapshot.revision,
     revisionLabel:snapshot.label,
     status:snapshot.status,
-    documentType:snapshot.documentType??quote.documentType,
+    // Legacy snapshots without a type are Quotes; do not borrow a later type.
+    documentType:snapshot.documentType??'quote',
+    // Spread above preserves stable Quote identity, but optional customer
+    // fields must be explicitly reset when absent in the frozen revision.
+    parentQuoteId:snapshot.parentQuoteId,
+    changeOrderNumber:snapshot.changeOrderNumber,
+    projectId:snapshot.projectId,
+    companyId:snapshot.companyId,
+    companyName:snapshot.companyName,
+    contactId:snapshot.contactId,
+    contactName:snapshot.contactName,
+    contactEmail:snapshot.contactEmail,
+    address:snapshot.address,
+    pricingDivision:snapshot.pricingDivision,
+    slabPools:undefined,
     templateId:snapshot.templateId,
     templateOrigin:snapshot.templateOrigin?structuredClone(snapshot.templateOrigin):undefined,
     projectMaterials:snapshot.projectMaterials?structuredClone(snapshot.projectMaterials):[],
