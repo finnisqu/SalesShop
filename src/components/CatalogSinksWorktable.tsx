@@ -131,7 +131,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
   clearHeaderQuery:()=>onClearExternalQuery?.(),
   clearCategory:()=>setCategory('all'),
   clearArchived:()=>setShowInactive(false),
-  clearSort:()=>setSort('brand'),
+  clearSort:()=>{setExpanded(null);setSort('brand');},
  });
  const activeFilterCount=filterChips.length;
  // Sorting closes an expanded editor so its page-follow effect cannot
