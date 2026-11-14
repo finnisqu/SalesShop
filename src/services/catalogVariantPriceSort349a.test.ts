@@ -62,8 +62,8 @@ describe('Batch 349a — Sinks/OTHER Catalog worktable price parity',()=>{
   for(const table of [sinks,other]){
    expect(table).toContain('compareCatalogVariantPrice(a,b,sort)');
    expect(table).toContain('<option value="price">Customer price · low first</option>');
-   expect(table).toContain('>Default cost</th>');
-   expect(table).toContain('>Customer price</th>');
+   expect(table).toContain('<WorktableSortButton label="Default cost"');
+   expect(table).toContain('<WorktableSortButton label="Customer price"');
    expect(table).toContain("sort==='price'?'ascending':undefined");
   }
   expect(sinks).toContain("catalogDefaultVariantPrice(model,'cost')");
