@@ -1,8 +1,7 @@
 import {Fragment,useEffect,useMemo,useState} from 'react';
 import {useSinkCatalogStore} from '../store/sinkCatalogStore';
 import {SINK_CATEGORIES,SINK_CATEGORY_LABELS,SINK_CONFIGURATIONS,SINK_CONFIGURATION_LABELS,
- type SinkCategory,type SinkModel,type SinkVariant,type SinkMountType,
- defaultSinkVariant} from '../types/sink';
+ type SinkCategory,type SinkModel,type SinkVariant,type SinkMountType} from '../types/sink';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import {scopedStorageKey} from '../lib/developerPlayground';
 import {useAuthStore} from '../store/authStore';
