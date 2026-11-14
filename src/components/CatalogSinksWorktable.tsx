@@ -8,7 +8,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {MobileCatalogActiveFilters} from './MobileCatalogTools';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
@@ -270,13 +270,13 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
       <WorktableSelectPageCheckbox label="Select all sink models on this page"
        allSelected={pageSelection.allSelected} someSelected={selectedIds.length>0}
        disabled={!pagedModels.length} onChange={checked=>pageSelection.selectPage(checked)}/></th>}
-      <th scope="col" aria-sort={sort==='brand'?'ascending':undefined}>Brand</th>
-      <th scope="col" aria-sort={sort==='name'?'ascending':undefined}>Model</th>
-      <th scope="col" aria-sort={sort==='category'?'ascending':undefined}>Category</th>
+      <th scope="col" aria-sort={sort==='brand'?'ascending':undefined}><WorktableSortButton label="Brand" active={sort==='brand'} onSort={()=>setSort('brand')}/></th>
+      <th scope="col" aria-sort={sort==='name'?'ascending':undefined}><WorktableSortButton label="Model" active={sort==='name'} onSort={()=>setSort('name')}/></th>
+      <th scope="col" aria-sort={sort==='category'?'ascending':undefined}><WorktableSortButton label="Category" active={sort==='category'} onSort={()=>setSort('category')}/></th>
       <th scope="col">Material</th><th scope="col">Mount</th>
       <th scope="col">Total W × L × H</th>
-      <th scope="col" aria-sort={sort==='cost'?'ascending':undefined}>Default cost</th>
-      <th scope="col" aria-sort={sort==='price'?'ascending':undefined}>Customer price</th>
+      <th scope="col" aria-sort={sort==='cost'?'ascending':undefined}><WorktableSortButton label="Default cost" active={sort==='cost'} onSort={()=>setSort('cost')}/></th>
+      <th scope="col" aria-sort={sort==='price'?'ascending':undefined}><WorktableSortButton label="Customer price" active={sort==='price'} onSort={()=>setSort('price')}/></th>
       <th scope="col">Variants</th></tr></thead>
      <tbody>
       {pagedModels.map(model=>{
