@@ -128,7 +128,8 @@ export function quickGridKeyDirection(
 export function handleQuickGridKey(event:GridKeyEvent,root:HTMLElement):void{
  const target=event.target;
  if(!(target instanceof HTMLElement))return;
- const editing=target.matches('input,textarea,[contenteditable="true"]');
+ // Select menus and Catalog comboboxes own their arrows and Enter key.
+ const editing=target.matches('input,textarea,select,[contenteditable="true"],[role="combobox"]');
  // Copy the focused display value without needing to highlight the text.
  // Native copy still applies inside text inputs and on browsers without Clipboard API.
  if(!editing&&(event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='c'
@@ -141,7 +142,8 @@ export function handleQuickGridKey(event:GridKeyEvent,root:HTMLElement):void{
   }
   return;
  }
- const direction=quickGridKeyDirection(event,editing,target.matches('input'));
+ const direction=quickGridKeyDirection(event,editing,
+  target.matches('input:not([type="checkbox"]):not([type="radio"])'));
  if(!direction)return;
  if(moveQuickGridFocus(root,target,direction,editing&&event.key==='Enter'))event.preventDefault();
 }
