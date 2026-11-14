@@ -8,7 +8,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import '../catalog-product-worktable.css';
 import {CatalogPagination,useCatalogPagination} from './CatalogPagination';
-import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton} from './WorktableChrome';
+import {WorktableFilterMenu,WorktableSurface,WorktableSelectPageCheckbox,WorktableSortButton,WorktableHorizontalHint} from './WorktableChrome';
 import {CatalogFilterReset} from './CatalogFilterReset';
 import {MobileCatalogActiveFilters} from './MobileCatalogTools';
 import {CatalogQuoteLauncher} from './CatalogQuoteInsert';
@@ -288,6 +288,7 @@ export function CatalogSinksWorktable({externalQuery='',onClearExternalQuery}:{
      <CatalogBulkActions label="Sink models" selectedCount={selectedIds.length}
       activeCount={pageSelection.activeIds.length} archivedCount={pageSelection.archivedIds.length}
       onArchive={bulkArchive} onRestore={bulkRestore} onClear={pageSelection.clear}/>}/>
+   <WorktableHorizontalHint label="Sinks"/>
    <WorktableSurface className="rates-reference-table-wrap catalog-product-scroll" label="Sinks catalog worktable">
     <table className="rates-reference-table catalog-product-table">
      <thead><tr>{selecting&&<th className="catalog-product-select-cell" scope="col">
