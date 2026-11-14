@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {nextQuickGridCell,quickGridControlIsNavigable,type QuickGridCell} from './quoteGridNavigation';
+import {nextQuickGridCell,quickGridControlIsNavigable,quickGridKeyDirection,quickGridLinearNeighborAvailable,type QuickGridCell} from './quoteGridNavigation';
 
 const cells:QuickGridCell[]=[
  {row:0,column:1},{row:0,column:3},{row:0,column:4},
@@ -72,5 +72,35 @@ describe('Quick Quote grid navigation',()=>{
   nextQuickGridCell(cells,7,'left');
   nextQuickGridCell(cells,7,'down');
   expect(JSON.stringify(cells)).toBe(before);
+ });
+ it('uses Shift+Enter for the preceding single-line cell, not for multiline or composing text',()=>{
+  const base={key:'Enter',shiftKey:false,ctrlKey:false,metaKey:false,altKey:false,isComposing:false};
+  expect(quickGridKeyDirection(base,true,true)).toBe('next');
+  expect(quickGridKeyDirection({...base,shiftKey:true},true,true)).toBe('previous');
+  expect(quickGridKeyDirection(base,true,false)).toBeUndefined();
+  expect(quickGridKeyDirection({...base,isComposing:true},true,true)).toBeUndefined();
+  expect(quickGridKeyDirection({...base,ctrlKey:true},true,true)).toBeUndefined();
+  expect(quickGridKeyDirection({...base,altKey:true},true,true)).toBeUndefined();
+  expect(quickGridKeyDirection({...base,key:'ArrowDown'},true,true)).toBeUndefined();
+  expect(quickGridKeyDirection({...base,key:'ArrowDown'},false,false)).toBe('down');
+  expect(quickGridKeyDirection({...base,key:'Tab',shiftKey:true},true,true)).toBe('previous');
+  expect(quickGridKeyDirection({...base,key:'Tab',metaKey:true},true,true)).toBeUndefined();
+ });
+ it('excludes visibility-hidden desktop cells and disables mobile Prev/Next at boundaries',()=>{
+  const mock=(visibility='visible')=>({
+   getClientRects:()=>[{}],
+   matches:()=>false,
+   closest:()=>null,
+   contains:(item:unknown)=>false,
+   ownerDocument:{defaultView:{getComputedStyle:()=>({visibility})}},
+  }) as unknown as HTMLElement;
+  const first=mock(),hidden=mock('hidden'),last=mock();
+  const root={querySelectorAll:()=>[first,hidden,last]} as unknown as HTMLElement;
+  expect(quickGridControlIsNavigable(hidden)).toBe(false);
+  expect(quickGridLinearNeighborAvailable(root,first,'previous')).toBe(false);
+  expect(quickGridLinearNeighborAvailable(root,first,'next')).toBe(true);
+  expect(quickGridLinearNeighborAvailable(root,last,'previous')).toBe(true);
+  expect(quickGridLinearNeighborAvailable(root,last,'next')).toBe(false);
+  expect(quickGridLinearNeighborAvailable(root,hidden,'next')).toBe(false);
  });
 });
