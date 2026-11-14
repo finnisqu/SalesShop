@@ -1,6 +1,6 @@
 import {
  quoteLineAmount,quoteLinesTotal,roundCurrency,
- type QuoteLine,type QuoteSection,
+ type PricingScheduleItem,type QuoteLine,type QuoteSection,
 } from '../types/quote';
 
 /** A signed receipt must NEVER store the full private QuoteLine or Area
@@ -65,5 +65,25 @@ export function customerReceiptSections(sections:readonly QuoteSection[]):QuoteS
  return sections.filter(section=>section.customerVisible).map(section=>({
   id:section.id,title:section.title,customerVisible:true,
   customerDisplayMode:section.customerDisplayMode,
+ }));
+}
+
+/** Imported pricing schedules can contain private workbook metadata at runtime.
+ * Sign only known customer-display fields, never an imported row wholesale. */
+export function customerReceiptScheduleItems(
+ items:readonly PricingScheduleItem[],
+):PricingScheduleItem[]{
+ return items.map(item=>({
+  sourceRow:item.sourceRow,
+  series:item.series,itemType:item.itemType,
+  planNumber:item.planNumber,planName:item.planName,
+  optionCode:item.optionCode,description:item.description,
+  customerPrice:item.customerPrice,displayType:item.displayType,
+  groupLabel:item.groupLabel,priceLabel:item.priceLabel,
+  unitLabel:item.unitLabel,detailsLayout:item.detailsLayout,
+  colors:Array.isArray(item.colors)
+   ?item.colors.filter((value):value is string=>typeof value==='string'):undefined,
+  details:Array.isArray(item.details)
+   ?item.details.filter((value):value is string=>typeof value==='string'):undefined,
  }));
 }
