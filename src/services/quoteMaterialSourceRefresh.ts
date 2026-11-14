@@ -25,7 +25,12 @@ export function quoteMaterialSourcePatch(
  if(!material.active)throw new Error('This Catalog material is inactive.');
  const variant=(material.variants??[]).find(v=>v.id===variantId&&v.active!==false);
  if(!variant)throw new Error('This material variant is inactive or unavailable.');
- const options=(variant.purchaseOptions??[]).filter(v=>v.active!==false);
+ const programs=variant.purchaseOptions??[];
+ const options=programs.filter(v=>v.active!==false);
+ // A configured variant whose supplier programs are all retired is not a
+ // valid buying reference. Do not fall back to an old legacy cost silently.
+ if(programs.length&&!options.length)
+  throw new Error('This material variant has no active supplier purchase program.');
  if(purchaseOptionId&&!options.some(option=>option.id===purchaseOptionId))
   throw new Error('The selected supplier purchase program is inactive or unavailable.');
  const reference=resolveStockMaterialCostReference(material,variant.id,purchaseOptionId);
