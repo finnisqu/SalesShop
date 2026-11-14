@@ -7,7 +7,7 @@ import {isGeneralTakeoffSection} from '../services/quoteCustomerPresentation';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {PHONE_LAYOUT_QUERY} from '../lib/mobileViewport';
 import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
-import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose} from '../services/quoteMobileSheetDismissal';
+import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose,quoteSheetBackdropShouldClose} from '../services/quoteMobileSheetDismissal';
 import {PreviewPanelHeading,PreviewPanelClose,PreviewPanelActions} from './PreviewPanelChrome';
 import {useQuoteStore} from '../store/quoteStore';
 import {QuoteInlineAreaName,QuoteInlineAreaRate} from './QuoteInlineAreaEditing';
@@ -43,9 +43,18 @@ export function QuoteAreaQuickPanel({quote,areaId,initialTab,onTab,onSelect,onCl
  const total=quoteLinesTotal(quote.lines.filter(l=>l.sectionId===section.id));
  const defaults={splashHeightIn:section.scope?.takeoffDefaultSplashHeightIn??4,
    edgeProfile:section.scope?.takeoffDefaultEdgeProfile??'Flat'};
- return createPortal(<div className="qmb qmb-quick-area-backdrop" onPointerDown={e=>{
-   if(e.currentTarget===e.target)onClose();
- }}>
+ return createPortal(<div className="qmb qmb-quick-area-backdrop" onPointerDown={event=>{
+   if(event.target!==event.currentTarget)return;
+   const active=document.activeElement;
+   const typing=active instanceof HTMLElement&&Boolean(ref.current?.contains(active))&&
+    active.matches('input,textarea,select,[contenteditable="true"],[role="combobox"]');
+   if(!quoteSheetBackdropShouldClose(
+     document.documentElement.dataset.ssMobileKeyboard==='open',typing)){
+    if(active instanceof HTMLElement)active.blur();
+    return;
+   }
+   onClose();
+  }}>
    <aside ref={ref} role="dialog" aria-modal="true" aria-label={'Quick edit Area '+section.title}
      className="qmb-quick-area-panel">
      <header className="qmb-quick-area-header" onTouchStart={event=>{
