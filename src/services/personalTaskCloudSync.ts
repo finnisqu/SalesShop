@@ -14,8 +14,12 @@ function readDocument(value:unknown):PersonalTask[]{
  * task merely because another device sent an equally-timestamped edit. */
 export function taskWinsMerge(candidate:PersonalTask,existing:PersonalTask):boolean{
   const a=Date.parse(candidate.updatedAt),b=Date.parse(existing.updatedAt);
-  if(Number.isFinite(a)&&Number.isFinite(b)&&a!==b)return a>b;
-  if(candidate.updatedAt!==existing.updatedAt)return candidate.updatedAt>existing.updatedAt;
+  const aValid=Number.isFinite(a),bValid=Number.isFinite(b);
+  // A corrupt offline clock/string must never outrank the valid cloud copy.
+  if(aValid!==bValid)return aValid;
+  if(aValid&&bValid&&a!==b)return a>b;
+  // Different ISO strings can represent the same instant. Never compare
+  // their spelling; preserve tombstones on equal or untrusted clocks.
   if(Boolean(candidate.deletedAt)!==Boolean(existing.deletedAt))return Boolean(candidate.deletedAt);
   return false; // Stable tie: retain existing remote record
 }
