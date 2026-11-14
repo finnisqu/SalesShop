@@ -36,6 +36,7 @@ export function BoardQuickCreate({kind,onCreate}:{
   const [name,setName]=useState('');
   const [error,setError]=useState('');
   const [pendingCreated,setPendingCreated]=useState<string|null>(null);
+  const formLocked=saving||Boolean(pendingCreated);
   const openProject=useNavigationStore(state=>state.openProject);
   const openCompany=useNavigationStore(state=>state.openCompany);
   const savingRef=useRef(false);
@@ -95,7 +96,7 @@ export function BoardQuickCreate({kind,onCreate}:{
           </header>
           <div className="board-create-fields ss-mobile-sheet-body">
             <label htmlFor={inputId}>{kind} name</label>
-            <input id={inputId} className="board-create-name-input" disabled={saving||Boolean(pendingCreated)}
+            <input id={inputId} className="board-create-name-input" disabled={formLocked}
               autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
               data-dialog-initial-focus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches?true:undefined}
               required value={name}
@@ -103,7 +104,7 @@ export function BoardQuickCreate({kind,onCreate}:{
               maxLength={180} placeholder={kind==='Deal'?'Name of the opportunity':'Company or account name'}/>
             {kind==='Deal'&&<>
               <button type="button" className="board-create-more" aria-expanded={more}
-                onClick={()=>setMore(value=>!value)} disabled={saving}>
+                onClick={()=>setMore(value=>!value)} disabled={formLocked}>
                 More details <span aria-hidden="true">{more?'⌃':'⌄'}</span>
               </button>
               {more&&<div className="board-create-details" role="group" aria-label="New deal details">
@@ -112,11 +113,11 @@ export function BoardQuickCreate({kind,onCreate}:{
                   <div className="ss-record-association-current">
                     <span>{newCompanyName?'New · '+newCompanyName:
                       companies.find(c=>c.id===companyId)?.name||'No company selected'}</span>
-                    {(companyId||newCompanyName)&&<button type="button" disabled={saving}
+                    {(companyId||newCompanyName)&&<button type="button" disabled={formLocked}
                       onClick={()=>{setCompanyId('');setNewCompanyName('');}}>Clear</button>}
                   </div>
                   <UnifiedRecordPicker kind="Company" triggerLabel="Search or create Company"
-                    disabled={saving}
+                    disabled={formLocked}
                     items={companies.filter(c=>!isOurOrgCompany(c)&&!isOurCompany(c))
                       .map(c=>({id:c.id,name:c.name,detail:c.aliases?.join(', ')}))}
                     onLink={id=>{setCompanyId(id);setNewCompanyName('');}}
@@ -126,15 +127,15 @@ export function BoardQuickCreate({kind,onCreate}:{
                 <div className="board-create-related">
                   <strong>People</strong>
                   <div className="board-create-chips">
-                    {personIds.map(id=><button key={id} type="button" disabled={saving}
+                    {personIds.map(id=><button key={id} type="button" disabled={formLocked}
                       onClick={()=>setPersonIds(ids=>ids.filter(item=>item!==id))}>
                       {people.find(p=>p.id===id)?.name||'Person'} ×</button>)}
-                    {newPeopleNames.map(name=><button key={name} type="button" disabled={saving}
+                    {newPeopleNames.map(name=><button key={name} type="button" disabled={formLocked}
                       onClick={()=>setNewPeopleNames(names=>names.filter(n=>n!==name))}>
                       New · {name} ×</button>)}
                   </div>
                   <UnifiedRecordPicker kind="Person" triggerLabel="Search or create Person"
-                    disabled={saving}
+                    disabled={formLocked}
                     items={people.map(p=>({id:p.id,name:p.name,
                       detail:personIds.includes(p.id)?'Already selected':p.email||p.title}))}
                     onLink={id=>setPersonIds(ids=>ids.includes(id)?ids:[...ids,id])}
@@ -153,7 +154,7 @@ export function BoardQuickCreate({kind,onCreate}:{
                 </div>
                 <label htmlFor={inputId+'-date'}>Bid due date</label>
                 <input type="date" id={inputId+'-date'} value={dueDate}
-                  disabled={saving} onChange={event=>setDueDate(event.target.value)}/>
+                  disabled={formLocked} onChange={event=>setDueDate(event.target.value)}/>
               </div>}
             </>}
             {error&&<p role="alert" className="board-create-error">{error}</p>}
