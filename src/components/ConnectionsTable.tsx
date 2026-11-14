@@ -186,7 +186,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
        <button type="button" onClick={()=>setSelected([])}>Clear</button>
      </>}
      {toolbarControls&&<div className="connections-toolbar-controls">{toolbarControls}</div>}
-     {toolbarFilters&&<WorktableFilterMenu activeCount={filterCount}>
+     {toolbarFilters&&<WorktableFilterMenu activeCount={filterCount} mobileDone>
        {toolbarFilters}
      </WorktableFilterMenu>}
      {!catalogPagination&&<WorktablePagination label={tableKey} total={sorted.length}
