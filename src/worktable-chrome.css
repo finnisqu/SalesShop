@@ -475,7 +475,7 @@
 }
 :root[data-sales-theme] .sales-app .ss-worktable-filter-done{display:none;}
 @media(max-width:820px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
- :root[data-sales-theme] .sales-app.view-catalog
+ :root[data-sales-theme] .sales-app
   .ss-worktable-filter-panel .ss-worktable-filter-done{
   position:sticky;bottom:-14px;z-index:1;
   box-sizing:border-box;display:grid;
@@ -484,7 +484,7 @@
   border-top:1px solid var(--ss-theme-border);
   background:var(--ss-theme-card);
  }
- :root[data-sales-theme] .sales-app.view-catalog
+ :root[data-sales-theme] .sales-app
   .ss-worktable-filter-done>button{
   min-height:44px;width:100%;
   background:var(--ss-theme-tint);color:var(--ss-theme-ink);
