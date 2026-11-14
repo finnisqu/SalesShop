@@ -60,6 +60,22 @@ export function calendarWeekDays(selected:string):string[]{
  });
 }
 
+/** Reassigned Deals cannot keep an old salesperson's automatically created
+ * bid obligation active in Home while their private Tasks cache catches up.
+ * Preserve user-authored tasks and their historical records; only hide stale
+ * deterministic "deal-submit:" tasks assigned to another rep. */
+export function personalCalendarTasks(
+ mode:'local'|'cloud',userId:string|undefined,
+ tasks:readonly PersonalTask[],deals:readonly Project[],
+):PersonalTask[]{
+ const active=tasks.filter(task=>!task.deletedAt);
+ if(mode==='local')return active;
+ if(!userId)return [];
+ const assignedElsewhere=new Set(deals.filter(deal=>
+  deal.assignedUserId&&deal.assignedUserId!==userId).map(deal=>deal.id));
+ return active.filter(task=>!task.sourceObjectId?.startsWith('deal-submit:')||
+  !assignedElsewhere.has(task.sourceObjectId.slice('deal-submit:'.length)));
+}
 /** Keep Home personal. CRM Activity remains available in the Recent history
  * surface but never contributes to the pending-work calendar badges. */
 export function personalCalendarSources(
