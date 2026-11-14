@@ -114,6 +114,24 @@ export function WorktableActionMenu({label,items}:{
  </details>;
 }
 
+/** Worktable heading action used by Catalog reference grids.
+ * The enclosing <th> owns aria-sort, matching clickable Records headings.
+ * A header click changes the active ascending/descending sort field and
+ * the existing Filters menu remains an alternative control. */
+export function WorktableSortButton({label,active,onSort,direction='ascending'}:{
+ label:string;active:boolean;onSort:()=>void;
+ direction?:'ascending'|'descending';
+}){
+ return <button type="button" className="ss-worktable-sort-button"
+  onClick={onSort} aria-label={'Sort by '+label}
+  title={active?'Sorted by '+label:'Sort by '+label}>
+  <span>{label}</span>
+  <span className="ss-worktable-sort-indicator" aria-hidden="true">
+   {active?(direction==='descending'?'↓':'↑'):'↕'}
+  </span>
+ </button>;
+}
+
 /** Shared rounded table surface used by CRM, Quotes and Catalog rows. */
 export function WorktableSurface({children,className='',label}:{
  children:ReactNode;className?:string;label:string;
