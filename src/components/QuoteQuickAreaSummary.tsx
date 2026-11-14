@@ -8,6 +8,7 @@ import {quoteIsCommerciallyEditable} from '../services/quoteIntegrity';
 import {handleQuickGridKey} from '../services/quoteGridNavigation';
 import {quoteSheetEscapeShouldClose} from '../services/quoteSheetEscape';
 import {useMobileQuoteSheetFieldReveal} from '../lib/useMobileQuoteSheetFieldReveal';
+import {quoteSheetSwipeCanStart,quoteSheetSwipeShouldClose} from '../services/quoteMobileSheetDismissal';
 import {QuoteMobileCellToolbar} from './QuoteMobileCellToolbar';
 import {parseQuickGridNumber} from '../services/quoteGridValue';
 import {quickAreaPrimary,quickAreaSummary,quickGeneralSummary,quickRoundedSf} from '../services/quoteQuickAreaSummary';
@@ -179,7 +180,7 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
  const title=section?.title??'General';
  const input=useRef<HTMLDivElement>(null);
  useMobileQuoteSheetFieldReveal(input);
- const sheetSwipeStart=useRef<number|null>(null);
+ const sheetSwipeStart=useRef<{x:number;y:number}|null>(null);
  const closeRef=useRef(onClose);
  closeRef.current=onClose;
  useEffect(()=>{
@@ -216,13 +217,18 @@ function DetailPanel({quote,detail,onClose,onCalculator,onTakeoffs,onAdvanced,on
    <div className="qqs-panel" role="dialog" aria-modal="true"
     aria-label={detailName[detail.kind]+' for '+title} ref={input}>
     <header onTouchStart={event=>{
-      if((event.target as HTMLElement).closest('button,input,select'))return;
-      sheetSwipeStart.current=event.touches[0]?.clientY??null;
-     }} onTouchEnd={event=>{
-      const start=sheetSwipeStart.current;
       sheetSwipeStart.current=null;
-      if(start!==null&&(event.changedTouches[0]?.clientY??start)-start>85)onClose();
-     }}><div><small>QUICK QUOTE · {title}</small><h2>{detailName[detail.kind]}</h2></div>
+      if(!quoteSheetSwipeCanStart(event.target instanceof Element?event.target:null,
+        document.documentElement.dataset.ssMobileKeyboard==='open',event.touches.length))return;
+      const touch=event.touches[0];
+      sheetSwipeStart.current={x:touch.clientX,y:touch.clientY};
+     }} onTouchEnd={event=>{
+      const start=sheetSwipeStart.current;sheetSwipeStart.current=null;
+      if(event.changedTouches.length!==1)return;
+      const touch=event.changedTouches[0];
+      if(quoteSheetSwipeShouldClose(start,{x:touch.clientX,y:touch.clientY},
+        document.documentElement.dataset.ssMobileKeyboard==='open'))onClose();
+     }} onTouchCancel={()=>{sheetSwipeStart.current=null;}}><div><small>QUICK QUOTE · {title}</small><h2>{detailName[detail.kind]}</h2></div>
      <button type="button" className="qqs-panel-close" onClick={onClose}
       aria-label="Close editor">×</button></header>
     <div className="qqs-panel-body">
