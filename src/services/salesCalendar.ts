@@ -220,8 +220,10 @@ export function recentHomeItems(
    const external=activity.type==='quote-sent'&&activity.metadata?.externalQuoteSent===true;
    // A historical submission belongs on its actual Date sent in the calendar.
    // Recents, however, should show it when the salesperson logged it.
-   const loggedAt=external&&Number.isFinite(Date.parse(activity.metadata?.recordedAt??''))
-    ?activity.metadata!.recordedAt!:activity.occurredAt;
+   const editedAt=activity.metadata?.editedAt;
+   const loggedAt=external&&editedAt&&Number.isFinite(Date.parse(editedAt))
+    ?editedAt:external&&Number.isFinite(Date.parse(activity.metadata?.recordedAt??''))
+     ?activity.metadata!.recordedAt!:activity.occurredAt;
    const sentDay=external?activity.metadata?.bidSentDate:undefined;
    return {
     id:'activity:'+activity.id,timestamp:loggedAt,
