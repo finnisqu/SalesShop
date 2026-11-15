@@ -3,6 +3,7 @@ import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,taskAssociatio
  isProtectedBidTask,bidTaskDealId} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {ActivityRelatedQuickCreate} from './ActivityRelatedQuickCreate';
+import {saveTaskEditorChanges} from '../services/taskEditorSave351e';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {TaskPreviewDueControls} from './TaskPreviewDueControls';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
@@ -456,12 +457,17 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
     update(id,{dueDate:date,dueTime:date?task.dueTime:undefined});
   };
   const save=(changes:TaskChanges&{title:string})=>{
-    if(!scope)throw new Error('Task workspace is unavailable. Keep this draft and try again.');
-    if(editing&&'id'in editing)update(editing.id,changes);
-    else{
-      const created=create(changes.title,changes);
-      if(!created)throw new Error('Unable to add this task. Your draft is preserved.');
-    }
+    const taskId=editing&&'id'in editing?editing.id:null;
+    saveTaskEditorChanges(scope,taskId,changes,{
+      snapshot:()=>{
+        const state=usePersonalTaskStore.getState();
+        return {scope:state.scope,tasks:state.tasks};
+      },
+      create:(title,input)=>create(title,input),
+      update:(id,input)=>update(id,input),
+    });
+    // A missing/deleted Task or switched workspace must never dismiss the
+    // editor. TaskEditor catches the error and keeps its linked CRM draft.
     setEditing(null);
     setTaskNotice({kind:'applied',message:RECORD_CHANGE_APPLIED_MESSAGE});
   };
