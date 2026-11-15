@@ -40,11 +40,14 @@ export function WorktablePagination({label,total,page,pageSize,onPageChange,onPa
  label:string;total:number;page:number;pageSize:number;
  onPageChange:(page:number)=>void;onPageSizeChange:(size:number)=>void;
 }){
- const range=worktablePageRange(total,page,pageSize);
+ const safeTotal=Number.isFinite(total)&&total>0?Math.floor(total):0;
+ const safeSize=WORKTABLE_PAGE_SIZES.includes(pageSize as typeof WORKTABLE_PAGE_SIZES[number])
+  ?pageSize:DEFAULT_WORKTABLE_PAGE_SIZE;
+ const range=worktablePageRange(safeTotal,page,safeSize);
  return <div className="ss-worktable-pagination" role="group" aria-label={label+' pagination'}>
-  <span className="ss-worktable-page-count">{range.first}–{range.last} of {total}</span>
+  <span className="ss-worktable-page-count">{range.first}–{range.last} of {safeTotal}</span>
   <label className="ss-worktable-page-size"><span>Show</span>
-   <select aria-label={label+' per page'} value={pageSize}
+   <select aria-label={label+' per page'} value={safeSize}
     onChange={event=>onPageSizeChange(Number(event.target.value))}>
     {WORKTABLE_PAGE_SIZES.map(size=><option key={size} value={size}>{size}</option>)}
    </select>
