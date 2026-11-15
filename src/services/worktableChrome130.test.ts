@@ -41,7 +41,9 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   const dismiss=src('components/useDismissibleDetails.ts');
   expect(dismiss).toContain('event.defaultPrevented');
   expect(dismiss).toContain('menu.contains(event.target as Node)');
-  expect(dismiss).toContain('ref.current?.contains(event.target as Node)');
+  expect(dismiss).toContain('const root=ref.current;');
+  expect(dismiss).toContain('!root?.contains(event.target as Node)');
+  expect(dismiss).toContain('innerOpen!==root&&root.contains(innerOpen)');
  });
  it('shares pagination math and 25/50/100 page sizes across Catalog and Records',()=>{
   expect(WORKTABLE_PAGE_SIZES).toEqual([25,50,100]);
