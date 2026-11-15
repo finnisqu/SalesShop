@@ -272,19 +272,38 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
       <section ref={sheetRef} className="quick-create-sheet ss-mobile-sheet" role="dialog" aria-modal="true" aria-label="Create in SalesShop">
         <MobileSheetHandle onClose={close} disabled={namedCreateSaving}/>
         <header className="quick-create-header">
-          <div><span>Quick create</span><strong>{namedMode ? `New ${namedMode === 'project' ? 'deal' : 'account'}` : 'What are you working on?'}</strong></div>
+          <div><span>Quick create</span><strong>{namedMode ? `New ${namedMode === 'project' ? 'deal' : namedMode==='person'?'person':'account'}` : 'What are you working on?'}</strong></div>
           <button type="button" onClick={close} disabled={namedCreateSaving} aria-label="Close quick create">×</button>
         </header>
 
         {namedMode ? (
           <form className="quick-create-name-form ss-mobile-sheet-body" onSubmit={event=>{void submitNamedCreate(event);}}>
             <label>
-              <span>{namedMode === 'project' ? 'Deal name' : 'Account / company name'}</span>
+              <span>{namedMode === 'project' ? 'Deal name' : namedMode==='person'?'Person name':'Account / company name'}</span>
               <input autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
-                value={name} disabled={namedCreateSaving||Boolean(pendingCreated)}
+                value={name} maxLength={180} disabled={namedCreateSaving||Boolean(pendingCreated)}
                 onChange={(event) => {setName(event.target.value);setNamedCreateError('');}}
-                placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : 'e.g. DeVane Builders'} />
+                placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : namedMode==='person'?'e.g. Jordan Smith':'e.g. DeVane Builders'} />
             </label>
+            {namedMode==='person'&&context?.kind==='person'&&
+              <p className="quick-create-person-helper">A new Person will be unlinked. People can be associated with a Company or Deal afterward.</p>}
+            {namedMode==='person'&&context?.kind==='deal'&&
+              <p className="quick-create-person-helper">The Person will be linked as a direct Deal contact and use the Deal's Company when available.</p>}
+            {namedMode==='person'&&context?.kind==='company'&&
+              <p className="quick-create-person-helper">The Person will belong to this Company.</p>}
+            {namedMode==='person'&&exactPeople.length>0&&<div className="quick-create-person-matches" role="group"
+               aria-label="Matching existing People">
+              <small>This Person already exists. Open or link the existing record instead of creating a duplicate.</small>
+              {exactPeople.slice(0,5).map(person=><button type="button" key={person.id}
+                disabled={namedCreateSaving||Boolean(pendingCreated)}
+                onClick={()=>{void openOrLinkExistingPerson(person.id);}}>
+                {context?.kind==='company'?'Move to this Company & open':
+                 context?.kind==='deal'?'Link to this Deal & open':'Open'} · {person.name||person.email||'Person'}
+                {person.email&&person.name&&<span>{person.email}</span>}
+              </button>)}
+              {context?.kind==='company'&&
+               <small>Linking an existing Person here changes their primary Company.</small>}
+             </div>}
             {namedCreateError&&<p className="quick-create-error" role="alert">{namedCreateError}</p>}
             <div>
               <button type="button" className="quick-create-secondary"
@@ -294,7 +313,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
               </button>
               {pendingCreated?
                 <button type="button" className="quick-create-primary" onClick={openPendingCreated}>Open created record</button>:
-                <button type="submit" className="quick-create-primary" disabled={!name.trim()||namedCreateSaving}>
+                <button type="submit" className="quick-create-primary" disabled={!name.trim()||namedCreateSaving||(namedMode==='person'&&exactPeople.length>0)}>
                  {namedCreateSaving?'Creating…':'Create & open'}</button>}
             </div>
           </form>
@@ -321,6 +340,10 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
             <div className="quick-create-divider" />
             <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('project')}><span className="quick-create-icon"><CreateGlyph kind="deal"/></span><span><strong>New Deal</strong><small>Add an opportunity or job.</small></span><b>›</b></button>
             <button type="button" className="quick-create-option compact" onClick={() => setNamedMode('account')}><span className="quick-create-icon"><CreateGlyph kind="account"/></span><span><strong>New Account</strong><small>Add a builder, customer, or prospect.</small></span><b>›</b></button>
+            {canRecordExternal&&<button type="button" className="quick-create-option compact" onClick={() => setNamedMode('person')}>
+              <span className="quick-create-icon"><CreateGlyph kind="person"/></span>
+              <span><strong>New Person</strong><small>Create a contact{context?.kind==='company'?' at this Company':context?.kind==='deal'?' on this Deal':''}.</small></span><b>›</b>
+            </button>}
             <button type="button" className="quick-create-option compact" onClick={makeNotebookPage}><span className="quick-create-icon"><CreateGlyph kind="notebook"/></span><span><strong>New Notebook Page</strong><small>Capture the thought first.</small></span><b>›</b></button>
           </div>
         )}
