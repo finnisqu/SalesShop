@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useRef,useState} from 'react';
 import {useCrmStore} from '../store/crmStore';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
@@ -11,8 +11,8 @@ import '../activity-related-create.css';
 
 type Kind='company'|'person'|'deal';
 /** Inline creation within an activity form; no navigation and no nested form. */
-export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
- onCreated:(link:TaskAssociation)=>void;disabled?:boolean;
+export function ActivityRelatedQuickCreate({onCreated,disabled=false,contextLabel='Activity'}:{
+ onCreated:(link:TaskAssociation)=>void;disabled?:boolean;contextLabel?:'Activity'|'Task';
 }){
  const [kind,setKind]=useState<Kind|null>(null);
  const [name,setName]=useState('');
@@ -23,6 +23,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
  const [stagedCompanyName,setStagedCompanyName]=useState('');
  const [createdCompanyId,setCreatedCompanyId]=useState<string|null>(null);
  const [error,setError]=useState('');
+ const pendingRef=useRef(false);
  const companies=useCrmStore(s=>s.companies);
  const people=useCrmStore(s=>s.contacts);
  const deals=useCrmStore(s=>s.projects);
@@ -59,9 +60,10 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
  };
  const submit=()=>{
   // This component lives inside the activity form. Never submit that form.
-  if(disabled||!kind)return;
+  if(disabled||!kind||pendingRef.current)return;
+  pendingRef.current=true;
   const clean=name.trim();
-  if(!clean){setError('Enter a name to create this record.');return;}
+  if(!clean){setError('Enter a name to create this record.');pendingRef.current=false;return;}
   setError('');
   try{
    let id:string|undefined|null;
@@ -80,7 +82,8 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
     const emailIssue=recordEmailError(email);
     if(emailIssue){setError(emailIssue);return;}
     if(people.some(p=>(email.trim()&&p.email?.toLowerCase()===email.trim().toLowerCase())||
-      (recordNameKey(p.name)===recordNameKey(clean)&&(p.companyId??'')===companyId))){
+      (recordNameKey(p.name)===recordNameKey(clean)&&!stagedCompanyName&&
+       (p.companyId??'')===companyId))){
      setError('That person may already exist. Find and link their record above.');return;
     }
     const resolvedCompanyId=resolveSelectedCompany();
@@ -103,10 +106,11 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
    choose(kind);
    setKind(null);
   }catch(reason){setError(reason instanceof Error?reason.message:'Could not create this record.');}
+  finally{pendingRef.current=false;}
  };
  return <div className="activity-related-quick-create">
   <div className="activity-related-quick-actions">
-   <span>Create while logging</span>
+   <span>{contextLabel==='Task'?'Create for Task':'Create while logging'}</span>
    {(['company','person','deal'] as const).map(option=><button type="button" key={option}
     disabled={disabled} aria-pressed={kind===option}
     onClick={()=>kind===option?setKind(null):choose(option)}>+ {option==='person'?'Person':option==='deal'?'Deal':'Company'}</button>)}
@@ -147,7 +151,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
        onCreate={createCompanyWhileLogging}
        helper="Find a Company or stage a new one. A new Company is only created when you save the Person or Deal."/>
       {stagedCompanyName&&<small className="activity-related-company-created">
-        Not saved yet. Canceling this Activity will not create the Company.
+        Not saved yet. Canceling this {contextLabel} will not create the Company.
        </small>}
       {createdCompanyId&&createdCompanyId===companyId&&<small className="activity-related-company-created">
         Company saved. If the {kind} could not be created, retrying uses this Company.
