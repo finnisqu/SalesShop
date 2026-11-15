@@ -144,7 +144,7 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  const pageRange=catalogPageRange(sorted.length,page,pageSize);
  const pages=pageRange.pageCount;
  const currentPage=pageRange.page;
- const display=sorted.slice((currentPage-1)*pageSize,currentPage*pageSize);
+ const display=sorted.slice(pageRange.start,pageRange.end);
  const selection=useMemo(()=>new Set(selected),[selected]);
  const chosen=useMemo(()=>rows.filter(row=>selection.has(row.id)),[rows,selection]);
  const allOnPage=display.length>0&&display.every(x=>selection.has(x.id));
@@ -253,9 +253,9 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
         <span>{row.name}</span>
        </label>)}
        <div className="connections-mobile-bulk-pages">
-        <button type="button" disabled={currentPage<=1} onClick={()=>setPage(page=>page-1)}>Previous</button>
+        <button type="button" disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>Previous</button>
         <span>Page {currentPage} of {pages}</span>
-        <button type="button" disabled={currentPage>=pages} onClick={()=>setPage(page=>page+1)}>Next</button>
+        <button type="button" disabled={currentPage>=pages} onClick={()=>setPage(currentPage+1)}>Next</button>
        </div>
      </div>}
     </div>}
