@@ -1,7 +1,8 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react';
-import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType,type TaskSubtask,subtaskProgress,normalizedSubtasks,
+import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,taskAssociationKey,type TaskAssociation,type PersonalTask,type TaskChanges,type TaskLink,type TaskPriority,type TaskPromotion,type TaskStatus,type TaskType,type TaskSubtask,subtaskProgress,normalizedSubtasks,
  isProtectedBidTask,bidTaskDealId} from '../store/personalTaskStore';
 import {TaskAssociationsField} from './TaskAssociationsField';
+import {ActivityRelatedQuickCreate} from './ActivityRelatedQuickCreate';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {TaskPreviewDueControls} from './TaskPreviewDueControls';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
@@ -115,6 +116,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
     setNewSubtask('');
   };
   const [formError,setFormError]=useState('');
+  const [showCreateRelated,setShowCreateRelated]=useState(false);
   const [selectedLinks,setSelectedLinks]=useState<TaskAssociation[]>(()=>recovered?.selectedLinks??normalizedTaskAssociations(initial));
   // Every form change is durable locally before submission. No unsaved task is sent to cloud.
   useEffect(()=>{
@@ -134,6 +136,15 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const commonQueues=Array.from(new Set([...defaultQueues,
     ...suggestionTasks.filter(task=>!!suggestionScope&&task.workspaceScope===suggestionScope&&!task.deletedAt)
       .map(task=>task.queue).filter((q):q is string=>!!q)])).sort();
+  const canCreateRelatedCrm=!useRolePerspectiveStore.getState().activePerspective&&
+   (auth.mode==='local'||Boolean(auth.organizationId&&auth.user?.id&&
+    canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')));
+  const linkCreatedRecord=(link:TaskAssociation)=>{
+   // The creator writes the shared CRM record exactly once. The Task link
+   // remains part of this Task's locally recoverable draft until Save.
+   setSelectedLinks(current=>current.some(item=>
+    taskAssociationKey(item)===taskAssociationKey(link))?current:[...current,link]);
+  };
   const quotes=useQuoteStore(s=>s.quotes);
   const authMode=useAuthStore(s=>s.mode),authUserId=useAuthStore(s=>s.user?.id);
   const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
@@ -180,6 +191,21 @@ export function TaskEditor({initial,onCancel,onSave}:{
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
       <TaskAssociationsField options={associations.map(item=>({...item,
         linked:{...item.linked,label:item.label}}))} value={selectedLinks} onChange={setSelectedLinks}/>
+      {canCreateRelatedCrm&&<section className="tasks-editor-related-create">
+       <button type="button" className="tasks-editor-related-create-trigger"
+        aria-expanded={showCreateRelated}
+        onClick={()=>setShowCreateRelated(value=>!value)}>
+        {showCreateRelated?'Hide create options':'+ Create and link Person, Company or Deal'}
+       </button>
+       {showCreateRelated&&<>
+        <p className="tasks-editor-related-create-help">
+         Creates a shared CRM record immediately. Its link to this Task is saved
+         when you save the Task. If you cancel the Task, the CRM record remains available.
+        </p>
+        <ActivityRelatedQuickCreate contextLabel="Task"
+         disabled={!canCreateRelatedCrm} onCreated={linkCreatedRecord}/>
+       </>}
+      </section>}
       <section className="tasks-editor-section">
        <div className="tasks-editor-section-heading"><strong>Details</strong></div>
        <div className="tasks-editor-grid">
