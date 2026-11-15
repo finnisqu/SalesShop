@@ -123,6 +123,49 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     else openCompany(saved.id);
   };
 
+  // One shared preflight for direct Person–Deal links, whether the Person
+  // already exists or is created from this sheet. No orphan Person is created
+  // if the team link workspace cannot be loaded.
+  const readyDealLinks=async()=>{
+    const scope=dealPeopleScope(authMode,organizationId);
+    if(!scope)throw new Error('The Deal contacts workspace is unavailable.');
+    const current=useDealPeopleStore.getState();
+    if(current.scope!==scope||!current.loaded)await current.load(scope);
+    const latest=useDealPeopleStore.getState();
+    if(latest.scope!==scope||!latest.loaded)
+      throw new Error(latest.error||'Deal contacts are unavailable. Retry after they load.');
+    return scope;
+  };
+  const normalizedPersonName=recordNameKey(name);
+  const exactPeople=normalizedPersonName?people.filter(person=>
+    recordNameKey(person.name||person.email||'')===normalizedPersonName):[];
+  const openOrLinkExistingPerson=async(personId:string)=>{
+    if(namedCreatePending.current||pendingCreated||!canRecordExternal)return;
+    namedCreatePending.current=true;setNamedCreateSaving(true);setNamedCreateError('');
+    try{
+      const person=useCrmStore.getState().contacts.find(item=>item.id===personId);
+      if(!person)throw new Error('That Person is no longer available. Search again.');
+      if(context?.kind==='company'){
+        if(!useCrmStore.getState().companies.some(item=>item.id===context.id))
+          throw new Error('The Company is no longer available.');
+        // A Person has one primary Company, so this intentionally reassigns it.
+        updateContact(personId,{companyId:context.id});
+      }else if(context?.kind==='deal'){
+        if(!useCrmStore.getState().projects.some(item=>item.id===context.id))
+          throw new Error('The Deal is no longer available.');
+        const scope=await readyDealLinks();
+        const links=useDealPeopleStore.getState();
+        if(links.scope!==scope||!links.loaded)throw new Error('Deal contacts changed workspace. Retry.');
+        if(!links.links.some(item=>item.dealId===context.id&&item.personId===personId))
+          await links.add(context.id,personId);
+      }
+      namedCreatePending.current=false;
+      close();openPerson(personId);
+    }catch(reason){
+      setNamedCreateError(reason instanceof Error?reason.message:'Unable to link this Person.');
+    }finally{namedCreatePending.current=false;setNamedCreateSaving(false);}
+  };
+
   const submitNamedCreate = async (event: FormEvent) => {
     event.preventDefault();
     // Do not create a second record from Enter + click before the dialog closes.
@@ -134,6 +177,36 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     setNamedCreateError('');
     let createdId:string|undefined;
     try{
+      if(namedMode==='person'){
+        if(!canRecordExternal)throw new Error('You no longer have permission to create People.');
+        const existing=useCrmStore.getState().contacts.find(person=>
+          recordNameKey(person.name||person.email||'')===recordNameKey(clean));
+        if(existing)throw new Error('This Person already exists. Open or link the existing Person below.');
+        let companyId:string|undefined;
+        let dealLinkScope:string|null=null;
+        if(context?.kind==='company'){
+          if(!useCrmStore.getState().companies.some(item=>item.id===context.id))
+            throw new Error('The Company is no longer available. Reopen it and retry.');
+          companyId=context.id;
+        }else if(context?.kind==='deal'){
+          const deal=useCrmStore.getState().projects.find(item=>item.id===context.id);
+          if(!deal)throw new Error('The Deal is no longer available. Reopen it and retry.');
+          dealLinkScope=await readyDealLinks();
+          companyId=deal.companyId;
+        }
+        const personId=createPerson({name:clean,companyId,source:'manual'});
+        if(!personId)throw new Error('Could not create Person. Check their name and retry.');
+        createdId=personId;
+        if(context?.kind==='deal'){
+          const links=useDealPeopleStore.getState();
+          if(!dealLinkScope||links.scope!==dealLinkScope||!links.loaded)
+            throw new Error('Deal contacts changed workspace. Open the new Person and link the Deal.');
+          await links.add(context.id,personId);
+        }
+        namedCreatePending.current=false;
+        close();openPerson(personId);
+        return;
+      }
       if(namedMode==='project'){
         // A contextual Deal started from a Person must not appear linked
         // until the shared Deal-Person row is available and acknowledged.
