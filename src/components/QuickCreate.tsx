@@ -44,6 +44,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
   const [open, setOpen] = useState(false);
   const [namedMode, setNamedMode] = useState<NamedCreateMode>(null);
   const [name, setName] = useState('');
+  const [allowSameNamePerson,setAllowSameNamePerson]=useState(false);
   const [namedCreateError,setNamedCreateError]=useState('');
   const [pendingCreated,setPendingCreated]=useState<{id:string;kind:'project'|'account'|'person'}|null>(null);
   const namedCreatePending=useRef(false);
@@ -77,6 +78,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     setOpen(false);
     setNamedMode(null);
     setName('');
+    setAllowSameNamePerson(false);
     setNamedCreateError('');
     setPendingCreated(null);
   };
@@ -181,7 +183,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
         if(!canRecordExternal)throw new Error('You no longer have permission to create People.');
         const existing=useCrmStore.getState().contacts.find(person=>
           recordNameKey(person.name||person.email||'')===recordNameKey(clean));
-        if(existing)throw new Error('This Person already exists. Open or link the existing Person below.');
+        if(existing&&!allowSameNamePerson)throw new Error('This Person already exists. Open or link the existing Person below, or confirm that this is someone else.');
         let companyId:string|undefined;
         let dealLinkScope:string|null=null;
         if(context?.kind==='company'){
@@ -282,7 +284,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
               <span>{namedMode === 'project' ? 'Deal name' : namedMode==='person'?'Person name':'Account / company name'}</span>
               <input autoFocus={typeof window!=='undefined'&&window.matchMedia('(min-width:761px)').matches}
                 value={name} maxLength={180} disabled={namedCreateSaving||Boolean(pendingCreated)}
-                onChange={(event) => {setName(event.target.value);setNamedCreateError('');}}
+                onChange={(event) => {setName(event.target.value);setAllowSameNamePerson(false);setNamedCreateError('');}}
                 placeholder={namedMode === 'project' ? 'e.g. Parkside Apartments' : namedMode==='person'?'e.g. Jordan Smith':'e.g. DeVane Builders'} />
             </label>
             {namedMode==='person'&&context?.kind==='person'&&
@@ -303,17 +305,23 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
               </button>)}
               {context?.kind==='company'&&
                <small>Linking an existing Person here changes their primary Company.</small>}
+              <label className="quick-create-person-duplicate-confirm">
+               <input type="checkbox" checked={allowSameNamePerson}
+                disabled={namedCreateSaving||Boolean(pendingCreated)}
+                onChange={event=>setAllowSameNamePerson(event.target.checked)}/>
+               This is a different Person with the same name. Create a separate record.
+              </label>
              </div>}
             {namedCreateError&&<p className="quick-create-error" role="alert">{namedCreateError}</p>}
             <div>
               <button type="button" className="quick-create-secondary"
-                onClick={() => pendingCreated?close():(setNamedMode(null),setName(''),setNamedCreateError(''))}
+                onClick={() => pendingCreated?close():(setNamedMode(null),setName(''),setAllowSameNamePerson(false),setNamedCreateError(''))}
                 disabled={namedCreateSaving}>
                 {pendingCreated?'Close':'Back'}
               </button>
               {pendingCreated?
                 <button type="button" className="quick-create-primary" onClick={openPendingCreated}>Open created record</button>:
-                <button type="submit" className="quick-create-primary" disabled={!name.trim()||namedCreateSaving||(namedMode==='person'&&exactPeople.length>0)}>
+                <button type="submit" className="quick-create-primary" disabled={!name.trim()||namedCreateSaving||(namedMode==='person'&&exactPeople.length>0&&!allowSameNamePerson)}>
                  {namedCreateSaving?'Creating…':'Create & open'}</button>}
             </div>
           </form>
