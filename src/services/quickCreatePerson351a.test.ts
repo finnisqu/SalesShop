@@ -26,8 +26,11 @@ describe('Batch 351a — universal Person quick create and contextual linking',(
   const id=useCrmStore.getState().createContact({name:'Jordan Example',source:'manual'});
   expect(id).toBeTruthy();
   expect(useCrmStore.getState().contacts.find(person=>person.id===id)).toMatchObject({
-   name:'Jordan Example',source:'manual',
+   name:'Jordan Example',
   });
+  expect(useCrmStore.getState().activities.some(activity=>
+   activity.contactId===id&&activity.type==='contact-created'&&
+   activity.metadata?.source==='manual')).toBe(true);
   expect(useCrmStore.getState().contacts.find(person=>person.id===id)?.companyId).toBeFalsy();
   const quick=src('components/QuickCreate.tsx');
   expect(quick).toContain("<strong>New Person</strong>");
