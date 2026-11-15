@@ -589,6 +589,22 @@
 
 
 /* Existing Activity popup doubles as the Task-completion workflow. */
+/* Batch #351d: a partial Activity save is recoverable without a
+ * duplicate log. Keep this notice in the existing phone/desktop sheet. */
+.sales-activity-recovery{
+ display:grid;gap:4px;margin:0;padding:10px 12px;
+ border:1px solid var(--ss-theme-border,#d4c9b5);
+ border-left:3px solid var(--ss-theme-accent,#917246);
+ border-radius:9px;background:var(--ss-theme-tint,#eee7d9);
+ color:var(--ss-theme-ink,#333);
+}
+.sales-activity-recovery strong{font-size:12px;font-weight:800}
+.sales-activity-recovery span{
+ color:var(--ss-theme-muted,#777);font-size:11px;line-height:1.45;
+}
+.sales-activity-methods button:disabled{opacity:.68;cursor:default}
+.sales-activity-dialog :is(input,textarea):disabled{opacity:.68;cursor:default}
+
 .sales-activity-task-context{
  display:grid;gap:4px;margin:0;padding:10px 12px;
  border:1px solid var(--ss-theme-border,#d4c9b5);
