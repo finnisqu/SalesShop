@@ -22,7 +22,10 @@ describe('Unified CRM relationship field and pin polish',()=>{
  it('uses consistent normalized duplicate checks in external quotes and relationship creators',()=>{
   const external=source('src/components/ExternalQuoteBackfillDialog.tsx');
   const related=source('src/components/RecordRelatedActions.tsx');
-  expect(external).toContain('recordNameKey(d.name)===recordNameKey(clean)');
+  const externalCreate=source('src/services/externalQuoteDealCreateLink.ts');
+  expect(external).toContain('createExternalQuoteDealWithCompany(name,');
+  expect(externalCreate).toContain('recordNameKey(deal.name)===recordNameKey(name)');
+  expect(externalCreate).toContain('recordNameKey(company.name)===recordNameKey(name)');
   expect(related).toContain('recordNameKey(d.name)===recordNameKey(clean)');
   expect(related).toContain('recordNameKey(c.name)===recordNameKey(cleaned)');
   expect(related).toContain('===recordNameKey(name)');
@@ -40,8 +43,12 @@ describe('Unified CRM relationship field and pin polish',()=>{
   const external=source('src/components/ExternalQuoteBackfillDialog.tsx');
   expect(external).toContain('<UnifiedRecordPicker kind="Deal"');
   expect(external).toContain('onCreate={createFromPicker}');
-  expect(external).toContain('onLink={id=>{setSelectedId(id)');
-  expect(external).toContain('setSelectedId(id);');
+  expect(external).toContain('onLink={selectDeal}');
+  expect(external).toContain('const selectDeal=(id:string)=>');
+  expect(external).toContain('setSelectedId(id);clearCompanyChoice();setLinkRecovery(null);');
+  expect(external).toContain('<UnifiedRecordPicker kind="Company"');
+  expect(external).toContain('setSelectedId(result.dealId);');
+  expect(external).toContain('setLinkRecovery(result.recovery);');
   expect(external).toContain('<ExternalQuoteSentForm key={selected.id}');
   expect(external).not.toContain('newDealOpen');
  });
