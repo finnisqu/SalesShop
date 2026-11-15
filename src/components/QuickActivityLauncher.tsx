@@ -146,6 +146,8 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
  const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
  const projects=useCrmStore(s=>s.projects);
  const record=useCrmStore(s=>s.recordActivity);
+ const loggedPendingActivity=useCrmStore(s=>Boolean(pendingActivityId&&
+  s.activities.some(activity=>activity.id===pendingActivityId)));
  const quotes=useQuoteStore(s=>s.quotes);
  const permitted=!perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'));
  const options=useMemo(()=>{
@@ -163,6 +165,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
  useModalScrollLock(open&&permitted);
  const activityRef=useDismissibleLayer<HTMLFormElement>(open&&permitted,()=>{if(!saving)close();});
  const discard=()=>{
+  if(loggedPendingActivity&&!window.confirm('This Activity has already been logged. Discard the remaining follow-up draft? The logged Activity will remain in CRM.'))return;
   clearSavedDraft(draftKey);
   setMethod('call');setNotes('');setLinks([]);setOccurred(dateTimeLocal());
   setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
@@ -273,6 +276,10 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
       title={workflowTaskId?'Log & complete task':'Log Activity'}/>
       <PreviewPanelClose onClose={close} label="Close Log Activity" initialFocus={false}/></header>
     <div className="sales-activity-form-body ss-mobile-sheet-body">
+     {loggedPendingActivity&&<div className="sales-activity-recovery" role="status">
+      <strong>Activity already logged</strong>
+      <span>The interaction is saved in CRM. Retry to finish the remaining follow-up or Task completion; another Activity will not be created. To change logged details, edit the existing Activity from Records.</span>
+     </div>}
      {workflowTaskId&&<p className="sales-activity-task-context">
       <strong>Task-linked interaction</strong>
       <span>Saving this Activity will mark the original task complete. Related records are prefilled; schedule another follow-up below if needed.</span>
@@ -280,17 +287,22 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
      <div className="sales-activity-methods" role="group" aria-label="Interaction method">
       {methods.map(item=><button type="button" key={item.id} aria-pressed={method===item.id}
        data-dialog-initial-focus={method===item.id?true:undefined}
-       onClick={()=>setMethod(item.id)}>
+       onClick={()=>setMethod(item.id)} disabled={loggedPendingActivity}>
        <span className="sales-activity-method-icon"><ActivityMethodIcon method={item.id}/></span>
        {item.label}</button>)}
      </div>
-     <label>When<input type="datetime-local" max={dateTimeLocal()} value={occurred}
+     <label>When<input type="datetime-local" max={dateTimeLocal()} value={occurred} disabled={loggedPendingActivity}
       onChange={e=>setOccurred(e.target.value)} required/></label>
-      <TaskAssociationsField options={options} value={links} onChange={addLinks}/>
-      <ActivityRelatedQuickCreate disabled={saving}
+      {!loggedPendingActivity&&<>
+       <TaskAssociationsField options={options} value={links} onChange={addLinks}/>
+       <ActivityRelatedQuickCreate disabled={saving}
         onCreated={link=>addLinks([...links,link])}/>
+      </>}
+      {loggedPendingActivity&&<p className="sales-activity-note">
+       Related records and the interaction are already saved. Complete or skip the pending follow-up below.
+      </p>}
      <label>Notes (optional)
-      <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3}
+      <textarea value={notes} onChange={e=>setNotes(e.target.value)} disabled={loggedPendingActivity} rows={3}
        maxLength={5000} placeholder="Key details, questions, next steps…"/></label>
      <section className="sales-activity-follow-up">
       <label><input type="checkbox" checked={createFollowUp}
@@ -302,14 +314,14 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
         value={followUpDate} onChange={e=>setFollowUpDate(e.target.value)} required/>
       </label>}
      </section>
-     <p className="sales-activity-note">Unsaved details are recovered on this device if SalesShop reloads. Saving logs the interaction to CRM history; it doesn't send a message.</p>
+     <p className="sales-activity-note">Unsaved details are recovered on this device if SalesShop reloads. Creating a Person, Company, or Deal saves that CRM record even if the Activity is canceled. Logging an Activity doesn't send a message.</p>
      <RecordFormFeedback notice={error?{kind:'error',message:error}:saving?{kind:'saving',message:'Logging activity…'}:null}
        className="sales-activity-error"/>
     </div>
     <PreviewPanelActions className="ss-record-editor-actions ss-mobile-sheet-actions">
      <button type="button" onClick={discard} disabled={saving} title="Erase this unsaved activity draft">Discard draft</button>
      <button type="button" onClick={close} disabled={saving}>Close</button>
-     <button type="submit" disabled={saving}>{saving?'Saving…':workflowTaskId?'Log & complete task':'Save activity'}</button>
+     <button type="submit" disabled={saving}>{saving?'Saving…':loggedPendingActivity?'Finish pending work':workflowTaskId?'Log & complete task':'Save activity'}</button>
     </PreviewPanelActions>
    </form>
   </div>,document.body)}
