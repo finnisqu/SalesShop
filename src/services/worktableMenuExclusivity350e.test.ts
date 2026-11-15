@@ -6,10 +6,14 @@ import {
 } from '../components/useViewportBoundDetails';
 
 const source=(path:string)=>readFileSync(join(process.cwd(),path),'utf8');
-type FakeScope={entries:HTMLDetailsElement[];querySelectorAll:()=>HTMLDetailsElement[]};
+type FakeScope={entries:HTMLDetailsElement[];querySelectorAll:(selector:string)=>HTMLDetailsElement[]};
 const scope=():FakeScope=>({
  entries:[],
- querySelectorAll(){return this.entries;},
+ // Match native Element.querySelectorAll: return only elements that actually
+ // satisfy the CSS selector, including its [open] state. Returning all
+ // entries accidentally made the mock treat unrelated help accordions as
+ // worktable menus, while the browser would never include them.
+ querySelectorAll(selector){return this.entries.filter(entry=>entry.open&&entry.matches(selector));},
 });
 const menu=(kind:string,root:FakeScope):HTMLDetailsElement=>({
  open:true,
@@ -52,6 +56,8 @@ describe('Batch 350e — worktable menus do not overlap',()=>{
   const other=menu('connections-columns-menu',second);
   const untracked=menu('user-guide-accordion',first);
   first.entries=[filters,untracked];second.entries=[other];
+  expect(first.querySelectorAll(OPEN_WORKTABLE_DETAILS_SELECTOR)).toEqual([filters]);
+  expect(second.querySelectorAll(OPEN_WORKTABLE_DETAILS_SELECTOR)).toEqual([other]);
   expect(closeOtherOpenWorktableDetails(filters)).toBe(0);
   expect(untracked.open).toBe(true);
   expect(other.open).toBe(true);
@@ -69,6 +75,7 @@ describe('Batch 350e — worktable menus do not overlap',()=>{
   expect(nested.open).toBe(true);
   expect(sibling.open).toBe(false);
   nested.open=false;
+  expect(root.querySelectorAll(OPEN_WORKTABLE_DETAILS_SELECTOR)).not.toContain(nested);
   expect(closeOtherOpenWorktableDetails(nested)).toBe(0);
  });
  it('uses the existing viewport toggle, outside-click and Escape hooks without a new overlay',()=>{
