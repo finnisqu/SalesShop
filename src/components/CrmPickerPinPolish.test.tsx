@@ -57,11 +57,14 @@ describe('Unified CRM relationship field and pin polish',()=>{
   const picker=source('src/components/UnifiedRecordPicker.tsx');
   const styles=source('src/activity-related-create.css');
   expect(activity).toContain('<UnifiedRecordPicker kind="Company"');
+  expect(activity).toContain('stageActivityCompanyName(raw,');
+  expect(activity).toContain('resolveActivityCompanyStage({companyId,stagedCompanyName}');
+  expect(activity).toContain('Not saved yet. Canceling this Activity will not create the Company.');
   expect(activity).toContain('onCreate={createCompanyWhileLogging}');
-  expect(activity).toContain('onLink={id=>{setCompanyId(id);setCreatedCompanyId(null);}}');
-  expect(activity).toContain("setCreatedCompanyId(id)");
-  expect(activity).toContain("companyId:companyId||undefined");
-  expect(activity).toContain("if(companyId)relinkDealCompany(id,companyId)");
+  expect(activity).toContain("onLink={id=>{setCompanyId(id);setStagedCompanyName('');setCreatedCompanyId(null);}}");
+  expect(activity).toContain("setCompanyId(id);setStagedCompanyName('');setCreatedCompanyId(id);");
+  expect(activity).toContain("companyId:resolvedCompanyId,source:'manual'");
+  expect(activity).toContain("if(resolvedCompanyId)relinkDealCompany(id,resolvedCompanyId)");
   expect(activity).toContain("!event.target.closest('.ss-unified-record-picker')");
   expect(activity).not.toContain('<select disabled={disabled} value={companyId}');
   expect(styles).toContain('.activity-related-company-picker .ss-unified-picker-panel');
