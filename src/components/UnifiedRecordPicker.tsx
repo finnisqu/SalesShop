@@ -51,7 +51,7 @@ export function UnifiedRecordPicker({kind,items,onLink,onCreate,
   }catch(e){setError(e instanceof Error?e.message:'Unable to update the record.');}
   finally{pendingRef.current=false;setSaving(false);}
  };
- return <div className="ss-unified-record-picker" ref={rootRef}>
+ return <div className="ss-unified-record-picker" ref={rootRef} data-ss-popover-open={open?"true":"false"}>
   <button type="button" ref={triggerRef}
    className="connections-record-add ss-unified-picker-trigger"
    disabled={disabled||saving} aria-expanded={open} aria-haspopup="true"
