@@ -338,3 +338,49 @@
 
 /* Keep failed named quick-creates visible until corrected or deliberately closed. */
 .quick-create-error{margin:0;padding:8px 10px;color:var(--ss-theme-danger,#9b322d);font-size:.88rem;line-height:1.35;}
+
+/* Batch 351a: a compact existing-Person chooser inside the existing
+ * Quick Create sheet. Keep create-vs-link clear without a second modal. */
+.quick-create-person-helper{
+ margin:0;
+ color:var(--ss-theme-muted);
+ font:550 12px/1.45 var(--ss-font-body,system-ui,sans-serif);
+}
+.quick-create-person-matches{
+ box-sizing:border-box;
+ display:grid;gap:7px;min-width:0;
+ padding:10px;
+ border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-tint);
+}
+.quick-create-person-matches>small{
+ color:var(--ss-theme-muted);font:550 11px/1.45 var(--ss-font-body,system-ui,sans-serif);
+}
+.quick-create-person-matches>button{
+ box-sizing:border-box;display:grid;gap:3px;
+ width:100%;min-height:38px;padding:8px 10px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ text-align:left;font:650 12px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;overflow-wrap:anywhere;
+}
+.quick-create-person-matches>button span{
+ font:500 11px/1.35 var(--ss-font-body,system-ui,sans-serif);color:var(--ss-theme-muted);
+}
+.quick-create-person-matches>button:disabled{opacity:.5;cursor:default}
+.quick-create-person-matches .quick-create-person-duplicate-confirm{
+ display:flex;align-items:flex-start;gap:8px;min-width:0;
+ font:550 11px/1.4 var(--ss-font-body,system-ui,sans-serif);
+ color:var(--ss-theme-ink);
+}
+.quick-create-person-duplicate-confirm input[type=checkbox]{
+ flex:0 0 auto;margin:1px 0 0;width:18px;height:18px;
+ accent-color:var(--ss-theme-accent);
+}
+.quick-create-person-matches :is(button,input):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+@media(max-width:760px){
+ .quick-create-person-matches>button{min-height:44px}
+ .quick-create-person-helper{overflow-wrap:anywhere}
+}
