@@ -118,6 +118,16 @@ describe('Batch 351b — external quote Deal/Company creation and recovery',()=>
   expect(f.deals).toHaveLength(1);
   expect(f.deals[0].companyId).toBe('company-new-1');
  });
+ it('keeps nested Deal and Company picker dismissal separate for keyboard Escape',()=>{
+  const picker=source('components/UnifiedRecordPicker.tsx');
+  const dismiss=source('components/useDismissibleDetails.ts');
+  expect(picker).toContain('data-ss-popover-open={open?"true":"false"}');
+  expect(picker).toContain('useDismissiblePopover(rootRef,open');
+  expect(dismiss).toContain("event.target.closest('[data-ss-popover-open=\"true\"]')");
+  expect(dismiss).toContain('innerOpen!==root&&root.contains(innerOpen)');
+  expect(dismiss).toContain('event.preventDefault();');
+  expect(dismiss).toContain('latest.current();');
+ });
  it('reuses the shared searchable picker and keeps external submission attached to selected Deal',()=>{
   const dialog=source('components/ExternalQuoteBackfillDialog.tsx');
   const form=source('components/ExternalQuoteSentForm.tsx');
