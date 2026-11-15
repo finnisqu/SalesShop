@@ -67,14 +67,12 @@ describe('Batch 351b — external quote Deal/Company creation and recovery',()=>
  });
  it('creates a staged new Company only AFTER the Deal exists',()=>{
   const f=fixture();
-  const actual=f.services;
   f.services.createDeal=()=>null;
   expect(()=>createExternalQuoteDealWithCompany('Job',{newCompanyName:'New Builder'},f.services))
    .toThrow('Could not create the Deal');
   expect(f.createdCompanies()).toBe(0);
   expect(f.deals).toHaveLength(0);
-  f.services.createDeal=actual.createDeal;
-  // Explicitly use a fresh normal implementation after failed pre-create.
+  // Allow a normal Deal create after the failed pre-create attempt.
   f.services.createDeal=name=>{f.deals.push({id:'deal-1',name});return 'deal-1';};
   const result=createExternalQuoteDealWithCompany('Job',{newCompanyName:'New Builder'},f.services);
   expect(result.recovery).toBeNull();
