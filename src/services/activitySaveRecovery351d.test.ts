@@ -28,7 +28,7 @@ describe('Batch 351d — idempotent Activity saves and recoverable follow-ups',(
   expect(activityAttemptId('task-7','org:one:user:bob',null,generate)).not.toBe(expected);
  });
  it('does not insert a second Activity when the same attempt is already logged',()=>{
-  const record=vi.fn(id=>id);
+  const record=vi.fn((id:string)=>id);
   const id=activityAttemptId(null,'local:user','activity_manual_saved');
   expect(recordActivityOnce(id,[{id}],record)).toBe(id);
   expect(record).not.toHaveBeenCalled();
@@ -37,7 +37,8 @@ describe('Batch 351d — idempotent Activity saves and recoverable follow-ups',(
   const id='activity_manual_first';
   const record=vi.fn((value:string)=>value);
   expect(recordActivityOnce(id,[],record)).toBe(id);
-  expect(record).toHaveBeenCalledExactlyOnceWith(id);
+  expect(record).toHaveBeenCalledTimes(1);
+  expect(record).toHaveBeenCalledWith(id);
  });
  it('retries a failed follow-up without creating a duplicate interaction',()=>{
   const activities:{id:string}[]=[];
