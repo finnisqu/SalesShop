@@ -103,4 +103,49 @@ describe('Batch 351c — Activity Company staged create/link',()=>{
   expect(activity).toContain('Not saved yet. Canceling this {contextLabel} will not create the Company.');
   expect(picker).toContain('useDismissiblePopover(rootRef,open');
  });
+ it('reuses the one CRM inline creator inside Tasks without nested forms',()=>{
+  const task=source('components/TasksWorkspace.tsx');
+  const activity=source('components/ActivityRelatedQuickCreate.tsx');
+  const field=source('components/TaskAssociationsField.tsx');
+  expect(task).toContain("import {ActivityRelatedQuickCreate} from './ActivityRelatedQuickCreate';");
+  expect(task).toContain('<ActivityRelatedQuickCreate contextLabel="Task"');
+  expect(task).toContain('disabled={!canCreateRelatedCrm} onCreated={linkCreatedRecord}');
+  expect(task).toContain('const [showCreateRelated,setShowCreateRelated]=useState(false);');
+  expect(task).toContain('const linkCreatedRecord=(link:TaskAssociation)=>');
+  expect(task).toContain('taskAssociationKey(item)===taskAssociationKey(link)');
+  expect(activity).toContain("contextLabel='Activity'");
+  expect(activity).toContain("contextLabel==='Task'?'Create for Task':'Create while logging'");
+  expect(activity).not.toContain('<form');
+  expect(field).toContain('onChange([...value,{...item.linked,label:item.label}])');
+ });
+ it('preserves a newly created Task link in the existing draft until the Task is saved',()=>{
+  const task=source('components/TasksWorkspace.tsx');
+  const creation=task.indexOf('const linkCreatedRecord=(link:TaskAssociation)=>');
+  const draft=task.indexOf('writeSavedDraft(scopeKey,{');
+  const save=task.indexOf('onSave({title:title.trim()');
+  expect(draft).toBeGreaterThan(0);
+  expect(creation).toBeGreaterThan(draft);
+  expect(save).toBeGreaterThan(creation);
+  expect(task).toContain('setSelectedLinks(current=>current.some(item=>');
+  expect(task).toContain('notes,queue,subtasks:savedSubtasks,associations:selectedLinks,');
+  expect(task).toContain('clearSavedDraft(scopeKey);clearSavedDraft(activeKey);');
+  expect(task).toContain('If you cancel the Task, the CRM record remains available.');
+  expect(task).toContain('Creates a shared CRM record immediately.');
+  expect(task).toContain('aria-expanded={showCreateRelated}');
+ });
+ it('keeps Task create permissions and duplicate-write protection aligned with CRM',()=>{
+  const task=source('components/TasksWorkspace.tsx');
+  const activity=source('components/ActivityRelatedQuickCreate.tsx');
+  const css=source('task-workflow-v2.css');
+  expect(task).toContain('const canCreateRelatedCrm=!useRolePerspectiveStore.getState().activePerspective');
+  expect(task).toContain("canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')");
+  expect(task).toContain('{canCreateRelatedCrm&&<section className="tasks-editor-related-create">');
+  expect(activity).toContain('if(disabled||!kind||pendingRef.current)return;');
+  expect(activity).toContain('pendingRef.current=true;');
+  expect(activity).toContain('finally{pendingRef.current=false;}');
+  expect(css).toContain('.tasks-editor-related-create');
+  expect(css).toContain('.tasks-editor-related-create-trigger{');
+  expect(css).toContain('min-height:44px;');
+ });
+
 });
