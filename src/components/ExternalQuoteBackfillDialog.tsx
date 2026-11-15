@@ -10,7 +10,9 @@ import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {PreviewPanelClose} from './PreviewPanelChrome';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
-import {recordNameKey} from '../services/recordNameKey';
+import {companyRelationshipPatch} from '../services/companyRelationship';
+import {createExternalQuoteDealWithCompany,linkExternalQuoteDealCompany,
+ type ExternalQuoteCompanyLinkRecovery,type ExternalQuoteDealCreateServices} from '../services/externalQuoteDealCreateLink';
 import '../external-quote.css';
 
 export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,initialSentDate}:{
@@ -20,6 +22,8 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,in
  const companies=useCrmStore(s=>s.companies);
  const createDeal=useCrmStore(s=>s.createProject);
  const assignCompany=useCrmStore(s=>s.setProjectCompany);
+ const resolveCompany=useCrmStore(s=>s.resolveCompany);
+ const updateCompany=useCrmStore(s=>s.updateCompany);
  const mode=useAuthStore(s=>s.mode),orgId=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   department=useAuthStore(s=>s.teamDepartment);
@@ -27,20 +31,43 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,in
  const editable=!perspective&&(mode==='local'||Boolean(orgId&&userId&&canEditTeamArea(role,department,'crm')));
  const [selectedId,setSelectedId]=useState(initialDealId??'');
  const [newCompanyId,setNewCompanyId]=useState('');
+ const [newCompanyName,setNewCompanyName]=useState('');
+ const [linkRecovery,setLinkRecovery]=useState<ExternalQuoteCompanyLinkRecovery|null>(null);
  const ref=useDismissibleLayer<HTMLElement>(true,onClose);
  useModalScrollLock(true);
  const selected=deals.find(d=>d.id===selectedId);
+ const createServices=():ExternalQuoteDealCreateServices=>({
+  deals:()=>useCrmStore.getState().projects,
+  companies:()=>useCrmStore.getState().companies,
+  createDeal:name=>createDeal(name,'Discovery'),
+  resolveCompany:name=>resolveCompany(name,'customer'),
+  assignCompany,
+  afterNewCompany:id=>{
+   const created=useCrmStore.getState().companies.find(company=>company.id===id);
+   if(created)updateCompany(id,companyRelationshipPatch(created,'prospect'));
+  },
+ });
+ const clearCompanyChoice=()=>{setNewCompanyId('');setNewCompanyName('');};
+ const selectDeal=(id:string)=>{
+  setSelectedId(id);clearCompanyChoice();setLinkRecovery(null);
+ };
  const createFromPicker=(name:string)=>{
   if(!editable)throw new Error('Your role cannot create Deals.');
-  const clean=name.trim();
-  if(!clean)throw new Error('Enter a Deal name.');
-  if(deals.some(d=>recordNameKey(d.name)===recordNameKey(clean)))
-    throw new Error('A Deal with that name already exists. Select it from search.');
-  const id=createDeal(clean,'Discovery');
-  if(!id)throw new Error('Could not create the Deal.');
-  if(newCompanyId)assignCompany(id,newCompanyId);
-  setSelectedId(id);
-  setNewCompanyId('');
+  const result=createExternalQuoteDealWithCompany(name,
+   {companyId:newCompanyId||undefined,newCompanyName:newCompanyName||undefined},
+   createServices());
+  // A successfully created Deal remains selected even when linking its
+  // Company fails. The user can retry the exact association, not create again.
+  setSelectedId(result.dealId);
+  setLinkRecovery(result.recovery);
+  if(!result.recovery)clearCompanyChoice();
+ };
+ const retryCompanyLink=()=>{
+  if(!editable||!linkRecovery||selectedId!==linkRecovery.dealId)return;
+  const next=linkExternalQuoteDealCompany(linkRecovery.dealId,
+   {companyId:linkRecovery.companyId,newCompanyName:linkRecovery.newCompanyName},createServices());
+  setLinkRecovery(next);
+  if(!next)clearCompanyChoice();
  };
  return createPortal(<div className="external-quote-picker-backdrop"
   onPointerDown={event=>{if(event.target===event.currentTarget)onClose();}}>
