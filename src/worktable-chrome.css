@@ -604,6 +604,14 @@
   flex-wrap:wrap;
  }
 }
+/* Batch 350f: page-size picker uses a phone-safe text size without
+ * increasing the shared header's number of controls or scroll parents. */
+@media(max-width:820px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
+ :root[data-sales-theme] .sales-app .ss-worktable-pagination select{
+  font-size:16px;
+  min-width:70px;
+ }
+}
 /* Catalog's older filter and Tags rules are more specific than the shared
  * chrome selector. Keep their touch targets aligned without changing desktop. */
 @media(max-width:820px), (orientation:landscape) and (max-height:520px) and (pointer:coarse){
