@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState,type FormEvent} from 'react';
+import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react';
 import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
 import {useQuoteStore} from '../store/quoteStore';
@@ -15,9 +15,10 @@ import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {MobileSheetHandle} from './MobileSheetHandle';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,
  type TaskAssociation,type TaskLink} from '../store/personalTaskStore';
-import {completedTaskActivityId,taskActivityMethod,type ActivityComposerRequest}
+import {taskActivityMethod,type ActivityComposerRequest}
  from '../services/taskActivityWorkflow';
 import {localDateKey} from '../services/salesCalendar';
+import {activityAttemptId,recordActivityOnce} from '../services/activitySaveRecovery351d';
 import {activityRelationsWithContext,primaryActivityRelations,type ActivityRelation}
  from '../services/activityRelations';
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
@@ -27,6 +28,7 @@ type Method='email'|'call'|'text'|'video-call'|'in-person';
 interface ActivityDraft {
  open:boolean;method:Method;notes:string;occurred:string;links:TaskAssociation[];
  createFollowUp?:boolean;followUpDate?:string;workflowTaskId?:string|null;
+ pendingActivityId?:string|null;
 }
 const methods:ReadonlyArray<{id:Method;label:string}>=[
  {id:'call',label:'Call'},{id:'email',label:'Email'},
@@ -80,18 +82,20 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
  const [createFollowUp,setCreateFollowUp]=useState(()=>saved?.createFollowUp??false);
  const [followUpDate,setFollowUpDate]=useState(()=>saved?.followUpDate??tomorrowKey());
  const [workflowTaskId,setWorkflowTaskId]=useState<string|null>(()=>saved?.workflowTaskId??null);
+ const [pendingActivityId,setPendingActivityId]=useState<string|null>(()=>saved?.pendingActivityId??null);
  const [error,setError]=useState('');
  const storedTaskScope=usePersonalTaskStore(s=>s.scope);
  const addTask=usePersonalTaskStore(s=>s.createTask);
  const completeTask=usePersonalTaskStore(s=>s.complete);
  const [saving,setSaving]=useState(false);
+ const savingRef=useRef(false);
  const orgId=useAuthStore(s=>s.organizationId);
  useEffect(()=>{
   if(!draftKey)return;
   // Save even while hidden so a browser tab discard or automatic reload cannot lose the form.
   if(open||notes.trim()||links.length)
-   writeSavedDraft(draftKey,{open,method,notes,occurred,links,createFollowUp,followUpDate,workflowTaskId});
- },[draftKey,open,method,notes,occurred,links,createFollowUp,followUpDate,workflowTaskId]);
+   writeSavedDraft(draftKey,{open,method,notes,occurred,links,createFollowUp,followUpDate,workflowTaskId,pendingActivityId});
+ },[draftKey,open,method,notes,occurred,links,createFollowUp,followUpDate,workflowTaskId,pendingActivityId]);
  useEffect(()=>{
   // Only the single app-level headless editor handles global action requests.
   if(!headless)return;
@@ -107,6 +111,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
     }
     if((notes.trim()||links.length||workflowTaskId)&&
       !window.confirm('Replace your unfinished Activity draft with this task-linked interaction?'))return;
+    setPendingActivityId(null);
     setWorkflowTaskId(current.id);
     setMethod(taskActivityMethod(current));
     setLinks(normalizedTaskAssociations(current).filter(link=>link.type!=='notebook'));
@@ -124,6 +129,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
     }else if(workflowTaskId&&
       !window.confirm('Start a separate Activity instead of finishing your task-linked draft?'))return;
     setWorkflowTaskId(null);
+    setPendingActivityId(null);
     if(day&&/^\d{4}-\d{2}-\d{2}$/.test(day)&&day<=localDateKey(new Date()))
       setOccurred(day+'T'+dateTimeLocal().slice(11));
    }
@@ -156,7 +162,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   clearSavedDraft(draftKey);
   setMethod('call');setNotes('');setLinks([]);setOccurred(dateTimeLocal());
   setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
-  setWorkflowTaskId(null);
+  setWorkflowTaskId(null);setPendingActivityId(null);
   close();
  };
  const addLinks=(items:TaskAssociation[])=>{
@@ -171,7 +177,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
  };
  const submit=(event:FormEvent)=>{
   event.preventDefault();
-  if(saving)return;
+  if(savingRef.current)return;
   setError('');
   if(!permitted)return setError('Your role cannot log shared CRM interactions.');
   const person=primaryName(links);
