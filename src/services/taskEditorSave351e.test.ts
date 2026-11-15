@@ -63,7 +63,7 @@ describe('Batch 351e — verified Task save and stale-editor recovery',()=>{
   const f=fixture();
   expect(saveTaskEditorChanges(scope,'task-1',changes,f.port)).toBe('task-1');
   expect(f.create).not.toHaveBeenCalled();
-  expect(f.update).toHaveBeenCalledOnce();
+  expect(f.update).toHaveBeenCalledTimes(1);
   expect(f.update).toHaveBeenCalledWith('task-1');
   expect(f.state().tasks[0].updatedAt).toBe('2026-11-15T10:00:01.000Z');
  });
