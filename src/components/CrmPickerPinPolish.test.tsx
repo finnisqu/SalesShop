@@ -59,7 +59,7 @@ describe('Unified CRM relationship field and pin polish',()=>{
   expect(activity).toContain('<UnifiedRecordPicker kind="Company"');
   expect(activity).toContain('stageActivityCompanyName(raw,');
   expect(activity).toContain('resolveActivityCompanyStage({companyId,stagedCompanyName}');
-  expect(activity).toContain('Not saved yet. Canceling this Activity will not create the Company.');
+  expect(activity).toContain('Not saved yet. Canceling this {contextLabel} will not create the Company.');
   expect(activity).toContain('onCreate={createCompanyWhileLogging}');
   expect(activity).toContain("onLink={id=>{setCompanyId(id);setStagedCompanyName('');setCreatedCompanyId(null);}}");
   expect(activity).toContain("setCompanyId(id);setStagedCompanyName('');setCreatedCompanyId(id);");
