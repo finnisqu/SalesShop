@@ -69,3 +69,29 @@
 .quote-external-backfill-launch button:hover{background:var(--ss-theme-tint,rgba(128,128,128,.06))}
 .quote-external-backfill-launch button:focus-visible{outline:2px solid var(--ss-focus,var(--ss-theme-accent));outline-offset:2px}
 @media(max-width:760px){.quote-external-backfill-launch button{min-height:44px}}
+
+/* Batch 351b — reuse the shared searchable Company picker when an external
+ * quote requires a new Deal, and keep post-create Company recovery visible. */
+.external-quote-company-choice{display:grid;gap:6px;min-width:0;padding:8px 0;}
+.external-quote-company-choice>strong{font-size:12px;font-weight:700;}
+.external-quote-company-choice>.ss-unified-record-picker{margin:0;}
+.external-quote-company-choice>.ss-record-association-current{min-width:0;}
+.external-quote-link-recovery{
+ display:grid;gap:8px;min-width:0;padding:11px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+}
+.external-quote-link-recovery p{margin:0;overflow-wrap:anywhere;font-size:12px;}
+.external-quote-link-recovery small{color:var(--ss-theme-muted);font-size:11px;line-height:1.4;}
+.external-quote-link-recovery button{
+ justify-self:start;min-height:38px;padding:7px 11px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:750 12px/1.4 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;
+}
+.external-quote-link-recovery button:disabled{opacity:.5;cursor:default;}
+@media(max-width:700px){
+ .external-quote-link-recovery button{min-height:44px;}
+ .external-quote-company-choice>.ss-unified-record-picker{min-width:0;}
+}
