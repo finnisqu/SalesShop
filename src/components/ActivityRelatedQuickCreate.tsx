@@ -6,6 +6,7 @@ import {companyRelationshipPatch} from '../services/companyRelationship';
 import {recordEmailError} from './RecordFormFeedback';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {recordNameKey} from '../services/recordNameKey';
+import {stageActivityCompanyName,resolveActivityCompanyStage} from '../services/activityCompanyStage351c';
 import '../activity-related-create.css';
 
 type Kind='company'|'person'|'deal';
@@ -19,6 +20,7 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
  const [phone,setPhone]=useState('');
  const [title,setTitle]=useState('');
  const [companyId,setCompanyId]=useState('');
+ const [stagedCompanyName,setStagedCompanyName]=useState('');
  const [createdCompanyId,setCreatedCompanyId]=useState<string|null>(null);
  const [error,setError]=useState('');
  const companies=useCrmStore(s=>s.companies);
@@ -32,18 +34,28 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
  const availableCompanies=companies.filter(c=>!isOurOrgCompany(c)).slice()
   .sort((a,b)=>a.name.localeCompare(b.name));
  const choose=(next:Kind)=>{setKind(next);setName('');setEmail('');setPhone('');
-  setTitle('');setCompanyId('');setCreatedCompanyId(null);setError('');};
+  setTitle('');setCompanyId('');setStagedCompanyName('');setCreatedCompanyId(null);setError('');};
  const createCompanyWhileLogging=(raw:string)=>{
-  const clean=raw.trim();
-  if(!clean)throw new Error('Enter a Company name.');
-  if(useCrmStore.getState().companies.some(c=>recordNameKey(c.name)===recordNameKey(clean)))
-   throw new Error('That Company already exists. Select it from search.');
-  const existingIds=new Set(useCrmStore.getState().companies.map(c=>c.id));
-  const id=resolveCompany(clean,'customer');
-  if(!id||existingIds.has(id))throw new Error('Unable to create a new Company.');
-  const created=useCrmStore.getState().companies.find(c=>c.id===id);
-  if(created)updateCompany(id,companyRelationshipPatch(created,'prospect'));
-  setCompanyId(id);setCreatedCompanyId(id);
+  // The nested Company picker stages a name only. Closing the Activity
+  // form or switching record type must not leave an unused Company behind.
+  const clean=stageActivityCompanyName(raw,useCrmStore.getState().companies);
+  setStagedCompanyName(clean);
+  setCompanyId('');setCreatedCompanyId(null);
+ };
+ const resolveSelectedCompany=()=>{
+  return resolveActivityCompanyStage({companyId,stagedCompanyName},{
+   companies:()=>useCrmStore.getState().companies,
+   resolveCompany:name=>resolveCompany(name,'customer'),
+   onCreated:id=>{
+    // Keep the resolved Company even if an optional classification or
+    // subsequent Person/Deal save fails. Retrying never duplicates it.
+    setCompanyId(id);setStagedCompanyName('');setCreatedCompanyId(id);
+   },
+   classifyNewCompany:id=>{
+    const created=useCrmStore.getState().companies.find(c=>c.id===id);
+    if(created)updateCompany(id,companyRelationshipPatch(created,'prospect'));
+   },
+  });
  };
  const submit=()=>{
   // This component lives inside the activity form. Never submit that form.
@@ -71,8 +83,9 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
       (recordNameKey(p.name)===recordNameKey(clean)&&(p.companyId??'')===companyId))){
      setError('That person may already exist. Find and link their record above.');return;
     }
+    const resolvedCompanyId=resolveSelectedCompany();
     id=createContact({name:clean,email:email.trim(),phone:phone.trim(),title:title.trim(),
-      companyId:companyId||undefined,source:'manual'});
+      companyId:resolvedCompanyId,source:'manual'});
     if(!id)throw new Error('Could not create the person.');
     link={type:'contact',id,label:'Person · '+clean};
    }else{
@@ -80,9 +93,10 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
       (d.companyId??'')===companyId)){
      setError('That Deal already exists. Find and link it above.');return;
     }
+    const resolvedCompanyId=resolveSelectedCompany();
     id=createDeal(clean,'Discovery');
     if(!id)throw new Error('Could not create the Deal.');
-    if(companyId)relinkDealCompany(id,companyId);
+    if(resolvedCompanyId)relinkDealCompany(id,resolvedCompanyId);
     link={type:'project',id,label:'Deal · '+clean};
    }
    onCreated(link);
@@ -120,20 +134,23 @@ export function ActivityRelatedQuickCreate({onCreated,disabled=false}:{
       aria-label="Company for new record">
       <strong>Company (optional)</strong>
       <div className="ss-record-association-current">
-       <span>{companyId
+       <span>{stagedCompanyName?'New Company (not yet saved) · '+stagedCompanyName:companyId
          ?availableCompanies.find(c=>c.id===companyId)?.name??'Selected company'
          :'Unassigned'}</span>
-       {companyId&&<button type="button" disabled={disabled}
-        onClick={()=>{setCompanyId('');setCreatedCompanyId(null);}}>Clear</button>}
+       {(companyId||stagedCompanyName)&&<button type="button" disabled={disabled}
+        onClick={()=>{setCompanyId('');setStagedCompanyName('');setCreatedCompanyId(null);}}>Clear</button>}
       </div>
       <UnifiedRecordPicker kind="Company" disabled={disabled}
-       triggerLabel={companyId?'Change Company':'Search or create Company'}
+       triggerLabel={companyId||stagedCompanyName?'Change Company':'Search or create Company'}
        items={availableCompanies.map(c=>({id:c.id,name:c.name}))}
-       onLink={id=>{setCompanyId(id);setCreatedCompanyId(null);}}
+       onLink={id=>{setCompanyId(id);setStagedCompanyName('');setCreatedCompanyId(null);}}
        onCreate={createCompanyWhileLogging}
-       helper="Find an existing Company or create one without leaving this Activity."/>
-      {createdCompanyId===companyId&&<small className="activity-related-company-created">
-        Company created and selected. It will be linked when this {kind} is saved.
+       helper="Find a Company or stage a new one. A new Company is only created when you save the Person or Deal."/>
+      {stagedCompanyName&&<small className="activity-related-company-created">
+        Not saved yet. Canceling this Activity will not create the Company.
+       </small>}
+      {createdCompanyId&&createdCompanyId===companyId&&<small className="activity-related-company-created">
+        Company saved. If the {kind} could not be created, retrying uses this Company.
        </small>}
      </div>}
     {error&&<p role="alert" className="activity-related-quick-error">{error}</p>}
