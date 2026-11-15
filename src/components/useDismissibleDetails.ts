@@ -44,14 +44,15 @@ export function useDismissiblePopover(
    if(ref.current&&!ref.current.contains(event.target as Node))latest.current();
   };
   const escape=(event:KeyboardEvent)=>{
+   const root=ref.current;
    if(event.key!=='Escape'||event.defaultPrevented||
-      !ref.current?.contains(event.target as Node))return;
+      !root?.contains(event.target as Node))return;
    // Nested shared CRM pickers have their own Escape handler. The outer
    // picker is registered first in capture phase, so let the innermost
    // OPEN picker dismiss itself instead of closing both disclosures.
    const innerOpen=event.target instanceof Element
     ?event.target.closest('[data-ss-popover-open="true"]'):null;
-   if(innerOpen&&innerOpen!==ref.current&&ref.current.contains(innerOpen))return;
+   if(innerOpen&&innerOpen!==root&&root.contains(innerOpen))return;
    event.preventDefault();
    event.stopPropagation();
    latest.current();
