@@ -138,7 +138,7 @@ describe('Batch 351b — external quote Deal/Company creation and recovery',()=>
   expect(dialog).toContain('setSelectedId(result.dealId);');
   expect(dialog).toContain('setLinkRecovery(result.recovery);');
   expect(dialog).toContain('linkExternalQuoteDealCompany(linkRecovery.dealId,');
-  expect(dialog).toContain('>Retry Company link');
+  expect(dialog).toMatch(/<button[^>]*onClick={retryCompanyLink}>\s*Retry Company link/);
   expect(dialog).toContain('<ExternalQuoteSentForm key={selected.id} deal={selected}');
   expect(form).toContain('recordExternalQuoteSent(');
   expect(dialog).not.toContain('<select value={newCompanyId}');
