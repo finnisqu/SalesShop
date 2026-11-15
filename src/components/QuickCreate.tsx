@@ -16,14 +16,15 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import type {TaskAssociation} from '../store/personalTaskStore';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
 import {setNotebookRelatedRecord} from '../services/notebookProjectContext';
+import {recordNameKey} from '../services/recordNameKey';
 
 export type RecordCreateContext={kind:'company'|'person'|'deal';id:string;name:string};
-type NamedCreateMode = 'project' | 'account' | null;
+type NamedCreateMode = 'project' | 'account' | 'person' | null;
 export function contextTaskAssociation(context:RecordCreateContext):TaskAssociation{
   const type=context.kind==='deal'?'project':context.kind==='person'?'contact':'company';
   return {type,id:context.id,label:(context.kind==='deal'?'Deal':context.kind==='person'?'Person':'Company')+' · '+context.name};
 }
-type QuickCreateGlyph = 'quote'|'external'|'task'|'activity'|'deal'|'account'|'notebook';
+type QuickCreateGlyph = 'quote'|'external'|'task'|'activity'|'deal'|'account'|'person'|'notebook';
 function CreateGlyph({kind}:{kind:QuickCreateGlyph}){
  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
   stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
@@ -34,6 +35,7 @@ function CreateGlyph({kind}:{kind:QuickCreateGlyph}){
    kind==='activity'?<><path d="M5 3h3l2.1 5.2-2.3 2.1a16 16 0 0 0 6 6l2.1-2.3L21 16v3.1a2 2 0 0 1-2.2 2C10.6 20.4 3.6 13.4 3 5.2A2 2 0 0 1 5 3Z"/></>:
    kind==='deal'?<><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/></>:
    kind==='account'?<><path d="M4 21V5l8-3 8 3v16M2 21h20M9 21v-5h6v5M8 8h1M15 8h1M8 12h1M15 12h1"/></>:
+   kind==='person'?<><circle cx="12" cy="8" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3"/></>:
    <><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 3v18M12 8h5M12 12h5M12 16h3"/></>}
  </svg>;
 }
@@ -43,7 +45,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
   const [namedMode, setNamedMode] = useState<NamedCreateMode>(null);
   const [name, setName] = useState('');
   const [namedCreateError,setNamedCreateError]=useState('');
-  const [pendingCreated,setPendingCreated]=useState<{id:string;kind:'project'|'account'}|null>(null);
+  const [pendingCreated,setPendingCreated]=useState<{id:string;kind:'project'|'account'|'person'}|null>(null);
   const namedCreatePending=useRef(false);
   const [namedCreateSaving,setNamedCreateSaving]=useState(false);
   const [recordExternalOpen,setRecordExternalOpen]=useState(false);
@@ -57,12 +59,15 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     Boolean(organizationId&&userId&&canEditTeamArea(teamRole,department,'crm')));
 
   const createProject = useCrmStore((state) => state.createProject);
+  const createPerson = useCrmStore((state) => state.createContact);
+  const people = useCrmStore((state)=>state.contacts);
   const setProjectCompany = useCrmStore((state)=>state.setProjectCompany);
   const updateContact = useCrmStore((state)=>state.updateContact);
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createEntry = useNotebookStore((state) => state.createEntry);
   const openProject = useNavigationStore((state) => state.openProject);
   const openCompany = useNavigationStore((state) => state.openCompany);
+  const openPerson = useNavigationStore((state) => state.openPerson);
   const setView = useNavigationStore((state) => state.setView);
 
   const close = () => {
@@ -114,6 +119,7 @@ export function QuickCreate({context,launcherLabel}:{context?:RecordCreateContex
     const saved=pendingCreated;
     close();
     if(saved.kind==='project')openProject(saved.id);
+    else if(saved.kind==='person')openPerson(saved.id);
     else openCompany(saved.id);
   };
 
