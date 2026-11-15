@@ -121,15 +121,19 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
    }else{
     // Normal Home/Calendar logging must never complete a previously selected task.
     if(request.associations?.length){
-     if((notes.trim()||links.length||workflowTaskId)&&
+     if((notes.trim()||links.length||workflowTaskId||pendingActivityId)&&
       !window.confirm('Replace your unfinished Activity draft with this related-record interaction?'))return;
      setLinks(request.associations);setNotes('');setMethod('call');
      setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
      setOccurred(dateTimeLocal());
-    }else if(workflowTaskId&&
-      !window.confirm('Start a separate Activity instead of finishing your task-linked draft?'))return;
+     setPendingActivityId(null);
+    }else if(workflowTaskId){
+     if(!window.confirm('Start a separate Activity instead of finishing your task-linked draft?'))return;
+     setPendingActivityId(null);
+    }
+    // Just reopening a manual Activity keeps its pending retry ID.
+    // Only a confirmed replacement starts a different recording attempt.
     setWorkflowTaskId(null);
-    setPendingActivityId(null);
     if(day&&/^\d{4}-\d{2}-\d{2}$/.test(day)&&day<=localDateKey(new Date()))
       setOccurred(day+'T'+dateTimeLocal().slice(11));
    }
@@ -137,7 +141,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   };
   window.addEventListener('salesshop:open-activity',openForDate);
   return()=>window.removeEventListener('salesshop:open-activity',openForDate);
- },[headless,mode,orgId,currentUser,notes,links,workflowTaskId]);
+ },[headless,mode,orgId,currentUser,notes,links,workflowTaskId,pendingActivityId]);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
  const projects=useCrmStore(s=>s.projects);
@@ -210,20 +214,26 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
       ?'Deal · '+(projects.find(x=>x.id===link.id)?.name??'Deal')
       :'Quote · '+(quotes.find(x=>x.id===link.id)?.title??'Quote')),
   }));
-  const activityId=workflowTaskId
-   ?completedTaskActivityId(workflowTaskId,privateScope??'local:user'):undefined;
-  const existing=activityId?useCrmStore.getState().activities.find(a=>a.id===activityId):undefined;
-  // A browser discard between logging and Task completion can retry without
-  // making two Activities for the same completion.
+  const activityId=activityAttemptId(workflowTaskId,privateScope,pendingActivityId);
+  // Persist the attempt identity synchronously BEFORE the first CRM write.
+  // A failure after recordActivity (for example creating a follow-up)
+  // must not append a second Activity on retry or browser reload.
+  if(pendingActivityId!==activityId){
+   setPendingActivityId(activityId);
+   writeSavedDraft(draftKey,{open:true,method,notes,occurred,links,createFollowUp,
+    followUpDate,workflowTaskId,pendingActivityId:activityId});
+  }
+  savingRef.current=true;
   setSaving(true);
   try{
-  const loggedId=existing?.id??record({id:activityId,
-   type:'manual-touchpoint',summary:fallback+' with '+(person||'related record'),
-   ...primary,
-   occurredAt:timestamp.toISOString(),
-   metadata:{source:'manual',interactionMethod:method,
-    relatedRecords:relations,
-    notes:notes.trim().slice(0,5000)||undefined}});
+  const loggedId=recordActivityOnce(activityId,useCrmStore.getState().activities,stableId=>
+   record({id:stableId,
+    type:'manual-touchpoint',summary:fallback+' with '+(person||'related record'),
+    ...primary,
+    occurredAt:timestamp.toISOString(),
+    metadata:{source:'manual',interactionMethod:method,
+     relatedRecords:relations,
+     notes:notes.trim().slice(0,5000)||undefined}}));
   if(createFollowUp){
    const already=usePersonalTaskStore.getState().tasks.some(t=>
     !t.deletedAt&&t.sourceObjectId==='activity-followup:'+loggedId);
@@ -242,10 +252,10 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   clearSavedDraft(draftKey);
   setMethod('call');setNotes('');setOccurred(dateTimeLocal());
   setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
-  setWorkflowTaskId(null);setLinks([]);close();
+  setWorkflowTaskId(null);setPendingActivityId(null);setLinks([]);close();
   }catch(error){
    setError(error instanceof Error?error.message:'Could not finish this activity. Please retry.');
-  }finally{setSaving(false);}
+  }finally{savingRef.current=false;setSaving(false);}
  };
  if(!permitted)return null;
  return <>
