@@ -100,7 +100,7 @@ describe('Batch 351c — Activity Company staged create/link',()=>{
   expect(activity).toContain('if(resolvedCompanyId)relinkDealCompany(id,resolvedCompanyId)');
   expect(activity).toContain("setCompanyId(id);setStagedCompanyName('');setCreatedCompanyId(id);");
   expect(activity).toContain("onLink={id=>{setCompanyId(id);setStagedCompanyName('');setCreatedCompanyId(null);}}");
-  expect(activity).toContain('Not saved yet. Canceling this Activity will not create the Company.');
+  expect(activity).toContain('Not saved yet. Canceling this {contextLabel} will not create the Company.');
   expect(picker).toContain('useDismissiblePopover(rootRef,open');
  });
 });
