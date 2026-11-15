@@ -83,25 +83,43 @@ export function ExternalQuoteBackfillDialog({onClose,onRecorded,initialDealId,in
        <span>{selected
          ?selected.name+' · '+selected.stage+(selected.companyName?' · '+selected.companyName:'')
          :'No Deal selected'}</span>
-       {selected&&editable&&<button type="button" onClick={()=>setSelectedId('')}
+       {selected&&editable&&<button type="button" onClick={()=>selectDeal('')}
          aria-label="Clear selected Deal">Clear</button>}
       </div>
       <UnifiedRecordPicker kind="Deal" disabled={!editable}
        triggerLabel={selected?'Change Deal':'Search or create Deal'}
        items={deals.slice().sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))
          .map(d=>({id:d.id,name:d.name,detail:[d.companyName,d.stage].filter(Boolean).join(' · ')}))}
-       onLink={id=>{setSelectedId(id);setNewCompanyId('');}}
+       onLink={selectDeal}
        onCreate={createFromPicker}
-       extra={<label>Company for a new Deal (optional)
-         <select value={newCompanyId} onChange={event=>setNewCompanyId(event.target.value)}>
-          <option value="">No company</option>
-          {companies.filter(c=>!isOurOrgCompany(c))
-            .slice().sort((a,b)=>a.name.localeCompare(b.name))
-            .map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-         </select>
-       </label>}
-       helper="Choose a Deal or create one here, then record the external bid. Creating a new Deal adds it to Connections."/>
+       extra={<div className="external-quote-company-choice" role="group" aria-label="Company for a new Deal">
+        <strong>Company for a new Deal (optional)</strong>
+        <div className="ss-record-association-current">
+         <span>{newCompanyName?'New Company · '+newCompanyName:
+          newCompanyId?companies.find(c=>c.id===newCompanyId)?.name||'Company unavailable':
+          'No Company selected'}</span>
+         {(newCompanyId||newCompanyName)&&<button type="button"
+          onClick={clearCompanyChoice} aria-label="Clear new Deal Company">Clear</button>}
+        </div>
+        <UnifiedRecordPicker kind="Company" disabled={!editable}
+         triggerLabel={newCompanyId||newCompanyName?'Change Company':'Search or create Company'}
+         items={companies.filter(company=>!isOurOrgCompany(company))
+          .slice().sort((a,b)=>a.name.localeCompare(b.name))
+          .map(company=>({id:company.id,name:company.name,detail:company.aliases?.join(', ')}))}
+         onLink={id=>{setNewCompanyId(id);setNewCompanyName('');}}
+         onCreate={name=>{setNewCompanyName(name.trim());setNewCompanyId('');}}
+         helper="Choose an existing Company or stage a new one. New Companies are created only when you create the Deal."/>
+       </div>}
+       helper="Choose an existing Deal or create a Deal and optional Company here, then record the outside bid."/>
      </div>
+     {linkRecovery&&selected?.id===linkRecovery.dealId&&
+      <div className="external-quote-link-recovery" role="alert">
+       <p>{linkRecovery.message}</p>
+       <button type="button" disabled={!editable} onClick={retryCompanyLink}>
+        Retry Company link
+       </button>
+       <small>The Deal is already created. Recording the external bid does not require a Company.</small>
+      </div>}
      {selected&&editable&&<ExternalQuoteSentForm key={selected.id} deal={selected}
        initialSentDate={initialSentDate} onCancel={onClose}
        onRecorded={date=>{try{onRecorded?.(selected.name,date);}finally{onClose();}}}/>}
