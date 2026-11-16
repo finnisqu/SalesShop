@@ -284,6 +284,15 @@
 - Role-preview change now clears cached record-level subject/body state via the same effect that reacts to token/mailbox changes and will not render a selected message without an active, non-preview Gmail session.
 - User's previous #358h release explicitly confirmed green. New Email batch still requires its own Cloudflare green and authenticated Google OAuth setup/consent.
 
+### November 16 #360a — Tools becomes a top-level navigation destination
+
+- User confirmed Email prototype build green and requested a temporary top-level **TOOLS** tab while development continues.
+- Desktop main header now reads **Home · Records · Catalog · Notebook · Tools**, preserving Shift+1–4 and adding Shift+5 for Tools. Mobile hamburger includes Tools with a distinct icon.
+- Tools is a real `/tools` route with the standard `WorkspaceHeader`, desktop segmented section tabs and mobile dropdown for **Analytics / Files / Automations / Email**. Existing components were moved rather than duplicated. Analytics retains personal Quote registry and scoped Tasks; Files uses current CRM records; Automations and Email keep their original safeguards.
+- Records More now retains operational directories (Suppliers / Pages / Activity / Our Organization) without duplicate Tools links. A previous Records tool selection is recognized as the initial Tools selection for legacy sessions.
+- No database migration, customer Quote rules, Gmail credentials, message sending or Task execution modes were changed. Navigation regression tests were updated and added to Cloudflare quick-quote gate.
+- **Cloudflare exact-head and authenticated browser/device QA pending #360a.** Check role-preview/viewer restrictions, mobile picker and zoom without header wrapping.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

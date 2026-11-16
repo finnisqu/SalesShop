@@ -47,9 +47,9 @@ describe('Files prototype #357a',()=>{
   expect(loadFileLinks('a')).toEqual([row]);
  });
  it('exposes a real Files directory and local record cards',()=>{
-  expect(read('components/RecordsSectionNav.tsx')).toContain("id:'files',label:'Files'");
-  const conn=read('components/Connections.tsx');
-  expect(conn).toContain("tab==='files'&&<FilesWorkspace");
+  expect(read('components/ToolsWorkspace.tsx')).toContain("id:'files',label:'Files'");
+  const workspace=read('components/ToolsWorkspace.tsx');
+  expect(workspace).toContain("section==='files'&&<FilesWorkspace");
   expect(read('components/DealRecordPage.tsx')).toContain("<RecordFilesPanel target={{kind:'deal'");
   expect(read('components/CompanyRecordPage.tsx')).toContain("<RecordFilesPanel target={{kind:'company'");
   expect(read('components/QuoteRecordMetadataPage.tsx')).toContain("<FileLinksManager target={{kind:'quote'");

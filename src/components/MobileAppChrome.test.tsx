@@ -93,6 +93,7 @@ describe('mobile shared navigation for restricted roles', () => {
     fixture.navigation.history = [];
     for (const [view, label] of [
       ['home', 'Home'], ['tasks', 'Records'], ['dashboard', 'Records'], ['quotes', 'Quotes'],
+      ['tools','Tools'],
     ] as const) {
       fixture.navigation.view = view;
       const html = renderToStaticMarkup(<MobileAppChrome />);
@@ -120,7 +121,7 @@ describe('mobile shared navigation for restricted roles', () => {
     expect(css).toContain('.sales-app.view-quotes:is(.sales-app-viewer, .owner-perspective-active) > .mobile-app-commandbar');
     expect(css).toContain('.sales-app.sales-app-viewer > .mobile-app-commandbar');
   });
-  it('keeps hamburger navigation to four primary pages without duplicated page-specific controls',()=>{
+  it('keeps hamburger navigation shared with the fifth Tools page',()=>{
     const source=readFileSync(new URL('./MobileAppChrome.tsx',import.meta.url),'utf8');
     expect(source).toContain('APP_DESTINATIONS.map(item=>');
     expect(source).toContain('<MobileDestinationIcon view={item.view}/>');

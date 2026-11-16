@@ -2,7 +2,7 @@ import {useEffect,useRef} from 'react';
 import {useDismissibleDetails} from './useDismissibleDetails';
 import {HomeCalendarHelpLegend} from './HomeCalendarCustomizer';
 
-export type WorkspaceHelpPage='home'|'quotes'|'tasks'|'board'|'connections'|'notebook'|'catalog'|'settings';
+export type WorkspaceHelpPage='home'|'quotes'|'tasks'|'board'|'connections'|'notebook'|'catalog'|'tools'|'settings';
 type Tip={label:string;text:string};
 type Article={name:string;intro:string;tips:readonly Tip[]};
 const pages:Record<WorkspaceHelpPage,Article>={
@@ -34,6 +34,11 @@ const pages:Record<WorkspaceHelpPage,Article>={
   {label:'Our Organization',text:'Keep employees and subcontractors in their own directory. Add reusable roles via + Add role, and give subcontractors a linked external Company. This does not grant Team access.'},
   {label:'Activity filters',text:'Combine Method, Relationship (Prospect/Customer/etc), Record type and When to find interactions such as recent phone calls with Prospects.'},
   {label:'Suppliers',text:'Suppliers now live in Connections, separate from customers. Their specialized profiles, pricing history, locations and importing rules are preserved.'}]},
+ tools:{name:'Tools',intro:'Connected tools, reporting, files and workflow helpers.',tips:[
+  {label:'Analytics',text:'Read pipeline and customer activity metrics from existing CRM records.'},
+  {label:'Files',text:'Attach file and folder links to an accessible Company, Deal or Quote. Originals stay with the provider.'},
+  {label:'Automations',text:'Opt into private Task rules. App-open execution is not a server scheduler.'},
+  {label:'Email',text:'Connect Gmail read-only, inspect threads and explicitly link to CRM People or Deals.'}]},
  notebook:{name:'Notebook',intro:'Pages, daily notes, and a linked agenda.',tips:[
   {label:'Daily pages',text:'A daily page is created when you use Notes on Home, not automatically every day.'},
   {label:'Linked agenda',text:'Keep calendar items alongside your notes without disrupting the page layout.'},
@@ -75,6 +80,11 @@ const contexts:Record<WorkspaceHelpPage,Record<string,Tip>>={
   activity:{label:'Activity history',text:'Filter by method, relationship, event kind and date range. Open logged interactions to edit links and notes; automatic events are view-only.'},
   suppliers:{label:'Suppliers',text:'Review supplier companies, primary contacts, warehouses, pricing publications, imported material costs and procurement rules without cluttering customer accounts.'},
   quotes:{label:'Quote metadata',text:'View document records and CRM links here; edit pricing in Quotes.'}},
+ tools:{
+  analytics:{label:'Analytics',text:'Filter delivery and pipeline reporting by owner and date.'},
+  files:{label:'Files',text:'Search saved file/folder references and open their original documents.'},
+  automations:{label:'Automations',text:'Enable rules deliberately and preview Tasks before creating them.'},
+  email:{label:'Email',text:'Read-only Gmail integration requires an approved Google OAuth Web client.'}},
  notebook:{
   pages:{label:'Pages',text:'Browse, search, and organize notebook pages.'},
   agenda:{label:'Agenda',text:'Review planned work alongside your notes.'}},

@@ -10,10 +10,6 @@ import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
 import {TasksWorkspace} from './TasksWorkspace';
 import {RecordsPagesDirectory} from './RecordsPagesDirectory';
-import {SalesAnalyticsWorkspace} from './SalesAnalyticsWorkspace';
-import {FilesWorkspace} from './FilesWorkspace';
-import {AutomationsWorkspace} from './AutomationsWorkspace';
-import {EmailWorkspace} from './EmailWorkspace';
 import '../records-workspace-polish.css';
 import {SuppliersWorkspace} from './SuppliersWorkspace';
 import '../suppliers-connections.css';
@@ -57,7 +53,7 @@ import {personLastContactIndex} from '../services/personLastContact';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from '../services/activityLogFilters';
 
-type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages' | 'analytics' | 'files' | 'automations' | 'email';
+type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages';
 type CompanyFilter = CompanyRelationship | 'self' | 'all';
 type DirectoryLayout='board'|'table';
 type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
@@ -653,13 +649,13 @@ export function Connections() {
             {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
           ]:[]}/>}
-        search={tab==='analytics'||tab==='automations'||tab==='email'?undefined:<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
+        search={<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
             tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':
             tab==='suppliers'?'Search suppliers and brands…':
             tab==='quotes'?'Search quotes…':tab==='tasks'?'Search tasks…':
-            tab==='files'?'Search files and folders…':tab==='pages'?'Search pages…':'Search activities…'}/>}
+            tab==='pages'?'Search pages…':'Search activities…'}/>}
         more={(tab==='companies'||tab==='deals')&&layouts[activeLayoutKind]==='board'?
           <WorkspaceMoreMenu label="Board options" items={[
             ...(tab==='deals'?[
@@ -732,13 +728,6 @@ export function Connections() {
 
 
           {notice && <p className="connections-notice" role="status">{notice}</p>}
-          {tab==='email'&&<EmailWorkspace contacts={contacts} deals={projects}/>}
-          {tab==='automations'&&<AutomationsWorkspace/>}
-          {tab==='files'&&<FilesWorkspace companies={companies} deals={projects}
-            quotes={personalQuoteRecords} query={query}/>}
-          {tab==='analytics'&&<SalesAnalyticsWorkspace projects={projects}
-            quoteRecords={personalQuoteRecords} activities={activities}
-            personalTasks={expectedTaskScope&&personalTaskScope===expectedTaskScope?personalTasks:[]}/>}
           {tab==='tasks'&&<section className="connections-directory records-tasks-directory"
             aria-label="Tasks directory"><TasksWorkspace embedded externalQuery={query}/></section>}
           {tab==='pages'&&<section className="connections-directory records-pages-host"

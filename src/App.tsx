@@ -61,6 +61,7 @@ import { useAppearanceStore } from './store/appearanceStore';
 import { canEditTeamArea } from './services/teamDepartments';
 import { CompanySettings } from './components/CompanySettings';
 import { Connections } from './components/Connections';
+import {ToolsWorkspace} from './components/ToolsWorkspace';
 import {HomeWorkspace} from './components/HomeWorkspace';
 import {taskScope,usePersonalTaskStore} from './store/personalTaskStore';
 import {confirmedBidSubmissionDealIds} from './services/confirmedBidSubmissions';
@@ -103,7 +104,7 @@ import './workspace-zoom-fixes.css';
 import './scrollbar-theme.css';
 import './quick-view-action-row.css';
 
-const PRIMARY_NAV_DESTINATIONS=['home','dashboard','catalog','notebook'] as const;
+const PRIMARY_NAV_DESTINATIONS=['home','dashboard','catalog','notebook','tools'] as const;
 
 function App() {
   const view = useNavigationStore((state) => state.view);
@@ -123,7 +124,7 @@ function App() {
   const viewer = mode === 'cloud' && effectiveRole === 'viewer';
   const scopedMember = mode === 'cloud' && effectiveRole === 'member' && effectiveDepartment !== 'general';
   const readOnlyArea = viewer || (scopedMember && (
-    ((view === 'board' || view === 'dashboard') && !canEditTeamArea(effectiveRole, effectiveDepartment, 'crm')) ||
+    ((view === 'board' || view === 'dashboard' || view === 'tools') && !canEditTeamArea(effectiveRole, effectiveDepartment, 'crm')) ||
     (view === 'quotes' && !canEditTeamArea(effectiveRole, effectiveDepartment, 'quotes')) ||
     (view === 'catalog' && !(catalogSection === 'suppliers' && canEditTeamArea(effectiveRole, effectiveDepartment, 'supplier')))
   ));
@@ -207,12 +208,12 @@ function App() {
   },[crmHydrated,tasksScope,loadedTaskScope,inRolePreview,mode,personalSyncStatus,
     teamRole,activities,completeDealSubmissionTasks]);
 
-  // Four main tabs: Shift+1 through Shift+4. Ignore typing, modal dialogs,
+  // Five main tabs: Shift+1 through Shift+5. Ignore typing, modal dialogs,
   // and OS/browser modified chords; physical Digit codes work on US layouts.
   useEffect(()=>{
     const navigateShortcut=(event:KeyboardEvent)=>{
       if(!event.shiftKey||event.ctrlKey||event.altKey||event.metaKey||event.repeat)return;
-      const match=/^Digit([1-4])$/.exec(event.code);
+      const match=/^Digit([1-5])$/.exec(event.code);
       if(!match)return;
       const target=event.target;
       if(target instanceof HTMLElement &&
@@ -325,6 +326,7 @@ function App() {
           <button className={`app-tab ${view === 'dashboard'||view==='tasks'||view==='quotes' ? 'active' : ''}`} onClick={() => setView('dashboard')} title="Shift+2">Records</button>
           <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')} title="Shift+3">Catalog</button>
           <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')} title="Shift+4">Notebook</button>
+          <button className={`app-tab ${view === 'tools' ? 'active' : ''}`} onClick={() => setView('tools')} title="Shift+5">Tools</button>
         </nav>
         <div className="app-primary-actions" role="group" aria-label="Calendar, search, create and notebook tools">
           <WorkspaceHelp page={view==='dashboard'?'connections':view}/>
@@ -356,6 +358,8 @@ function App() {
         <CatalogWorkspace />
       ) : view === 'dashboard' ? (
         <Connections />
+      ) : view === 'tools' ? (
+        <ToolsWorkspace />
       ) : view === 'settings' ? (
         <CompanySettings />
       ) : !hydrated || !entry ? (

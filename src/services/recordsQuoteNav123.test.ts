@@ -4,13 +4,13 @@ import {readFileSync} from 'node:fs';
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Batch 123 — Quotes consolidation into Records',()=>{
- it('keeps exactly four primary destinations and physical Shift+1–4 shortcuts',()=>{
+ it('keeps Records consolidated while adding the fifth Tools destination',()=>{
   const app=read('App.tsx');
   const mobile=read('components/MobileAppChrome.tsx');
-  expect(app).toContain("const PRIMARY_NAV_DESTINATIONS=['home','dashboard','catalog','notebook']");
-  expect(app).toContain('/^Digit([1-4])$/');
+  expect(app).toContain("const PRIMARY_NAV_DESTINATIONS=['home','dashboard','catalog','notebook','tools']");
+  expect(app).toContain('/^Digit([1-5])$/');
   const tabs=app.slice(app.indexOf('<nav className="app-tabs"'),app.indexOf('</nav>',app.indexOf('<nav className="app-tabs"')));
-  for(const label of ['Home','Records','Catalog','Notebook'])
+  for(const label of ['Home','Records','Catalog','Notebook','Tools'])
    expect(tabs).toContain('>'+label+'</button>');
   expect(tabs).not.toContain('>Quotes</button>');
   expect(tabs).not.toContain('>Tasks</button>');

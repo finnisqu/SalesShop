@@ -1,0 +1,75 @@
+/* #360a · Reuse the standard desktop/mobile header for all four tools. */
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-workspace{
+ display:flex;flex:1 1 auto;flex-direction:column;gap:0;min-width:0;min-height:0;
+ width:100%;height:100%;box-sizing:border-box;overflow-x:hidden;overflow-y:auto;
+ overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-workspace>.ss-workspace-header{
+ flex:0 0 var(--ss-workspace-header-height,82px);
+}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-tab-pill{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:max-content;max-width:100%;min-width:0;padding:4px;gap:3px;
+ background:var(--ss-theme-card);border:1px solid var(--ss-theme-border);
+ border-radius:10px;box-sizing:border-box;
+}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-section-tabs{
+ display:inline-flex;align-items:center;justify-content:center;
+ flex:0 1 auto;width:auto;max-width:100%;min-width:0;
+ padding:0;margin:0;border:0;background:transparent;gap:3px;
+}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-section-tabs>.ss-section-tab{
+ display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+ width:auto;min-width:0;max-width:none;min-height:36px;height:36px;
+ gap:4px;margin:0;padding:7px 10px;border:1px solid transparent;
+ border-radius:7px;background:transparent;box-shadow:none;
+ color:var(--ss-theme-ink);font:750 11px/1.2 var(--ss-font-body,system-ui,sans-serif);
+ white-space:nowrap;cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-section-tabs>.ss-section-tab small{display:none}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-section-tabs>.ss-section-tab.active{
+ border-color:var(--ss-theme-border);
+ background:var(--ss-theme-tint);box-shadow:inset 0 -2px var(--ss-theme-accent);
+}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-content{
+ flex:1 0 auto;box-sizing:border-box;min-width:0;min-height:0;width:100%;
+ padding:0 0 calc(30px + env(safe-area-inset-bottom));
+}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-content>section{
+ width:100%;max-width:1400px;margin-inline:auto;box-sizing:border-box;
+}
+:root[data-sales-theme] .sales-app.view-tools .ss-tools-workspace>.workspace-loading-state{
+ width:min(100% - 32px,1200px);margin:24px auto;
+}
+@media(min-width:761px) and (max-width:1099px){
+ :root[data-sales-theme] .sales-app.view-tools .ss-workspace-header>.ss-workspace-header__tabs{
+  overflow-x:auto!important;overflow-y:hidden!important;justify-content:center!important;
+  scrollbar-width:none;
+ }
+ :root[data-sales-theme] .sales-app.view-tools .ss-tools-tab-pill{
+  max-width:100%;overflow-x:auto;scrollbar-width:none;
+ }
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-tools .ss-tools-workspace{
+  height:auto;min-height:0;flex:1 1 auto;
+ }
+ :root[data-sales-theme] .sales-app.view-tools .ss-tools-content{
+  padding-bottom:calc(76px + env(safe-area-inset-bottom));
+ }
+}
+
+/* Tools currently has no global Create/More control. On phones, do not reserve
+ * three 44px icon slots when only the Files search icon is present. */
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-tools .ss-workspace-header
+ .ss-workspace-header__tools>.ss-workspace-header__more:empty,
+ :root[data-sales-theme] .sales-app.view-tools .ss-workspace-header
+ .ss-workspace-header__tools>.ss-workspace-header__primary:empty,
+ :root[data-sales-theme] .sales-app.view-tools .ss-workspace-header
+ .ss-workspace-header__tools>.ss-workspace-header__search:not(:has(.ss-workspace-header__search-toggle)){
+  display:none!important;flex:0 0 0!important;width:0!important;min-width:0!important;
+  max-width:0!important;
+ }
+}

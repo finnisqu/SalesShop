@@ -77,8 +77,8 @@ describe('Gmail provider / CRM linking #359a',()=>{
   expect(requests[2].url).toContain('format=full');
  });
  it('has a real Connected Email page and record-scoped conversation readers',()=>{
-  expect(read('components/RecordsSectionNav.tsx')).toContain("id:'email',label:'Email'");
-  expect(read('components/Connections.tsx')).toContain("tab==='email'&&<EmailWorkspace");
+  expect(read('components/ToolsWorkspace.tsx')).toContain("id:'email',label:'Email'");
+  expect(read('components/ToolsWorkspace.tsx')).toContain("section==='email'&&<EmailWorkspace");
   expect(read('components/DealRecordPage.tsx')).toContain('<RecordEmailThreadsPanel kind="deal"');
   expect(read('components/PersonRecordPage.tsx')).toContain('<RecordEmailThreadsPanel kind="person"');
   expect(read('App.tsx')).toContain('<EmailAccountBoundary/>');

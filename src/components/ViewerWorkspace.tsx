@@ -57,7 +57,7 @@ export function ViewerWorkspace({ section, previewRole, previewDepartment }: { s
   const selectedQuote = quotes.find((quote) => quote.id === selectedQuoteId);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const title = section === 'board' ? 'Deal board' : section === 'quotes' ? 'Quotes'
-    : section === 'catalog' ? 'Material catalog' : 'Connections';
+    : section === 'catalog' ? 'Material catalog' : section==='tools'?'Tools':'Connections';
 
   return <main className="viewer-workspace">
     <PageHeader className="viewer-workspace-header viewer-foundation-header"

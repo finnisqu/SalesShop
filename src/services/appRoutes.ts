@@ -40,6 +40,7 @@ export function parseSalesShopRoute(pathname:string):Partial<NavigationLocation>
     return id&&!id.includes('/')&&clean(id)?{view:'dashboard',focusedContactId:clean(id)}:null;
   }
   if(path==='/notebook')return{view:'notebook'};
+  if(path==='/tools')return{view:'tools'};
   if(path==='/catalog')return{view:'catalog'};
   if(path.startsWith('/catalog/')){
     const section=path.slice('/catalog/'.length);
@@ -61,6 +62,7 @@ export function salesShopRoutePath(location:Pick<NavigationLocation,'view'|'cata
       location.focusedContactId?'/connections/people/'+segment(location.focusedContactId):
       location.focusedCompanyId?'/connections/companies/'+segment(location.focusedCompanyId):'/connections';
     case 'notebook':return '/notebook';
+    case 'tools':return '/tools';
     case 'catalog':return '/catalog/'+location.catalogSection;
     case 'settings':return '/settings';
   }

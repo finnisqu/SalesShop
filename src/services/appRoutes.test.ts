@@ -11,6 +11,7 @@ describe('SalesShop route navigation',()=>{
    expect(parseSalesShopRoute('/connections/people/person%2B1')).toEqual({view:'dashboard',focusedContactId:'person+1'});
    expect(parseSalesShopRoute('/connections/deals/project%2B1')).toEqual({view:'dashboard',focusedProjectId:'project+1'});
    expect(parseSalesShopRoute('/notebook')).toEqual({view:'notebook'});
+   expect(parseSalesShopRoute('/tools')).toEqual({view:'tools'});
    expect(parseSalesShopRoute('/settings')).toEqual({view:'settings'});
    expect(parseSalesShopRoute('/catalog/suppliers')).toEqual({view:'catalog',catalogSection:'suppliers'});
    expect(parseSalesShopRoute('/catalog/tags')).toEqual({view:'catalog',catalogSection:'tags'});
@@ -19,7 +20,7 @@ describe('SalesShop route navigation',()=>{
    expect(parseSalesShopRoute('/quotes/quote%2Btwo')).toEqual({view:'quotes',focusedQuoteId:'quote+two'});
  });
  it('round-trips quote, project and catalog paths',()=>{
-   for(const item of [loc({view:'home'}),loc({view:'quotes',focusedQuoteId:'Q/12'}),loc({view:'board',focusedProjectId:'my project'}),loc({view:'board',focusedCompanyId:'C-8'}),loc({view:'dashboard',focusedCompanyId:'new-account'}),loc({view:'dashboard',focusedContactId:'person 7'}),loc({view:'dashboard',focusedProjectId:'deal 2'}),loc({view:'catalog',catalogSection:'rates'})]){
+   for(const item of [loc({view:'home'}),loc({view:'quotes',focusedQuoteId:'Q/12'}),loc({view:'board',focusedProjectId:'my project'}),loc({view:'board',focusedCompanyId:'C-8'}),loc({view:'dashboard',focusedCompanyId:'new-account'}),loc({view:'dashboard',focusedContactId:'person 7'}),loc({view:'dashboard',focusedProjectId:'deal 2'}),loc({view:'catalog',catalogSection:'rates'}),loc({view:'tools'})]){
      const parsed=parseSalesShopRoute(salesShopRoutePath(item));
      expect(parsed?.view).toBe(item.view);
      if(item.focusedQuoteId)expect(parsed?.focusedQuoteId).toBe(item.focusedQuoteId);

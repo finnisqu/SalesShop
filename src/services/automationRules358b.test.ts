@@ -78,9 +78,9 @@ describe('Opt-in workflow automations #358b',()=>{
   expect(actions[0].changes.subtasks).toHaveLength(4);
  });
  it('shows real toggles, preview, execution history and app-level live runner',()=>{
-  const nav=read('components/RecordsSectionNav.tsx');
+  const nav=read('components/ToolsWorkspace.tsx');
   expect(nav).toContain("id:'automations',label:'Automations'");
-  expect(read('components/Connections.tsx')).toContain("tab==='automations'&&<AutomationsWorkspace");
+  expect(nav).toContain("section==='automations'&&<AutomationsWorkspace");
   expect(read('App.tsx')).toContain('<AutomationRuntime/>');
   const ui=read('components/AutomationsWorkspace.tsx');
   expect(ui).toContain('Automatically run enabled rules while SalesShop is open');
