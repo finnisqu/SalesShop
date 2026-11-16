@@ -14,7 +14,7 @@ type Props={
 export function QuoteLibraryFilterControls({filters,counts,externalCount,
  canFilterOwner,onChange,onClear}:Props){
  return <div className="qmb-library-tools qmb-library-filters-v112" aria-label="Quote library filters">
-  <label><span>Show</span>
+  <label><span>Status</span>
    <select value={filters.status} aria-label="Document status"
     onChange={e=>onChange({status:e.target.value as SalesDocumentStatusFilter})}>
     <option value="active">Active ({counts.active+externalCount})</option>

@@ -17,3 +17,40 @@
  .qmb-library-extra-filters>summary{min-height:42px;}
  .qmb-library-extra-filters-content{right:0;max-width:calc(100vw - 32px);}
 }
+
+
+/* November 16: the shared Filters popover owns the positioning.
+ * Old nested popover rules were shrinking all labels into tiny inline columns. */
+.ss-worktable-filter-panel .qmb-library-filters-v112{
+ box-sizing:border-box;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:12px;width:100%;min-width:0;max-width:none;align-items:stretch;
+}
+.ss-worktable-filter-panel .qmb-library-filters-v112>label{
+ display:flex!important;flex-direction:column;align-items:stretch;gap:5px;min-width:0;
+ font-size:11px;white-space:normal;
+}
+.ss-worktable-filter-panel .qmb-library-filters-v112>label>select{
+ width:100%;max-width:none;min-width:0;min-height:39px;
+ box-sizing:border-box;
+}
+.ss-worktable-filter-panel .qmb-library-extra-filters-content{
+ position:static!important;inset:auto!important;z-index:auto!important;
+ grid-column:1/-1;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+ width:100%!important;min-width:0!important;max-width:none!important;gap:10px;
+ border:0!important;padding:10px 0 0!important;margin:0!important;
+ border-top:1px solid var(--ss-theme-border);border-radius:0!important;
+ box-shadow:none!important;background:transparent!important;
+}
+.ss-worktable-filter-panel .qmb-library-extra-filters-content>label{min-width:0!important}
+.ss-worktable-filter-panel .qmb-library-extra-filters-content>p{
+ grid-column:1/-1;line-height:1.45;
+}
+.ss-worktable-filter-panel .qmb-library-extra-filters-content>button{
+ grid-column:1/-1;min-height:39px;
+}
+.ss-worktable-filter-panel .qmb-records-document-type{display:flex;flex-direction:column;gap:5px;max-width:100%}
+.ss-worktable-filter-panel .qmb-records-document-type select{min-height:40px;width:100%;max-width:100%}
+@media(max-width:460px){
+ .ss-worktable-filter-panel .qmb-library-filters-v112,
+ .ss-worktable-filter-panel .qmb-library-extra-filters-content{grid-template-columns:1fr}
+}

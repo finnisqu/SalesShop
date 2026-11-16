@@ -73,7 +73,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
 }){
  const button=useRef<HTMLButtonElement>(null);
  const [open,setOpen]=useState(false);
- const [position,setPosition]=useState<CSSProperties>({});
+ const [position,setPosition]=useState<CSSProperties>({top:-9999,left:-9999,visibility:'hidden'});
  const [month,setMonth]=useState(()=>new Date(new Date().getFullYear(),new Date().getMonth(),1,12));
  const [selected,setSelected]=useState(()=>localDateKey(new Date()));
  const [isPhone,setIsPhone]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:760px)').matches);
@@ -311,9 +311,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
   const left=Math.max(8,Math.min(rect.left,screenWidth-width-8));
   const roomBelow=screenHeight-rect.bottom;
   setPosition({left,top:roomBelow>510?Math.max(8,rect.bottom+8):
-    Math.max(8,Math.min(rect.top-520,screenHeight-525))});
+    Math.max(8,Math.min(rect.top-520,screenHeight-525)),visibility:'visible'});
  };
- useEffect(()=>{
+ useLayoutEffect(()=>{
   if(!open)return;
   const update=()=>placement();
   update();
@@ -498,7 +498,9 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
        if(!inMonth){const date=new Date(key+'T12:00:00');
         setMonth(new Date(date.getFullYear(),date.getMonth(),1,12));}
       };
-      return <div key={key} className={'sales-calendar-day'+(!inMonth?' is-outside':'')+
+      return <div key={key} className={'sales-calendar-day'+
+         ((new Date(key+'T12:00:00').getDay()===0||new Date(key+'T12:00:00').getDay()===6)?' is-weekend':'')+
+         (!inMonth?' is-outside':'')+
          (key===today?' is-today':'')+(key===selected?' is-selected':'')}>
         <button type="button" className="sales-calendar-day-select"
          aria-pressed={key===selected}
@@ -671,7 +673,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  return <>
   {!embedded&&<button ref={button} type="button" className={'sales-calendar-trigger'+(compact?' is-compact':'')}
    title={label} aria-haspopup="dialog" aria-expanded={open} aria-label={'Open '+label.toLowerCase()}
-   onClick={()=>setOpen(value=>!value)}>
+   onClick={()=>{if(!open)placement();setOpen(value=>!value);}}>
    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/>

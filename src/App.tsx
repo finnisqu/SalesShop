@@ -97,6 +97,7 @@ import './worktable-parity.css';
 import './records-toolbar-consistency.css';
 import './worktable-chrome.css';
 import './workspace-tab-nav.css';
+import './workspace-zoom-fixes.css';
 
 const PRIMARY_NAV_DESTINATIONS=['home','dashboard','catalog','notebook'] as const;
 

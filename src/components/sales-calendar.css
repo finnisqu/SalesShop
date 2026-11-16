@@ -1132,3 +1132,38 @@
   max-width:150px;
  }
 }
+
+
+/* November 16: weekend tint on both embedded and floating calendars. */
+.sales-calendar-day.is-weekend:not(.is-selected){
+ background:color-mix(in srgb,var(--ss-theme-tint,#ede6d8) 46%,transparent);
+}
+.sales-calendar-day.is-weekend.is-outside:not(.is-selected){
+ background:color-mix(in srgb,var(--ss-theme-tint,#ede6d8) 27%,transparent);
+}
+.sales-calendar-day.is-selected{background:var(--ss-theme-tint,#ede6d8)}
+/* Fixed date-number row; badges always stay below, including 3-4 badges at small widths. */
+.sales-calendar-popover:not(.is-inline) .sales-calendar-day{
+ min-height:62px!important;padding:0!important;
+}
+.sales-calendar-popover:not(.is-inline) .sales-calendar-day .sales-calendar-day-select{
+ padding:7px!important;
+}
+.sales-calendar-popover:not(.is-inline) .sales-calendar-day .sales-calendar-day-select>span:first-child{
+ position:relative;z-index:1;align-self:flex-start;
+}
+.sales-calendar-popover:not(.is-inline) .sales-calendar-day .home-calendar-custom-dots{
+ bottom:5px!important;left:5px!important;right:4px!important;
+ max-width:calc(100% - 9px);max-height:35px;overflow:hidden;
+ align-content:end;justify-content:flex-start;flex-wrap:wrap;
+}
+/* Week strips use the same separation, without increasing height unnecessarily. */
+.sales-calendar-popover.is-inline .sales-calendar-day .sales-calendar-day-select>span:first-child{
+ z-index:1;
+}
+@media(max-width:760px){
+ .sales-calendar-popover:not(.is-inline) .sales-calendar-day{min-height:60px!important}
+ .sales-calendar-popover:not(.is-inline) .sales-calendar-day .home-calendar-custom-dots{
+  max-height:32px;
+ }
+}

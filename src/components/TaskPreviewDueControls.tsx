@@ -15,7 +15,9 @@ export function TaskPreviewDueControls({task,onUpdate}:{
  const apply=(date:string|undefined)=>onUpdate(task.id,{
   dueDate:date,dueTime:date?task.dueTime:undefined,
  });
- return <div className="tasks-preview-quick-schedule" aria-label="Reschedule task">
+ return <details className="tasks-preview-quick-schedule" aria-label="Reschedule task">
+  <summary>Reschedule…</summary>
+  <div className="tasks-preview-quick-schedule-fields">
   <label>Reschedule
    <select value="" aria-label={'Quick reschedule '+task.title}
     onChange={event=>{
@@ -33,5 +35,6 @@ export function TaskPreviewDueControls({task,onUpdate}:{
    <input type="date" aria-label={'Due date for '+task.title}
     value={task.dueDate??''} onChange={event=>apply(event.currentTarget.value||undefined)}/>
   </label>
- </div>;
+  </div>
+ </details>;
 }

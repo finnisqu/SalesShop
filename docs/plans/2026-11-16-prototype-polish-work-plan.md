@@ -118,6 +118,13 @@
 - **Fix:** Update the static regression assertion to match the current defaulted-stage creation call while preserving the existing ordering and partial-link recovery checks. No app runtime logic changed.
 - **Validation:** Source-reviewed; next Cloudflare build still pending. Mark green only after its exact SHA passes all gates.
 
+### November 16 user-approved polish after Analytics green
+
+- Cloudflare Analytics `446e5a5` **green per user**, Analytics page manually confirmed working. Do not conflate build green with the remaining detailed device QC.
+- User reported and requested: Quote FILTERS popover layout, calendar weekend tint and first-open top-left flicker, calendar badges obscuring dates, browser-zoom header collisions on Notebook/Records/Catalog, duplicate Board +Deal/Company and their redundant board toolbar, Settings header mismatch, quote creation bypassing template/title, Task preview due controls, Home Outstanding Task "today" shortcut, and clearer Follow Ups intent.
+- **#355a source implemented:** Calendar initial anchored positioning before paint; weekend tint and badge/date separation; two-column layout for Quote Filters on all viewports; reschedule in Task Quick View behind disclosure; Follow Ups copy; shared zoom layout CSS. Build/device confirmation pending.
+- **Changelog created:** `CHANGELOG.md` is the rear-view release history; `ROADMAP.md` and this plan continue to track future/open work. Update changelog in each implementation commit; explicitly record deferrals.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

@@ -56,8 +56,8 @@ export function QuotesFollowUpDashboard({
   };
   return <section className="qmb-followups" aria-label="Quote follow-up dashboard">
     <header className="qmb-followups-heading">
-      <div><span>YOUR NEXT ACTIONS</span><h2>Quote follow-ups</h2>
-        <p>See what needs delivery, customer contact or a scheduled check-in. No customer messages are sent here.</p></div>
+      <div><span>QUOTES · CUSTOMER HANDOFF</span><h2>Quote follow-ups</h2>
+        <p>Your quote delivery and customer-response queue. Use it to check what still needs to be sent, reviewed, or followed up. This only records plans and contact history; it does not send messages.</p></div>
       <strong>{counts.total} active</strong>
     </header>
     <div className="qmb-followups-stats" aria-label="Follow-up summary">
