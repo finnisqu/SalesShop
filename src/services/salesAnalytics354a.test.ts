@@ -76,11 +76,12 @@ describe('Analytics 354a — real records and filter semantics',()=>{
   expect(run([],[],[],{period:'30d',ownerId:'all',pipeline:'all'}).trend).toHaveLength(6);
   expect(run([],[],[],{period:'all',ownerId:'all',pipeline:'all'}).trend).toHaveLength(12);
  });
- it('exposes actual interaction controls under Records More without changing four main app sections',()=>{
+ it('exposes Analytics under Tools while keeping Records focused on CRM',()=>{
   const nav=readFileSync(new URL('../components/RecordsSectionNav.tsx',import.meta.url),'utf8');
-  const connections=readFileSync(new URL('../components/Connections.tsx',import.meta.url),'utf8');
-  expect(nav).toContain("id:'analytics',label:'Analytics'");
-  expect(connections).toContain("tab==='analytics'&&<SalesAnalyticsWorkspace");
+  const tools=readFileSync(new URL('../components/ToolsWorkspace.tsx',import.meta.url),'utf8');
+  expect(nav).not.toContain("id:'analytics',label:'Analytics'");
+  expect(tools).toContain("id:'analytics',label:'Analytics'");
+  expect(tools).toContain("section==='analytics'&&<SalesAnalyticsWorkspace");
   const ui=readFileSync(new URL('../components/SalesAnalyticsWorkspace.tsx',import.meta.url),'utf8');
   for(const label of ['Analytics time period','Analytics owner','Analytics pipeline','Open pipeline by stage',
    'Confirmed quote deliveries','Recent confirmed bids'])expect(ui).toContain(label);

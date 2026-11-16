@@ -293,6 +293,13 @@
 - No database migration, customer Quote rules, Gmail credentials, message sending or Task execution modes were changed. Navigation regression tests were updated and added to Cloudflare quick-quote gate.
 - **Cloudflare exact-head and authenticated browser/device QA pending #360a.** Check role-preview/viewer restrictions, mobile picker and zoom without header wrapping.
 
+### November 16 #360b — stale test and Gmail setup guide
+
+- User's Cloudflare build on November 16 at 22:03–22:05 UTC passed TypeScript and 833/834 tests. One failed source assertion expected Analytics under Records More; intentional Tools move made that requirement obsolete.
+- Test now asserts Analytics is under `ToolsWorkspace` and absent from `RecordsSectionNav`. No production Analytics behavior changed.
+- Gmail documentation updated to **Tools → Email**, exact SalesShop browser origin (no assumed `app.` subdomain), and no redirect URI for the Google browser token flow.
+- Source pushed; **new Cloudflare build pending**. To make email work, enable Gmail API, configure Google Auth platform OAuth consent with restricted `gmail.readonly` scope, create Web application OAuth client with authorized JavaScript origin, add testing account, set `VITE_GOOGLE_GMAIL_CLIENT_ID` in Cloudflare production build variables, and redeploy.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

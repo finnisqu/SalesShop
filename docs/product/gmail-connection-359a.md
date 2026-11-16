@@ -1,7 +1,7 @@
 # Gmail Integration v0.1 — Setup and safety
 
 **Status:** Source implementation, Cloudflare build and authenticated Google consent testing pending.
-**Product:** SalesShop → Records → More → Email.
+**Product:** SalesShop → Tools → Email.
 
 ## What the first prototype actually does
 
@@ -15,10 +15,10 @@
 ## Prerequisites to enable a real Gmail connection
 
 1. In Google Cloud Console for SalesShop, enable **Gmail API**, configure an OAuth consent screen, and create an **OAuth Client ID** of type **Web application**.
-2. Add the exact SalesShop UI origin (typically **https://app.salesshop.work**) to the client **Authorized JavaScript origins**. For a local test use the exact Vite localhost origin. Do not add wildcards.
-3. Configure Cloudflare Pages build env **VITE_GOOGLE_GMAIL_CLIENT_ID** to the Web client ID (ends in \`.apps.googleusercontent.com\`). This is a **public OAuth client identifier**, not a secret; never put a Google client secret or access token into a Vite env variable.
+2. Add the **exact origin shown in your SalesShop browser address bar** to **Authorized JavaScript origins** (for example, **https://salesshop.work** if that is where you actually use the app). The origin has scheme and host but **no trailing slash or URL path**. If you use another host, preview URL or local Vite development server, register that separate origin. Do not add wildcards. **This browser token-client prototype does not need an OAuth redirect URI**.
+3. Configure Cloudflare Pages **production build** variable **VITE_GOOGLE_GMAIL_CLIENT_ID** to the Web client ID (ends in \`.apps.googleusercontent.com\`). This is a **public OAuth client identifier**, not a secret; never put a Google client secret or access token into a Vite env variable.
 4. Add test users to the Google OAuth consent screen while the app is in testing; Google's Gmail read-only scope is **restricted** and broad external deployment may require Google's scope verification, security assessment and/or Workspace admin approval.
-5. Deploy, open Records → More → Email, choose **Connect Gmail**, grant the displayed Gmail read-only permission, and test loading, searching, opening, linking, and unlinking threads. Reload and confirm reconnection is needed and only ID-based links remain.
+5. Redeploy after setting the build variable, open Tools → Email, choose **Connect Gmail**, grant the displayed Gmail read-only permission, and test loading, searching, opening, linking, and unlinking threads. Reload and confirm reconnection is needed and only ID-based links remain.
 6. Negative tests: denied consent, revoked access, expired token, wrong Google account, user changing SalesShop organization, role without CRM edit, phone/small screen, absent client ID, and browser storage quota.
 
 ## Security and release boundaries
