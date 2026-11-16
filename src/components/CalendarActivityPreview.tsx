@@ -15,6 +15,8 @@ import {activityRelations,primaryActivityRelations,activityMethodSummary,
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
 import {localDateKey} from '../services/salesCalendar';
 import {activityEditorCanUseDraft} from '../services/activityEditorScope';
+import {unavailableTaskAssociations,unavailableAssociationSaveError,
+ type AssociationVerifiedTypes} from '../services/taskAssociationIntegrity351f';
 import {isExternalQuoteActivity} from '../services/salesQuoteRegistry';
 import type {ActivityMetadata} from '../types/crm';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
@@ -51,6 +53,11 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
  const companies=useCrmStore(s=>s.companies);
  const deals=useCrmStore(s=>s.projects);
  const quotes=useQuoteStore(s=>s.quotes);
+ const crmHydrated=useCrmStore(s=>s.hydrated);
+ const quoteHydrated=useQuoteStore(s=>s.hydrated);
+ const verifiedTypes:AssociationVerifiedTypes={
+  contact:crmHydrated,company:crmHydrated,project:crmHydrated,quote:quoteHydrated,
+ };
  const mode=useAuthStore(s=>s.mode),userId=useAuthStore(s=>s.user?.id),
   orgId=useAuthStore(s=>s.organizationId),role=useAuthStore(s=>s.teamRole),
   department=useAuthStore(s=>s.teamDepartment);
@@ -146,6 +153,9 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
     }finally{setSaving(false);}
     return;
   }
+  const linkError=unavailableAssociationSaveError(
+   unavailableTaskAssociations(links,options,verifiedTypes));
+  if(linkError){setError(linkError);return;}
   const when=new Date(occurred);
   if(!Number.isFinite(when.getTime())||when.getTime()>Date.now()+60000){
    setError('Choose a valid date and time for a completed interaction.');return;
@@ -222,7 +232,8 @@ export function CalendarActivityPreview({activityId,onClose,onSelect}:{
       <label>Notes<textarea rows={6} maxLength={5000} value={notes}
        placeholder="Details, questions and next steps…"
        onChange={e=>setNotes(e.target.value)}/></label>
-      <TaskAssociationsField options={options} value={links} onChange={setLinks}/>
+      <TaskAssociationsField options={options} value={links} onChange={setLinks}
+       verifiedTypes={verifiedTypes}/>
       <ActivityRelatedQuickCreate disabled={saving}
        onCreated={link=>setLinks(previous=>previous.some(item=>
          item.type===link.type&&item.id===link.id)?previous:[...previous,link])}/>
