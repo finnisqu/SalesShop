@@ -171,6 +171,12 @@
 - Themed advanced Deal inputs including select, number, and assignee, scrollbars; Today uses calendar icon; Quick View bottom buttons stay on a horizontally scrollable row.
 - New static regression tests in the build gate. **Cloudflare and authenticated visual QA pending for #356a**.
 
+### November 16 #356b — last pre-Files touchups
+
+- Quote Filters markup is one full-width Document type and a six-field two-column form. Removed nested .qmb-library-extra-filters-content from runtime; desktop and mobile share the same layout.
+- Task Quick View actions use short labels ("Open Deal", "Open Quote", "Log external bid", "Quote required", "Complete + Log"). Guided completion still preselects optional follow-up; proof guard is unchanged.
+- Source committed; latest Cloudflare and authenticated visual check pending. Proceed straight to Files v0.1.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

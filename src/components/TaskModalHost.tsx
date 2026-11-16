@@ -190,14 +190,14 @@ export function TaskModalHost(){
        {isProtectedBidTask(task)&&!task.submissionConfirmedAt?<>
         {linkedDealId&&<button type="button" onClick={()=>{
          close();nav.openProject(linkedDealId);
-        }}>Open linked Deal ↗</button>}
+        }}>Open Deal ↗</button>}
         {relatedQuote&&<button type="button" onClick={()=>{
          close();nav.openQuote(relatedQuote.id);
-        }}>Open linked Quote ↗</button>}
+        }}>Open Quote ↗</button>}
         {canLog&&<button type="button" className="tasks-flow-action"
-          onClick={recordExternal}>Record external quote</button>}
+          onClick={recordExternal}>Log external bid</button>}
         <button type="button" disabled
-          title="Requires confirmed customer delivery or a recorded external submission">Complete · quote required</button>
+          title="Requires confirmed customer delivery or a recorded external submission">Quote required</button>
        </>:<>
         {task.sourceObjectId?.startsWith('home-note:')&&
           homeNotes(notebookEntries).some(note=>
@@ -205,10 +205,10 @@ export function TaskModalHost(){
            <button type="button" onClick={()=>{
             close();openHomeNote({mode:'preview',
              objectId:task.sourceObjectId!.slice('home-note:'.length)});
-           }}>Open source note</button>}
+           }}>Open Note</button>}
         {relatedQuote&&<button type="button" onClick={()=>{
          close();nav.openQuote(relatedQuote.id);
-        }}>Open linked Quote ↗</button>}
+        }}>Open Quote ↗</button>}
         <button type="button"
          disabled={task.status!=='completed'&&
           (task.status==='canceled'||Boolean(taskCompletionBlocker(task)))}
@@ -223,9 +223,9 @@ export function TaskModalHost(){
          }}>{task.status==='completed'?'Reopen task':'Complete'}</button>
         {canLog&&task.status!=='completed'&&task.status!=='canceled'&&
          !taskCompletionBlocker(task)&&
-         <button type="button" className="tasks-flow-action" onClick={()=>{
+         <button type="button" className="tasks-flow-action" title="Complete task, log activity and optionally plan a follow-up" onClick={()=>{
           close();openActivityComposer({taskId:task.id,planFollowUp:true});
-         }}>Complete · Log · Plan next</button>}
+         }}>Complete + Log</button>}
        </>}
       </div>
      </PreviewPanelActions>

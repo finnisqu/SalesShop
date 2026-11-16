@@ -764,20 +764,20 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
          {isProtectedBidTask(viewing)&&!viewing.submissionConfirmedAt?<>
           {viewingDealId&&<button type="button" onClick={()=>{
             setViewingId(null);nav.openProject(viewingDealId);
-          }}>Open linked Deal ↗</button>}
+          }}>Open Deal ↗</button>}
           {viewingQuote&&<button type="button" onClick={()=>{
             setViewingId(null);nav.openQuote(viewingQuote.id);
-          }}>Open linked Quote ↗</button>}
+          }}>Open Quote ↗</button>}
           {canLog&&<button type="button" className="tasks-flow-action"
            onClick={()=>{setViewingId(null);setExternalDealId(bidTaskDealId(viewing));}}>
-           Record external quote</button>}
+           Log external bid</button>}
           <button type="button" disabled
            title="Completion requires confirmed customer delivery or a recorded external submission">
-           Complete · quote required</button>
+           Quote required</button>
          </>:<>
           {viewingQuote&&<button type="button" onClick={()=>{
             setViewingId(null);nav.openQuote(viewingQuote.id);
-          }}>Open linked Quote ↗</button>}
+          }}>Open Quote ↗</button>}
           <button type="button" disabled={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0}
            title={!taskComplete(viewing)&&subtaskProgress(viewing).remaining>0?'Complete the checklist first':undefined}
            onClick={()=>{taskComplete(viewing)?reopen(viewing.id):complete(viewing.id);setViewingId(null);}}>
@@ -785,7 +785,7 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
           {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&subtaskProgress(viewing).remaining===0&&
            <button type="button" className="tasks-flow-action" onClick={()=>{
             setViewingId(null);openActivityComposer({taskId:viewing.id,planFollowUp:true});
-           }}>Complete · Log · Plan next</button>}
+           }}>Complete + Log</button>}
          </>}
         </div>
        </PreviewPanelActions>

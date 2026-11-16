@@ -1325,7 +1325,7 @@ export function QuotesMobileBeta() {
            <div className="qmb-library-mobile-filters">
              {renderLibraryToolbarMenus()}
              <WorktableFilterMenu activeCount={activeDocumentFilterCount}>
-              {documentTypeControl}{sharedLibraryControls}
+              <div className="qmb-quote-filter-layout">{documentTypeControl}{sharedLibraryControls}</div>
              </WorktableFilterMenu>
             </div>
          </div>
@@ -1333,7 +1333,9 @@ export function QuotesMobileBeta() {
            <ConnectionsTable tableKey="documents" columns={documentColumns} rows={documentTableRows}
              toolbarTarget={documentToolbarHost}
              toolbarControls={renderLibraryToolbarMenus()}
-             toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}
+             toolbarFilters={<div className="qmb-quote-filter-layout">
+               {documentTypeControl}{sharedLibraryControls}
+              </div>}
              filterCount={activeDocumentFilterCount}
              onOpen={id=>id.startsWith('external:')
                 ?setExternalQuotePreviewId(id.slice('external:'.length))

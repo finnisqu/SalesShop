@@ -5,8 +5,8 @@ describe('Batch 353f — Task follow-up and record action grouping',()=>{
  it('both Task previews provide the same optional next follow-up flow',()=>{
   const global=source('components/TaskModalHost.tsx');
   const workspace=source('components/TasksWorkspace.tsx');
-  expect(global).toContain('Complete · Log · Plan next');
-  expect(workspace).toContain('Complete · Log · Plan next');
+  expect(global).toContain('Complete + Log');
+  expect(workspace).toContain('Complete + Log');
   expect(global).toContain('planFollowUp:true');
   expect(workspace).toContain('planFollowUp:true');
  });

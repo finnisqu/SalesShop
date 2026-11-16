@@ -11,6 +11,8 @@ type Props={
  onChange:(patch:Partial<SavedQuoteLibraryFilters>)=>void;
  onClear:()=>void;
 };
+/** All fields are direct grid children: no nested popover or flattened columns.
+ * This is shared by desktop and phone Quote document directories. */
 export function QuoteLibraryFilterControls({filters,counts,externalCount,
  canFilterOwner,onChange,onClear}:Props){
  return <div className="qmb-library-tools qmb-library-filters-v112" aria-label="Quote library filters">
@@ -31,7 +33,7 @@ export function QuoteLibraryFilterControls({filters,counts,externalCount,
     <option value="external">External quotes</option>
    </select>
   </label>
-  <label><span>Sort</span>
+  <label><span>Sort by</span>
    <select value={filters.sort} aria-label="Sort documents"
     onChange={e=>onChange({sort:e.target.value as SalesDocumentSort})}>
     <option value="recent">Recently updated</option>
@@ -40,23 +42,21 @@ export function QuoteLibraryFilterControls({filters,counts,externalCount,
     <option value="oldest">Oldest updated</option>
    </select>
   </label>
-  <div className="qmb-library-extra-filters-content">
-    {canFilterOwner&&<label><span>Ownership</span>
-     <select value={filters.owner} aria-label="Quote ownership"
-      onChange={e=>onChange({owner:e.target.value as QuoteLibraryOwner})}>
-      <option value="all">All accessible quotes</option>
-      <option value="mine">Recorded or created by me</option>
-      <option value="assigned">External bids on my Deals</option>
-     </select>
-    </label>}
-    <label><span>From date</span><input type="date" aria-label="Quotes from date"
-     value={filters.from} max={filters.to||undefined}
-     onChange={e=>onChange({from:e.target.value})}/></label>
-    <label><span>Through date</span><input type="date" aria-label="Quotes through date"
-     value={filters.to} min={filters.from||undefined}
-     onChange={e=>onChange({to:e.target.value})}/></label>
-    <p>The date is the sent date for submitted quotes, or last updated date for drafts.</p>
-    <button type="button" onClick={onClear}>Clear all filters</button>
-   </div>
+  {canFilterOwner?<label><span>Ownership</span>
+   <select value={filters.owner} aria-label="Quote ownership"
+    onChange={e=>onChange({owner:e.target.value as QuoteLibraryOwner})}>
+    <option value="all">All accessible quotes</option>
+    <option value="mine">Recorded or created by me</option>
+    <option value="assigned">External bids on my Deals</option>
+   </select>
+  </label>:<div className="qmb-library-filter-placeholder" aria-hidden="true"/>}
+  <label><span>From date</span><input type="date" aria-label="Quotes from date"
+   value={filters.from} max={filters.to||undefined}
+   onChange={e=>onChange({from:e.target.value})}/></label>
+  <label><span>Through date</span><input type="date" aria-label="Quotes through date"
+   value={filters.to} min={filters.from||undefined}
+   onChange={e=>onChange({to:e.target.value})}/></label>
+  <p className="qmb-library-filter-help">Dates use delivery for submitted quotes and last edit for drafts.</p>
+  <button className="qmb-library-filter-reset" type="button" onClick={onClear}>Clear filters</button>
  </div>;
 }

@@ -9,10 +9,10 @@ describe('Screenshot polish #356a',()=>{
   expect(css).not.toContain('grid-row:2!important');
  });
  it('uses a real two-column grid in Quote Filters, not display:contents',()=>{
-  const css=read('worktable-chrome.css');
-  expect(css).toContain('grid-column:1/-1!important');
-  expect(css).not.toContain('display:contents!important;position:static!important');
+  const css=read('components/quote-library-filters.css');
+  expect(css).toContain('.qmb-quote-filter-layout');
   expect(css).toContain('grid-template-columns:repeat(2,minmax(0,1fr))!important');
+  expect(read('components/QuoteLibraryFilterControls.tsx')).toContain('Dates use delivery');
  });
  it('places the Settings header before, not inside, its sidebar grid',()=>{
   const page=read('components/CompanySettings.tsx');

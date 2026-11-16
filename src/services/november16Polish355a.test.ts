@@ -13,7 +13,7 @@ describe('November 16 screenshot polish #355a',()=>{
  });
  it('filters lay out as full-width form fields, not nested absolute popovers',()=>{
   const css=load('components/quote-library-filters.css');
-  expect(css).toContain('.ss-worktable-filter-panel .qmb-library-extra-filters-content');
+  expect(css).toContain('.qmb-quote-filter-layout>.qmb-library-filters-v112');
   expect(css).toContain('position:static!important');
   expect(css).toContain('grid-template-columns:repeat(2,minmax(0,1fr))');
  });
