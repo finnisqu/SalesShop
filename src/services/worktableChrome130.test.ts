@@ -72,7 +72,8 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(records).toContain('toolbarFilters={companyFilterControl}');
   expect(records).toContain('toolbarFilters={dealPipelineControl}');
   expect(records).toContain('toolbarFilters={<div className="connections-activity-filters"');
-  expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
+  expect(quotes).toContain('toolbarFilters={<div className="qmb-quote-filter-layout">');
+  expect(quotes).toContain('{documentTypeControl}{sharedLibraryControls}');
   expect(quoteFilters).not.toContain('<details className="qmb-library-extra-filters">');
   const chrome=src('components/WorktableChrome.tsx');
   expect(chrome).toContain('useDismissibleDetails(ref)');
@@ -170,7 +171,8 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(quotes).toContain('onClear={resetLibraryFilters}');
   expect(quotes).toContain('className="qmb-followups-return-toolbar"');
   expect(quotes).toContain('onClick={()=>setFollowUpsTab(false)}>← Documents');
-  expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
+  expect(quotes).toContain('toolbarFilters={<div className="qmb-quote-filter-layout">');
+  expect(quotes).toContain('{documentTypeControl}{sharedLibraryControls}');
   expect(quotes).not.toContain('value="follow-ups">Follow-ups</option>');
   expect(header).not.toContain('Quotes is a Records view with an additional action-More');
   expect(chrome).toContain('export function WorktableActionMenu');

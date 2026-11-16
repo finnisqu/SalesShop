@@ -43,7 +43,8 @@ describe('Batch 126 — shared compact Records/Catalog worktables',()=>{
   expect(quotes).toContain('tabs={<RecordsSectionNav selected="quotes"');
   expect(quotes).not.toContain('more={<WorkspaceMoreMenu');
   expect(quotes).toContain('const documentTypeControl');
-  expect(quotes).toContain('toolbarFilters={<>{documentTypeControl}{sharedLibraryControls}</>}');
+  expect(quotes).toContain('toolbarFilters={<div className="qmb-quote-filter-layout">');
+  expect(quotes).toContain('{documentTypeControl}{sharedLibraryControls}');
   expect(quotes).toContain('toolbarControls={renderLibraryToolbarMenus()}');
   expect(quotes).toContain('<WorktableActionMenu label="Views"');
   expect(quotes).toContain('<WorktableActionMenu label="Actions"');

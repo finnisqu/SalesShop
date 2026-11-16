@@ -42,6 +42,12 @@
 | P5 | CAD-Lite bridge v0.1 | Open a linked CAD-Lite project from Deal/Quote; import manual takeoff export | Technical data owned by CAD-Lite; no implicit repricing | Queued |
 | P6 | Slack and QuickBooks | Real Slack notification or authenticated export flow; QuickBooks export first, API sync later | Explicit provider permissions and safe credentials | Queued |
 
+### New BYO document-export idea (user proposed November 16)
+
+- **P2b · Customer Quote link references:** In Files, surface existing live cloud Quote Share status/actions by native Quote ID and current revision. Do not persist share bearer tokens in the browser-local link store.
+- **P7 · BYO document templates:** Google Docs template copying and approved Quote `{{placeholder}}` merge, later repeating tables/Google Sheets builder worksheets. Generated Docs belong to user Google Drive and link to the SaleShop source Quote, but never mutate the frozen Quote or prove delivery. See [design note](../product/quote-links-files-and-google-docs-template-exports.md). **Proposed, not built.**
+- Default order remains Files → Automations → Email → CAD-Lite/provider expansion; reprioritize Docs after user chooses a prototype slice.
+
 ## Longer-term work intentionally **not** lost
 
 - Shared custom-field activation (#352d2) needs real disposable PostgreSQL/RLS testing (#352c4). Local draft designer, starter field packs and JSON configuration portability already exist.
@@ -186,6 +192,14 @@
 - Seven Vitest tests cover URL/scope/provider/persistence and view integration; registered in quick-quote release gate.
 - **Next stage:** authenticated shared link table with verified negative RLS and provider connection, or proceed to opted-in workflow automation prototype #357b (no claim of background execution without scheduler).
 - Pending exact Cloudflare build and manual browser QA for links, editing/removal, native & external Quote linkage.
+
+### November 16 #357b — release gate, customer links, BYO Docs
+
+- User-shared Cloudflare log for #357a (`0174f55`): TypeScript passed; **807/812 tests passed**, five failed solely on stale source-string contracts in `worktableChrome130` (2), `worktableParity126` (1), `bidSubmissionTaskGuard` (1), and `november16Polish355a` (1). Existing Files 7 tests and external Quote cloud-confirmation cases passed.
+- Updated those four test files to reflect actual **one-grid Quote Filters** and shorter Task Quick View labels while retaining all business guard assertions. New head's exact Cloudflare build remains unverified.
+- Customer Quote links are already authoritative **cloud Quote Share** resources, but not automatically in Files v0.1. Design a *dynamic* reference to the current usable share; never copy bearer tokens to browser-local Files.
+- User proposed Bring Your Own SaaS Google Docs export: choose/copy authorized Drive template, merge `{{placeholders}}`, handle repeating pricing rows, save resulting editable Google Doc as a linked output. Must restrict customer exports to approved customer-visible fields, preserve revisions, avoid implicit delivery. See `docs/product/quote-links-files-and-google-docs-template-exports.md`. **Planning only**, no OAuth/cloud implementation committed.
+- Next prototype queue stays Automations P3 unless user prioritizes the Google Docs export.
 
 ## Carry-forward notes for next chat
 

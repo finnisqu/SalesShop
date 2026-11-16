@@ -30,12 +30,14 @@ describe('bid submission Task confirmation boundary',()=>{
  it('offers the correct proof actions in both quick views',()=>{
   for(const view of [modal,workspace]){
    expect(view).toContain('isProtectedBidTask(');
-   expect(view).toContain('Record external quote');
-   expect(view).toContain('Open linked Deal ↗');
-   expect(view).toContain('Open linked Quote ↗');
+   expect(view).toContain('Log external bid');
+   expect(view).toContain('Open Deal ↗');
+   expect(view).toContain('Open Quote ↗');
    expect(view).toContain('<TaskPreviewDueControls');
-   expect(view).toContain('Complete · quote required');
+   expect(view).toContain('Quote required');
    expect(view).toContain('initialDealId={externalDealId}');
+   expect(view).toContain('onClick={recordExternal}');
+   expect(view).toContain('taskCompletionBlocker(task)');
    expect(view).toContain('<PencilIcon/> Edit');
    expect(view).toContain('tasks-preview-actions-left');
    expect(view).toContain('tasks-preview-actions-right');
