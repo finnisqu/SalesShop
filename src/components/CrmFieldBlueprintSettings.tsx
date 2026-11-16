@@ -1,9 +1,10 @@
 import {useState,type FormEvent} from 'react';
 import {useWorktableDirectoryState} from './useWorktableDirectoryState';
 import {blankCrmFieldBlueprint,crmBlueprintStorageKey,readCrmFieldBlueprint,
- createCrmCustomField,toggleCrmCustomField,moveCrmCustomField,
- CRM_FIELD_TARGETS,CRM_FIELD_TYPES,CRM_MAX_FIELDS_PER_TARGET,CRM_LABEL_LIMIT,
- type CrmFieldTarget,type CrmFieldType,type CrmFieldBlueprint,
+ createCrmCustomField,toggleCrmCustomField,moveCrmCustomField,setCrmFieldVisibility,
+ CRM_FIELD_TARGETS,CRM_FIELD_TYPES,CRM_FIELD_VISIBILITIES,
+ DEFAULT_CRM_FIELD_VISIBILITY,CRM_MAX_FIELDS_PER_TARGET,CRM_LABEL_LIMIT,
+ type CrmFieldTarget,type CrmFieldType,type CrmFieldVisibility,type CrmFieldBlueprint,
 } from '../services/crmFieldBlueprint352b';
 import '../crm-blueprint-settings.css';
 
@@ -23,6 +24,7 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
  const [target,setTarget]=useState<CrmFieldTarget>('company');
  const [label,setLabel]=useState('');
  const [kind,setKind]=useState<CrmFieldType>('text');
+ const [visibility,setVisibility]=useState<CrmFieldVisibility>(DEFAULT_CRM_FIELD_VISIBILITY);
  const [description,setDescription]=useState('');
  const [choices,setChoices]=useState('');
  const [error,setError]=useState('');
@@ -35,11 +37,11 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
   if(!editable)return;
   try{
    const next=createCrmCustomField(blueprint,{
-    target,label,type:kind,description,
+    target,label,type:kind,description,visibility,
     ...(kind==='choice'?{options:choices.split(/[,\n]/)}:{}),
    },'field_'+crypto.randomUUID());
    setBlueprint(next);
-   setLabel('');setDescription('');setChoices('');setError('');
+   setLabel('');setDescription('');setChoices('');setVisibility(DEFAULT_CRM_FIELD_VISIBILITY);setError('');
    setNotice('Field definition added to your local blueprint. It is not active on CRM records yet.');
   }catch(e){
    setError(e instanceof Error?e.message:'Could not add this field.');
@@ -79,10 +81,22 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
        <strong>{field.label}</strong>
        <small>{CRM_FIELD_TYPES.find(item=>item.id===field.type)?.label}
         {field.type==='choice'?' · '+(field.options??[]).join(', '):''}</small>
+       <small>Visible to: {CRM_FIELD_VISIBILITIES.find(item=>item.id===field.visibility)?.label??
+        'CRM editors and admins'}</small>
        {field.description&&<span>{field.description}</span>}
        <code>{field.key}</code>
       </div>
       <div className="crm-blueprint-field-actions">
+       <label className="crm-blueprint-visibility">
+        <span>Visibility</span>
+        <select disabled={!editable} value={field.visibility??DEFAULT_CRM_FIELD_VISIBILITY}
+         aria-label={'Visibility of '+field.label}
+         onChange={event=>setBlueprint(current=>setCrmFieldVisibility(current,
+          field.id,event.target.value as CrmFieldVisibility))}>
+         {CRM_FIELD_VISIBILITIES.map(item=>
+          <option key={item.id} value={item.id}>{item.label}</option>)}
+        </select>
+       </label>
        <button type="button" disabled={!editable||index===0}
         onClick={()=>setBlueprint(current=>moveCrmCustomField(current,field.id,-1))}
         aria-label={'Move '+field.label+' up'}>↑</button>
@@ -111,6 +125,17 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
         {CRM_FIELD_TYPES.map(type=><option key={type.id} value={type.id}>{type.label}</option>)}
        </select>
       </label>
+      <label className="crm-blueprint-wide"><span>Who can see it once published?</span>
+       <select value={visibility}
+        onChange={event=>setVisibility(event.target.value as CrmFieldVisibility)}>
+        {CRM_FIELD_VISIBILITIES.map(item=>
+         <option key={item.id} value={item.id}>{item.label}</option>)}
+       </select>
+      </label>
+      <p className="crm-blueprint-visibility-help crm-blueprint-wide">
+       {CRM_FIELD_VISIBILITIES.find(item=>item.id===visibility)?.description}
+       {' '}This is a draft setting; actual privacy requires database enforcement before publishing.
+      </p>
       <label className="crm-blueprint-wide"><span>Description (optional)</span>
        <input value={description} maxLength={160}
         placeholder="How should your team use this field?"

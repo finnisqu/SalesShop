@@ -1,7 +1,8 @@
 import {
- normalizeCrmFieldBlueprint,validateCrmCustomFieldValue,
+ normalizeCrmFieldBlueprint,normalizeCrmFieldVisibility,widensCrmFieldVisibility,
+ validateCrmCustomFieldValue,
  type CrmCustomField,type CrmFieldBlueprint,type CrmFieldTarget,
- type CrmFieldType,type CrmFieldValue,
+ type CrmFieldType,type CrmFieldValue,type CrmFieldVisibility,
 } from './crmFieldBlueprint352b';
 
 /** The proposed cloud schema. No Supabase client, SQL, or customer-data
@@ -13,6 +14,7 @@ export interface SharedCrmDefinitionRow{
  field_key:string;
  label:string;
  field_type:CrmFieldType;
+ visibility:CrmFieldVisibility;
  description:string|null;
  options:string[];
  active:boolean;
@@ -43,6 +45,9 @@ export interface SharedCrmPublicationPlan{
  unchanged:SharedCrmDefinitionRow[];
  /** Values must be checked before removing choices currently in use. */
  choiceChangesRequiringValueReview:string[];
+ /** Any expansion (admins -> editors/team or editors -> team) requires
+  * explicit admin review and server-side RLS validation before publication. */
+ visibilityExpansionsRequiringReview:string[];
 }
 
 const recordColumn:Record<CrmFieldTarget,'company_id'|'contact_id'|'project_id'>={
@@ -60,6 +65,7 @@ const trimmed=(v:string|undefined,label:string):string=>{
 const definitionFromField=(organizationId:string,field:CrmCustomField,revision:number):SharedCrmDefinitionRow=>({
  organization_id:organizationId,id:field.id,record_type:field.target,
  field_key:field.key,label:field.label,field_type:field.type,
+ visibility:normalizeCrmFieldVisibility(field.visibility),
  description:field.description??null,options:[...(field.options??[])],
  active:field.active,revision,
 });
@@ -68,7 +74,7 @@ function assertDefinitionScope(row:SharedCrmDefinitionRow,organizationId:string)
   throw new Error('Custom field definition belongs to a different organization.');
 }
 function definitionsMatch(a:SharedCrmDefinitionRow,b:SharedCrmDefinitionRow):boolean{
- return a.label===b.label&&a.description===b.description&&
+ return a.visibility===b.visibility&&a.label===b.label&&a.description===b.description&&
   a.active===b.active&&JSON.stringify(a.options)===JSON.stringify(b.options);
 }
 
@@ -92,7 +98,8 @@ export function planSharedCrmFieldPublication(
   priorById.set(row.id,row);
  }
  const creates:SharedCrmDefinitionRow[]=[],updates:SharedCrmDefinitionRow[]=[],
-  unchanged:SharedCrmDefinitionRow[]=[],choiceChangesRequiringValueReview:string[]=[];
+  unchanged:SharedCrmDefinitionRow[]=[],choiceChangesRequiringValueReview:string[]=[],
+  visibilityExpansionsRequiringReview:string[]=[];
  for(const field of normalized.fields){
   const prior=priorById.get(field.id);
   const next=definitionFromField(org,field,prior?.revision??0);
@@ -102,6 +109,8 @@ export function planSharedCrmFieldPublication(
     throw new Error('A published field cannot change its key, record type or value type.');
    if(definitionsMatch(prior,next))unchanged.push(prior);
    else{
+    if(widensCrmFieldVisibility(prior.visibility,next.visibility))
+     visibilityExpansionsRequiringReview.push(field.id);
     if(prior.field_type==='choice'&&prior.options.some(option=>!next.options.includes(option)))
      choiceChangesRequiringValueReview.push(field.id);
     updates.push({...next,revision:prior.revision+1});
@@ -112,7 +121,8 @@ export function planSharedCrmFieldPublication(
    creates.push({...next,revision:1});
   }
  }
- return {organizationId:org,creates,updates,unchanged,choiceChangesRequiringValueReview};
+ return {organizationId:org,creates,updates,unchanged,choiceChangesRequiringValueReview,
+  visibilityExpansionsRequiringReview};
 }
 
 export function buildSharedCrmValueOperation(input:{

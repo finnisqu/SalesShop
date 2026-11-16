@@ -18,7 +18,7 @@ const mk=(type:'text'|'number'|'date'|'choice'|'boolean'='text',
 const stored=(overrides:Partial<SharedCrmDefinitionRow>={}):SharedCrmDefinitionRow=>({
  organization_id:'org-A',id:'field-1',record_type:'company',
  field_key:'custom',label:'Custom',field_type:'text',
- description:null,options:[],active:true,revision:3,...overrides,
+ visibility:'crm_editors',description:null,options:[],active:true,revision:3,...overrides,
 });
 const write=(field=mk(),value:unknown='Hello',recordId='record-1')=>
  buildSharedCrmValueOperation({organizationId:'org-A',target:field.target,recordId,field,value});
@@ -32,11 +32,12 @@ describe('Batch 352c — shared CRM custom field contract before cloud activatio
   expect(plan.creates).toEqual([{
    organization_id:'org-A',id:'territory-id',record_type:'company',
    field_key:'territory',label:'Territory',field_type:'choice',
-   description:null,options:['East','West'],active:true,revision:1,
+   visibility:'crm_editors',description:null,options:['East','West'],active:true,revision:1,
   }]);
   expect(plan.updates).toEqual([]);
   expect(plan.unchanged).toEqual([]);
   expect(plan.choiceChangesRequiringValueReview).toEqual([]);
+  expect(plan.visibilityExpansionsRequiringReview).toEqual([]);
  });
  it('retains stable definition identity and increments revisions on edit',()=>{
   const blueprint=createCrmCustomField(blankCrmFieldBlueprint(),{

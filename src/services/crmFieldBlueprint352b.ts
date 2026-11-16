@@ -3,6 +3,41 @@
  * separately reviewed cloud schema and permission boundary. */
 export type CrmFieldTarget='company'|'person'|'deal';
 export type CrmFieldType='text'|'number'|'date'|'choice'|'boolean';
+/** Presentation guidance only: cloud RLS must independently enforce this. */
+export type CrmFieldVisibility='organization'|'crm_editors'|'admins';
+export const CRM_FIELD_VISIBILITIES=[
+ {id:'organization',label:'Everyone in organization',
+  description:'Any signed-in teammate, including viewers, can read this field.'},
+ {id:'crm_editors',label:'CRM editors and admins',
+  description:'Only teammates permitted to edit CRM records and administrators can read it.'},
+ {id:'admins',label:'Owners and admins only',
+  description:'Restrict this field to organization leadership.'},
+] as const;
+export const DEFAULT_CRM_FIELD_VISIBILITY:CrmFieldVisibility='crm_editors';
+const VISIBILITY_RANK:Record<CrmFieldVisibility,number>={
+ admins:0,crm_editors:1,organization:2,
+};
+export function normalizeCrmFieldVisibility(value:unknown):CrmFieldVisibility{
+ // Previous #352b browser-only blueprints had no visibility; keep the
+ // newly adopted editors-only default. Unknown/tampered values fail closed.
+ if(value===undefined||value===null)return DEFAULT_CRM_FIELD_VISIBILITY;
+ return value==='organization'||value==='crm_editors'||value==='admins'?value:'admins';
+}
+export function widensCrmFieldVisibility(previous:CrmFieldVisibility,next:CrmFieldVisibility):boolean{
+ return VISIBILITY_RANK[next]>VISIBILITY_RANK[previous];
+}
+/** UI guidance only. Never use client role state as database authorization. */
+export function canReadCrmFieldVisibility(
+ visibility:CrmFieldVisibility,
+ role:'owner'|'admin'|'member'|'viewer'|null,
+ crmEditPermitted:boolean,
+):boolean{
+ if(!role)return false;
+ if(role==='owner'||role==='admin')return true;
+ if(visibility==='organization')return true;
+ return visibility==='crm_editors'&&role==='member'&&crmEditPermitted;
+}
+
 export const CRM_FIELD_TARGETS=[
  {id:'company',label:'Companies'},
  {id:'person',label:'People'},
@@ -22,6 +57,7 @@ export interface CrmCustomField {
  label:string;
  target:CrmFieldTarget;
  type:CrmFieldType;
+ visibility?:CrmFieldVisibility;
  description?:string;
  options?:string[];
  active:boolean;
@@ -32,6 +68,7 @@ export interface NewCrmCustomField {
  label:string;
  target:CrmFieldTarget;
  type:CrmFieldType;
+ visibility?:CrmFieldVisibility;
  description?:string;
  options?:string[];
 }
@@ -101,6 +138,7 @@ export function createCrmCustomField(
   throw new Error('Single choice fields need at least two different options.');
  const description=input.description?.trim().slice(0,CRM_DESCRIPTION_LIMIT)||undefined;
  const field:CrmCustomField={id,key,label,target:input.target,type:input.type,
+  visibility:normalizeCrmFieldVisibility(input.visibility),
   ...(description?{description}:{}),...(options?{options}:{}),active:true};
  return {version:1,fields:[...blueprint.fields,field]};
 }
@@ -111,6 +149,15 @@ export function toggleCrmCustomField(
  blueprint:CrmFieldBlueprint,id:string,active:boolean,
 ):CrmFieldBlueprint{
  return {...blueprint,fields:blueprint.fields.map(f=>f.id===id?{...f,active}:f)};
+}
+
+export function setCrmFieldVisibility(
+ blueprint:CrmFieldBlueprint,id:string,visibility:CrmFieldVisibility,
+):CrmFieldBlueprint{
+ if(!CRM_FIELD_VISIBILITIES.some(item=>item.id===visibility))
+  throw new Error('Choose a valid field visibility.');
+ return {...blueprint,fields:blueprint.fields.map(field=>
+  field.id===id?{...field,visibility}:field)};
 }
 
 export function moveCrmCustomField(
@@ -182,7 +229,8 @@ export function normalizeCrmFieldBlueprint(raw:unknown):CrmFieldBlueprint{
   if(type==='choice'&&(options?.length??0)<2)continue;
   const description=typeof f.description==='string'?
    f.description.trim().slice(0,CRM_DESCRIPTION_LIMIT)||undefined:undefined;
-  fields.push({id,label,key,target,type,...(options?{options}:{}),
+  fields.push({id,label,key,target,type,visibility:normalizeCrmFieldVisibility(f.visibility),
+   ...(options?{options}:{}),
    ...(description?{description}:{}),active:f.active!==false});
   seenIds.add(id);seenKeys.add(composite);
  }

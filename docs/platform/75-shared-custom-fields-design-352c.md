@@ -2,6 +2,10 @@
 
 **NO PRODUCTION MIGRATION APPLIED**
 
+**Visibility policy update (November 16, #352c2):** The initial matrix below assumed organization-wide field metadata reads and marked per-field privacy as unresolved. It has now been superseded for any future activation by [#352c2 visibility and metadata protection](76-custom-field-visibility-security-352c2.md): **both** definitions and values must honor `organization`, `crm_editors`, or `admins` visibility under actual RLS. Do not use the unqualified organization-wide SELECT example below for custom-field values or definitions. No database migration has been applied.
+
+
+
 Date: November 16, 2026  
 Status: Read-only production schema/RLS inspection completed; typed client contract and test suite prepared for `main`. No new tables, policies, functions, grants, RLS changes, or customer-field values have been deployed. Cloudflare TypeScript/Vitest/Vite and staging PostgreSQL RLS tests pending.
 

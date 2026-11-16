@@ -34,7 +34,7 @@ describe('Batch 352b — plug-and-play CRM field blueprints',()=>{
   expect(next.fields).toEqual([{
    id:'company-field-1',key:'territory',label:'Territory',
    target:'company',type:'choice',options:['North','South'],
-   description:'Region covered',active:true,
+   visibility:'crm_editors',description:'Region covered',active:true,
   }]);
  });
  it('normalizes descriptive keys and protects built-in record properties',()=>{
