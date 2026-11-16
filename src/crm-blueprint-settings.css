@@ -126,3 +126,73 @@
  .crm-blueprint-visibility{width:100%;max-width:none;}
  .crm-blueprint-visibility>select{min-height:44px;font-size:16px;}
 }
+
+/* Batch 352d1 — reusable sample record editor. Its values stay in React
+ * memory only; no CRM persistence, sync or localStorage reads. */
+.crm-blueprint-preview{min-width:0;}
+.crm-blueprint-preview-disclaimer{
+ margin:0 0 12px;padding:10px 12px;border-radius:8px;
+ border:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-tint);color:var(--ss-theme-muted);
+ font-size:11px;line-height:1.55;
+}
+.crm-blueprint-preview-disclaimer strong{color:var(--ss-theme-ink);}
+.crm-blueprint-preview-record{
+ display:grid;gap:12px;min-width:0;
+ padding:12px;border:1px solid var(--ss-theme-border);
+ border-radius:10px;background:var(--ss-theme-base);
+}
+.crm-blueprint-preview-record-header{
+ display:flex;justify-content:space-between;align-items:center;
+ flex-wrap:wrap;gap:6px;padding-bottom:8px;
+ border-bottom:1px solid var(--ss-theme-border);
+}
+.crm-blueprint-preview-record-header strong{font-size:13px;}
+.crm-blueprint-preview-record-header span{
+ font-size:10px;color:var(--ss-theme-muted);
+}
+.crm-custom-field-editor{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+ min-width:0;
+}
+.crm-custom-field-control{display:grid;gap:5px;min-width:0;align-content:start;}
+.crm-custom-field-control label{font-size:11px;font-weight:750;color:var(--ss-theme-ink);}
+.crm-custom-field-control :is(input,select){
+ box-sizing:border-box;width:100%;min-width:0;min-height:36px;
+ padding:7px 10px;border:1px solid var(--ss-theme-border);
+ border-radius:7px;background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);font-size:12px;font-family:inherit;
+}
+.crm-custom-field-control :is(input,select)[aria-invalid="true"]{
+ border-color:var(--ss-theme-accent);
+}
+.crm-custom-field-control>small,.crm-custom-field-empty{
+ font-size:11px;line-height:1.4;color:var(--ss-theme-muted);
+ overflow-wrap:anywhere;
+}
+.crm-custom-field-control .crm-custom-field-error{
+ color:var(--ss-theme-ink);font-weight:750;
+}
+.crm-custom-field-control .crm-custom-field-visibility{
+ font-size:10px;opacity:.8;
+}
+.crm-custom-field-empty{margin:0;}
+.crm-blueprint-preview-reset{
+ justify-self:start;min-height:36px;margin-top:12px;padding:7px 10px;
+ border:1px solid var(--ss-theme-border);
+ border-radius:7px;background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);font-size:11px;font-weight:750;
+ cursor:pointer;
+}
+.crm-blueprint-preview-reset:disabled{opacity:.45;cursor:default;}
+.crm-custom-field-control :is(input,select):focus-visible,
+.crm-blueprint-preview-reset:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+@media(max-width:760px){
+ .crm-custom-field-editor{grid-template-columns:1fr;}
+ .crm-custom-field-control :is(input,select){
+  min-height:44px;font-size:16px;
+ }
+ .crm-blueprint-preview-reset{min-height:44px;}
+}

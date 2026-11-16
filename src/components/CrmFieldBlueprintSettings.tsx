@@ -1,5 +1,7 @@
 import {useState,type FormEvent} from 'react';
 import {useWorktableDirectoryState} from './useWorktableDirectoryState';
+import {CrmCustomFieldEditor} from './CrmCustomFieldEditor';
+import type {CrmCustomFieldValues} from '../services/crmFieldEditor352d1';
 import {blankCrmFieldBlueprint,crmBlueprintStorageKey,readCrmFieldBlueprint,
  createCrmCustomField,toggleCrmCustomField,moveCrmCustomField,setCrmFieldVisibility,
  CRM_FIELD_TARGETS,CRM_FIELD_TYPES,CRM_FIELD_VISIBILITIES,
@@ -29,9 +31,16 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
  const [choices,setChoices]=useState('');
  const [error,setError]=useState('');
  const [notice,setNotice]=useState('');
+ // Sample values never persist, and the directory key isolates them when
+ // someone switches accounts/organizations in the same Settings session.
+ const [sampleValues,setSampleValues]=useWorktableDirectoryState<
+  Record<CrmFieldTarget,CrmCustomFieldValues>>(scope+':sample-record',
+  ()=>({company:{},person:{},deal:{}}));
+ const [sampleRevision,setSampleRevision]=useState(0);
 
  const fields=blueprint.fields.filter(field=>field.target===target);
  const title=CRM_FIELD_TARGETS.find(item=>item.id===target)?.label??'Records';
+ const recordName=target==='company'?'Company':target==='person'?'Person':'Deal';
  const create=(event:FormEvent)=>{
   event.preventDefault();
   if(!editable)return;
@@ -155,6 +164,34 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
    </form>
    {error&&<p role="alert" className="crm-blueprint-error">{error}</p>}
    {notice&&<p role="status" className="crm-blueprint-notice">{notice}</p>}
+  </article>
+  <article className="company-settings-card crm-blueprint-preview">
+   <header><div>
+    <strong>Sample {recordName} record preview</strong>
+    <small>Test how your field definitions would look on a record page.</small>
+   </div></header>
+   <p className="crm-blueprint-preview-disclaimer" role="status">
+    <strong>Preview only</strong> · These are fictional sample values.
+    Nothing entered here is stored in CRM, synced to Supabase, or saved to this device.
+    Closing or reloading SalesShop discards the sample.
+   </p>
+   <div className="crm-blueprint-preview-record">
+    <div className="crm-blueprint-preview-record-header">
+     <strong>Example {recordName}</strong>
+     <span>Custom fields · {fields.filter(field=>field.active).length} active</span>
+    </div>
+    <CrmCustomFieldEditor
+     key={scope+':'+target+':'+sampleRevision}
+     fields={fields} target={target} values={sampleValues[target]??{}}
+     disabled={!editable}
+     onChange={next=>setSampleValues(current=>({...current,[target]:next}))}/>
+   </div>
+   <button type="button" className="crm-blueprint-preview-reset"
+    disabled={!editable||!Object.keys(sampleValues[target]??{}).length}
+    onClick={()=>{
+     setSampleValues(current=>({...current,[target]:{}}));
+     setSampleRevision(current=>current+1);
+    }}>Clear sample values</button>
   </article>
   <article className="company-settings-card crm-blueprint-principles">
    <header><div>
