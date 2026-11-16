@@ -116,7 +116,11 @@ describe('Batch 351c — Activity Company staged create/link',()=>{
   expect(activity).toContain("contextLabel='Activity'");
   expect(activity).toContain("contextLabel==='Task'?'Create for Task':'Create while logging'");
   expect(activity).not.toContain('<form');
-  expect(field).toContain('onChange([...value,{...item.linked,label:item.label}])');
+  // The shared picker now routes ordinary links and unavailable-link replacements
+  // through one change callback; the Task creator still uses that same field.
+  expect(field).toContain('const next={...item.linked,label:item.label};');
+  expect(field).toContain('onChange(replacingKey?replaceTaskAssociation(value,replacingKey,next):[...value,next]);');
+  expect(field).toContain('if(selectedKeys.has(item.key))return;');
  });
  it('preserves a newly created Task link in the existing draft until the Task is saved',()=>{
   const task=source('components/TasksWorkspace.tsx');
