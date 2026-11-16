@@ -54,11 +54,15 @@ export function TaskAssociationsField({options,value,onChange,verifiedTypes={}}:
    const frame=requestAnimationFrame(positionPopover);
    const outside=(event:PointerEvent)=>{
      const target=event.target as Node;
-     if(!searchRef.current?.contains(target)&&!popoverRef.current?.contains(target))setOpen(false);
+     if(!searchRef.current?.contains(target)&&!popoverRef.current?.contains(target)){
+       setOpen(false);setReplacingKey(null);
+     }
    };
    const onFocus=(event:FocusEvent)=>{
      const target=event.target as Node;
-     if(!searchRef.current?.contains(target)&&!popoverRef.current?.contains(target))setOpen(false);
+     if(!searchRef.current?.contains(target)&&!popoverRef.current?.contains(target)){
+       setOpen(false);setReplacingKey(null);
+     }
    };
    const onEscape=(event:globalThis.KeyboardEvent)=>{
      if(event.key==='Escape'&&open){
@@ -138,7 +142,7 @@ export function TaskAssociationsField({options,value,onChange,verifiedTypes={}}:
      })}
    </div>}
    <div className="tasks-associations-search" ref={searchRef}>
-     <select value={type} aria-label="Related record type"
+     <select value={type} aria-label="Related record type" disabled={Boolean(replacingKey)}
        onChange={e=>{setType(e.target.value as typeof type);setActiveIndex(0);setOpen(true);}}>
        <option value="all">All types</option>
        {Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}
