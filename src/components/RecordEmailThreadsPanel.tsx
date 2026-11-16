@@ -41,7 +41,7 @@ export function RecordEmailThreadsPanel({kind,id}:{kind:EmailTargetKind;id:strin
       .map(item=>[item.id,item])));
   });
   return()=>{alive=false;};
- },[scope,token,mailbox,mine]);
+ },[scope,token,mailbox,mine,perspective]);
  const read=async(threadId:string)=>{
   const access=validGmailToken(scope);
   if(!access)return;
@@ -74,7 +74,7 @@ export function RecordEmailThreadsPanel({kind,id}:{kind:EmailTargetKind;id:strin
    </div>;
   })}
   {error&&<p className="ss-email-error" role="alert">{error}</p>}
-  {selected&&<div className="ss-email-record-detail">
+  {account&&selected&&<div className="ss-email-record-detail">
    <h3>{selected.summary.subject}</h3>
    {selected.messages.map(message=><article key={message.id} className="ss-email-message">
     <strong>{message.from}</strong><small>{new Date(message.date).toLocaleString()}</small>

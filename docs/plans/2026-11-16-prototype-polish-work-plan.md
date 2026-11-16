@@ -279,6 +279,11 @@
 - Gmail session and linked references now reset on App unmount or SalesShop identity handoff. Record email detail resets when mailbox changes, and role preview blocks fetching/private content.
 - No provider credentials configured from this chat; Cloudflare build remains pending.
 
+### November 16 #359d — email security finishing pass
+
+- Role-preview change now clears cached record-level subject/body state via the same effect that reacts to token/mailbox changes and will not render a selected message without an active, non-preview Gmail session.
+- User's previous #358h release explicitly confirmed green. New Email batch still requires its own Cloudflare green and authenticated Google OAuth setup/consent.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

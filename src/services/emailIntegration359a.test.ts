@@ -84,6 +84,7 @@ describe('Gmail provider / CRM linking #359a',()=>{
   expect(read('App.tsx')).toContain('<EmailAccountBoundary/>');
   expect(read('components/EmailAccountBoundary.tsx')).toContain('bindScope(null)');
   expect(read('components/RecordEmailThreadsPanel.tsx')).toContain('perspective?null:validGmailToken(scope)');
+  expect(read('components/RecordEmailThreadsPanel.tsx')).toContain('{account&&selected&&');
  });
  it('does not save tokens or message bodies and requires explicit CRM linking',()=>{
   const storage=read('services/emailThreadLinks359a.ts');
