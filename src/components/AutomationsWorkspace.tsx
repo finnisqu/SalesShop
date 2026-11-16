@@ -1,6 +1,7 @@
 import {useMemo,useState} from 'react';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
+import {canEditTeamArea} from '../services/teamDepartments';
 import {useCrmStore} from '../store/crmStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {taskScope,usePersonalTaskStore} from '../store/personalTaskStore';
@@ -29,10 +30,11 @@ const descriptions:Record<AutomationRuleId,{title:string;explanation:string;timi
 };
 export function AutomationsWorkspace(){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
- user=useAuthStore(s=>s.user?.id);
+ user=useAuthStore(s=>s.user?.id),
+ role=useAuthStore(s=>s.teamRole),department=useAuthStore(s=>s.teamDepartment);
  const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
  const scope=taskScope(mode,org,user),automationScope=useAutomationStore(s=>s.scope);
- const storedTaskScope=usePersonalTaskStore(s=>s.scope);
+ const storedTaskScope=usePersonalTaskStore(s=>s.scope),taskSync=usePersonalTaskStore(s=>s.syncStatus);
  const rules=useAutomationStore(s=>s.rules),history=useAutomationStore(s=>s.history),
  live=useAutomationStore(s=>s.autoRunWhileOpen);
  const configure=useAutomationStore(s=>s.configure),toggleLive=useAutomationStore(s=>s.toggleLive);
@@ -45,7 +47,8 @@ export function AutomationsWorkspace(){
  const candidates=useMemo(()=>automationCandidates({
   deals,quotes:linkedQuotes,activities,tasks,rules,now:new Date(),mode,userId:user,
  }),[deals,linkedQuotes,activities,tasks,rules,mode,user]);
- const ready=!!scope&&scope===automationScope&&scope===storedTaskScope&&!previewRole;
+ const ready=!!scope&&scope===automationScope&&scope===storedTaskScope&&!previewRole&&
+  (mode==='local'||(canEditTeamArea(role,department,'crm')&&taskSync==='saved'));
  const run=()=>{
   if(!scope||!ready)return;
   const result=executeAutomationCandidates(scope,candidates);
@@ -58,6 +61,7 @@ export function AutomationsWorkspace(){
    <span>Local rules · no background server</span>
   </header>
   <div className="ss-automation-intro">
+   {!ready&&<p role="status">Automations are read-only until your private Tasks have finished syncing and your role allows CRM edits.</p>}
    <strong>Rules start off.</strong> Enable each rule you want, preview its matches, then run it.
    You can also opt into automatic checks while SalesShop is open. Offline or closed-browser
    execution is not supported yet, and these rules never send customer messages.

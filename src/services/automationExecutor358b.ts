@@ -11,7 +11,13 @@ export function executeAutomationCandidates(scope:string,candidates:readonly Aut
  for(const item of candidates.slice(0,20)){
   const tasks=usePersonalTaskStore.getState();
   const settings=useAutomationStore.getState();
-  if(tasks.scope!==scope||settings.scope!==scope){errors.push('Workspace changed; stop and reopen Automations.');break;}
+  if(tasks.scope!==scope||settings.scope!==scope){
+   errors.push('Workspace changed; stop and reopen Automations.');break;
+  }
+  // Manual and automatic execution both wait for cloud Task hydration.
+  if(scope.startsWith('org:')&&tasks.syncStatus!=='saved'){
+   errors.push('Private Tasks are not fully synced yet. Retry after sync finishes.');break;
+  }
   if(!settings.rules[item.rule].enabled)continue;
   if(tasks.tasks.some(task=>task.sourceObjectId===item.sourceObjectId))continue;
   try{

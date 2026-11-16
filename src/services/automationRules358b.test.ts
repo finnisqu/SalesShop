@@ -80,5 +80,7 @@ describe('Opt-in workflow automations #358b',()=>{
   expect(ui).toContain('Run enabled rules');
   expect(ui).toContain('Created Task history');
   expect(read('services/automationExecutor358b.ts')).toContain('sourceObjectId===item.sourceObjectId');
+  expect(read('services/automationExecutor358b.ts')).toContain("tasks.syncStatus!=='saved'");
+  expect(read('components/AutomationRuntime.tsx')).toContain("mode==='cloud'&&taskSync!=='saved'");
  });
 });

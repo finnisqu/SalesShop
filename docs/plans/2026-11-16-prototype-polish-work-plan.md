@@ -226,6 +226,13 @@
 - Automation config + log are per-user browser localStorage (not shared team rules). 20 new Tasks maximum per execution cycle. Without server transactions, cross-device simultaneous execution is not globally atomic; this is still a prototype.
 - New tests exercise default opt-out, delivery proof, date math, idle window, owner checks, won stage evidence, and integration. Exact Cloudflare build and authenticated functional checks pending.
 
+### November 16 #358c — automation cloud-safety pass
+
+- The user's last confirmed build before #358a was green; Files manually verified. Source #358a and #358b need a new Cloudflare result.
+- Added mandatory `private_documents` Task sync-state **saved** gate before both manual and app-open automatic rule execution in cloud mode. Early cached local Tasks must not create automation suggestions before remote Task rehydration is confirmed.
+- Automations UI only allows enabling and executing rules when team role has CRM editing authority, and while a valid private Task scope is hydrated. Rule previews remain read-only otherwise.
+- No server-side scheduler, shared rules, or atomic multi-device idempotence yet. Tests document these boundaries.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

@@ -19,7 +19,8 @@ export function AutomationRuntime(){
  const projects=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities),
  crmReady=useCrmStore(s=>s.hydrated);
  const quotes=useQuoteStore(s=>s.quotes),quotesReady=useQuoteStore(s=>s.hydrated);
- const storedTaskScope=usePersonalTaskStore(s=>s.scope),tasks=usePersonalTaskStore(s=>s.tasks);
+ const storedTaskScope=usePersonalTaskStore(s=>s.scope),tasks=usePersonalTaskStore(s=>s.tasks),
+ taskSync=usePersonalTaskStore(s=>s.syncStatus);
  const scope=taskScope(mode,org,user);
  const automationScope=useAutomationStore(s=>s.scope),rules=useAutomationStore(s=>s.rules),
  autoRun=useAutomationStore(s=>s.autoRunWhileOpen);
@@ -32,11 +33,11 @@ export function AutomationRuntime(){
  },[crmReady,quotesReady,quotes,activities,projects,mode,user]);
  useEffect(()=>{
   if(!allowed||!scope||storedTaskScope!==scope||automationScope!==scope||
-   !crmReady||!quotesReady||!autoRun)return;
+   (mode==='cloud'&&taskSync!=='saved')||!crmReady||!quotesReady||!autoRun)return;
   const candidates=automationCandidates({deals:projects,quotes:personalQuotes,
    activities,tasks,rules,now:new Date(),mode,userId:user});
   if(candidates.length)executeAutomationCandidates(scope,candidates);
  },[allowed,scope,storedTaskScope,automationScope,crmReady,quotesReady,
-  autoRun,projects,personalQuotes,activities,tasks,rules,mode,user]);
+  autoRun,projects,personalQuotes,activities,tasks,rules,mode,user,taskSync]);
  return null;
 }
