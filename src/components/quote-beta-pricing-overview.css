@@ -88,3 +88,13 @@
  .qmb .qmb-pricing-overview-next{align-items:stretch;flex-direction:column;gap:8px;}
  .qmb .qmb-pricing-overview-next button{align-self:flex-end;}
 }
+
+/* November 16 pricing triage: one compact filter strip and direct missing-cost fixes. */
+.qmb .qmb-pricing-overview-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.qmb .qmb-pricing-overview-filters button{display:flex;gap:6px;align-items:center;border:1px solid var(--qmb-border);border-radius:9px;padding:7px 9px;min-height:36px;font-size:11px;font-weight:720;color:var(--qmb-ink);background:var(--qmb-card);cursor:pointer}
+.qmb .qmb-pricing-overview-filters button.is-active{background:var(--qmb-tint);color:var(--qmb-accent);border-color:var(--qmb-accent)}
+.qmb .qmb-pricing-overview-filters button span{font-size:10px;opacity:.8;font-variant-numeric:tabular-nums}
+.qmb .qmb-pricing-overview-filters button:focus-visible{outline:2px solid var(--qmb-accent);outline-offset:2px}
+.qmb .qmb-pricing-overview-cost-actions{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.qmb .qmb-pricing-overview-cost-actions button.is-priority{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:480px){.qmb .qmb-pricing-overview-filters button{flex:1 1 40%;justify-content:space-between}}

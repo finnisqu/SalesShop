@@ -1,9 +1,10 @@
-import {useMemo} from 'react';
+import {useMemo,useState} from 'react';
 import type { Quote } from '../types/quote';
 import { quoteTotal } from '../types/quote';
 import { auditQuoteDraft, type QuoteAuditDestination } from '../services/quoteDraftAudit';
 import { quotePricingOverview } from '../services/quotePricingOverview';
 import {projectAreaCost} from '../services/quoteAreaCost';
+import {pricingAreaMarginLabel,pricingAreaMatches,nextInternalCostTab,type PricingAreaFilter} from '../services/quotePricingGuidance353e';
 import './quote-beta-pricing-overview.css';
 import './quote-pricing-table-polish.css';
 import {QuoteSharedSlabPools} from './QuoteSharedSlabPools';
@@ -20,6 +21,7 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
   onResolve:(destination:QuoteAuditDestination)=>void;
   onReview:()=>void;
 }) {
+  const [areaFilter,setAreaFilter]=useState<PricingAreaFilter>('all');
   const report=useMemo(()=>auditQuoteDraft(quote),[quote]);
   const overview=useMemo(()=>quotePricingOverview(quote,report),[quote,report]);
   // Area issue order remains blockers-first, matching the previous find().
@@ -39,14 +41,26 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
   const incompleteCosts=useMemo(()=>measuredRows.filter(row=>
     !costsByArea.get(row.section.id)?.complete),[measuredRows,costsByArea]);
   const total=useMemo(()=>quoteTotal(quote),[quote]);
+  const areaStatus=(row:(typeof overview.rows)[number])=>({
+    blockers:row.blockers,measuredSf:row.measuredSf,
+    costComplete:row.measuredSf>0?costsByArea.get(row.section.id)?.complete:false,
+  });
+  const counts={
+    all:overview.rows.length,
+    selling:overview.rows.filter(row=>pricingAreaMatches('selling',areaStatus(row))).length,
+    cost:overview.rows.filter(row=>pricingAreaMatches('cost',areaStatus(row))).length,
+    ready:overview.rows.filter(row=>pricingAreaMatches('ready',areaStatus(row))).length,
+  };
+  const filteredRows=overview.rows.filter(row=>pricingAreaMatches(areaFilter,areaStatus(row)));
+  const firstCost=incompleteCosts[0]&&costsByArea.get(incompleteCosts[0].section.id);
   const nextBlocker=overview.blockers[0];
   const nextAction=nextBlocker
     ?{label:'Resolve next pricing issue',detail:nextBlocker.title,
       go:()=>nextBlocker.id==='quote:work'?onGeneral():onResolve(nextBlocker.destination)}
     :incompleteCosts.length
       ?{label:'Check next internal estimate',
-        detail:(incompleteCosts[0].section.title||'Untitled Area')+' · private costs are incomplete',
-        go:()=>onArea(incompleteCosts[0].section.id,'calculator')}
+        detail:(incompleteCosts[0].section.title||'Untitled Area')+' · '+(firstCost?.missingCostItems.join(', ')||'private costs are incomplete'),
+        go:()=>onArea(incompleteCosts[0].section.id,firstCost?nextInternalCostTab(firstCost):'calculator')}
       :{label:'Continue to Review',detail:'No blocking selling-price findings or missing measured Area costs.',
         go:onReview};
   return <div className="qmb-pricing-overview" aria-label="Quote-wide materials and pricing">
@@ -82,11 +96,20 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
       :'No priced work yet. Add a General charge or an Area.'}</p>}
     <div className="qmb-pricing-overview-title"><h3>Area selections &amp; selling prices</h3>
       <small>{overview.rows.length?'Open any Area to edit':'Areas are optional for simple quotes'}</small></div>
+    {overview.rows.length>0&&<div className="qmb-pricing-overview-filters"
+      role="group" aria-label="Filter quote Areas by pricing readiness">
+      {([['all','All Areas'],['selling','Needs sell price'],['cost','Missing internal costs'],
+        ['ready','Ready for review']] as const).map(([id,label])=>
+        <button type="button" key={id} aria-pressed={areaFilter===id}
+          className={areaFilter===id?'is-active':''} onClick={()=>setAreaFilter(id)}>
+          {label} <span>{counts[id]}</span>
+        </button>)}
+    </div>}
     <div className="qmb-pricing-overview-areas qmb-pricing-table">
       <div className="qmb-pricing-table-head" aria-hidden="true">
         <span>Area</span><span>Material / scope</span><span>Sell total</span>
       </div>
-      {overview.rows.map(row=>{
+      {filteredRows.map(row=>{
         const issue=issueFor(row.section.id);
         // This is private estimating guidance, NOT a quote issuing requirement.
         // No slab/production estimate is implied for an unmeasured flat-fee Area.
@@ -100,12 +123,18 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
           </div>
           {cost&&<div className="qmb-pricing-overview-cost" aria-label="Private Area cost coverage">
             <span>Private cost estimate · {covered}/5 categories entered
-              {cost.marginPercent!==undefined?' · Estimated margin '+cost.marginPercent.toFixed(1)+'%':' · Margin incomplete'}
+              {' · '+pricingAreaMarginLabel(cost)}
               {!cost.complete?' · Missing: '+cost.missingCostItems.join(', '):''}
             </span>
-            <button type="button" onClick={()=>onArea(row.section.id,'calculator')}>
-              Open Calculator ›
-            </button>
+            <div className="qmb-pricing-overview-cost-actions">
+              {cost&&!cost.complete&&<button type="button" className="is-priority"
+                onClick={()=>onArea(row.section.id,nextInternalCostTab(cost))}>
+                {nextInternalCostTab(cost)==='materials'?'Check material/sink costs ›':'Complete missing costs ›'}
+              </button>}
+              <button type="button" onClick={()=>onArea(row.section.id,'calculator')}>
+                Open Calculator ›
+              </button>
+            </div>
           </div>}
           <div className="qmb-pricing-overview-row-actions">
             <button type="button" onClick={()=>onArea(row.section.id,'measure')}>Measurements ›</button>
@@ -118,6 +147,11 @@ export function QuoteBetaPricingOverview({quote,onArea,onGeneral,onResolve,onRev
           </div>
         </section>;
       })}
+      {overview.rows.length>0&&!filteredRows.length&&<div className="qmb-pricing-overview-empty">
+        <strong>No Areas match this filter</strong>
+        <p>Try another pricing state or return to the full Area list.</p>
+        <button type="button" onClick={()=>setAreaFilter('all')}>Show all Areas ›</button>
+      </div>}
       {!overview.rows.length&&<div className="qmb-pricing-overview-empty">
         <strong>No Areas yet</strong>
         <p>Flat-fee quotes can use General charges only. Add an Area when you need measurements or a separate scope.</p>
