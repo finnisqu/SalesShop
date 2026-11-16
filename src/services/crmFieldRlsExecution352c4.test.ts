@@ -88,7 +88,7 @@ describe('Batch 352c4 staging-only RLS execution preparation',()=>{
   // Test durable safety instructions, not a time-sensitive staging status sentence.
   expect(guide).toContain('Prepared, NOT EXECUTED');
   expect(guide).toContain('352c4-disposable-run.psql');
-  expect(guide).toContain('DO NOT use a production connection URL');
+  expect(guide).toContain('**DO NOT** use a production connection URL');
   expect(guide).toContain('Actual disposable Postgres role and negative tests passing.');
  });
 });
