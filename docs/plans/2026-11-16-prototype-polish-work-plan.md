@@ -87,6 +87,13 @@
 - New configuration/cloud-RLS features remain outside these polish commits.
 - **Next feature after polish acceptance:** Analytics v0.1 using existing Deals, Quotes, Tasks and Activities. Make charts and filters actually work before treating the prototype as delivered.
 
+### November 16 build recovery — Cloudflare 18:16 UTC
+
+- **Observed:** `ffd08e8` passed TypeScript and **775/775** quick-quote and regression tests, then failed `npm run test:record-gate` with `Board Deal relationship persistence changed` at line 43. Vite did not run.
+- **Cause:** `e2e/record-page-redesign-gate.mjs` still searched for the old `createProject(name,'Discovery'` call. The current live creation code accepts `details?.stage??'Discovery'`; existing Company/People/due-date links remain.
+- **Correction:** Check the current initial-stage and amount/pipeline behavior, and explicitly verify the preflight → Deal creation → Person linking order plus typed partial-create recovery. This retains stronger relationship safeguards, rather than dropping the gate.
+- **Status:** Source corrected; next Cloudflare build **pending**. Manual authenticated and mobile QA remain unchecked.
+
 ### November 16 build recovery — Cloudflare 18:09 UTC
 
 - **Observed:** `a709688` passed TypeScript, but the quick-quote test suite failed at `src/services/recordCreateLinkRecovery345.test.ts:107`: **774 passed / 1 failed**. Record gate and Vite bundle were not reached.

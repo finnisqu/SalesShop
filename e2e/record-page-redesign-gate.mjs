@@ -42,11 +42,21 @@ assert(contains(quick,[
 const board=source('src/components/Board.tsx');
 assert(contains(board,[
   'const createDealWithDetails=async',
-  "const id=createProject(name,'Discovery'",
+  // Stage and value are now selected before creation; Discovery is the default.
+  "const id=createProject(name,details?.stage??'Discovery'",
+  'amount:details?.amount',
+  "details?.pipeline==='unassigned'?undefined",
   'if(details?.dueDate)updateProject(id,{dueDate:details.dueDate})',
   'await useDealPeopleStore.getState().add(id,personId)',
   'if(companyId)setProjectCompany(id,companyId)'
 ]),'Board Deal relationship persistence changed');
+const preflight=board.indexOf('for(const id of details?.personIds??[])');
+const created=board.indexOf("const id=createProject(name,details?.stage??'Discovery'");
+const linkPeople=board.indexOf('for(const personId of personIds)');
+assert(preflight>=0&&created>preflight&&linkPeople>created,
+  'Board must validate People before creating the Deal and link them only after creation');
+assert(board.includes('satisfies BoardPartialCreate'),
+  'Partial Deal relationship failures must preserve the created Deal ID');
 
 // Records retains the Board and Table directory's shared search/filter results,
 // record-preview workflow, and consolidated Tasks and Activities navigation.
