@@ -52,8 +52,10 @@ describe('Opt-in workflow automations #358b',()=>{
     .filter(item=>item.rule==='quote-delivered')).toHaveLength(0);
  });
  it('does not duplicate historical, canceled or removed Tasks',()=>{
-  const candidate=candidates([deal()],[quote()])[0];
-  const existing={id:'t',title:'Old',sourceObjectId:candidate.sourceObjectId,
+  const candidate=candidates([deal()],[quote()])
+    .find(item=>item.rule==='quote-delivered');
+  expect(candidate).toBeDefined();
+  const existing={id:'t',title:'Old',sourceObjectId:candidate!.sourceObjectId,
    deletedAt:'2026-11-15',createdAt:'2026-11-15',updatedAt:'2026-11-15'} as PersonalTask;
   expect(candidates([deal()],[quote()],[],[existing])
     .filter(item=>item.rule==='quote-delivered')).toHaveLength(0);

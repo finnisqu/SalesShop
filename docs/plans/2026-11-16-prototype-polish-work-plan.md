@@ -256,6 +256,12 @@
   - `src/store/automationStore.ts:16` used an unnecessarily complex asserted `Object.fromEntries` rule initializer. Replaced with explicit typed default rule keys and removed the unused AUTOMATION_IDS import.
 - Added static regression checks in the existing gate. **Committed source; next Cloudflare build result not yet confirmed.** Do not mark green until new log confirms TypeScript, tests and Vite.
 
+### November 16 #358h — automation test fixture selection
+
+- In the default all-rules-on fixture, the original Deal also qualifies for inactivity; `automationCandidates` sorts it ahead of the Quote follow-up. The duplicate-prevention test incorrectly selected the first candidate before asserting the Quote had been suppressed.
+- Test now explicitly selects the `quote-delivered` candidate by rule ID, verifies it exists, and uses its stable source key for the deleted Task tombstone. No production automations or customer behaviors changed.
+- Source committed; still waiting for exact-head Cloudflare green.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.
