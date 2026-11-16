@@ -125,6 +125,13 @@
 - **#355a source implemented:** Calendar initial anchored positioning before paint; weekend tint and badge/date separation; two-column layout for Quote Filters on all viewports; reschedule in Task Quick View behind disclosure; Follow Ups copy; shared zoom layout CSS. Build/device confirmation pending.
 - **Changelog created:** `CHANGELOG.md` is the rear-view release history; `ROADMAP.md` and this plan continue to track future/open work. Update changelog in each implementation commit; explicitly record deferrals.
 
+### November 16 #355b — record and HOME workflow corrections
+
+- Deal and Company "Add new Quote" now call guided Quote creation with context instead of creating a premature draft.
+- Home Outstanding Tasks exposes a one-click Today action for personal ordinary Tasks, never protected generated bid obligations.
+- Settings uses only the shared workspace header and shared SectionTabs for its quick views, removing the duplicated PageHeader title.
+- Cloudflare and authenticated/mobile verification pending.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

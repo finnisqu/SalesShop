@@ -28,6 +28,7 @@ import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {externalQuoteActivities} from '../services/salesQuoteRegistry';
 import {requestTaskModal} from '../services/taskModalEvents';
 import { useQuoteStore } from '../store/quoteStore';
+import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
 import {useNotebookStore} from '../store/notebookStore';
 import { useNavigationStore } from '../store/navigationStore';
 
@@ -47,7 +48,6 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
   const updateCompany = useCrmStore((state) => state.updateCompany);
   const quotes = useQuoteStore((state) => state.quotes);
   const hydrateQuotes = useQuoteStore((state) => state.hydrate);
-  const createQuote = useQuoteStore((state) => state.createQuote);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const openProject = useNavigationStore((state) => state.openProject);
   const openPerson = useNavigationStore((state) => state.openPerson);
@@ -156,8 +156,8 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
     }catch(reason){setEditError(reason instanceof Error?reason.message:'Unable to apply company changes.');}
   };
   const newQuote = () => {
-    const quoteId = createQuote({ title: 'Quote · ' + company.name, companyId: company.id, companyName: company.name });
-    openQuote(quoteId);
+    // Follow the named template workflow and retain the originating Company.
+    openGuidedQuoteCreation({kind:'company',id:company.id,name:company.name});
   };
   const addAlias = (event: FormEvent) => {
     event.preventDefault();

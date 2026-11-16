@@ -7,7 +7,7 @@ import { AppearanceThemePicker } from './AppearanceThemePicker';
 import { PersonalDateTimeSettings } from './PersonalDateTimeSettings';
 import { CompanyDocumentTermsReference } from './CompanyDocumentTermsReference';
 import { OwnerRolePreviewSettings } from './RolePerspectiveControls';
-import { PageHeader, Panel, Button } from '../design-system/components';
+import { Panel, Button, SectionTabs } from '../design-system/components';
 import {WorkspaceHelp} from './WorkspaceHelp';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import { SettingsIdentityFields, SettingsProfileFields } from './SettingsIdentityFields';
@@ -184,14 +184,12 @@ export function CompanySettings() {
           mobileTabs={visibleTabs.map(item=>({value:item.id,label:item.title}))}
           mobileTabValue={tab}
           onMobileTabChange={value=>setTab(value as SettingsTab)}
-          tabs={<nav aria-label="Settings quick views">
-            <button type="button" aria-current={tab==='company'?'page':undefined}
-              onClick={()=>setTab('company')}>Company</button>
-            <button type="button" aria-current={tab==='account'?'page':undefined}
-              onClick={()=>setTab('account')}>My Account</button>
-            <button type="button" aria-current={tab==='beta'?'page':undefined}
-              onClick={()=>setTab('beta')}>Beta Features</button>
-          </nav>}
+          tabs={<SectionTabs className="settings-header-tabs ss-header-tab-pill"
+            aria-label="Settings quick views"
+            items={[{id:'company',label:'Company'},{id:'account',label:'My Account'},
+              {id:'beta',label:'Beta Features'}]}
+            selected={['company','account','beta'].includes(tab)?tab:'company'}
+            onSelect={id=>setTab(id as SettingsTab)}/>}
           more={<WorkspaceMoreMenu items={visibleTabs.map(item=>({
             label:item.title,onClick:()=>setTab(item.id),active:tab===item.id,
           }))}/>}
@@ -206,13 +204,6 @@ export function CompanySettings() {
             disabled={!canQuickCreate}
             onClick={()=>document.querySelector<HTMLButtonElement>('.mobile-app-hidden-launchers .quick-create-launcher')?.click()}>
             + Create</button>}
-        />
-        <PageHeader
-          className="company-settings-header settings-foundation-page-header"
-          eyebrow="Your workspace"
-          title="Settings"
-          description="Company identity, account information, and the way SalesShop feels to you."
-          actions={tab === 'company' ? <div className="company-settings-save-state" role="status">{error ? <strong className="has-error">{error}</strong> : <span>{saving ? 'Saving…' : 'Saved automatically'}</span>}</div> : undefined}
         />
         <label className="settings-mobile-section-select">
           <span>Settings section</span>

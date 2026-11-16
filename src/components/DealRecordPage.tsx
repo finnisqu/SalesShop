@@ -19,6 +19,7 @@ import { DEAL_PIPELINES, PROJECT_STAGES, dealPipelineLabel, type DealPipeline, t
 import { quoteTotal, displayQuoteNumber } from '../types/quote';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
+import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
 import { useNavigationStore } from '../store/navigationStore';
 import {DealAssigneeSelect,useDealAssigneeDirectory,dealAssigneeLabel} from '../services/dealAssignees';
 import {ExternalQuoteSentForm} from './ExternalQuoteSentForm';
@@ -68,7 +69,6 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
   const updateCompany = useCrmStore(state => state.updateCompany);
   const quotes = useQuoteStore(state => state.quotes);
   const hydrateQuotes = useQuoteStore(state => state.hydrate);
-  const createQuote = useQuoteStore(state => state.createQuote);
   const openQuote = useNavigationStore(state => state.openQuote);
   const openCompany = useNavigationStore(state => state.openCompany);
   const openPerson = useNavigationStore(state => state.openPerson);
@@ -190,8 +190,8 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
       ...(person?[{type:'contact' as const,id:person.id,label:'Person · '+person.name}]:[])]});
   };
   const newQuote = () => {
-    const id = createQuote({ title: deal.name, projectId: deal.id, companyId: deal.companyId, companyName: deal.companyName });
-    openQuote(id);
+    // No document exists until a template and name have been explicitly chosen.
+    openGuidedQuoteCreation({kind:'deal',id:deal.id,name:deal.name});
   };
 
   if(timelineBetaEnabled&&timelineOpen)return <section className="connections-record-page ss-timeline-beta-page">

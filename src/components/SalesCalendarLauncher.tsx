@@ -1,7 +1,7 @@
 import {useEffect,useLayoutEffect,useMemo,useRef,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import {useCrmStore} from '../store/crmStore';
-import {usePersonalTaskStore,taskScope,subtaskProgress} from '../store/personalTaskStore';
+import {usePersonalTaskStore,taskScope,subtaskProgress,isProtectedBidTask} from '../store/personalTaskStore';
 import {useQuoteStore} from '../store/quoteStore';
 import {useNotebookStore} from '../store/notebookStore';
 import {openHomeNote} from '../services/homeNotes';
@@ -109,6 +109,7 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
  const mayLogActivity=mode==='local'||!!(userId&&canEditTeamArea(teamRole,department,'crm'));
  const preview=useRolePerspectiveStore(s=>s.activePerspective);
  const storedScope=usePersonalTaskStore(s=>s.scope),tasks=usePersonalTaskStore(s=>s.tasks);
+ const updateTask=usePersonalTaskStore(s=>s.updateTask);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
  const contacts=useCrmStore(s=>s.contacts),companies=useCrmStore(s=>s.companies);
  const quotes=useQuoteStore(s=>s.quotes);
@@ -431,9 +432,10 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
            <small>{new Date(item.timestamp).toLocaleDateString()} · {item.detail}</small>
           </span>
          </button>):<p>Completed tasks and logged interactions will appear here.</p>
-        :outstanding.length?outstanding.map(task=><button type="button" key={task.id}
-         className={'home-outstanding-task-row'+(task.dueDate&&task.dueDate<today?' is-overdue':'')}
-         onClick={()=>requestTaskModal({mode:'preview',id:task.id})}>
+        :outstanding.length?outstanding.map(task=><div key={task.id}
+         className={'home-outstanding-task-row'+(task.dueDate&&task.dueDate<today?' is-overdue':'')}>
+         <button type="button" className="home-outstanding-task-open"
+           onClick={()=>requestTaskModal({mode:'preview',id:task.id})}>
           <span className="home-outstanding-task-copy">
            <strong>{task.title}</strong>
            <small>{outstandingDueLabel(task,today)}
@@ -442,7 +444,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
           </span>
           {task.priority==='urgent'&&<span className="home-outstanding-priority"
             aria-label="Urgent task" title="Urgent task">!</span>}
-         </button>):<p>All caught up. No outstanding tasks.</p>}
+         </button>
+         {task.dueDate!==today&&!isProtectedBidTask(task)&&storedScope===personal&&
+           <button type="button" className="home-outstanding-today-action"
+             aria-label={'Move '+task.title+' to today'}
+             onClick={()=>{if(storedScope===personal)updateTask(task.id,{dueDate:today});}}>
+             Today
+           </button>}
+         </div>):<p>All caught up. No outstanding tasks.</p>}
       </div>
     </aside>
  ):null;
