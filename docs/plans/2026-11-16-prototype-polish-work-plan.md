@@ -45,7 +45,7 @@
 ### New BYO document-export idea (user proposed November 16)
 
 - **P2b · Customer Quote link references:** In Files, surface existing live cloud Quote Share status/actions by native Quote ID and current revision. Do not persist share bearer tokens in the browser-local link store.
-- **P7 · BYO document templates:** Google Docs template copying and approved Quote `{{placeholder}}` merge, later repeating tables/Google Sheets builder worksheets. Generated Docs belong to user Google Drive and link to the SaleShop source Quote, but never mutate the frozen Quote or prove delivery. See [design note](../product/quote-links-files-and-google-docs-template-exports.md). **Proposed, not built.**
+- **P7 · DEFERRED — BYO Google Sheets builder worksheets:** Copy an accessible Google Sheets template, map approved Quote fields into cells/named ranges and repeating Area/line-item tables, then link the newly generated spreadsheet back to the Quote/Deal. Source Quote remains authoritative, no automatic issue or delivery. See [parked design note](../product/quote-links-files-and-google-sheets-template-exports.md). **Not built; do not start until reprioritized.**
 - Default order remains Files → Automations → Email → CAD-Lite/provider expansion; reprioritize Docs after user chooses a prototype slice.
 
 ## Longer-term work intentionally **not** lost
@@ -198,13 +198,19 @@
 - User-shared Cloudflare log for #357a (`0174f55`): TypeScript passed; **807/812 tests passed**, five failed solely on stale source-string contracts in `worktableChrome130` (2), `worktableParity126` (1), `bidSubmissionTaskGuard` (1), and `november16Polish355a` (1). Existing Files 7 tests and external Quote cloud-confirmation cases passed.
 - Updated those four test files to reflect actual **one-grid Quote Filters** and shorter Task Quick View labels while retaining all business guard assertions. New head's exact Cloudflare build remains unverified.
 - Customer Quote links are already authoritative **cloud Quote Share** resources, but not automatically in Files v0.1. Design a *dynamic* reference to the current usable share; never copy bearer tokens to browser-local Files.
-- User proposed Bring Your Own SaaS Google Docs export: choose/copy authorized Drive template, merge `{{placeholders}}`, handle repeating pricing rows, save resulting editable Google Doc as a linked output. Must restrict customer exports to approved customer-visible fields, preserve revisions, avoid implicit delivery. See `docs/product/quote-links-files-and-google-docs-template-exports.md`. **Planning only**, no OAuth/cloud implementation committed.
-- Next prototype queue stays Automations P3 unless user prioritizes the Google Docs export.
+- User corrected the BYO SaaS idea to **Google Sheets** rather than Google Docs, and explicitly deferred it. Intended future output: builder spreadsheet templates with mapped Quote fields and repeatable Areas/line items, preserving customer-visible data protections and Quote provenance. See `docs/product/quote-links-files-and-google-sheets-template-exports.md`. **Docked; no OAuth/cloud implementation committed.**
+- Next prototype stays **Automations P3**; Google Sheets integration is explicitly deferred.
 
 ### November 16 #357c — external Quote source contract follow-up
 
 - Reviewed the committed #357b test against both real Quick View components before build. They use distinct callbacks (`recordExternal` in TaskModalHost vs inline `setExternalDealId(...)` in TasksWorkspace). Updated common static assertion to require actual recorder state activation in both paths instead of the callback name used by only one. All other protected bid submission checks remain.
 - Next Cloudflare check should cover #357b's five stale expectation fixes and #357c's callback-contract adjustment. Pending; no green claim.
+
+### November 16 #357d — Google Sheets clarification and prototype priority
+
+- User clarified the BYO export target is **Google Sheets**, not Google Docs. Explicitly **docked/deferred**; do not spend development time on it now. Kept a historical redirect from the earlier Google Docs design filename.
+- Current next prototype remains **P3 Workflow Automations v0.1**, after exact-head Cloudflare green: quote delivery → follow-up, inactive Deal → reminder, Won Deal → handoff. First version must be consented/opt-in and duplicate-safe; never claim unattended background execution without an actual scheduler.
+- The last user-supplied log for `0174f55` showed five stale assertion failures; #357b/#357c source fixes committed but their Cloudflare result is still unknown.
 
 ## Carry-forward notes for next chat
 

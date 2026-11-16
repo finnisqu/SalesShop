@@ -1,4 +1,4 @@
-> **Customer quote link & BYO document export proposal (November 16):** [Google Docs templates + live Quote Share references in Files](docs/product/quote-links-files-and-google-docs-template-exports.md). Proposal only; secure Quote sharing already exists, automatic Files listing and Google OAuth do not. See sprint plan for queue.
+> **Customer quote link & BYO document export proposal (November 16):** [parked Google Sheets templates + live Quote Share references in Files](docs/product/quote-links-files-and-google-sheets-template-exports.md). Google Sheets export is **deferred at user request**; secure Quote sharing already exists, automatic Files listing and Google OAuth do not. See sprint plan for queue.
 
 > **Current sprint (November 16, 2026):** [Prototype & Polish Work Plan](docs/plans/2026-11-16-prototype-polish-work-plan.md). This tracks the active batches, status, issues, and verified release results. The 12-phase roadmap below is the historical long-term vision; its status summaries are not a substitute for the current work plan.
 
