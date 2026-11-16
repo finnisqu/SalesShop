@@ -21,14 +21,16 @@ import { useCompanySettingsStore } from '../store/companySettingsStore';
 import {useCrmStore} from '../store/crmStore';
 import {isOurCompany,ourCompanyPatch,companyRelationshipPatch} from '../services/companyRelationship';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
+import {CrmFieldBlueprintSettings} from './CrmFieldBlueprintSettings';
 
-type SettingsTab = 'company' | 'account' | 'team' | 'appearance' | 'beta' | 'data' | 'advanced';
+type SettingsTab = 'company' | 'crm' | 'account' | 'team' | 'appearance' | 'beta' | 'data' | 'advanced';
 type RecordKind = 'quote' | 'person' | 'company' | 'deal' | 'activity';
 const manageRecords=(kind:RecordKind,testMode=false)=>{
   window.dispatchEvent(new CustomEvent('salesshop:open-cleanup-center',{detail:{kind,testMode}}));
 };
 const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
   { id: 'company', title: 'Company & Branding', subtitle: 'Customer-facing identity' },
+  { id: 'crm', title: 'CRM Setup', subtitle: 'Custom field blueprints' },
   { id: 'account', title: 'My Account', subtitle: 'Salesperson profile' },
   { id: 'team', title: 'Team', subtitle: 'People in your shop' },
   { id: 'appearance', title: 'Appearance & Accessibility', subtitle: 'Personal preferences' },
@@ -313,6 +315,9 @@ export function CompanySettings() {
           <PersonalDateTimeSettings userId={user?.id ?? null} />
         </section>}
 
+        {tab === 'crm' && <CrmFieldBlueprintSettings
+          editable={canEditCompany} mode={mode} organizationId={organizationId}
+          userId={user?.id}/>}
         {tab === 'team' && <><TeamAccessSettings /><SalesTeamManagement /></>}
         {tab === 'appearance' && <section className="settings-panel-grid" aria-label="Appearance and accessibility preferences">
           <AppearanceThemePicker />

@@ -1,0 +1,108 @@
+/* Batch 352b: industry-neutral, device-draft CRM configuration studio.
+ * Scoped styles follow existing Settings panels and theme tokens. */
+.crm-blueprint-panel,
+.crm-blueprint-principles{min-width:0;}
+.crm-blueprint-explainer{
+ margin:0 0 10px;color:var(--ss-theme-ink);font-size:12px;line-height:1.55;
+}
+.crm-blueprint-draft-note{
+ display:grid;gap:4px;margin:9px 0 14px;padding:11px 12px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ border-left:3px solid var(--ss-theme-accent);
+ background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+}
+.crm-blueprint-draft-note strong{font-size:12px;}
+.crm-blueprint-draft-note span{font-size:11px;line-height:1.55;color:var(--ss-theme-muted);}
+.crm-blueprint-access-note,.crm-blueprint-empty{
+ font-size:12px;line-height:1.5;color:var(--ss-theme-muted);margin:10px 0;
+}
+.crm-blueprint-targets{display:flex;gap:7px;flex-wrap:wrap;margin:4px 0 15px;}
+.crm-blueprint-targets>button{
+ display:flex;align-items:center;gap:7px;min-height:36px;
+ padding:7px 12px;border:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ border-radius:8px;font-size:12px;font-weight:750;cursor:pointer;
+}
+.crm-blueprint-targets>button[aria-pressed="true"]{
+ background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
+}
+.crm-blueprint-targets>button>span{
+ display:inline-grid;place-items:center;min-width:19px;height:19px;
+ border-radius:99px;background:var(--ss-theme-base);font-size:10px;
+}
+.crm-blueprint-section-heading{
+ display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+ justify-content:space-between;margin-bottom:8px;
+}
+.crm-blueprint-section-heading strong{font-size:12px;}
+.crm-blueprint-section-heading small{font-size:11px;color:var(--ss-theme-muted);}
+.crm-blueprint-field-list{display:grid;gap:6px;margin:0 0 14px;}
+.crm-blueprint-field{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;
+ padding:9px 10px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;background:var(--ss-theme-card);
+}
+.crm-blueprint-field-info{display:grid;gap:3px;min-width:0;flex:1;}
+.crm-blueprint-field-info strong{font-size:12px;overflow-wrap:anywhere;}
+.crm-blueprint-field-info small,.crm-blueprint-field-info span{
+ font-size:11px;line-height:1.4;color:var(--ss-theme-muted);overflow-wrap:anywhere;
+}
+.crm-blueprint-field-info code{
+ justify-self:start;max-width:100%;font-size:10px;color:var(--ss-theme-muted);
+ overflow-wrap:anywhere;
+}
+.crm-blueprint-field-actions{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.crm-blueprint-field-actions>button{
+ min-width:32px;min-height:34px;padding:6px 8px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font-size:11px;font-weight:750;cursor:pointer;
+}
+.crm-blueprint-field-actions>button[aria-pressed="false"]{opacity:.75;}
+.crm-blueprint-field-actions>button:disabled{opacity:.4;cursor:default;}
+.crm-blueprint-new-field fieldset{
+ min-width:0;margin:0;padding:12px;border:1px solid var(--ss-theme-border);
+ border-radius:9px;
+}
+.crm-blueprint-new-field legend{font-size:12px;font-weight:750;padding:0 5px;}
+.crm-blueprint-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.crm-blueprint-form-grid label{display:grid;gap:5px;min-width:0;}
+.crm-blueprint-form-grid label>span{font-size:11px;font-weight:700;}
+.crm-blueprint-form-grid .crm-blueprint-wide{grid-column:1/-1;}
+.crm-blueprint-form-grid :is(input,select,textarea){
+ box-sizing:border-box;display:block;min-width:0;width:100%;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ padding:8px 10px;min-height:36px;font-size:12px;font-family:inherit;
+}
+.crm-blueprint-form-grid textarea{resize:vertical;line-height:1.5;}
+.crm-blueprint-create{
+ margin-top:10px;padding:8px 12px;min-height:36px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-tint);color:var(--ss-theme-ink);
+ font-size:12px;font-weight:750;cursor:pointer;
+}
+.crm-blueprint-new-field :disabled{opacity:.5;cursor:default;}
+.crm-blueprint-error,.crm-blueprint-notice{
+ margin:9px 0 0;font-size:11px;line-height:1.4;
+ overflow-wrap:anywhere;
+}
+.crm-blueprint-error{color:var(--ss-theme-ink);font-weight:700;}
+.crm-blueprint-notice{color:var(--ss-theme-muted);}
+.crm-blueprint-principle-list{display:grid;gap:8px;}
+.crm-blueprint-principle-list p{margin:0;font-size:12px;line-height:1.55;color:var(--ss-theme-muted);}
+.crm-blueprint-principle-list p strong{color:var(--ss-theme-ink);}
+.crm-blueprint-panel button:focus-visible,
+.crm-blueprint-panel :is(input,textarea,select):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+@media(max-width:760px){
+ .crm-blueprint-field{align-items:flex-start;flex-direction:column;gap:8px;}
+ .crm-blueprint-field-actions{width:100%;justify-content:flex-end;}
+ .crm-blueprint-form-grid{grid-template-columns:1fr;}
+ .crm-blueprint-targets>button,.crm-blueprint-field-actions>button,
+ .crm-blueprint-create{min-height:44px;}
+ .crm-blueprint-form-grid :is(input,select,textarea){
+  min-height:44px;font-size:16px;
+ }
+}
