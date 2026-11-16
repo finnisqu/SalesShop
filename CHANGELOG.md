@@ -8,7 +8,8 @@ Status meanings: **Source committed** = in GitHub; **Build green** = confirmed C
 
 | Version / commit | Delivered | Release status | Follow-up / deferred |
 | --- | --- | --- | --- |
-| #356b (this commit) | Quote Filters rebuilt as one orderly two-column form with full-width Document type; Task Quick View buttons shortened with original behavior intact | Source committed / build pending | Check Quote Filters at 100/125% and button meanings with keyboard/tooltip |
+| #357a (this commit) | Files v0.1: actual file/folder URL library, label editing, Company/Deal/Quote context panels, Records → More → Files search/open actions; scoped browser persistence and URL validation | Source committed / Cloudflare pending | Browser-local only, no team sync, OAuth or uploads; test user and tenant separation before cloud expansion |
+| #356b (8a268b4) | Quote Filters rebuilt as one orderly two-column form with full-width Document type; Task Quick View buttons shortened with original behavior intact | Source committed / build pending | Check Quote Filters at 100/125% and button meanings with keyboard/tooltip |
 | #356a (797378a) | Desktop single-row headers; Quote Filters grid fixed at source; Settings header outside sidebar; themed Deal form controls and scrollbars; Today icon; one-row Quick View actions | Source committed / build pending | Browser 100–175% zoom and mobile QA |
 | #355f (48a7fb4) | Corrected stale Customer follow-ups test expectation; raised one slow external-Quote cloud-confirmation test's wall-clock budget to handle contended CI workers, preserving all business assertions | Source committed / Cloudflare pending | Verify next gate; if same case exceeds 30 s, investigate test runner/resource contention rather than weakening confirmation rules |
 | #355e (ad2a059) | Focused zoom/header and floating calendar legibility follow-up; clearer Quote follow-up menu name | **Red gate** on November 16 (2 tests failed; 796 passed) | Check 100/125/150/175% zoom and calendar at desktop and phone widths |
@@ -26,4 +27,5 @@ Status meanings: **Source committed** = in GitHub; **Build green** = confirmed C
 - Shared custom-field activation until negative RLS tests on isolated disposable PostgreSQL; production Supabase is not a test database.
 - Multifamily Gantt/timeline draft PR #67 paused until scheduled work is resumed.
 - Legacy sink-repricing PR #95 needs migration to the single-editor workflow.
-- File/provider integrations, reliable background automations, email integration, CAD-Lite bridge and external plugins follow Analytics and the pre-prototype polish.
+- Files v0.1 stores browser-local *links* only. Cloud shared link library, real uploads and provider OAuth need authenticated RLS/scoping work.
+- Reliable background automations, email integration, CAD-Lite bridge and external plugins remain queued after Files.

@@ -36,7 +36,7 @@
 | Order | Prototype | Minimum **working** user outcome | Risk / boundary | Status |
 | --- | --- | --- | --- | --- |
 | P1 | Analytics v0.1 | Actual KPI cards/charts for deal value/stages, bids, quotes and activity; owner/date filters using current records | Date range is a Deal creation cohort; cloud quotes use the same private visible index as Records | Source committed / build pending (#354a) |
-| P2 | Files v0.1 | Store/open/link real file URLs under Company/Deal/Quote, with editable labels; not a mock button | Tenant scope and link URL validation; connected providers later | Queued |
+| P2 | Files v0.1 | Store/open/link real file URLs under Company/Deal/Quote, with editable labels; not a mock button | Browser-local per user/tenant and developer-playground namespace. No cloud sharing or provider access yet | Source committed / build pending (#357a) |
 | P3 | Automations v0.1 | Opt-in follow-up on confirmed quote delivery, inactive Deal reminder and won Deal handoff Task; auditable/no duplicate firing | Server-backed execution required before claiming background reliability | Queued |
 | P4 | Email v0.1 | Connect one real provider, read conversations, selectively link threads to CRM People/Deals | OAuth and least-privilege; never infer a sent email from a copied link | Queued |
 | P5 | CAD-Lite bridge v0.1 | Open a linked CAD-Lite project from Deal/Quote; import manual takeoff export | Technical data owned by CAD-Lite; no implicit repricing | Queued |
@@ -176,6 +176,16 @@
 - Quote Filters markup is one full-width Document type and a six-field two-column form. Removed nested .qmb-library-extra-filters-content from runtime; desktop and mobile share the same layout.
 - Task Quick View actions use short labels ("Open Deal", "Open Quote", "Log external bid", "Quote required", "Complete + Log"). Guided completion still preselects optional follow-up; proof guard is unchanged.
 - Source committed; latest Cloudflare and authenticated visual check pending. Proceed straight to Files v0.1.
+
+### November 16 #357a — Files v0.1 live-link library prototype
+
+- Records → More → Files is a real searchable library: create labeled file/folder URLs, choose Company/Deal/native Quote/external Quote, open external URLs, edit label/link/type or remove only the SalesShop reference (not the source file).
+- Company, Deal and native Quote metadata pages include the same Files manager, contextualized to their saved CRM record. External bids appear in the Files directory as external Quote targets.
+- Browser localStorage is uniquely scoped to **org + signed-in user** in cloud mode, with a separate Developer Playground namespace. Missing cloud identity disables saving. Do not claim org-shared sync, mobile-device sync or file uploads.
+- URL validator allows only http(s), rejects embedded usernames/passwords and unsafe schemes. Links open with noopener+noreferrer; records list is constrained to currently accessible CRM targets.
+- Seven Vitest tests cover URL/scope/provider/persistence and view integration; registered in quick-quote release gate.
+- **Next stage:** authenticated shared link table with verified negative RLS and provider connection, or proceed to opted-in workflow automation prototype #357b (no claim of background execution without scheduler).
+- Pending exact Cloudflare build and manual browser QA for links, editing/removal, native & external Quote linkage.
 
 ## Carry-forward notes for next chat
 

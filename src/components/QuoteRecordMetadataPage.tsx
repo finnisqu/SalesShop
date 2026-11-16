@@ -3,6 +3,7 @@ import {useCrmStore} from '../store/crmStore';
 import {useAuthStore} from '../store/authStore';
 import {useNavigationStore} from '../store/navigationStore';
 import {displayQuoteNumber,quoteTotal} from '../types/quote';
+import {FileLinksManager} from './FileLinksManager';
 import '../quote-record-metadata.css';
 
 const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
@@ -41,6 +42,9 @@ export function QuoteRecordMetadataPage({quoteId,onBack,onPreview}:{
        {detail('Created',new Date(quote.createdAt).toLocaleDateString())}
        {detail('Updated',new Date(quote.updatedAt).toLocaleDateString())}
      </dl></section>
+     <section><h2>Files & folders</h2>
+       <FileLinksManager target={{kind:'quote',id:quote.id,title:quote.title||displayQuoteNumber(quote)}}/>
+     </section>
      <section><h2>Connections</h2>
        {company?<button type="button" onClick={()=>nav.openCompany(company.id)}>{company.name} · Company ›</button>
          :<p>{quote.companyName||'No company linked'}</p>}

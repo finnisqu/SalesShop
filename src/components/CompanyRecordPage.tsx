@@ -9,6 +9,7 @@ import {openActivityComposer} from '../services/taskActivityWorkflow';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordUnlinkAction} from './RecordUnlinkAction';
 import {RecordTasksPanel} from './RecordTasksPanel';
+import {RecordFilesPanel} from './RecordFilesPanel';
 import {ourOrgPeople,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
@@ -312,6 +313,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
           </button>)}
         {!related.relatedActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>}/>
+      <RecordFilesPanel target={{kind:'company',id:company.id,title:company.name}}/>
       <RecordTasksPanel kind="company" id={company.id} name={company.name} editing={editing||unlinking}/>
       <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
         <div className="connections-record-entity-list">
