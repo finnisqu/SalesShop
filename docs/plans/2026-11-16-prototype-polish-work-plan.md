@@ -239,6 +239,11 @@
 - Added a 20-Task app-open execution budget per workspace session, even through multiple task store sync renders. Manual preview/execution remains opt-in and capped at 20 per click.
 - No proof guards, send actions or cloud schema changed. Exact new Cloudflare build remains pending.
 
+### November 16 #358e — modal focus finish
+
+- File dialog's + Link launcher remains mounted behind the overlay so focus can return on Escape/cancel; both File and Our Org modals start focus in the first meaningful text field rather than the close icon.
+- User confirmed the previous Files page build **green** and working; new #358a–#358e changes still require their own Cloudflare build. All new automation rules remain off until explicitly enabled.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

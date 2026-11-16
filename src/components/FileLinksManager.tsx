@@ -64,7 +64,7 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
  };
  if(!expectedScope)return <p className="ss-files-notice">A signed-in workspace is required for your private file links.</p>;
  return <div className="ss-file-links-manager">
-  {!showForm&&<div className="ss-file-links-actions">
+  <div className="ss-file-links-actions">
    <span>{visible.length} {visible.length===1?'link':'links'}{target?' for this record':''}</span>
    <button type="button" onClick={startNew}>+ Link file or folder</button>
   </div>}
@@ -97,7 +97,7 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
    </label>}
    <div className="ss-file-links-fields">
     <label>Label<input type="text" required maxLength={180} value={title}
-     autoFocus placeholder="e.g. Contract drawings" onChange={e=>setTitle(e.target.value)}/></label>
+     data-dialog-initial-focus placeholder="e.g. Contract drawings" onChange={e=>setTitle(e.target.value)}/></label>
     <label>Link type<select value={kind} onChange={e=>setKind(e.target.value as FileLinkKind)}>
      <option value="file">Document / file</option><option value="folder">Folder</option>
     </select></label>

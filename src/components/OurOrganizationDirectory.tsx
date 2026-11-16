@@ -148,7 +148,7 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
      <form className="our-org-form" onSubmit={save}>
    <div className="our-org-form-title"><strong>{editingId?'Edit':'Add'} person</strong>
     <button type="button" aria-label="Close person form" onClick={closeEditor}>×</button></div>
-   <label>Name<input required maxLength={180} value={draft.name}
+   <label>Name<input data-dialog-initial-focus required maxLength={180} value={draft.name}
     onChange={e=>setDraft(d=>({...d,name:e.target.value}))}/></label>
    <label>Relationship<select value={draft.group} onChange={e=>setDraft(d=>({...d,group:e.target.value as RosterGroup,title:''}))}>
     {OUR_ORG_GROUPS.map(item=><option key={item.id} value={item.id}>{item.title.slice(0,-1)}</option>)}

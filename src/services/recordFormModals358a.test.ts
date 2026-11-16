@@ -10,6 +10,8 @@ describe('Centered create/edit modals #358a',()=>{
   expect(s).toContain('onSubmit={submit}');
   expect(s).toContain('aria-modal="true"');
   expect(s).toContain('Save link');
+  expect(s).toContain('data-dialog-initial-focus');
+  expect(s).toContain('<div className="ss-file-links-actions">');
  });
  it('Our Org +Person uses same modal without changing role/roster save logic',()=>{
   const s=read('components/OurOrganizationDirectory.tsx');
@@ -18,6 +20,7 @@ describe('Centered create/edit modals #358a',()=>{
   expect(s).toContain('ensureOurOrgCompany(');
   expect(s).toContain('onSubmit={save}');
   expect(s).not.toContain('scrollIntoView(');
+  expect(s).toContain('data-dialog-initial-focus');
  });
  it('both use a responsive full-screen backdrop and fixed-width themed dialog',()=>{
   const s=read('components/record-form-modal.css');
