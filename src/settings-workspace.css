@@ -420,3 +420,23 @@
  .sales-app.view-settings .settings-record-management-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
  .sales-app.view-settings .settings-record-management-actions button{min-height:44px}
 }
+
+/* #356a: Settings header is a full-page sibling of the two-column rail. */
+@media(min-width:761px){
+ :root[data-sales-theme] .sales-app.view-settings .company-settings-view{
+  padding:0!important;display:flex;flex-direction:column;min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-settings .company-settings-view>.ss-workspace-header{
+  flex:0 0 var(--ss-workspace-header-height,82px);width:100%;min-width:0;
+ }
+ :root[data-sales-theme] .sales-app.view-settings .settings-layout{
+  box-sizing:border-box;width:100%;max-width:1270px;margin:0 auto;
+  min-width:0;padding:18px 18px 48px;
+  grid-template-columns:220px minmax(0,1fr);grid-template-rows:auto;align-content:start;
+ }
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-settings .company-settings-view>.ss-workspace-header{
+  display:none!important;
+ }
+}

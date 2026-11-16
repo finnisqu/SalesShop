@@ -98,6 +98,8 @@ import './records-toolbar-consistency.css';
 import './worktable-chrome.css';
 import './workspace-tab-nav.css';
 import './workspace-zoom-fixes.css';
+import './scrollbar-theme.css';
+import './quick-view-action-row.css';
 
 const PRIMARY_NAV_DESTINATIONS=['home','dashboard','catalog','notebook'] as const;
 

@@ -1,0 +1,21 @@
+/* #356a: theme-matched scrollbars in workspace and body-portaled dialogs. */
+:root[data-sales-theme]{scrollbar-color:var(--ss-theme-border) var(--ss-theme-base);scrollbar-width:thin}
+:root[data-sales-theme] :is(.sales-app,.sales-app *,.board-create-backdrop,
+ .board-create-backdrop *,.tasks-dialog-backdrop,.tasks-dialog-backdrop *,
+ .record-preview-backdrop,.record-preview-backdrop *){
+ scrollbar-color:var(--ss-theme-border) var(--ss-theme-base);scrollbar-width:thin;
+}
+:root[data-sales-theme] :is(.sales-app,.board-create-backdrop,
+ .tasks-dialog-backdrop,.record-preview-backdrop) ::-webkit-scrollbar{width:9px;height:9px}
+:root[data-sales-theme] :is(.sales-app,.board-create-backdrop,
+ .tasks-dialog-backdrop,.record-preview-backdrop) ::-webkit-scrollbar-track{
+ background:var(--ss-theme-base);border-radius:99px;
+}
+:root[data-sales-theme] :is(.sales-app,.board-create-backdrop,
+ .tasks-dialog-backdrop,.record-preview-backdrop) ::-webkit-scrollbar-thumb{
+ background:var(--ss-theme-border);border-radius:99px;border:2px solid var(--ss-theme-base);
+}
+:root[data-sales-theme] :is(.sales-app,.board-create-backdrop,
+ .tasks-dialog-backdrop,.record-preview-backdrop) ::-webkit-scrollbar-thumb:hover{
+ background:var(--ss-theme-accent);
+}

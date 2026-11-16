@@ -1,0 +1,23 @@
+/* #356a: one bottom action row, horizontally reachable at narrow widths. */
+:root[data-sales-theme] :is(.tasks-preview-card,.record-preview-panel)
+ :is(.ss-preview-actions,.record-preview-actions){
+ display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
+ justify-content:space-between!important;gap:8px!important;
+ overflow-x:auto;overflow-y:hidden;max-width:100%;min-width:0;
+ scrollbar-width:thin;overscroll-behavior-x:contain;
+}
+:root[data-sales-theme] .tasks-preview-card .tasks-preview-actions-left,
+:root[data-sales-theme] .tasks-preview-card .tasks-preview-actions-right{
+ display:flex!important;align-items:center;flex:0 0 auto!important;
+ flex-wrap:nowrap!important;gap:6px!important;
+}
+:root[data-sales-theme] .tasks-preview-card .tasks-preview-actions-left{margin-right:auto}
+:root[data-sales-theme] :is(.tasks-preview-card,.record-preview-panel)
+ :is(.ss-preview-actions,.record-preview-actions) button{
+ box-sizing:border-box;flex:0 0 auto!important;white-space:nowrap!important;
+ min-height:36px;max-width:none;padding:7px 10px;font-size:11px;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] :is(.tasks-preview-card,.record-preview-panel)
+ :is(.ss-preview-actions,.record-preview-actions) button{min-height:44px}
+}

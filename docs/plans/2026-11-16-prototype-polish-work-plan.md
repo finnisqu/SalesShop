@@ -163,6 +163,14 @@
 - `externalQuoteCloudConfirmation330.test.ts` case "waits for both Activity and Deal acknowledgement..." exceeded the default 5000 ms timeout under Cloudflare's highly parallel test run (reported 16.08 s). The other five scenarios in that file passed. Increase the wall-clock limit **for that first case only** to 30 s, retaining all remote Activity and Deal acknowledgement assertions, stage/amount/deadline checks, and safe failure/duplicate handling.
 - Source committed to main; Cloudflare and authenticated smoke checks still pending. A repeated timeout beyond the new threshold requires further investigation, not bypassing the test.
 
+### November 16 #356a — screenshot follow-up
+
+- Confirmed screenshot from `48a7fb4`: desktop headers growing to two rows at 100%+, Quote Filters overlapping, Settings grid jumbled, inconsistent native Deal fields, oversized Today button and wrapping Quick View actions.
+- Replaced the 126px two-row zoom override with an 82px single-row layout and independent intro/tabs/tools grid tracks; uses compact controls below 1100px.
+- Corrected the higher-specificity `display:contents` rule in `worktable-chrome.css` that defeated Quote Filters grid layout; Settings header is now a sibling above the sidebar grid.
+- Themed advanced Deal inputs including select, number, and assignee, scrollbars; Today uses calendar icon; Quick View bottom buttons stay on a horizontally scrollable row.
+- New static regression tests in the build gate. **Cloudflare and authenticated visual QA pending for #356a**.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

@@ -178,8 +178,7 @@ export function CompanySettings() {
 
   return (
     <main className="company-settings-view">
-      <div className="settings-layout">
-        <WorkspaceHeader title="Settings" help={<WorkspaceHelp page="settings" section={tab}/>}
+      <WorkspaceHeader title="Settings" help={<WorkspaceHelp page="settings" section={tab}/>}
           className="ss-settings-mobile-header"
           mobileTabs={visibleTabs.map(item=>({value:item.id,label:item.title}))}
           mobileTabValue={tab}
@@ -205,6 +204,7 @@ export function CompanySettings() {
             onClick={()=>document.querySelector<HTMLButtonElement>('.mobile-app-hidden-launchers .quick-create-launcher')?.click()}>
             + Create</button>}
         />
+      <div className="settings-layout">
         <label className="settings-mobile-section-select">
           <span>Settings section</span>
           <select aria-label="Settings section" value={tab}

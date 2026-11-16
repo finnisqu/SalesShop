@@ -1,77 +1,81 @@
-/* November 16 · shared responsive header: never overlap navigation and actions
- * when browser zoom reduces the effective CSS viewport width. */
+/* #356a: Desktop headers stay on ONE row at normal and high zoom.
+ * The old rule explicitly forced a 126px, second-row nav for 761–1599px. */
 @media(min-width:761px) and (max-width:1599px){
- :root[data-sales-theme] .sales-app{
-  --ss-workspace-header-height:126px;
- }
+ :root[data-sales-theme] .sales-app{--ss-workspace-header-height:82px!important}
  :root[data-sales-theme] .sales-app .ss-workspace-header,
  :root[data-sales-theme] .sales-app.view-catalog .catalog-workspace>.catalog-header.catalog-foundation-heading.ss-workspace-header,
  :root[data-sales-theme] .sales-app.view-dashboard .connections-directory-layout>.connections-heading.connections-foundation-heading.ss-workspace-header{
-  position:relative!important;
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) minmax(0,410px)!important;
-  grid-template-rows:50px 46px!important;
-  row-gap:5px!important;
-  height:126px!important;min-height:126px!important;
-  max-height:126px!important;align-items:center!important;
- }
- :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs{
-  position:static!important;inset:auto!important;
-  grid-column:1/-1!important;grid-row:2!important;
-  transform:none!important;justify-self:center!important;
-  width:min(100%,1000px)!important;max-width:100%!important;
-  min-width:0!important;height:46px!important;min-height:0!important;
-  display:flex!important;justify-content:center!important;align-items:center!important;
-  overflow-x:auto!important;overflow-y:visible!important;
-  pointer-events:auto!important;
+  display:grid!important;position:relative;box-sizing:border-box;
+  grid-template-columns:minmax(175px,1fr) minmax(0,440px) minmax(310px,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:0 10px!important;align-items:center!important;
+  height:82px!important;min-height:82px!important;max-height:82px!important;
+  flex-wrap:nowrap!important;
  }
  :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__intro{
   grid-column:1!important;grid-row:1!important;min-width:0!important;
  }
- :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tools{
-  grid-column:2!important;grid-row:1!important;justify-self:end!important;
-  max-width:100%!important;
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs{
+  grid-column:2!important;grid-row:1!important;transform:none!important;
+  justify-self:center!important;align-self:center!important;
+  max-width:100%!important;min-width:0!important;height:auto!important;
  }
- :root[data-sales-theme] .sales-app .ss-workspace-header__tabs> :is(nav,div){
-  flex-wrap:nowrap!important;min-width:0!important;max-width:100%!important;
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tools{
+  grid-column:3!important;grid-row:1!important;justify-self:end!important;max-width:100%!important;
  }
  :root[data-sales-theme] .sales-app .notebook-workspace:has(>.ss-workspace-header){
-  grid-template-rows:126px minmax(0,1fr)!important;
+  grid-template-rows:82px minmax(0,1fr)!important;
+ }
+ :root[data-sales-theme] .sales-app.view-notebook .ss-workspace-header .notebook-header-page-navigator{
+  position:static!important;left:auto!important;right:auto!important;
+  transform:none!important;margin:0!important;max-width:100%!important;
  }
 }
-@media(min-width:761px) and (max-width:1050px){
+@media(min-width:1100px) and (max-width:1399px){
+ :root[data-sales-theme] .sales-app .ss-workspace-header,
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-workspace>.catalog-header.catalog-foundation-heading.ss-workspace-header{
+  grid-template-columns:minmax(185px,1fr) minmax(0,425px) minmax(330px,1fr)!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header{
+  --ss-header-more-width:66px!important;--ss-header-search-width:150px!important;
+  --ss-header-create-width:108px!important;
+ }
  :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tools{
-  --ss-header-search-width:100px;--ss-header-more-width:76px;--ss-header-create-width:112px;
-  width:auto!important;grid-template-columns:76px 100px 112px!important;
+  width:338px!important;grid-template-columns:66px 150px 108px!important;
  }
 }
-
-/* High-specificity correction for the old >=1400px Records absolute nav.
- * At 125% desktop zoom that branch was still painting the tabs through the
- * right-side search/create actions. Keep menus unclipped on the second row. */
+@media(min-width:761px) and (max-width:1099px){
+ :root[data-sales-theme] .sales-app .ss-workspace-header,
+ :root[data-sales-theme] .sales-app.view-catalog .catalog-workspace>.catalog-header.catalog-foundation-heading.ss-workspace-header{
+  grid-template-columns:minmax(120px,1fr) minmax(0,1.7fr) minmax(242px,1.2fr)!important;
+  padding-inline:12px!important;column-gap:7px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header{
+  --ss-header-more-width:49px!important;--ss-header-search-width:100px!important;
+  --ss-header-create-width:94px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tools{
+  width:257px!important;grid-template-columns:49px 100px 94px!important;column-gap:7px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header__intro h1{font-size:21px!important}
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs{
+  overflow-x:auto!important;overflow-y:hidden!important;justify-content:flex-start!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header__tabs>.ss-header-tab-pill{
+  max-width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;
+ }
+}
+/* Preserve true page-center placement where enough width exists. */
 @media(min-width:1400px) and (max-width:1599px){
  :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
  .ss-workspace-header:has(>.ss-workspace-header__tabs>.records-section-nav)
  >.ss-workspace-header__tabs{
-   position:static!important;inset:auto!important;
-   grid-column:1/-1!important;grid-row:2!important;
-   z-index:2!important;width:100%!important;max-width:100%!important;
-   height:46px!important;margin:0!important;
-   transform:none!important;justify-content:center!important;
-   pointer-events:auto!important;overflow:visible!important;
+  position:absolute!important;inset:0!important;grid-column:1/-1!important;grid-row:1!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;max-width:none!important;overflow:visible!important;
+  pointer-events:none!important;z-index:2!important;
  }
-}
-@media(min-width:761px) and (max-width:1599px){
- :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs{
-  overflow:visible!important;
- }
- :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs>.ss-header-tab-pill{
-  min-width:0!important;max-width:100%!important;
-  box-sizing:border-box!important;
- }
- :root[data-sales-theme] .sales-app.view-notebook
- .ss-workspace-header .notebook-header-page-navigator{
-  position:static!important;left:auto!important;right:auto!important;
-  margin:0!important;transform:none!important;max-width:100%!important;
- }
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+ .ss-workspace-header:has(>.ss-workspace-header__tabs>.records-section-nav)
+ >.ss-workspace-header__tabs>.records-section-nav{pointer-events:auto!important}
 }

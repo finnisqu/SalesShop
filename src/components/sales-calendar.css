@@ -1183,3 +1183,10 @@
   min-height:68px!important;
  }
 }
+
+/* Same small calendar Today icon, instead of a wide text button. */
+.sales-calendar-sidecar-list.is-outstanding .home-outstanding-task-row .home-outstanding-today-action{
+ display:inline-grid;place-items:center;flex:0 0 34px;width:34px;height:34px;
+ min-width:34px;min-height:34px;padding:6px;margin-right:8px;border-radius:8px;
+}
+.sales-calendar-sidecar-list.is-outstanding .home-outstanding-today-action svg{display:block;width:18px;height:18px}

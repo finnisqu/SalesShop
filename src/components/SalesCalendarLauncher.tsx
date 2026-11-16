@@ -447,9 +447,14 @@ export function SalesCalendarLauncher({compact=false,label='Calendar',embedded=f
          </button>
          {task.dueDate!==today&&!isProtectedBidTask(task)&&storedScope===personal&&
            <button type="button" className="home-outstanding-today-action"
-             aria-label={'Move '+task.title+' to today'}
+             aria-label={'Move '+task.title+' to today'} title="Move task to today"
              onClick={()=>{if(storedScope===personal)updateTask(task.id,{dueDate:today});}}>
-             Today
+             <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              aria-hidden="true">
+              <rect x="3" y="5" width="18" height="16" rx="2"/>
+              <path d="M7 3v4M17 3v4M3 10h18M12 14v4M10 16h4"/>
+             </svg>
            </button>}
          </div>):<p>All caught up. No outstanding tasks.</p>}
       </div>

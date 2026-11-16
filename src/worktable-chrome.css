@@ -323,13 +323,35 @@
  .qmb-library-filters-v112>label>select{max-width:100%;width:100%;min-width:0}
 :root[data-sales-theme] .sales-app .ss-worktable-filter-panel
  .qmb-library-extra-filters-content{
- display:contents!important;position:static!important;
- min-width:0!important;width:auto!important;max-width:none!important;
- padding:0!important;margin:0!important;border:0!important;
- background:transparent!important;box-shadow:none!important;
+ display:grid!important;position:static!important;
+ grid-column:1/-1!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ align-items:start;gap:12px;
+ min-width:0!important;width:100%!important;max-width:none!important;
+ margin:0!important;padding:12px 0 0!important;
+ border:0!important;border-top:1px solid var(--ss-theme-border)!important;
+ border-radius:0!important;background:transparent!important;box-shadow:none!important;
 }
 :root[data-sales-theme] .sales-app .ss-worktable-filter-panel
  .qmb-library-extra-filters-content :is(p,button){grid-column:1/-1}
+:root[data-sales-theme] .sales-app .ss-worktable-filter-panel .qmb-library-filters-v112{
+ width:100%!important;min-width:0!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+:root[data-sales-theme] .sales-app .ss-worktable-filter-panel .qmb-library-filters-v112>label{
+ display:grid!important;gap:5px!important;width:100%!important;min-width:0!important;white-space:normal!important;
+}
+:root[data-sales-theme] .sales-app .ss-worktable-filter-panel .qmb-library-filters-v112 :is(select,input,label){
+ min-width:0!important;max-width:100%!important;
+}
+:root[data-sales-theme] .sales-app.view-quotes .ss-worktable-filter-panel{
+ width:min(480px,calc(100vw - 26px));
+}
+@media(max-width:460px){
+ :root[data-sales-theme] .sales-app .ss-worktable-filter-panel .qmb-library-filters-v112,
+ :root[data-sales-theme] .sales-app .ss-worktable-filter-panel .qmb-library-extra-filters-content{
+  grid-template-columns:1fr!important;
+ }
+}
 :root[data-sales-theme] .sales-app .ss-worktable-filter-panel
  .connections-people-attention-filters{
  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));

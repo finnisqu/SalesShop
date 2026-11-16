@@ -139,3 +139,28 @@
 .board-create-extra-grid>label{display:flex;flex-direction:column;gap:5px;min-width:0}
 .board-create-extra-grid :is(select,input){width:100%;max-width:100%;min-width:0}
 @media(max-width:520px){.board-create-extra-grid{grid-template-columns:1fr}}
+
+/* #356a: style all advanced inputs inside the body-portaled Deal dialog. */
+:root[data-sales-theme] .board-create-sheet .board-create-extra-grid>label{
+ font:700 12px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ color:var(--ss-theme-ink);gap:6px;min-width:0;
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details
+ :is(.board-create-extra-grid select,.board-create-extra-grid input,
+ .board-create-related select,.board-create-related input:not([type="checkbox"])){
+ display:block;box-sizing:border-box;width:100%;max-width:100%;min-width:0;
+ height:42px;min-height:42px;padding:9px 11px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:600 12px/1.3 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details .board-create-related>small{
+ font:500 11px/1.45 var(--ss-font-body,system-ui,sans-serif);color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .board-create-sheet .board-create-details :is(input,select,button):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .board-create-sheet .board-create-details
+ :is(.board-create-extra-grid input,.board-create-extra-grid select,.board-create-related select){font-size:16px}
+}
