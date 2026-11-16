@@ -784,8 +784,8 @@ export function TasksWorkspace({embedded=false,externalQuery=''}:{embedded?:bool
            {taskComplete(viewing)?'Reopen task':'Complete'}</button>
           {canLog&&!taskComplete(viewing)&&viewing.status!=='canceled'&&subtaskProgress(viewing).remaining===0&&
            <button type="button" className="tasks-flow-action" onClick={()=>{
-            setViewingId(null);openActivityComposer({taskId:viewing.id});
-           }}>Complete + Log Activity</button>}
+            setViewingId(null);openActivityComposer({taskId:viewing.id,planFollowUp:true});
+           }}>Complete · Log · Plan next</button>}
          </>}
         </div>
        </PreviewPanelActions>

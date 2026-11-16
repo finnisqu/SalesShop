@@ -31,11 +31,15 @@ export function RecordActionsMenu({unlinking,onUnlink,onDelete,disabled=false}:{
    <WorkspaceChromeIcon name="more"/>
   </summary>
   <div className="ss-record-actions-popover" role="group" aria-label="Record actions">
+   <span className="ss-record-actions-label">Connections</span>
    <button type="button" disabled={disabled||busy} onClick={()=>{
      closeMenu();onUnlink();
    }}>{unlinking?'Done unlinking':'Unlink connections'}</button>
-   {onDelete&&<button type="button" className="is-destructive" disabled={disabled||busy}
-     onClick={()=>void runDelete()}>{busy?'Checking…':'Delete record…'}</button>}
+   {onDelete&&<>
+    <span className="ss-record-actions-label is-separated">Record</span>
+    <button type="button" className="is-destructive" disabled={disabled||busy}
+     onClick={()=>void runDelete()}>{busy?'Checking…':'Delete record…'}</button>
+   </>}
    {error&&<small role="alert" className="ss-record-menu-error">{error}</small>}
   </div>
  </details>;

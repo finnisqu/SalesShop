@@ -53,7 +53,7 @@ describe('Task agenda and quick-view polish',()=>{
    expect(file).toContain('tasks-preview-actions-right');
    expect(file).toContain('<TrashIcon/> Delete');
    expect(file).toContain('<PencilIcon/> Edit');
-   expect(file).toContain('Complete + Log Activity');
+   expect(file).toContain('Complete · Log · Plan next');
   }
   expect(css).toContain('tasks-preview-action-groups');
  });

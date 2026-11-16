@@ -16,6 +16,7 @@ describe('Batch 353d — opt-in bid reminders and guided task follow-up',()=>{
  });
  it('task-linked Activity preselects the optional follow-up but still requires a save',()=>{
   expect(src('components/TaskModalHost.tsx')).toContain('openActivityComposer({taskId:task.id,planFollowUp:true})');
+  expect(src('components/TasksWorkspace.tsx')).toContain('openActivityComposer({taskId:viewing.id,planFollowUp:true})');
   expect(src('components/QuickActivityLauncher.tsx')).toContain('setCreateFollowUp(Boolean(request.planFollowUp))');
   expect(src('components/QuickActivityLauncher.tsx')).toContain('if(createFollowUp)');
   expect(src('components/QuickActivityLauncher.tsx')).toContain('if(workflowTaskId)completeTask(workflowTaskId)');
