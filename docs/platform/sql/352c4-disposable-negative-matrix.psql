@@ -33,6 +33,7 @@ SELECT set_config('app.test_field_editor',:'field_editor',true);
 SELECT set_config('app.test_field_admin',:'field_admin',true);
 SELECT set_config('app.test_company_a',:'company_a',true);
 SELECT set_config('app.test_company_b',:'company_b',true);
+SELECT set_config('app.test_company_a_alt',:'company_a_alt',true);
 SELECT set_config('app.test_contact_a',:'contact_a',true);
 
 SET LOCAL ROLE authenticated;
@@ -74,7 +75,7 @@ BEGIN
  INSERT INTO public.crm_field_definitions
   (organization_id,id,record_type,field_key,label,field_type,visibility,options)
  VALUES (current_setting('app.test_org_a')::uuid,
-  '352c4_choice','company','352c4_choice','Fixture Choice',
+  '352c4_choice','company','c352c4_choice','Fixture Choice',
   'choice','admins','["Warm","Cool"]'::jsonb);
  INSERT INTO public.crm_field_values
   (organization_id,field_id,record_type,company_id,value_choice)
@@ -90,7 +91,7 @@ BEGIN
   INSERT INTO public.crm_field_values
    (organization_id,field_id,record_type,company_id,value_choice)
   VALUES (current_setting('app.test_org_a')::uuid,'352c4_choice','company',
-   current_setting('app.test_company_a'),'Invalid');
+   current_setting('app.test_company_a_alt'),'Invalid');
  EXCEPTION WHEN OTHERS THEN denied:=true; END;
  IF NOT denied THEN RAISE EXCEPTION 'Invalid choice inserted'; END IF;
 
@@ -119,7 +120,7 @@ BEGIN
    (organization_id,field_id,record_type,company_id,value_number)
   VALUES (current_setting('app.test_org_a')::uuid,
    current_setting('app.test_field_org'),'company',
-   current_setting('app.test_company_a'),123);
+   current_setting('app.test_company_a_alt'),123);
  EXCEPTION WHEN OTHERS THEN denied:=true; END;
  IF NOT denied THEN RAISE EXCEPTION 'Number inserted into Text definition'; END IF;
 
@@ -137,7 +138,7 @@ BEGIN
    (organization_id,field_id,record_type,company_id,value_text,value_boolean)
   VALUES (current_setting('app.test_org_a')::uuid,
    current_setting('app.test_field_org'),'company',
-   current_setting('app.test_company_a'),'mixed',true);
+   current_setting('app.test_company_a_alt'),'mixed',true);
  EXCEPTION WHEN OTHERS THEN denied:=true; END;
  IF NOT denied THEN RAISE EXCEPTION 'Stored multiple typed value columns'; END IF;
 

@@ -16,6 +16,7 @@
 \set field_admin 352c4_admin_note
 \set company_a 352c4-company-a
 \set company_b 352c4-company-b
+\set company_a_alt 352c4-company-a-alt
 \set contact_a 352c4-contact-a
 \set project_a 352c4-project-a
 
@@ -58,6 +59,7 @@ VALUES
 
 INSERT INTO public.companies(organization_id,id,name)
 VALUES (:'org_a'::uuid,:'company_a','352c4 Fixture Company A'),
+       (:'org_a'::uuid,:'company_a_alt','352c4 Fixture Company A Alt'),
        (:'org_b'::uuid,:'company_b','352c4 Fixture Company B');
 INSERT INTO public.contacts(organization_id,id,name)
 VALUES (:'org_a'::uuid,:'contact_a','352c4 Fixture Contact A');
@@ -67,9 +69,9 @@ VALUES (:'org_a'::uuid,:'project_a','352c4 Fixture Project A','Discovery');
 INSERT INTO public.crm_field_definitions
  (organization_id,id,record_type,field_key,label,field_type,visibility,active)
 VALUES
- (:'org_a'::uuid,:'field_org','company','352c4_public_note','Fixture public note','text','organization',true),
- (:'org_a'::uuid,:'field_editor','company','352c4_editors_note','Fixture editors note','text','crm_editors',true),
- (:'org_a'::uuid,:'field_admin','company','352c4_admin_note','Fixture admin note','text','admins',true);
+ (:'org_a'::uuid,:'field_org','company','c352c4_public_note','Fixture public note','text','organization',true),
+ (:'org_a'::uuid,:'field_editor','company','c352c4_editors_note','Fixture editors note','text','crm_editors',true),
+ (:'org_a'::uuid,:'field_admin','company','c352c4_admin_note','Fixture admin note','text','admins',true);
 
 INSERT INTO public.crm_field_values(organization_id,field_id,record_type,company_id,value_text)
 VALUES

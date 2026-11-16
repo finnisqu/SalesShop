@@ -33,6 +33,8 @@ describe('Batch 352c4 staging-only RLS execution preparation',()=>{
   expect(fixtures).toContain('352c4-outsider@invalid.example');
   expect(fixtures).toContain('352c4 Fixture Company A');
   expect(fixtures).toContain('352c4 Fixture Company B');
+  expect(fixtures).toContain('352c4 Fixture Company A Alt');
+  expect(fixtures).toContain('c352c4_public_note');
   expect(fixtures).not.toContain('World Stone');
  });
  it('seeds all relevant role/organization states',()=>{
@@ -62,6 +64,7 @@ describe('Batch 352c4 staging-only RLS execution preparation',()=>{
  });
  it('validates constraints and typed fields with positive/negative writes',()=>{
   expect(matrix).toContain('Admin positive choice value write failed');
+  expect(matrix).toContain('app.test_company_a_alt');
   for(const assertion of [
    'Invalid choice inserted','Removed an in-use choice option',
    'Wrong record type attached','Number inserted into Text definition',
