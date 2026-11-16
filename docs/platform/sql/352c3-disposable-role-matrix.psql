@@ -1,0 +1,216 @@
+-- #352c3 disposable SQL matrix; psql only. NEVER run against production.
+-- Input variables must point to a seeded, throwaway SalesShop database:
+-- -v org_a=<uuid> -v org_b=<uuid>
+-- -v viewer_uid=<uuid> -v limited_uid=<uuid> -v editor_uid=<uuid> -v admin_uid=<uuid> -v outsider_uid=<uuid>
+-- -v field_org=<text-id> -v field_editor=<text-id> -v field_admin=<text-id>
+-- -v company_a=<text-id> -v company_b=<text-id>
+-- Seed: one Company in each org, three company/text definitions and values
+-- in org A, visibility organization/crm_editors/admins respectively.
+-- Seed memberships: viewer, non-CRM member (e.g. purchasing), CRM-authorized
+-- member, admin in org A; outsider in org B only. Editor must have actual CRM edit permission.
+-- Requires schema candidate 352c3 in the SAME disposable database.
+-- Execute under a test superuser with SET ROLE authenticated privileges.
+\set ON_ERROR_STOP on
+\if :{?org_a}
+\else
+ \echo 'Missing org_a staging fixture variable'
+ \quit 2
+\endif
+\if :{?org_b}
+\else
+ \echo 'Missing org_b staging fixture variable'
+ \quit 2
+\endif
+\if :{?viewer_uid}
+\else
+ \echo 'Missing viewer_uid variable'
+ \quit 2
+\endif
+\if :{?limited_uid}
+\else
+ \echo 'Missing limited_uid variable'
+ \quit 2
+\endif
+\if :{?editor_uid}
+\else
+ \echo 'Missing editor_uid variable'
+ \quit 2
+\endif
+\if :{?admin_uid}
+\else
+ \echo 'Missing admin_uid variable'
+ \quit 2
+\endif
+\if :{?outsider_uid}
+\else
+ \echo 'Missing outsider_uid variable'
+ \quit 2
+\endif
+\if :{?field_org}
+\else
+ \echo 'Missing field_org variable'
+ \quit 2
+\endif
+\if :{?field_editor}
+\else
+ \echo 'Missing field_editor variable'
+ \quit 2
+\endif
+\if :{?field_admin}
+\else
+ \echo 'Missing field_admin variable'
+ \quit 2
+\endif
+\if :{?company_a}
+\else
+ \echo 'Missing company_a variable'
+ \quit 2
+\endif
+\if :{?company_b}
+\else
+ \echo 'Missing company_b variable'
+ \quit 2
+\endif
+
+BEGIN;
+DO $guard$
+BEGIN
+ IF coalesce(current_setting('app.salesshop_disposable_custom_field_test',true),'') <> 'yes' THEN
+  RAISE EXCEPTION 'Refusing RLS role impersonation outside marked disposable DB';
+ END IF;
+END
+$guard$;
+
+SELECT set_config('app.test_org_a',:'org_a',true);
+SELECT set_config('app.test_org_b',:'org_b',true);
+SELECT set_config('app.test_field_org',:'field_org',true);
+SELECT set_config('app.test_field_editor',:'field_editor',true);
+SELECT set_config('app.test_field_admin',:'field_admin',true);
+SELECT set_config('app.test_company_a',:'company_a',true);
+SELECT set_config('app.test_company_b',:'company_b',true);
+
+-- The SQL role and Supabase auth.uid() are deliberately tested together.
+-- Both definitions and values must enforce the same audience.
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub',:'viewer_uid',true);
+DO $viewer$
+DECLARE n integer;
+BEGIN
+ SELECT count(*) INTO n FROM public.crm_field_definitions
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>1 THEN RAISE EXCEPTION 'Viewer: expected 1 visible definition, got %',n; END IF;
+ SELECT count(*) INTO n FROM public.crm_field_values
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>1 THEN RAISE EXCEPTION 'Viewer: expected 1 visible value, got %',n; END IF;
+ UPDATE public.crm_field_values SET value_text='forbidden'
+ WHERE organization_id=current_setting('app.test_org_a')::uuid
+  AND field_id=current_setting('app.test_field_org');
+ GET DIAGNOSTICS n=ROW_COUNT;
+ IF n<>0 THEN RAISE EXCEPTION 'Viewer modified custom values'; END IF;
+END
+$viewer$;
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub',:'limited_uid',true);
+DO $limited$
+DECLARE n integer;
+BEGIN
+ SELECT count(*) INTO n FROM public.crm_field_definitions
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>1 THEN RAISE EXCEPTION 'Non-CRM member: expected 1 visible definition, got %',n; END IF;
+ SELECT count(*) INTO n FROM public.crm_field_values
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>1 THEN RAISE EXCEPTION 'Non-CRM member: expected 1 visible value, got %',n; END IF;
+ UPDATE public.crm_field_values SET value_text='forbidden'
+ WHERE organization_id=current_setting('app.test_org_a')::uuid
+  AND field_id=current_setting('app.test_field_org');
+ GET DIAGNOSTICS n=ROW_COUNT;
+ IF n<>0 THEN RAISE EXCEPTION 'Non-CRM member modified a custom field'; END IF;
+END
+$limited$;
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub',:'editor_uid',true);
+DO $editor$
+DECLARE n integer;
+BEGIN
+ SELECT count(*) INTO n FROM public.crm_field_definitions
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>2 THEN RAISE EXCEPTION 'Editor: expected 2 visible definitions, got %',n; END IF;
+ SELECT count(*) INTO n FROM public.crm_field_values
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>2 THEN RAISE EXCEPTION 'Editor: expected 2 visible values, got %',n; END IF;
+ SELECT count(*) INTO n FROM public.crm_field_values
+ WHERE organization_id=current_setting('app.test_org_b')::uuid;
+ IF n<>0 THEN RAISE EXCEPTION 'Editor leaked other-organization custom values'; END IF;
+ UPDATE public.crm_field_values SET value_text='forbidden'
+ WHERE organization_id=current_setting('app.test_org_a')::uuid
+  AND field_id=current_setting('app.test_field_admin');
+ GET DIAGNOSTICS n=ROW_COUNT;
+ IF n<>0 THEN RAISE EXCEPTION 'Editor modified admins-only custom value'; END IF;
+END
+$editor$;
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub',:'admin_uid',true);
+DO $admin$
+DECLARE n integer; denied boolean;
+BEGIN
+ SELECT count(*) INTO n FROM public.crm_field_definitions
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>3 THEN RAISE EXCEPTION 'Admin: expected 3 visible definitions, got %',n; END IF;
+ SELECT count(*) INTO n FROM public.crm_field_values
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>3 THEN RAISE EXCEPTION 'Admin: expected 3 visible values, got %',n; END IF;
+ denied:=false;
+ BEGIN
+  UPDATE public.crm_field_definitions SET visibility='organization', revision=revision+1
+  WHERE organization_id=current_setting('app.test_org_a')::uuid
+   AND id=current_setting('app.test_field_admin');
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Admin widened visibility without reviewed publication'; END IF;
+ denied:=false;
+ BEGIN
+  INSERT INTO public.crm_field_values
+   (organization_id,field_id,record_type,company_id,value_text)
+  VALUES (current_setting('app.test_org_a')::uuid,
+   current_setting('app.test_field_org'),'company',
+   current_setting('app.test_company_b'),'invalid-cross-org');
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Cross-tenant Company foreign key was not enforced'; END IF;
+END
+$admin$;
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub',:'outsider_uid',true);
+DO $outsider$
+DECLARE n integer;
+BEGIN
+ SELECT count(*) INTO n FROM public.crm_field_definitions
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>0 THEN RAISE EXCEPTION 'Outsider can read foreign definitions'; END IF;
+ SELECT count(*) INTO n FROM public.crm_field_values
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>0 THEN RAISE EXCEPTION 'Outsider can read foreign values'; END IF;
+END
+$outsider$;
+RESET ROLE;
+
+SET LOCAL ROLE anon;
+DO $anonymous$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  PERFORM 1 FROM public.crm_field_definitions LIMIT 1;
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Anonymous role has table access'; END IF;
+END
+$anonymous$;
+RESET ROLE;
+
+-- Every assertion ran within one transaction; fixture values remain untouched.
+ROLLBACK;
