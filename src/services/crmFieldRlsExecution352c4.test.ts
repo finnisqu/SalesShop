@@ -85,8 +85,10 @@ describe('Batch 352c4 staging-only RLS execution preparation',()=>{
  });
  it('keeps every SQL script separate from production migration folders',()=>{
   const guide=readFileSync(new URL('../../docs/platform/81-custom-field-rls-runbook-352c4.md',import.meta.url),'utf8');
-  expect(guide).toContain('No isolated branch has been created');
-  expect(guide).toContain('Cost approval is required');
-  expect(guide).toContain('DO NOT');
+  // Test durable safety instructions, not a time-sensitive staging status sentence.
+  expect(guide).toContain('Prepared, NOT EXECUTED');
+  expect(guide).toContain('352c4-disposable-run.psql');
+  expect(guide).toContain('DO NOT use a production connection URL');
+  expect(guide).toContain('Actual disposable Postgres role and negative tests passing.');
  });
 });
