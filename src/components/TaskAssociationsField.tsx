@@ -2,6 +2,8 @@ import {useCallback,useEffect,useId,useMemo,useRef,useState,type CSSProperties,t
 import {createPortal} from 'react-dom';
 import {taskAssociationKey,type TaskAssociation} from '../store/personalTaskStore';
 import {taskAssociationPopoverPlacement} from '../services/taskAssociationPopover';
+import {unavailableTaskAssociations,replaceTaskAssociation,
+ type AssociationVerifiedTypes} from '../services/taskAssociationIntegrity351f';
 import '../task-association-popover.css';
 
 export interface AssociationOption {key:string;linked:TaskAssociation;label:string;}
@@ -11,12 +13,14 @@ const labels:Record<TaskAssociation['type'],string>={
 const themeKeys=['--ss-theme-card','--ss-theme-base','--ss-theme-ink',
  '--ss-theme-muted','--ss-theme-tint','--ss-theme-border','--ss-theme-accent'];
 /** Portal the matching results out of the scrolling task form without moving content. */
-export function TaskAssociationsField({options,value,onChange}:{
+export function TaskAssociationsField({options,value,onChange,verifiedTypes={}}:{
  options:AssociationOption[];value:TaskAssociation[];onChange:(items:TaskAssociation[])=>void;
+ verifiedTypes?:AssociationVerifiedTypes;
 }){
  const [search,setSearch]=useState('');
  const [type,setType]=useState<'all'|TaskAssociation['type']>('all');
  const [open,setOpen]=useState(false);
+ const [replacingKey,setReplacingKey]=useState<string|null>(null);
  const [activeIndex,setActiveIndex]=useState(0);
  const [placement,setPlacement]=useState<(CSSProperties&{maxHeight:number})|null>(null);
  const searchRef=useRef<HTMLDivElement>(null);
@@ -24,6 +28,8 @@ export function TaskAssociationsField({options,value,onChange}:{
  const popoverRef=useRef<HTMLDivElement>(null);
  const listboxId=useId();
  const selectedKeys=useMemo(()=>new Set(value.map(taskAssociationKey)),[value]);
+ const unavailable=unavailableTaskAssociations(value,options,verifiedTypes);
+ const unavailableKeys=new Set(unavailable.map(taskAssociationKey));
  const matches=useMemo(()=>{
    const words=search.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
    return options.filter(x=>!selectedKeys.has(x.key)&&(type==='all'||type===x.linked.type)
@@ -56,7 +62,7 @@ export function TaskAssociationsField({options,value,onChange}:{
    };
    const onEscape=(event:globalThis.KeyboardEvent)=>{
      if(event.key==='Escape'&&open){
-       event.stopPropagation();setOpen(false);
+       event.stopPropagation();setOpen(false);setReplacingKey(null);
        if(popoverRef.current?.contains(document.activeElement))
          searchRef.current?.querySelector('select')?.focus();
      }
@@ -81,12 +87,18 @@ export function TaskAssociationsField({options,value,onChange}:{
  },[open,positionPopover,matches.length]);
  const add=(item:AssociationOption)=>{
    if(selectedKeys.has(item.key))return;
-   onChange([...value,{...item.linked,label:item.label}]);
-   setSearch('');setActiveIndex(0);setOpen(true);
+   const next={...item.linked,label:item.label};
+   onChange(replacingKey?replaceTaskAssociation(value,replacingKey,next):[...value,next]);
+   setReplacingKey(null);setSearch('');setActiveIndex(0);setOpen(true);
    inputRef.current?.focus();
  };
+ const replace=(link:TaskAssociation)=>{
+   setReplacingKey(taskAssociationKey(link));
+   setType(link.type);setSearch('');setActiveIndex(0);setOpen(true);
+   requestAnimationFrame(()=>inputRef.current?.focus());
+ };
  const submit=(event:KeyboardEvent<HTMLInputElement>)=>{
-   if(event.key==='Escape'){event.preventDefault();event.stopPropagation();setOpen(false);return;}
+   if(event.key==='Escape'){event.preventDefault();event.stopPropagation();setOpen(false);setReplacingKey(null);return;}
    if(event.key==='ArrowDown'||event.key==='ArrowUp'){
      event.preventDefault();
      if(!open){setOpen(true);setActiveIndex(0);return;}
@@ -101,12 +113,29 @@ export function TaskAssociationsField({options,value,onChange}:{
  return <div className="tasks-associations" aria-label="Related records">
    <div className="tasks-associations-header"><strong>Related records</strong>
      <small>Link multiple Companies, People, Deals and Quotes</small></div>
+   {unavailable.length>0&&<div className="tasks-associations-unavailable" role="status">
+     <span>{unavailable.length} saved {unavailable.length===1?'link is':'links are'} no longer selectable here. The record may have been removed, archived or become inaccessible. Replace or unlink before saving.</span>
+     <button type="button" onClick={()=>{onChange(value.filter(link=>!unavailableKeys.has(taskAssociationKey(link))));setReplacingKey(null);}}>
+       Unlink {unavailable.length===1?'unavailable record':'unavailable records'}
+     </button>
+   </div>}
    {value.length>0&&<div className="tasks-association-chips">
-     {value.map((link,i)=><span className="tasks-association-chip" key={taskAssociationKey(link)+i}>
-       <b>{labels[link.type]}</b> {link.label?.replace(/^(Quote|Deal|Company|Person|Notebook) · /,'')||link.id}
-       <button type="button" title="Remove association" aria-label={'Remove '+(link.label||link.id)}
-         onClick={()=>onChange(value.filter((_,j)=>j!==i))}>×</button>
-     </span>)}
+     {value.map((link,i)=>{
+       const missing=unavailableKeys.has(taskAssociationKey(link));
+       return <span className={'tasks-association-chip'+(missing?' is-unavailable':'')} key={taskAssociationKey(link)+i}>
+        <b>{labels[link.type]}</b> {link.label?.replace(/^(Quote|Deal|Company|Person|Notebook) · /,'')||link.id}
+        {missing&&<>
+          <small title="No longer selectable in this workspace">Unavailable</small>
+          <button type="button" className="tasks-association-replace"
+           onClick={()=>replace(link)} aria-label={'Replace '+(link.label||link.id)}>
+           Replace
+          </button>
+        </>}
+        <button type="button" title="Remove association" aria-label={'Remove '+(link.label||link.id)}
+          onClick={()=>{onChange(value.filter((_,j)=>j!==i));
+           if(replacingKey===taskAssociationKey(link))setReplacingKey(null);}}>×</button>
+       </span>;
+     })}
    </div>}
    <div className="tasks-associations-search" ref={searchRef}>
      <select value={type} aria-label="Related record type"
@@ -126,6 +155,7 @@ export function TaskAssociationsField({options,value,onChange}:{
      <div ref={popoverRef} id={listboxId} style={placement}
        className="tasks-associations-results tasks-associations-popover"
        role="listbox" aria-label="Matching related records">
+       {replacingKey&&<p className="tasks-associations-replace-help">Choose an available {labels[type==='all'?'project':type].toLowerCase()} to replace the unavailable link. Canceling keeps the original.</p>}
        {matches.length?matches.map((x,i)=><button type="button" role="option"
          aria-selected={activeIndex===i} id={listboxId+'-item-'+i}
          className={activeIndex===i?'is-active':''}
@@ -137,7 +167,7 @@ export function TaskAssociationsField({options,value,onChange}:{
        <div className="tasks-associations-popover-foot">
          <small>{matches.length?String(matches.length)+' matches · ↑↓ to choose · Enter to link':'Try another name or record type'}</small>
          <button type="button" className="tasks-associations-close"
-           onClick={()=>{setOpen(false);searchRef.current?.querySelector('select')?.focus();}}>Done</button>
+           onClick={()=>{setOpen(false);setReplacingKey(null);searchRef.current?.querySelector('select')?.focus();}}>Done</button>
        </div>
      </div>,document.body)}
  </div>;
