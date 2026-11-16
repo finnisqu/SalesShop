@@ -1,4 +1,4 @@
-import {useEffect,useMemo} from 'react';
+import {useEffect,useMemo,useRef} from 'react';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useCrmStore} from '../store/crmStore';
@@ -25,6 +25,9 @@ export function AutomationRuntime(){
  const automationScope=useAutomationStore(s=>s.scope),rules=useAutomationStore(s=>s.rules),
  autoRun=useAutomationStore(s=>s.autoRunWhileOpen);
  const allowed=!perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'));
+ // Avoid a runaway catch-up after receiving consecutive cloud sync snapshots.
+ // Manual execution on the Automations page remains available for deliberate backfill.
+ const budget=useRef({scope:'',count:0});
  useEffect(()=>{useAutomationStore.getState().hydrate(scope);},[scope]);
  const personalQuotes=useMemo(()=>{
   if(!crmReady||!quotesReady)return [];
@@ -34,9 +37,17 @@ export function AutomationRuntime(){
  useEffect(()=>{
   if(!allowed||!scope||storedTaskScope!==scope||automationScope!==scope||
    (mode==='cloud'&&taskSync!=='saved')||!crmReady||!quotesReady||!autoRun)return;
+  if(budget.current.scope!==scope)budget.current={scope,count:0};
+  if(budget.current.count>=20)return;
   const candidates=automationCandidates({deals:projects,quotes:personalQuotes,
    activities,tasks,rules,now:new Date(),mode,userId:user});
-  if(candidates.length)executeAutomationCandidates(scope,candidates);
+  if(candidates.length){
+   const room=20-budget.current.count;
+   // Reserve the quota before creating Tasks. Reentrant store updates should
+   // never start a second execution against the same candidate snapshot.
+   budget.current.count+=Math.min(room,candidates.length);
+   executeAutomationCandidates(scope,candidates.slice(0,room));
+  }
  },[allowed,scope,storedTaskScope,automationScope,crmReady,quotesReady,
   autoRun,projects,personalQuotes,activities,tasks,rules,mode,user,taskSync]);
  return null;

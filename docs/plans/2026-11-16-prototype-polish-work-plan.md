@@ -233,6 +233,12 @@
 - Automations UI only allows enabling and executing rules when team role has CRM editing authority, and while a valid private Task scope is hydrated. Rule previews remain read-only otherwise.
 - No server-side scheduler, shared rules, or atomic multi-device idempotence yet. Tests document these boundaries.
 
+### November 16 #358d — automation cross-rule test and catch-up cap
+
+- A realistic Quote follow-up fixture also qualified for an inactivity reminder. Updated tests to assert the specific `quote-delivered` rule rather than incorrectly assuming that no other rule would match.
+- Added a 20-Task app-open execution budget per workspace session, even through multiple task store sync renders. Manual preview/execution remains opt-in and capped at 20 per click.
+- No proof guards, send actions or cloud schema changed. Exact new Cloudflare build remains pending.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

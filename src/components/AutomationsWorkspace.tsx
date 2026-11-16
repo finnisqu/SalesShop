@@ -116,6 +116,8 @@ export function AutomationsWorkspace(){
   </section>
   <footer>Each generated Task has a stable automation reference to prevent repeat creation after
    refresh or manual deletion. The log is local to this browser and user; a cloud scheduler
-   with server-side uniqueness is required for dependable unattended, multi-device execution.</footer>
+   with server-side uniqueness is required for dependable unattended, multi-device execution.
+   Automatic execution has a 20-Task cap per open session; manual runs let you review
+   additional matches before creating them.</footer>
  </section>;
 }

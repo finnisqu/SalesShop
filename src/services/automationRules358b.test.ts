@@ -45,13 +45,15 @@ describe('Opt-in workflow automations #358b',()=>{
   const result=candidates([deal()],[quote(),quote({id:'external:a',source:'external',sourceId:'a'})]);
   expect(result.filter(item=>item.rule==='quote-delivered')).toHaveLength(2);
   expect(result[0].changes.sourceObjectId).toContain('automation:');
-  expect(candidates([deal()],[quote({sentDate:undefined})])).toHaveLength(0);
+  expect(candidates([deal()],[quote({sentDate:undefined})])
+    .filter(item=>item.rule==='quote-delivered')).toHaveLength(0);
  });
  it('does not duplicate historical, canceled or removed Tasks',()=>{
   const candidate=candidates([deal()],[quote()])[0];
   const existing={id:'t',title:'Old',sourceObjectId:candidate.sourceObjectId,
    deletedAt:'2026-11-15',createdAt:'2026-11-15',updatedAt:'2026-11-15'} as PersonalTask;
-  expect(candidates([deal()],[quote()],[],[existing])).toHaveLength(0);
+  expect(candidates([deal()],[quote()],[],[existing])
+    .filter(item=>item.rule==='quote-delivered')).toHaveLength(0);
  });
  it('only considers current assigned-owner Deals and recent interaction events',()=>{
   const idle=deal({stage:'Discovery',createdAt:'2026-10-01T12:00:00Z'});
@@ -82,5 +84,6 @@ describe('Opt-in workflow automations #358b',()=>{
   expect(read('services/automationExecutor358b.ts')).toContain('sourceObjectId===item.sourceObjectId');
   expect(read('services/automationExecutor358b.ts')).toContain("tasks.syncStatus!=='saved'");
   expect(read('components/AutomationRuntime.tsx')).toContain("mode==='cloud'&&taskSync!=='saved'");
+  expect(read('components/AutomationRuntime.tsx')).toContain('if(budget.current.count>=20)return;');
  });
 });
