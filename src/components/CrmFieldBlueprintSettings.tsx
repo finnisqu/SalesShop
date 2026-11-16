@@ -1,6 +1,8 @@
 import {useState,type FormEvent} from 'react';
 import {useWorktableDirectoryState} from './useWorktableDirectoryState';
 import {CrmCustomFieldEditor} from './CrmCustomFieldEditor';
+import {CRM_STARTER_FIELD_PACKS,previewCrmStarterPack,applyCrmStarterPack,
+ type CrmStarterPackId} from '../services/crmStarterPacks352e1';
 import type {CrmCustomFieldValues} from '../services/crmFieldEditor352d1';
 import {blankCrmFieldBlueprint,crmBlueprintStorageKey,readCrmFieldBlueprint,
  createCrmCustomField,toggleCrmCustomField,moveCrmCustomField,setCrmFieldVisibility,
@@ -37,6 +39,10 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
   Record<CrmFieldTarget,CrmCustomFieldValues>>(scope+':sample-record',
   ()=>({company:{},person:{},deal:{}}));
  const [sampleRevision,setSampleRevision]=useState(0);
+ const [starterPackId,setStarterPackId]=useState<CrmStarterPackId>('general_sales');
+ const [starterNotice,setStarterNotice]=useState('');
+ const [starterError,setStarterError]=useState('');
+ const starterPlan=previewCrmStarterPack(blueprint,starterPackId);
 
  const fields=blueprint.fields.filter(field=>field.target===target);
  const title=CRM_FIELD_TARGETS.find(item=>item.id===target)?.label??'Records';
@@ -164,6 +170,68 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
    </form>
    {error&&<p role="alert" className="crm-blueprint-error">{error}</p>}
    {notice&&<p role="status" className="crm-blueprint-notice">{notice}</p>}
+  </article>
+  <article className="company-settings-card crm-starter-pack-panel">
+   <header><div>
+    <strong>Optional starter field packs</strong>
+    <small>Pick only what your company needs. Nothing is installed by default.</small>
+   </div></header>
+   <p className="crm-starter-pack-intro">
+    Start with a suggested set of Company, Person and Deal fields, or keep your blueprint
+    completely custom. Preview each change before adding definitions to this browser only.
+   </p>
+   <label className="crm-starter-pack-select">
+    <span>Starter pack</span>
+    <select value={starterPackId} aria-label="Choose a starter field pack"
+     onChange={event=>{
+      setStarterPackId(event.target.value as CrmStarterPackId);
+      setStarterError('');setStarterNotice('');
+     }}>
+     {CRM_STARTER_FIELD_PACKS.map(pack=>
+      <option key={pack.id} value={pack.id}>{pack.title}</option>)}
+    </select>
+   </label>
+   <p className="crm-starter-pack-description">{starterPlan.pack.description}</p>
+   <div className="crm-starter-pack-summary" aria-live="polite">
+    <span>{starterPlan.additions} to add</span>
+    <span>{starterPlan.present} already defined</span>
+    {starterPlan.incompatible>0&&<span>{starterPlan.incompatible} type conflicts (skip)</span>}
+   </div>
+   <ul className="crm-starter-pack-fields" aria-label="Starter pack field preview">
+    {starterPlan.fields.map(({field,status,message})=>
+     <li key={field.target+':'+field.label}>
+      <div><strong>{field.label}</strong>
+       <small>{CRM_FIELD_TARGETS.find(item=>item.id===field.target)?.label}
+        {' · '}{CRM_FIELD_TYPES.find(item=>item.id===field.type)?.label}</small>
+      </div>
+      <span className="crm-starter-pack-status" data-status={status}
+       title={message}>{status==='add'?'Add':status==='present'?'Already defined':'Keep existing'}</span>
+     </li>)}
+   </ul>
+   {starterPlan.blockedReason&&<p role="alert" className="crm-blueprint-error">
+    Cannot add this pack: {starterPlan.blockedReason} No fields will be imported.
+   </p>}
+   <button type="button" className="crm-blueprint-create crm-starter-pack-apply"
+    disabled={!editable||Boolean(starterPlan.blockedReason)||!starterPlan.additions}
+    onClick={()=>{
+     if(!editable)return;
+     try{
+      const next=applyCrmStarterPack(blueprint,starterPackId);
+      setBlueprint(next);
+      setStarterNotice('Added '+starterPlan.additions+
+       ' optional fields to this browser blueprint. Existing fields were left unchanged.');
+      setStarterError('');
+     }catch(error){
+      setStarterError(error instanceof Error?error.message:'Could not add starter fields.');
+      setStarterNotice('');
+     }
+    }}>Add {starterPlan.additions} field{starterPlan.additions===1?'':'s'} to local blueprint</button>
+   {starterNotice&&<p role="status" className="crm-blueprint-notice">{starterNotice}</p>}
+   {starterError&&<p role="alert" className="crm-blueprint-error">{starterError}</p>}
+   <p className="crm-starter-pack-disclaimer">
+    Local design only · No live CRM records, team settings or Supabase data are changed.
+    Existing fields can be paused or re-enabled individually.
+   </p>
   </article>
   <article className="company-settings-card crm-blueprint-preview">
    <header><div>
