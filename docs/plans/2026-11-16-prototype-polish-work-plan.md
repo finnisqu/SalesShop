@@ -57,7 +57,7 @@
 | --- | --- | --- | --- | --- | --- |
 | Nov 16 earlier · #353b | `b3e899a` + `ce229dc` | Old quote editor removed from user navigation; stale test repaired | **Green per user** | Not separately confirmed | Don't restore the old editor |
 | Nov 16 earlier · #353a | `bac74a2` | Local Playground import/preview/reset | Build included in later green; sample import worked per user | More edit/reload/reset scenarios unconfirmed | No production account data import |
-| Nov 16 · #354a | See GitHub history | Analytics v0.1 · working accessible Records More dashboard, filters and external/native quote parity | Pending Cloudflare | Pending device/auth | No production schema; read-only; verify permission scope |
+| Nov 16 · #354a | `fbc9f62` | Analytics v0.1 · working accessible Records More dashboard, filters and external/native quote parity | Pending Cloudflare | Pending device/auth | No production schema; read-only; verify permission scope |
 | Nov 16 · `6135e84` | `6135e84` | Records source regression gate updated for configurable Deal creation | **Green per user** | Device QA pending | 775/775 prior tests and release gates cleared |
 | Nov 16 · #353g | `4727e87a5` | One-click planned Meeting Task from Company/Person/Deal, Calendar-ready | Pending Cloudflare | Pending Task/Calendar acceptance | Does not create a fictitious completed Activity |
 | Nov 16 · #353f | `844b28d` | Unified Task completion and grouped record ellipsis actions | Pending Cloudflare | Pending phone desktop | Activity drafts and permissions unchanged |
@@ -89,6 +89,13 @@
 - Bid reminder v0 is a one-time, user-confirmed Task. It doesn't automatically move if the Deal due date changes; the Task explicitly reminds the user to review it.
 - New configuration/cloud-RLS features remain outside these polish commits.
 - **Analytics #354a is now source-implemented** under Records → More. Confirm real filters, data interpretation and scope after Cloudflare. Do not call it released until build and hands-on checks pass. Next prototype after Analytics: Files v0.1.
+
+### Analytics #354a acceptance and date-window correction
+
+- Analytics is **source committed** under Records → More: owner/pipeline/30–90–365-day/all-time selectors, current Deal-stage cohort charts, confirmed external/native quote counts, activity trends and direct record navigation.
+- Calendar-week trend now builds the actual list of Mondays intersecting the selected period. On November 16 a 90-day filter requires 14 week buckets, and 30 days requires 6; no early days are silently omitted from the chart.
+- Company Prospect/Customer/Partner bulk editing and About inline editing already exist; don't duplicate them just to mark polish complete. Device screenshots and authenticated cross-account checks are still needed.
+- **New analytics build:** pending Cloudflare confirmation for latest head; do not mark prototype QA complete just from source checks.
 
 ### November 16 build recovery — Cloudflare 18:16 UTC
 

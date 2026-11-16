@@ -57,13 +57,18 @@ function weekKey(day:string):string {
 }
 function periodBuckets(period:AnalyticsPeriod,now:Date):AnalyticsTrend[]{
  if(period==='30d'||period==='90d'){
-  const weeks=period==='30d'?5:13;
-  const anchor=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12);
-  anchor.setDate(anchor.getDate()-(anchor.getDay()+6)%7);
-  return Array.from({length:weeks},(_,i)=>{
-   const date=new Date(anchor);date.setDate(date.getDate()-(weeks-1-i)*7);
-   return {key:analyticsLocalDay(date),label:date.toLocaleDateString(undefined,{month:'short',day:'numeric'}),sent:0,interactions:0};
-  });
+  // Generate every Monday from the window's first week through this week.
+  // A hard-coded 5/13-week list silently omits early days in some 30/90-day windows.
+  const first=analyticsWindowStart(period,now)!;
+  const start=new Date(weekKey(first)+'T12:00:00');
+  const last=new Date(weekKey(analyticsLocalDay(now))+'T12:00:00');
+  const rows:AnalyticsTrend[]=[];
+  for(const date=new Date(start);date<=last;date.setDate(date.getDate()+7)){
+   rows.push({key:analyticsLocalDay(date),
+    label:date.toLocaleDateString(undefined,{month:'short',day:'numeric'}),
+    sent:0,interactions:0});
+  }
+  return rows;
  }
  return Array.from({length:12},(_,i)=>{
   const d=new Date(now.getFullYear(),now.getMonth()-11+i,1,12);

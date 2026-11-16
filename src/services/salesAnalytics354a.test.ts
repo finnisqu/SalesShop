@@ -64,7 +64,9 @@ describe('Analytics 354a — real records and filter semantics',()=>{
  it('has inclusive calendar-day boundaries and nonempty chart buckets',()=>{
   expect(analyticsWindowStart('30d',now)).toBe('2026-10-18');
   expect(analyticsWindowStart('all',now)).toBeNull();
-  expect(run([],[],[]).trend).toHaveLength(13);
+  // Nov 16 is Monday; 90 days back begins Wed Aug 19, so 14 week buckets.
+  expect(run([],[],[]).trend).toHaveLength(14);
+  expect(run([],[],[],{period:'30d',ownerId:'all',pipeline:'all'}).trend).toHaveLength(6);
   expect(run([],[],[],{period:'all',ownerId:'all',pipeline:'all'}).trend).toHaveLength(12);
  });
  it('exposes actual interaction controls under Records More without changing four main app sections',()=>{
