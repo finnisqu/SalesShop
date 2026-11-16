@@ -1,9 +1,11 @@
 import {describe,it,expect,vi,beforeEach} from 'vitest';
+import {readFileSync} from 'node:fs';
 import {extractAddresses,summarizeGmailThread,displayGmailThread} from './gmailRead359a';
 import {emailWorkspaceScope,emailLinksKey,normalizeMailbox,validateEmailLink,
  loadEmailLinks,saveEmailLinks} from './emailThreadLinks359a';
 import {emailTargetSuggestions} from './emailThreadMatching359a';
 import type {Contact,Project} from '../types/crm';
+const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const values=new Map<string,string>();
 beforeEach(()=>{
  values.clear();
@@ -56,5 +58,19 @@ describe('Gmail provider / CRM linking #359a',()=>{
    targetKind:'deal',targetId:'d'})).toThrow();
   expect(()=>validateEmailLink({mailbox:'a@example.com',threadId:'18df9',
    targetKind:'deal',targetId:''})).toThrow();
+ });
+ it('has a real Connected Email page and record-scoped conversation readers',()=>{
+  expect(read('components/RecordsSectionNav.tsx')).toContain("id:'email',label:'Email'");
+  expect(read('components/Connections.tsx')).toContain("tab==='email'&&<EmailWorkspace");
+  expect(read('components/DealRecordPage.tsx')).toContain('<RecordEmailThreadsPanel kind="deal"');
+  expect(read('components/PersonRecordPage.tsx')).toContain('<RecordEmailThreadsPanel kind="person"');
+  expect(read('App.tsx')).toContain('<EmailAccountBoundary/>');
+ });
+ it('does not save tokens or message bodies and requires explicit CRM linking',()=>{
+  const storage=read('services/emailThreadLinks359a.ts');
+  expect(storage).not.toContain('access_token');
+  expect(storage).not.toContain('messageBody');
+  expect(read('components/EmailWorkspace.tsx')).toContain('Link conversation');
+  expect(read('components/EmailWorkspace.tsx')).toContain('No email or text');
  });
 });

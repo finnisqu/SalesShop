@@ -38,7 +38,7 @@
 | P1 | Analytics v0.1 | Actual KPI cards/charts for deal value/stages, bids, quotes and activity; owner/date filters using current records | Date range is a Deal creation cohort; cloud quotes use the same private visible index as Records | Source committed / build pending (#354a) |
 | P2 | Files v0.1 | Store/open/link real file URLs under Company/Deal/Quote, with editable labels; not a mock button | Browser-local per user/tenant and developer-playground namespace. No cloud sharing or provider access yet | Source committed / build pending (#357a) |
 | P3 | Automations v0.1 | Opt-in follow-up on confirmed quote delivery, inactive Deal reminder and won Deal handoff Task; auditable/no duplicate firing | User-scoped browser configuration + private Task source identity, manual Run and auto-run only while app is open. Server scheduler / atomic multi-device uniqueness deferred | Source committed / build pending (#358b) |
-| P4 | Email v0.1 | Connect one real provider, read conversations, selectively link threads to CRM People/Deals | OAuth and least-privilege; never infer a sent email from a copied link | Queued |
+| P4 | Email v0.1 | Connect Gmail read-only with explicit OAuth consent; search/list real threads, read plain text on demand, suggest related People/Deals and explicitly link them | Public Google OAuth Web client ID and restricted-scope verification needed; temporary in-memory token; thread reference only in scoped browser storage | Source committed / build pending (#359a–b) |
 | P5 | CAD-Lite bridge v0.1 | Open a linked CAD-Lite project from Deal/Quote; import manual takeoff export | Technical data owned by CAD-Lite; no implicit repricing | Queued |
 | P6 | Slack and QuickBooks | Real Slack notification or authenticated export flow; QuickBooks export first, API sync later | Explicit provider permissions and safe credentials | Queued |
 
@@ -261,6 +261,16 @@
 - In the default all-rules-on fixture, the original Deal also qualifies for inactivity; `automationCandidates` sorts it ahead of the Quote follow-up. The duplicate-prevention test incorrectly selected the first candidate before asserting the Quote had been suppressed.
 - Test now explicitly selects the `quote-delivered` candidate by rule ID, verifies it exists, and uses its stable source key for the deleted Task tombstone. No production automations or customer behaviors changed.
 - Source committed; still waiting for exact-head Cloudflare green.
+
+### November 16 #359a–b — connected Gmail prototype
+
+- User confirmed previous Cloudflare release `e537042` green and asked to begin Email v0.1 immediately.
+- Added browser-only Google Identity Services token client (read-only Gmail scope), Gmail API thread list/search/metadata and explicit user-requested full plaintext read, with per-user session token **in memory only** and reset on SalesShop identity change/disconnect/reload.
+- Records → More → Email shows actual connected mailbox, search, thread summaries, conversation reader, exact email participant suggestions and explicit links to CRM People and Deals. Both full Deal and Person pages show linked conversations with on-demand Gmail fetch.
+- Minimal link persistence: only Gmail mailbox, thread ID, CRM target ID/type and timestamp in current browser `localStorage` partitioned by SalesShop organization+user. No OAuth token, subject, body, recipients, generated Activities, fake deliveries, or team-shared sync.
+- OAuth client ID `VITE_GOOGLE_GMAIL_CLIENT_ID` must be configured in Cloudflare Pages after Google Cloud OAuth Web client, Gmail API and authorized UI origin setup. Gmail readonly is a restricted scope; Google verification/testing-user restrictions apply. UI displays real setup instructions if unconfigured. Setup runbook in `docs/product/gmail-connection-359a.md`.
+- No production database or permissions changes; no provider sending. Added functional parsing, matching, tenant-scoping and UI contract tests registered in the Cloudflare quick-quote gate.
+- **Pending:** Cloudflare exact SHA green, real Google test account consent, mailbox switching, scoped link persistence and authenticated phone/role QA. Do not describe this as persistent provider connection or supported background sync.
 
 ## Carry-forward notes for next chat
 

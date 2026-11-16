@@ -9,6 +9,7 @@ import {RecordUnlinkAction} from './RecordUnlinkAction';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
 import {RecordFilesPanel} from './RecordFilesPanel';
+import {RecordEmailThreadsPanel} from './RecordEmailThreadsPanel';
 import {DealBidReminder} from './DealBidReminder';
 import {DealPeopleRelationships} from './DealPersonRelationships';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
@@ -394,6 +395,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
         {!related.directHistory.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>}/>
       <RecordFilesPanel target={{kind:'deal',id:deal.id,title:deal.name}}/>
+      <RecordEmailThreadsPanel kind="deal" id={deal.id}/>
       <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing||unlinking}
         quickActions={<DealBidReminder deal={deal}/>}/>
       {timelineBetaEnabled&&<RecordCard title="Project timeline · Beta">

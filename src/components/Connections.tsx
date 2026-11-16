@@ -13,6 +13,7 @@ import {RecordsPagesDirectory} from './RecordsPagesDirectory';
 import {SalesAnalyticsWorkspace} from './SalesAnalyticsWorkspace';
 import {FilesWorkspace} from './FilesWorkspace';
 import {AutomationsWorkspace} from './AutomationsWorkspace';
+import {EmailWorkspace} from './EmailWorkspace';
 import '../records-workspace-polish.css';
 import {SuppliersWorkspace} from './SuppliersWorkspace';
 import '../suppliers-connections.css';
@@ -56,7 +57,7 @@ import {personLastContactIndex} from '../services/personLastContact';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from '../services/activityLogFilters';
 
-type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages' | 'analytics' | 'files' | 'automations';
+type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages' | 'analytics' | 'files' | 'automations' | 'email';
 type CompanyFilter = CompanyRelationship | 'self' | 'all';
 type DirectoryLayout='board'|'table';
 type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
@@ -94,7 +95,7 @@ function initialTabSearches():Partial<Record<ConnectionsTab,string>>{
     const raw=JSON.parse(sessionStorage.getItem(SEARCH_KEY)??'{}') as Record<string,unknown>;
     if(!raw||typeof raw!=='object')return {};
     const saved:Partial<Record<ConnectionsTab,string>>={};
-    for(const tab of ['tasks','companies','people','deals','activity','organization','suppliers','quotes','pages','analytics','files','automations'] as ConnectionsTab[]){
+    for(const tab of ['tasks','companies','people','deals','activity','organization','suppliers','quotes','pages','analytics','files','automations','email'] as ConnectionsTab[]){
       if(typeof raw[tab]==='string')saved[tab]=(raw[tab] as string).slice(0,300);
     }
     return saved;
@@ -652,7 +653,7 @@ export function Connections() {
             {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
           ]:[]}/>}
-        search={tab==='analytics'||tab==='automations'?undefined:<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
+        search={tab==='analytics'||tab==='automations'||tab==='email'?undefined:<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
             tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':
@@ -731,6 +732,7 @@ export function Connections() {
 
 
           {notice && <p className="connections-notice" role="status">{notice}</p>}
+          {tab==='email'&&<EmailWorkspace contacts={contacts} deals={projects}/>}
           {tab==='automations'&&<AutomationsWorkspace/>}
           {tab==='files'&&<FilesWorkspace companies={companies} deals={projects}
             quotes={personalQuoteRecords} query={query}/>}

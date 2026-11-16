@@ -1,0 +1,84 @@
+/* Connected Email v0.1. All content is text, never rendered provider HTML. */
+.ss-email-workspace{display:grid;gap:13px;box-sizing:border-box;
+ width:100%;max-width:1400px;min-width:0;margin:0 auto;padding:17px 16px 50px;
+ color:var(--ss-theme-ink);font-family:var(--ss-font-body,system-ui,sans-serif)}
+.ss-email-heading{display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap}
+.ss-email-heading small{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--ss-theme-muted)}
+.ss-email-heading h2{margin:3px 0 7px;font-size:22px}
+.ss-email-heading p,.ss-email-heading>span{margin:0;font-size:12px;color:var(--ss-theme-muted)}
+.ss-email-heading>span{border:1px solid var(--ss-theme-border);padding:8px 10px;border-radius:8px}
+.ss-email-state,.ss-email-toolbar,.ss-email-detail,.ss-email-threads,.ss-email-disclaimer{
+ border:1px solid var(--ss-theme-border);border-radius:11px;padding:13px;
+ min-width:0;background:var(--ss-theme-card)}
+.ss-email-state{display:grid;gap:7px;font-size:12px}
+.ss-email-state p{margin:0;line-height:1.5}
+.ss-email-state a{color:var(--ss-theme-accent);font-weight:750}
+.ss-email-connection{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ss-email-connection>span{font-weight:700;font-size:12px}
+.ss-email-workspace button,.ss-email-record-row button{
+ cursor:pointer;border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:700 11px/1.35 var(--ss-font-body,system-ui,sans-serif);padding:8px 11px;
+ min-height:37px}
+.ss-email-workspace button:disabled{opacity:.52;cursor:not-allowed}
+.ss-email-connection button,.ss-email-search button,.ss-email-link-controls button{
+ background:var(--ss-theme-accent);color:var(--ss-theme-contrast);border-color:var(--ss-theme-accent)}
+.ss-email-toolbar{display:grid;gap:12px}
+.ss-email-search{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px}
+.ss-email-search label,.ss-email-link-controls label{font-size:11px;font-weight:700}
+.ss-email-search input,.ss-email-link-controls select{
+ box-sizing:border-box;width:100%;min-width:0;min-height:40px;padding:8px 10px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);font:600 12px/1.35 var(--ss-font-body)}
+.ss-email-error{color:#ab3a3a;font-size:12px;font-weight:650;margin:4px 0}
+.ss-email-notice{font-size:12px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;padding:10px;background:var(--ss-theme-tint);margin:0}
+.ss-email-content{display:grid;grid-template-columns:minmax(255px,.9fr) minmax(0,1.4fr);gap:12px;min-width:0}
+.ss-email-threads,.ss-email-detail{display:grid;align-content:start;gap:7px;min-height:300px}
+.ss-email-threads h3,.ss-email-detail h3{display:flex;justify-content:space-between;
+ align-items:center;margin:0 0 4px;font-size:14px}
+.ss-email-threads h3 small{color:var(--ss-theme-muted);font-size:10px}
+.ss-email-threads .ss-email-thread{display:grid;gap:4px;text-align:left;min-width:0;
+ padding:12px;border:1px solid var(--ss-theme-border);border-radius:8px;background:transparent}
+.ss-email-thread.is-selected{background:var(--ss-theme-tint);border-color:var(--ss-theme-accent)}
+.ss-email-thread strong{font-size:12px;overflow-wrap:anywhere}
+.ss-email-thread span,.ss-email-thread small{color:var(--ss-theme-muted);font-size:11px;overflow-wrap:anywhere}
+.ss-email-thread p{font:500 11px/1.5 var(--ss-font-body);margin:0;
+ color:var(--ss-theme-muted);overflow-wrap:anywhere}
+.ss-email-more{justify-self:center;margin-top:7px}
+.ss-email-detail-heading{display:grid;gap:5px;border-bottom:1px solid var(--ss-theme-border);padding-bottom:11px}
+.ss-email-detail-heading h3{font-size:15px;margin:0}
+.ss-email-detail-heading small{font-size:11px;color:var(--ss-theme-muted);overflow-wrap:anywhere}
+.ss-email-messages{display:grid;gap:9px;max-height:570px;overflow-y:auto;min-width:0}
+.ss-email-message{display:grid;gap:5px;min-width:0;
+ border:1px solid var(--ss-theme-border);border-radius:9px;padding:11px;
+ background:var(--ss-theme-base)}
+.ss-email-message>div{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ss-email-message strong{font-size:12px;overflow-wrap:anywhere}
+.ss-email-message small{font-size:10px;color:var(--ss-theme-muted);overflow-wrap:anywhere}
+.ss-email-message pre{font:500 12px/1.55 var(--ss-font-body);white-space:pre-wrap;
+ overflow-wrap:anywhere;margin:5px 0;max-height:390px;overflow:auto}
+.ss-email-associations{display:grid;gap:9px;margin-top:11px;
+ border-top:1px solid var(--ss-theme-border);padding-top:12px}
+.ss-email-associations h4{font-size:12px;margin:0}
+.ss-email-associations>p{font-size:11px;color:var(--ss-theme-muted);margin:0}
+.ss-email-associations>div:not(.ss-email-link-controls){display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ss-email-link-controls{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center}
+.ss-email-disclaimer{font-size:11px;color:var(--ss-theme-muted);line-height:1.6}
+.ss-email-record-row{display:flex;align-items:center;gap:9px;padding:9px 0;
+ border-bottom:1px solid var(--ss-theme-border)}
+.ss-email-record-row>div{display:grid;gap:3px;flex:1;min-width:0}
+.ss-email-record-row strong{font-size:12px;overflow-wrap:anywhere}
+.ss-email-record-row small{color:var(--ss-theme-muted);font-size:10px;overflow-wrap:anywhere}
+.ss-email-record-detail{display:grid;gap:9px;min-width:0;margin-top:12px;
+ padding:11px;border:1px solid var(--ss-theme-border);border-radius:9px}
+.ss-email-record-detail h3{margin:0;font-size:13px}
+.ss-email-workspace :is(button,input,select,a):focus-visible,
+.ss-email-record-row button:focus-visible{outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+@media(max-width:950px){.ss-email-content{grid-template-columns:1fr}}
+@media(max-width:600px){
+ .ss-email-workspace{padding:10px 9px 72px}
+ .ss-email-search,.ss-email-link-controls{grid-template-columns:1fr}
+ .ss-email-workspace button,.ss-email-record-row button{min-height:44px}
+ .ss-email-search input,.ss-email-link-controls select{min-height:44px;font-size:16px}
+}

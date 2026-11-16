@@ -12,6 +12,7 @@ import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordUnlinkAction} from './RecordUnlinkAction';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
+import {RecordEmailThreadsPanel} from './RecordEmailThreadsPanel';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {PersonDealRelationships} from './DealPersonRelationships';
 import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,recordEmailError,type RecordFormNotice} from './RecordFormFeedback';
@@ -250,6 +251,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
           </button>)}
         {!related.directActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>}/>
+      <RecordEmailThreadsPanel kind="person" id={person.id}/>
       <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
       <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
         <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
