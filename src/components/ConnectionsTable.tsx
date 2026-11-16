@@ -16,6 +16,10 @@ import {CatalogPagination,DEFAULT_CATALOG_PAGE_SIZE,CATALOG_PAGE_SIZES,catalogPa
 import {WorktableFilterMenu,WorktablePagination,WorktableSurface,WorktableSelectPageCheckbox,WorktableHorizontalHint} from './WorktableChrome';
 import {worktableStoredSort} from '../services/worktableSortPreference';
 import {useWorktableDirectoryState} from './useWorktableDirectoryState';
+import {useAuthStore} from '../store/authStore';
+import {recordViewsStorageKey,readSavedRecordViews,createSavedRecordView,
+ updateSavedRecordView,removeSavedRecordView,savedRecordViewMatches,
+ RECORD_VIEW_NAME_LIMIT,type SavedRecordView} from '../services/recordSavedViews352a';
 export interface ConnectionColumn {key:string;label:string;}
 export interface ConnectionTableRow {id:string;name:string;association?:TaskAssociation;values:Record<string,string>;sortValues?:Record<string,string|number>;archived?:boolean;readOnly?:boolean;isSelfCompany?:boolean;}
 interface Props {tableKey:'companies'|'people'|'deals'|'quotes'|'documents'|'tasks'|'tags'|'suppliers'|'organization'|'pages'|'activity';columns:ConnectionColumn[];rows:ConnectionTableRow[];
@@ -70,6 +74,10 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
  // Selection, bulk dialogs and mobile selection mode must never transfer to
  // another Records directory, even when row IDs happen to overlap.
  const [selected,setSelected]=useWorktableDirectoryState<string[]>(tableKey,()=>[]);
+ const authMode=useAuthStore(state=>state.mode);
+ const organizationId=useAuthStore(state=>state.organizationId);
+ const userId=useAuthStore(state=>state.user?.id);
+ const recordViewsScope=recordViewsStorageKey(tableKey,authMode,organizationId,userId);
  const [density,setDensity]=useWorkbookTableDensity();
  const [bulkEditing,setBulkEditing]=useWorktableDirectoryState(tableKey,()=>false);
  const [bulkTaskEditing,setBulkTaskEditing]=useWorktableDirectoryState(tableKey,()=>false);
@@ -115,6 +123,24 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
     JSON.stringify({key:sortState.key,reverse:sortState.reverse}));}
   catch{/* device-only worktable preference is optional */}
  },[sortState]);
+ // Named views are scoped to one directory and one account in the current
+ // browser. The underlying live Columns/Sort/Page preferences keep working.
+ const [savedViews,setSavedViews]=useWorktableDirectoryState<SavedRecordView[]>(recordViewsScope,
+  scope=>{
+   try{return readSavedRecordViews(localStorage.getItem(scope),
+    columns.map(col=>col.key),defaultSort(),CATALOG_PAGE_SIZES,PAGE_SIZE);}
+   catch{return [];}
+  },
+  (scope,views)=>{try{localStorage.setItem(scope,JSON.stringify(views));}catch{}});
+ const selectedViewScope=recordViewsScope+':selected';
+ const [selectedViewId,setSelectedViewId]=useWorktableDirectoryState<string|null>(selectedViewScope,
+  scope=>{try{return localStorage.getItem(scope);}catch{return null;}},
+  (scope,id)=>{try{if(id)localStorage.setItem(scope,id);else localStorage.removeItem(scope);}catch{}});
+ const [newViewName,setNewViewName]=useWorktableDirectoryState(recordViewsScope+':name',()=> '');
+ const [viewError,setViewError]=useWorktableDirectoryState(recordViewsScope+':error',()=> '');
+ const viewsMenuRef=useRef<HTMLDetailsElement>(null);
+ useDismissibleDetails(viewsMenuRef);
+ useViewportBoundDetails(viewsMenuRef);
  const columnsMenuRef=useRef<HTMLDetailsElement>(null);
  useDismissibleDetails(columnsMenuRef);
  useViewportBoundDetails(columnsMenuRef);
@@ -133,6 +159,36 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
      .filter((col):col is ConnectionColumn=>Boolean(col));
  },[active,columns]);
  const columnChoices=useMemo(()=>orderedConnectionColumnChoices(columns,active),[columns,active]);
+ const currentViewLayout={columns:active,sort:{key:sort.key,reverse:sort.reverse},pageSize};
+ const selectedView=savedViews.find(view=>view.id===selectedViewId);
+ const selectedViewModified=Boolean(selectedView&&!savedRecordViewMatches(selectedView,currentViewLayout));
+ const applySavedView=(view:SavedRecordView)=>{
+  setKeys(view.columns);
+  setSort({tableKey,...view.sort});
+  setPageSize(view.pageSize);
+  setPage(1);
+  setSelected([]);
+  setSelectedViewId(view.id);
+  setViewError('');
+ };
+ const saveNewView=()=>{
+  try{
+   const id='view_'+crypto.randomUUID();
+   const next=createSavedRecordView(savedViews,newViewName,id,currentViewLayout);
+   setSavedViews(next);setSelectedViewId(id);setNewViewName('');setViewError('');
+  }catch(error){setViewError(error instanceof Error?error.message:'Could not save view.');}
+ };
+ const updateSelectedView=()=>{
+  if(!selectedView)return;
+  setSavedViews(current=>updateSavedRecordView(current,selectedView.id,currentViewLayout));
+  setViewError('');
+ };
+ const deleteSavedView=(view:SavedRecordView)=>{
+  if(!window.confirm('Delete saved view "'+view.name+'"? This does not delete any records.'))return;
+  setSavedViews(current=>removeSavedRecordView(current,view.id));
+  if(selectedViewId===view.id)setSelectedViewId(null);
+  setViewError('');
+ };
  const sorted=useMemo(()=>[...rows].sort((a,b)=>{
    const diff=compareConnectionSortValues(
      a.sortValues?.[sort.key]??a.values[sort.key],
@@ -193,6 +249,48 @@ export function ConnectionsTable({tableKey,columns,rows,onOpen,onRecordEdit,onBu
      {!catalogPagination&&<WorktablePagination label={tableKey} total={sorted.length}
        page={currentPage} pageSize={pageSize} onPageChange={setPage}
        onPageSizeChange={size=>{setPageSize(size);setPage(1);}}/>}
+     {!catalogPagination&&<details className="connections-columns-menu connections-views-menu" ref={viewsMenuRef}>
+       <summary aria-label="Saved record views"><WorkspaceChromeIcon name="columns"/> Views
+        {selectedView&&<span className="connections-views-current">{selectedView.name}{selectedViewModified?' · Modified':''}</span>}
+       </summary>
+       <div className="connections-columns-popover connections-views-popover">
+        <strong>Saved views</strong>
+        <small>Column visibility & order, sorting, rows per page · Private to this browser and account</small>
+        {savedViews.length>0?<div className="connections-views-list">
+          {savedViews.map(view=><div className="connections-view-choice" key={view.id}>
+            <button type="button" className="connections-view-apply"
+             aria-pressed={selectedViewId===view.id}
+             onClick={()=>applySavedView(view)}>
+             <span>{view.name}</span>
+             <small>{view.columns.length} columns · {view.pageSize} rows</small>
+            </button>
+            <button type="button" className="connections-view-delete"
+             aria-label={'Delete view '+view.name} title={'Delete view '+view.name}
+             onClick={()=>deleteSavedView(view)}>×</button>
+          </div>)}
+        </div>:<p className="connections-views-empty">No views saved yet. Save your current layout below.</p>}
+        <label className="connections-view-create-label" htmlFor={'new-record-view-'+tableKey}>New view name</label>
+        <div className="connections-view-create">
+          <input id={'new-record-view-'+tableKey} type="text" maxLength={RECORD_VIEW_NAME_LIMIT}
+           value={newViewName} placeholder="e.g. Builder outreach"
+           onChange={event=>{setNewViewName(event.target.value);setViewError('');}}
+           onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();saveNewView();}}}/>
+          <button type="button" disabled={!newViewName.trim()} onClick={saveNewView}>Save view</button>
+        </div>
+        {viewError&&<p className="connections-views-error" role="alert">{viewError}</p>}
+        {selectedView&&<div className="connections-views-update">
+          <small>{selectedViewModified?'Current layout differs from "'+selectedView.name+'".':'The saved view matches this layout.'}</small>
+          <button type="button" disabled={!selectedViewModified}
+           onClick={updateSelectedView}>Update selected view</button>
+        </div>}
+        <div className="connections-columns-done">
+         <button type="button" onClick={()=>{
+           if(viewsMenuRef.current)viewsMenuRef.current.open=false;
+           viewsMenuRef.current?.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
+         }}>Done · View table</button>
+        </div>
+       </div>
+     </details>}
      <details className="connections-columns-menu" ref={columnsMenuRef}><summary><WorkspaceChromeIcon name="columns"/> Columns</summary>
        <div className="connections-columns-popover"><strong>Columns</strong>
          <small>{visible.length} visible · {columns.length-visible.length} hidden · Saved on this device</small>
