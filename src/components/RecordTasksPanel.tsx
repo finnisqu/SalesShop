@@ -42,6 +42,15 @@ export function RecordTasksPanel({kind,id,name,editing=false,quickActions}:{kind
     </div>)}
    {!related.length&&<p className="connections-record-empty">No tasks linked yet.</p>}
   </div>
+  {!preview&&Boolean(scope)&&storedScope===scope&&<button type="button"
+    className="connections-record-add ss-record-schedule-meeting"
+    onClick={()=>requestTaskModal({mode:'create',type:'meeting',
+     title:kind==='deal'?'Project meeting · '+name:'Meet with '+name,
+     associations:[{type:linkType,id,label:
+      (kind==='person'?'Person':kind==='deal'?'Deal':'Company')+' · '+name}],
+     notes:'Planned meeting. Set a date and time to show it on your Calendar. Log the completed meeting separately as an Activity.'})}>
+    + Schedule meeting
+   </button>}
   {!preview&&Boolean(scope)&&storedScope===scope&&
    <UnifiedRecordPicker kind="Task"
     items={tasks.filter(task=>!task.deletedAt&&task.workspaceScope===scope&&

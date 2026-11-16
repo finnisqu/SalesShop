@@ -154,3 +154,7 @@
 /* Distinguish relationship operations from destructive record actions. */
 .ss-record-actions-label{display:block;padding:6px 11px 3px;color:var(--ss-theme-muted);font-size:10px;line-height:1.2;font-weight:750;letter-spacing:.045em;text-transform:uppercase}
 .ss-record-actions-label.is-separated{margin-top:5px;padding-top:10px;border-top:1px solid var(--ss-theme-border)}
+
+/* Compact planned-meeting shortcut beneath personal Tasks; no extra record card. */
+.ss-record-schedule-meeting{display:inline-flex;align-items:center;justify-content:center;min-height:37px;margin:7px 0 9px;font-size:12px}
+@media(max-width:600px){.ss-record-schedule-meeting{min-height:44px}}
