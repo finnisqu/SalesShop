@@ -904,7 +904,7 @@ export function QuotesMobileBeta() {
   // document/status menus formerly housed in the page-header ellipsis.
   const libraryViewItems:WorktableActionItem[]=[
     {label:'Documents',active:!followUpsTab,onClick:()=>setFollowUpsTab(false)},
-    {label:'Follow-ups',active:followUpsTab,onClick:()=>setFollowUpsTab(true)},
+    {label:'Customer follow-ups',active:followUpsTab,onClick:()=>setFollowUpsTab(true)},
     ...(canBrowseTeam?[{label:signedShopOutcomesEnabled?'Shop Outcomes':'Team Quotes',
       onClick:()=>setLibraryMode('team')}]:[]),
   ];

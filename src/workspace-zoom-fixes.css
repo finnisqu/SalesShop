@@ -45,3 +45,33 @@
   width:auto!important;grid-template-columns:76px 100px 112px!important;
  }
 }
+
+/* High-specificity correction for the old >=1400px Records absolute nav.
+ * At 125% desktop zoom that branch was still painting the tabs through the
+ * right-side search/create actions. Keep menus unclipped on the second row. */
+@media(min-width:1400px) and (max-width:1599px){
+ :root[data-sales-theme] .sales-app:is(.view-dashboard,.view-quotes)
+ .ss-workspace-header:has(>.ss-workspace-header__tabs>.records-section-nav)
+ >.ss-workspace-header__tabs{
+   position:static!important;inset:auto!important;
+   grid-column:1/-1!important;grid-row:2!important;
+   z-index:2!important;width:100%!important;max-width:100%!important;
+   height:46px!important;margin:0!important;
+   transform:none!important;justify-content:center!important;
+   pointer-events:auto!important;overflow:visible!important;
+ }
+}
+@media(min-width:761px) and (max-width:1599px){
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs{
+  overflow:visible!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs>.ss-header-tab-pill{
+  min-width:0!important;max-width:100%!important;
+  box-sizing:border-box!important;
+ }
+ :root[data-sales-theme] .sales-app.view-notebook
+ .ss-workspace-header .notebook-header-page-navigator{
+  position:static!important;left:auto!important;right:auto!important;
+  margin:0!important;transform:none!important;max-width:100%!important;
+ }
+}

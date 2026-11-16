@@ -1173,3 +1173,13 @@
 .sales-calendar-sidecar-list.is-outstanding .home-outstanding-task-row .home-outstanding-task-open{display:flex;flex:1 1 auto;align-items:center;justify-content:space-between;min-width:0;min-height:55px;padding:9px 5px 9px 12px;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
 .sales-calendar-sidecar-list.is-outstanding .home-outstanding-task-row .home-outstanding-today-action{flex:0 0 auto;min-height:34px;margin-right:8px;padding:5px 8px;border:1px solid var(--ss-theme-border);border-radius:7px;background:var(--ss-theme-card);color:var(--ss-theme-ink);font-size:10px;font-weight:750;cursor:pointer}
 .sales-calendar-sidecar-list.is-outstanding .home-outstanding-today-action:hover{background:var(--ss-theme-tint)}
+
+/* Floating six-week calendars reserve an uninterrupted date-number row. */
+.sales-calendar-popover:not(.is-inline) .sales-calendar-day{
+ min-height:70px!important;
+}
+@media(max-width:760px){
+ .sales-calendar-popover:not(.is-inline) .sales-calendar-day{
+  min-height:68px!important;
+ }
+}

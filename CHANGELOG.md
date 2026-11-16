@@ -8,7 +8,8 @@ Status meanings: **Source committed** = in GitHub; **Build green** = confirmed C
 
 | Version / commit | Delivered | Release status | Follow-up / deferred |
 | --- | --- | --- | --- |
-| #355d (this commit) | Table and Board now use the identical Deal quick-create form and one shared relationship-safe save method | Source committed / build pending | Verify both layouts, partial link failures and board filter defaults |
+| #355e (this commit) | Focused zoom/header and floating calendar legibility follow-up; clearer Quote follow-up menu name | Source committed / build pending | Check 100/125/150/175% zoom and calendar at desktop and phone widths |
+| #355d (0870c43) | Table and Board now use the identical Deal quick-create form and one shared relationship-safe save method | Source committed / build pending | Verify both layouts, partial link failures and board filter defaults |
 | #355c (676133c) | Embedded Deals and Companies Board controls consolidated into Records header; one visible create launcher | Source committed / build pending | Table Deal form retains older flow pending full parity review |
 | #355b (984fbed) | Deal/Company new Quotes require template+name; Home Outstanding Tasks Today action; Settings header standardized | Source committed / build pending | Verify cancelled quote creation and Task update in browser |
 | #355a (e06f7b2) | Calendar first-open positioning, weekend backgrounds, badge/date spacing; Quote Filters repair; zoom-safe shared headers; Task reschedule disclosure; clear Follow Ups explanation | Source committed / build pending | Real browser at 125–175% zoom, WARM and mobile QA |

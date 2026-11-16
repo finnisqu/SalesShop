@@ -147,6 +147,14 @@
 - The release gate must continue to enforce the preflight → creation → linking order, and `recordCreateLinkRecovery345.test.ts` should remain green because the underlying code and order are unchanged.
 - Cloudflare, table/board UI and authenticated links must be checked before marking verified.
 
+### November 16 #355e — last layout guard before cloud check
+
+- The old 1400px+ Records absolute-centering CSS was more specific than the shared zoom fix and could still overlap right-hand actions at 125% desktop zoom. Added an exact override that keeps navigational tabs in the full-width second header row at CSS viewports 761–1599px.
+- Floating calendar day cells now reserve a larger two-row badge area, separate from the date.
+- Settings More sections no longer falsely mark Company selected in the header when another section is open.
+- Quote Views menu says "Customer follow-ups" to distinguish it from task reminders.
+- Source committed; authenticated browser QC and exact Cloudflare green still pending.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

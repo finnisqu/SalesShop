@@ -188,7 +188,7 @@ export function CompanySettings() {
             aria-label="Settings quick views"
             items={[{id:'company',label:'Company'},{id:'account',label:'My Account'},
               {id:'beta',label:'Beta Features'}]}
-            selected={['company','account','beta'].includes(tab)?tab:'company'}
+            selected={tab}
             onSelect={id=>setTab(id as SettingsTab)}/>}
           more={<WorkspaceMoreMenu items={visibleTabs.map(item=>({
             label:item.title,onClick:()=>setTab(item.id),active:tab===item.id,
