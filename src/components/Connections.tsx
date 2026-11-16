@@ -9,6 +9,7 @@ import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
 import {TasksWorkspace} from './TasksWorkspace';
 import {RecordsPagesDirectory} from './RecordsPagesDirectory';
+import {SalesAnalyticsWorkspace} from './SalesAnalyticsWorkspace';
 import '../records-workspace-polish.css';
 import {SuppliersWorkspace} from './SuppliersWorkspace';
 import '../suppliers-connections.css';
@@ -52,7 +53,7 @@ import {personLastContactIndex} from '../services/personLastContact';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from '../services/activityLogFilters';
 
-type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages';
+type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages' | 'analytics';
 type CompanyFilter = CompanyRelationship | 'self' | 'all';
 type DirectoryLayout='board'|'table';
 type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
@@ -90,7 +91,7 @@ function initialTabSearches():Partial<Record<ConnectionsTab,string>>{
     const raw=JSON.parse(sessionStorage.getItem(SEARCH_KEY)??'{}') as Record<string,unknown>;
     if(!raw||typeof raw!=='object')return {};
     const saved:Partial<Record<ConnectionsTab,string>>={};
-    for(const tab of ['tasks','companies','people','deals','activity','organization','suppliers','quotes','pages'] as ConnectionsTab[]){
+    for(const tab of ['tasks','companies','people','deals','activity','organization','suppliers','quotes','pages','analytics'] as ConnectionsTab[]){
       if(typeof raw[tab]==='string')saved[tab]=(raw[tab] as string).slice(0,300);
     }
     return saved;
@@ -663,7 +664,7 @@ export function Connections() {
             {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
           ]:[]}/>}
-        search={<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
+        search={tab==='analytics'?undefined:<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
             tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':
@@ -722,6 +723,9 @@ export function Connections() {
 
 
           {notice && <p className="connections-notice" role="status">{notice}</p>}
+          {tab==='analytics'&&<SalesAnalyticsWorkspace projects={projects}
+            quoteRecords={personalQuoteRecords} activities={activities}
+            personalTasks={expectedTaskScope&&personalTaskScope===expectedTaskScope?personalTasks:[]}/>}
           {tab==='tasks'&&<section className="connections-directory records-tasks-directory"
             aria-label="Tasks directory"><TasksWorkspace embedded externalQuery={query}/></section>}
           {tab==='pages'&&<section className="connections-directory records-pages-host"

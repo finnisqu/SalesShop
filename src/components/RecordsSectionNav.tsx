@@ -17,6 +17,7 @@ export const RECORDS_MORE_TABS=[
  {id:'pages',label:'Pages',description:'Notebook page directory'},
  {id:'activity',label:'Activity',description:'Recorded events and interactions'},
  {id:'organization',label:'Our Organization',description:'Internal team directory'},
+ {id:'analytics',label:'Analytics',description:'Sales intelligence and reporting'},
 ] as const;
 export type RecordsMoreTab=typeof RECORDS_MORE_TABS[number]['id'];
 export type RecordsSection=RecordsMainTab|RecordsMoreTab;
@@ -42,7 +43,7 @@ export function RecordsSectionNav({selected,onSelect,extraMore=[]}:{
 }){
  const additional:WorkspaceMoreItem[]=[
   ...RECORDS_MORE_TABS.map(item=>({
-   section:'More records',label:item.label,active:selected===item.id,
+   section:item.id==='analytics'?'Insights':'More records',label:item.label,active:selected===item.id,
    onClick:()=>onSelect(item.id),
   })),
   ...extraMore,

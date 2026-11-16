@@ -35,7 +35,7 @@
 
 | Order | Prototype | Minimum **working** user outcome | Risk / boundary | Status |
 | --- | --- | --- | --- | --- |
-| P1 | Analytics v0.1 | Actual KPI cards/charts for deal value/stages, bids, quotes and activity; owner/date filters using current records | Label approximate metrics and explain data completeness | Queued |
+| P1 | Analytics v0.1 | Actual KPI cards/charts for deal value/stages, bids, quotes and activity; owner/date filters using current records | Date range is a Deal creation cohort; cloud quotes use the same private visible index as Records | Source committed / build pending (#354a) |
 | P2 | Files v0.1 | Store/open/link real file URLs under Company/Deal/Quote, with editable labels; not a mock button | Tenant scope and link URL validation; connected providers later | Queued |
 | P3 | Automations v0.1 | Opt-in follow-up on confirmed quote delivery, inactive Deal reminder and won Deal handoff Task; auditable/no duplicate firing | Server-backed execution required before claiming background reliability | Queued |
 | P4 | Email v0.1 | Connect one real provider, read conversations, selectively link threads to CRM People/Deals | OAuth and least-privilege; never infer a sent email from a copied link | Queued |
@@ -57,6 +57,8 @@
 | --- | --- | --- | --- | --- | --- |
 | Nov 16 earlier · #353b | `b3e899a` + `ce229dc` | Old quote editor removed from user navigation; stale test repaired | **Green per user** | Not separately confirmed | Don't restore the old editor |
 | Nov 16 earlier · #353a | `bac74a2` | Local Playground import/preview/reset | Build included in later green; sample import worked per user | More edit/reload/reset scenarios unconfirmed | No production account data import |
+| Nov 16 · #354a | See GitHub history | Analytics v0.1 · working accessible Records More dashboard, filters and external/native quote parity | Pending Cloudflare | Pending device/auth | No production schema; read-only; verify permission scope |
+| Nov 16 · `6135e84` | `6135e84` | Records source regression gate updated for configurable Deal creation | **Green per user** | Device QA pending | 775/775 prior tests and release gates cleared |
 | Nov 16 · #353g | `4727e87a5` | One-click planned Meeting Task from Company/Person/Deal, Calendar-ready | Pending Cloudflare | Pending Task/Calendar acceptance | Does not create a fictitious completed Activity |
 | Nov 16 · #353f | `844b28d` | Unified Task completion and grouped record ellipsis actions | Pending Cloudflare | Pending phone desktop | Activity drafts and permissions unchanged |
 | Nov 16 · #353e | `7dfcef4` | Pricing readiness filters and honest private margin labels | Pending Cloudflare | Pending authenticated Quote workflow | No customer pricing/receipts changed |
@@ -66,9 +68,10 @@
 
 ## November 16 release gate / manual acceptance
 
-**Current deployment status:** User confirmed previous `ce229dc` build **green**. No Cloudflare result or authenticated browser QC has been supplied yet for `b9b8b6f` through `4727e87`. New code and regression tests are committed, but this does **not** establish a deployed working UI. Record failures under the exact commit before changing scope.
+**Current deployment status:** User confirmed Cloudflare build **green** on `6135e84` (November 16). TypeScript, 775/775 quick-quote tests, Records gate and Vite bundle cleared by that confirmation. Authenticated UI/mobile acceptance remains unchecked. Subsequent analytics source commit awaits its own Cloudflare build.
 
-- [ ] **Cloudflare:** `npm run build` succeeds on exact latest head (TypeScript → quick-quote Vitest → Record gate → Vite). Retain last good SHA and paste failing section if red.
+- [x] **Cloudflare:** `6135e84` build green per user (TypeScript → 775 quick-quote tests → Record gate → Vite).
+- [ ] **Analytics #354a:** Confirm Records → More → Analytics, date/owner/pipeline filtering, stage bar values, external/natively delivered bid parity and private Tasks. Recheck the new head's Cloudflare build.
 - [ ] **A / Deals:** From Records → Deals Board, click `+ Deal → More details`. Pick stage, pipeline, value and assignee; select/create Company and People; set bid date. Save and reload. Verify every value, no duplicates and correct submission Task ownership. Repeat with a simple name-only Deal and an intentionally unassigned pipeline.
 - [ ] **A / Menus:** On Company/Person/Deal, `…` shows separate Connections and Record categories when deletion is permitted. Unlink keeps the related record and history; deletion still requires confirmation and relationship safety.
 - [ ] **B / Task flow:** Open a normal Task from Home and Tasks → `Complete · Log · Plan next`. Confirm Activity opens with linked record and next follow-up prechecked; uncheck if not needed. Saving creates exactly one Activity and finishes the eligible Task. Protected Submit Quote Task remains blocked without confirmed proof. Retry after a partial follow-up failure without duplicates.
@@ -85,7 +88,7 @@
 - Meeting planner v0 deliberately uses a personal Meeting Task, **not** a new shared appointment database.
 - Bid reminder v0 is a one-time, user-confirmed Task. It doesn't automatically move if the Deal due date changes; the Task explicitly reminds the user to review it.
 - New configuration/cloud-RLS features remain outside these polish commits.
-- **Next feature after polish acceptance:** Analytics v0.1 using existing Deals, Quotes, Tasks and Activities. Make charts and filters actually work before treating the prototype as delivered.
+- **Analytics #354a is now source-implemented** under Records → More. Confirm real filters, data interpretation and scope after Cloudflare. Do not call it released until build and hands-on checks pass. Next prototype after Analytics: Files v0.1.
 
 ### November 16 build recovery — Cloudflare 18:16 UTC
 
