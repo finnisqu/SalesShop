@@ -652,7 +652,7 @@ export function Connections() {
             {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
             {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
           ]:[]}/>}
-        search={tab==='analytics'?undefined:<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
+        search={tab==='analytics'||tab==='automations'?undefined:<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
             tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':

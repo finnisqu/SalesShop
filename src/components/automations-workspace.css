@@ -39,7 +39,12 @@
 .ss-automation-preview strong{font-size:12px}
 .ss-automation-preview span,.ss-automation-preview small{font-size:11px;color:var(--ss-theme-muted)}
 .ss-automation-history-list{display:grid;gap:7px;margin-top:12px}
-.ss-automation-history-list>div{display:flex;flex-direction:column;gap:3px;padding:8px 0;border-bottom:1px solid var(--ss-theme-border)}
+.ss-automation-history-list>div{display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding:8px 0;border-bottom:1px solid var(--ss-theme-border)}
+.ss-automation-history-list>div>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ss-automation-history-list button{flex:0 0 auto;padding:7px 10px;min-height:35px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;background:var(--ss-theme-base);
+ color:var(--ss-theme-ink);font-size:11px;font-weight:750;cursor:pointer}
 .ss-automation-history-list strong{font-size:12px}
 .ss-automation-history-list span,.ss-automation-history>p{font-size:11px;color:var(--ss-theme-muted)}
 .ss-automation-workspace>footer{font-size:11px;color:var(--ss-theme-muted);line-height:1.6}

@@ -244,6 +244,11 @@
 - File dialog's + Link launcher remains mounted behind the overlay so focus can return on Escape/cancel; both File and Our Org modals start focus in the first meaningful text field rather than the close icon.
 - User confirmed the previous Files page build **green** and working; new #358a–#358e changes still require their own Cloudflare build. All new automation rules remain off until explicitly enabled.
 
+### November 16 #358f — usable automation history and header
+
+- Created Task history entries provide an **Open Task** action through the existing private Task Quick View. Automations page no longer displays a misleading generic Records search box.
+- All three rule families, scope and role restrictions remain unchanged; pending exact-head Cloudflare validation.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

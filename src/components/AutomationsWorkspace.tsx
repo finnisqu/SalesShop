@@ -9,6 +9,7 @@ import {useAutomationStore} from '../store/automationStore';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
 import {AUTOMATION_IDS,automationCandidates,type AutomationRuleId} from '../services/automationRules358b';
 import {executeAutomationCandidates} from '../services/automationExecutor358b';
+import {requestTaskModal} from '../services/taskModalEvents';
 import './automations-workspace.css';
 
 const descriptions:Record<AutomationRuleId,{title:string;explanation:string;timing:string}>={
@@ -109,8 +110,12 @@ export function AutomationsWorkspace(){
    <h3>Created Task history</h3>
    {history.length?<div className="ss-automation-history-list">
     {history.slice(0,30).map(item=><div key={item.id}>
-     <strong>{item.title}</strong>
-     <span>{descriptions[item.rule].title} · {new Date(item.at).toLocaleString()}</span>
+     <div><strong>{item.title}</strong>
+      <span>{descriptions[item.rule].title} · {new Date(item.at).toLocaleString()}</span>
+     </div>
+     <button type="button" onClick={()=>requestTaskModal({mode:'preview',id:item.taskId})}>
+       Open Task
+     </button>
     </div>)}
    </div>:<p>No Tasks created by these rules yet.</p>}
   </section>
