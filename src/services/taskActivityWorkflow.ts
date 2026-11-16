@@ -4,6 +4,8 @@ import type {ActivityMetadata} from '../types/crm';
 export interface ActivityComposerRequest {
   date?:string;
   taskId?:string;
+  /** Prefill optional next follow-up when finishing a Task. */
+  planFollowUp?:boolean;
   associations?:TaskAssociation[];
 }
 /** One global Activity editor services Home, Calendar, Tasks and CRM previews. */

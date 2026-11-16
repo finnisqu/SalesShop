@@ -1,3 +1,4 @@
+import type {ReactNode} from 'react';
 import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,subtaskProgress,isProtectedBidTask} from '../store/personalTaskStore';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -7,7 +8,7 @@ import {RecordUnlinkButton} from './RecordUnlinkButton';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import type {RelatedEntityKind} from './RecordRelatedActions';
 
-export function RecordTasksPanel({kind,id,name,editing=false}:{kind:RelatedEntityKind;id:string;name:string;editing?:boolean}){
+export function RecordTasksPanel({kind,id,name,editing=false,quickActions}:{kind:RelatedEntityKind;id:string;name:string;editing?:boolean;quickActions?:ReactNode}){
  const tasks=usePersonalTaskStore(s=>s.tasks);
  const updateTask=usePersonalTaskStore(s=>s.updateTask);
  const storedScope=usePersonalTaskStore(s=>s.scope);
@@ -23,6 +24,7 @@ export function RecordTasksPanel({kind,id,name,editing=false}:{kind:RelatedEntit
 
  return <RecordCard title="Tasks" extra={<span>{openTasks.length} open · private</span>}>
   <p className="connections-record-helper">Tasks linked to this record, private to your account.</p>
+  {quickActions}
   <div className="connections-record-entity-list">
    {related.slice().sort((a,b)=>Number(a.status==='completed')-Number(b.status==='completed')||
     (a.dueDate??'9999').localeCompare(b.dueDate??'9999')).map(task=><div

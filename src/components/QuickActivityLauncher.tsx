@@ -118,7 +118,7 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
     setMethod(taskActivityMethod(current));
     setLinks(normalizedTaskAssociations(current).filter(link=>link.type!=='notebook'));
     setNotes('');setOccurred(dateTimeLocal());
-    setCreateFollowUp(false);setFollowUpDate(tomorrowKey());
+    setCreateFollowUp(Boolean(request.planFollowUp));setFollowUpDate(tomorrowKey());
     setError('');
    }else{
     // Normal Home/Calendar logging must never complete a previously selected task.

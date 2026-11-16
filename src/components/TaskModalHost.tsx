@@ -224,8 +224,8 @@ export function TaskModalHost(){
         {canLog&&task.status!=='completed'&&task.status!=='canceled'&&
          !taskCompletionBlocker(task)&&
          <button type="button" className="tasks-flow-action" onClick={()=>{
-          close();openActivityComposer({taskId:task.id});
-         }}>Complete + Log Activity</button>}
+          close();openActivityComposer({taskId:task.id,planFollowUp:true});
+         }}>Complete · Log · Plan next</button>}
        </>}
       </div>
      </PreviewPanelActions>

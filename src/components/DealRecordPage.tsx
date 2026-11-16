@@ -8,6 +8,7 @@ import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordUnlinkAction} from './RecordUnlinkAction';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import {RecordTasksPanel} from './RecordTasksPanel';
+import {DealBidReminder} from './DealBidReminder';
 import {DealPeopleRelationships} from './DealPersonRelationships';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
@@ -391,7 +392,8 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
           </button>)}
         {!related.directHistory.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>}/>
-      <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing||unlinking}/>
+      <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing||unlinking}
+        quickActions={<DealBidReminder deal={deal}/>}/>
       {timelineBetaEnabled&&<RecordCard title="Project timeline · Beta">
         <p className="connections-record-helper">Track deposit, shop drawings, import batches, installations by building, invoices and retainage.</p>
         <button type="button" onClick={()=>setTimelineOpen(true)}>Open milestone timeline</button>
