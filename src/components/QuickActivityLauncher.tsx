@@ -19,6 +19,8 @@ import {taskActivityMethod,type ActivityComposerRequest}
  from '../services/taskActivityWorkflow';
 import {localDateKey} from '../services/salesCalendar';
 import {activityAttemptId,recordActivityOnce} from '../services/activitySaveRecovery351d';
+import {unavailableTaskAssociations,unavailableAssociationSaveError,
+ type AssociationVerifiedTypes} from '../services/taskAssociationIntegrity351f';
 import {activityRelationsWithContext,primaryActivityRelations,type ActivityRelation}
  from '../services/activityRelations';
 import {draftStorageKey,readSavedDraft,writeSavedDraft,clearSavedDraft} from '../services/draftRecovery';
@@ -149,6 +151,11 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
  const loggedPendingActivity=useCrmStore(s=>Boolean(pendingActivityId&&
   s.activities.some(activity=>activity.id===pendingActivityId)));
  const quotes=useQuoteStore(s=>s.quotes);
+ const crmHydrated=useCrmStore(s=>s.hydrated);
+ const quoteHydrated=useQuoteStore(s=>s.hydrated);
+ const verifiedTypes:AssociationVerifiedTypes={
+  contact:crmHydrated,company:crmHydrated,project:crmHydrated,quote:quoteHydrated,
+ };
  const permitted=!perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'));
  const options=useMemo(()=>{
   return [
@@ -187,6 +194,13 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
   if(savingRef.current)return;
   setError('');
   if(!permitted)return setError('Your role cannot log shared CRM interactions.');
+  // A logged Activity is immutable during retry. Its follow-up/completion
+  // may proceed even if one of its historical links becomes unavailable.
+  if(!loggedPendingActivity){
+   const linkError=unavailableAssociationSaveError(
+    unavailableTaskAssociations(links,options,verifiedTypes));
+   if(linkError)return setError(linkError);
+  }
   const person=primaryName(links);
   const fallback=methods.find(x=>x.id===method)?.label||'Interaction';
   if(!links.some(link=>link.type!=='notebook'))return setError('Link at least one person, company, deal, or quote.');
@@ -294,7 +308,8 @@ function ActivityLauncherInner({label='Log Activity',compact=false,tile=false,he
      <label>When<input type="datetime-local" max={dateTimeLocal()} value={occurred} disabled={loggedPendingActivity}
       onChange={e=>setOccurred(e.target.value)} required/></label>
       {!loggedPendingActivity&&<>
-       <TaskAssociationsField options={options} value={links} onChange={addLinks}/>
+       <TaskAssociationsField options={options} value={links} onChange={addLinks}
+        verifiedTypes={verifiedTypes}/>
        <ActivityRelatedQuickCreate disabled={saving}
         onCreated={link=>addLinks([...links,link])}/>
       </>}
