@@ -64,3 +64,28 @@
     -webkit-overflow-scrolling:touch;scrollbar-width:none}
  .developer-console-sidebar nav button{flex:0 0 auto;white-space:nowrap}
 }
+
+/* Batch 353a – repeatable manual datasets in the disconnected playground. */
+.developer-playground-toolbar{max-width:min(370px,calc(100vw - 18px));}
+.developer-playground-toolbar-actions{max-height:min(76dvh,640px);overflow-y:auto;overscroll-behavior:contain;}
+.developer-playground-import{display:grid;gap:9px;padding:10px 8px;
+ border:1px solid #72877e;border-radius:9px;background:#20332f;}
+.developer-playground-import>strong{font-size:12px;}
+.developer-playground-import>small{line-height:1.5;}
+.developer-playground-file{display:grid;gap:6px;padding:6px 4px;min-width:0;}
+.developer-playground-file>span{font-weight:700;font-size:11px;}
+.developer-playground-file input{display:block;max-width:100%;font-size:12px;color:#fff;}
+.developer-playground-file input::file-selector-button{
+ background:#e2cd9c;color:#243730;border:0;border-radius:7px;padding:8px;
+ font:700 11px system-ui;cursor:pointer;margin-right:8px;
+}
+.developer-playground-import-preview{display:grid;gap:6px;padding:9px;
+ border:1px solid #6d9080;border-radius:8px;background:#2c5145;overflow-wrap:anywhere;}
+.developer-playground-import-preview small{line-height:1.6;}
+.developer-playground-import-preview button{border-color:#ddc687;background:#d5b978;color:#24372f;}
+.developer-playground-import-preview button:disabled{opacity:.5;cursor:default;}
+.developer-playground-error{margin:0;color:#ffe2cc;font-size:11px;line-height:1.5;}
+@media(max-width:600px){
+ .developer-playground-toolbar-actions{max-height:65dvh}
+ .developer-playground-file{min-height:44px}
+}
