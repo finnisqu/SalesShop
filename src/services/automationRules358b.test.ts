@@ -34,6 +34,9 @@ describe('Opt-in workflow automations #358b',()=>{
   const safe=sanitizeAutomationSettings(null);
   expect(Object.values(safe.rules).every(rule=>!rule.enabled)).toBe(true);
   expect(safe.autoRunWhileOpen).toBe(false);
+  const store=read('store/automationStore.ts');
+  expect(store).toContain("rules:{\n  'quote-delivered':");
+  expect(store).not.toContain("as Config['rules']");
   expect(sanitizeAutomationSettings({rules:{'deal-inactive':{enabled:true,days:500}}})
    .rules['deal-inactive'].days).toBe(60);
  });

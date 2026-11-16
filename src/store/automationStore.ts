@@ -1,5 +1,5 @@
 import {create} from 'zustand';
-import {AUTOMATION_IDS,DEFAULT_AUTOMATION_SETTINGS,readAutomationSettings,
+import {DEFAULT_AUTOMATION_SETTINGS,readAutomationSettings,
  saveAutomationSettings,type AutomationRuleId,type AutomationSettings,type AutomationHistoryItem}
  from '../services/automationRules358b';
 
@@ -12,9 +12,13 @@ interface AutomationState extends Config {
  log:(item:AutomationHistoryItem)=>void;
 }
 const fresh=():Config=>({
- rules:Object.fromEntries(AUTOMATION_IDS.map(id=>[id,{...DEFAULT_AUTOMATION_SETTINGS.rules[id]}]))
-  as Config['rules'],
- autoRunWhileOpen:false,history:[],
+ rules:{
+  'quote-delivered':{...DEFAULT_AUTOMATION_SETTINGS.rules['quote-delivered']},
+  'deal-inactive':{...DEFAULT_AUTOMATION_SETTINGS.rules['deal-inactive']},
+  'deal-won':{...DEFAULT_AUTOMATION_SETTINGS.rules['deal-won']},
+ },
+ autoRunWhileOpen:false,
+ history:[],
 });
 export const useAutomationStore=create<AutomationState>((set,get)=>({
  scope:null,...fresh(),

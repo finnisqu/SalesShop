@@ -12,6 +12,8 @@ describe('Centered create/edit modals #358a',()=>{
   expect(s).toContain('Save link');
   expect(s).toContain('data-dialog-initial-focus');
   expect(s).toContain('<div className="ss-file-links-actions">');
+  expect(s).toContain('</div>\n  {showForm&&createPortal(');
+  expect(s).not.toContain('</div>}\n  {showForm&&createPortal(');
  });
  it('Our Org +Person uses same modal without changing role/roster save logic',()=>{
   const s=read('components/OurOrganizationDirectory.tsx');

@@ -8,7 +8,8 @@ Status meanings: **Source committed** = in GitHub; **Build green** = confirmed C
 
 | Version / commit | Delivered | Release status | Follow-up / deferred |
 | --- | --- | --- | --- |
-| #358f (this commit) | Automations history entries now open generated private Tasks; disabled irrelevant Records search on the Automations view | Source committed / build pending | Confirm Cloudflare and usability, no automated background server |
+| #358g (this commit) | Fixed build-blocking JSX stray closing brace in Files Add Link modal and replaced invalid automation rule-initializer type assertion with explicit typed rule defaults; strengthened regression source checks | Source committed / Cloudflare pending | Re-run npm build, check TypeScript then test suite |
+| #358f (396297b) | Automations history entries now open generated private Tasks; disabled irrelevant Records search on the Automations view | Source committed / build pending | Confirm Cloudflare and usability, no automated background server |
 | #358e (85dbdfc) | Dialog focus returns to the Add File launcher; initial focus moves into the first field in both centered dialogs; updated green build milestone | Source committed / build pending | Cloudflare check for all #358x changes |
 | #358d (5214fb9) | Corrected cross-rule test isolation and capped app-open automatic task creation to 20 per session, preserving manual preview and safe catch-up | Source committed / build pending | Confirm first automation build and cloud hydration on green deployment |
 | #358c (44c5a81) | Guarded both automatic and manual rule execution on completed private Task cloud hydration and CRM role permissions, preventing pre-sync duplicate creation | Source committed / build pending | Check Cloudflare and multi-user loading states; cross-device uniqueness still needs server enforcement |

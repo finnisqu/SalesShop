@@ -67,7 +67,7 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
   <div className="ss-file-links-actions">
    <span>{visible.length} {visible.length===1?'link':'links'}{target?' for this record':''}</span>
    <button type="button" onClick={startNew}>+ Link file or folder</button>
-  </div>}
+  </div>
   {showForm&&createPortal(<div className="ss-record-form-backdrop"
       onPointerDown={event=>{if(event.currentTarget===event.target)closeForm();}}>
      <section ref={modalRef} className="ss-record-form-modal" role="dialog" aria-modal="true"

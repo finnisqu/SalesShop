@@ -249,6 +249,13 @@
 - Created Task history entries provide an **Open Task** action through the existing private Task Quick View. Automations page no longer displays a misleading generic Records search box.
 - All three rule families, scope and role restrictions remain unchanged; pending exact-head Cloudflare validation.
 
+### November 16 #358g — Cloudflare TypeScript build repair
+
+- User-supplied Cloudflare build from November 16 20:40 UTC stopped during `tsc --noEmit` on two parser errors before any Vitest runs:
+  - `src/components/FileLinksManager.tsx:70` had a stray closing `}` after the permanently mounted File launcher div (previously conditional). The create/edit portal remains conditional on `showForm` and focus can return to the mounted launcher.
+  - `src/store/automationStore.ts:16` used an unnecessarily complex asserted `Object.fromEntries` rule initializer. Replaced with explicit typed default rule keys and removed the unused AUTOMATION_IDS import.
+- Added static regression checks in the existing gate. **Committed source; next Cloudflare build result not yet confirmed.** Do not mark green until new log confirms TypeScript, tests and Vite.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.
