@@ -4,6 +4,8 @@ import {usePersonalTaskStore,taskScope,normalizedTaskAssociations,taskAssociatio
 import {TaskAssociationsField} from './TaskAssociationsField';
 import {ActivityRelatedQuickCreate} from './ActivityRelatedQuickCreate';
 import {saveTaskEditorChanges} from '../services/taskEditorSave351e';
+import {unavailableTaskAssociations,unavailableAssociationSaveError,
+ type AssociationVerifiedTypes} from '../services/taskAssociationIntegrity351f';
 import {SalesCalendarLauncher} from './SalesCalendarLauncher';
 import {TaskPreviewDueControls} from './TaskPreviewDueControls';
 import {taskDuePresetDate,type TaskDuePreset} from '../services/taskSchedule';
@@ -150,6 +152,13 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const authMode=useAuthStore(s=>s.mode),authUserId=useAuthStore(s=>s.user?.id);
   const companies=useCrmStore(s=>s.companies),contacts=useCrmStore(s=>s.contacts);
   const deals=useCrmStore(s=>s.projects),pages=useNotebookStore(s=>s.entries);
+  const crmHydrated=useCrmStore(s=>s.hydrated);
+  const quoteHydrated=useQuoteStore(s=>s.hydrated);
+  const notebookHydrated=useNotebookStore(s=>s.hydrated);
+  const verifiedTypes:AssociationVerifiedTypes={
+   contact:crmHydrated,company:crmHydrated,project:crmHydrated,
+   quote:quoteHydrated,notebook:notebookHydrated,
+  };
   const associations=[
     ...quotes.filter(q=>!q.archivedAt&&(authMode!=='cloud'||q.ownerUserId===authUserId)).map(q=>({key:'quote:'+q.id,linked:{type:'quote',id:q.id} as TaskLink,label:'Quote · '+q.title})),
     ...deals.map(d=>({key:'project:'+d.id,linked:{type:'project',id:d.id} as TaskLink,label:'Deal · '+d.name})),
@@ -162,6 +171,9 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const submit=(event:FormEvent)=>{
     event.preventDefault();
     if(!title.trim()){setFormError('Enter a task title.');return;}
+    const unavailable=unavailableTaskAssociations(selectedLinks,associations,verifiedTypes);
+    const linkError=unavailableAssociationSaveError(unavailable);
+    if(linkError){setFormError(linkError);return;}
     setFormError('');
     try{
       const pending=newSubtask.trim().slice(0,180);
@@ -191,7 +203,8 @@ export function TaskEditor({initial,onCancel,onSave}:{
       </RecordEditField>
       {sourceText&&<p className="tasks-editor-source">Promoted from Notebook · Original text preserved</p>}
       <TaskAssociationsField options={associations.map(item=>({...item,
-        linked:{...item.linked,label:item.label}}))} value={selectedLinks} onChange={setSelectedLinks}/>
+        linked:{...item.linked,label:item.label}}))} value={selectedLinks} onChange={setSelectedLinks}
+        verifiedTypes={verifiedTypes}/>
       {canCreateRelatedCrm&&<section className="tasks-editor-related-create">
        <button type="button" className="tasks-editor-related-create-trigger"
         aria-expanded={showCreateRelated}
