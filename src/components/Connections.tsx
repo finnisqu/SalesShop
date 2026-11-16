@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } fr
 import {createPortal} from 'react-dom';
 import {WorkspaceLoadingState} from './WorkspaceLoadingState';
 import { CompanyRecordPage } from './CompanyRecordPage';
-import {Board} from './Board';
+import {Board,createDealFromQuickCreate} from './Board';
+import {BoardQuickCreate} from './BoardQuickCreate';
 import {scopedStorageKey} from '../lib/developerPlayground';
 import './connections-board-toggle.css';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
@@ -44,7 +45,7 @@ import {consumeQuoteMetadataRequest} from '../services/quoteMetadataNavigation';
 import {indexConnectionsCounts} from '../services/connectionsCountIndex';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry,dedupeExternalQuoteActivities} from '../services/salesQuoteRegistry';
 import {DEAL_PIPELINES,dealPipelineLabel,matchesDealPipeline,
- type DealPipeline,type DealPipelineFilter,type ProjectStage} from '../types/crm';
+ type DealPipelineFilter,type ProjectStage} from '../types/crm';
 import {companyRelationshipLabel,companyRelationshipPatch,
  companyMatchesRelationship,isOurCompany,visibleCompanyAliases,type CompanyRelationship,
  type EditableCompanyRelationship} from '../services/companyRelationship';
@@ -271,10 +272,6 @@ export function Connections() {
   const [newCompanyRelationship, setNewCompanyRelationship] = useState<EditableCompanyRelationship>('prospect');
   const [externalQuotePickerOpen,setExternalQuotePickerOpen]=useState(false);
   const [personCreating, setPersonCreating] = useState(false);
-  const [dealCreating, setDealCreating] = useState(false);
-  const [newDeal, setNewDeal] = useState('');
-  const [newDealCompanyId, setNewDealCompanyId] = useState('');
-  const [newDealPipeline, setNewDealPipeline] = useState<DealPipeline | ''>('');
   const [newPerson, setNewPerson] = useState('');
   const [newPersonEmail, setNewPersonEmail] = useState('');
   const [newPersonCompany, setNewPersonCompany] = useState('');
@@ -310,13 +307,11 @@ export function Connections() {
     Boolean(authOrgId&&authUser&&canEditTeamArea(authRole,authDepartment,'supplier')));
   const resolveCompany = useCrmStore((state) => state.resolveCompany);
   const createContact = useCrmStore((state) => state.createContact);
-  const createDeal = useCrmStore((state) => state.createProject);
   const updateCompany = useCrmStore((state) => state.updateCompany);
   const updateContact = useCrmStore((state) => state.updateContact);
   const relinkContactCompany = useCrmStore((state) => state.relinkContactCompany);
   const updateDeal = useCrmStore((state) => state.updateProject);
   const assignDeal = useCrmStore((state) => state.assignProject);
-  const relinkDealCompany = useCrmStore((state) => state.relinkProjectCompany);
   const setProjectCompany=useCrmStore(state=>state.setProjectCompany);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
@@ -352,7 +347,7 @@ export function Connections() {
     if(next==='quotes'){requestRecordsQuotesLibrary();setView('quotes');return;}
     setPreview(null);setActivityPreview(null);setQuoteRecordId(null);
     setTab(next);setNotice('');setPeopleAttention('all');
-    setCompanyCreating(false); setPersonCreating(false); setDealCreating(false);
+    setCompanyCreating(false); setPersonCreating(false);
     rememberRecordsSection(next as RecordsSection);
   };
 
@@ -527,23 +522,14 @@ export function Connections() {
       openPerson(id);
     } else setNotice('Could not add that person. Check the details and try again.');
   };
-  const addDeal = (event: FormEvent) => {
-    event.preventDefault();
-    if (!newDeal.trim()) return;
-    const id = createDeal(newDeal.trim(),'Discovery',{pipeline:newDealPipeline || undefined});
-    if (!id) { setNotice('Could not create this deal.'); return; }
-    if (newDealCompanyId) relinkDealCompany(id, newDealCompanyId);
-    setNewDeal(''); setNewDealCompanyId(''); setNewDealPipeline(''); setDealCreating(false);
-    openProject(id);
-  };
   const openActivity = (activity: (typeof activities)[number]) => {
     setPreview(null);setActivityPreview(activity.id);
   };
 
   const closeNewRecord=()=>{
-    setCompanyCreating(false);setPersonCreating(false);setDealCreating(false);
+    setCompanyCreating(false);setPersonCreating(false);
   };
-  const isCreateOpen=companyCreating||personCreating||dealCreating;
+  const isCreateOpen=companyCreating||personCreating;
   const newRecordRef=useDismissibleLayer<HTMLElement>(isCreateOpen,closeNewRecord);
   useModalScrollLock(isCreateOpen);
   // A Company → Deal → Person journey should return to its immediate related
@@ -707,8 +693,9 @@ export function Connections() {
             <button type="button" aria-pressed={dealsView==='list'} onClick={()=>chooseDealsView('list')}>List</button>
             <button type="button" aria-pressed={dealsView==='timeline'} onClick={()=>chooseDealsView('timeline')}>Timeline <small>Beta</small></button>
           </div>}
-          {tab==='deals'&&layouts.deals==='table'&&<Button variant="primary" className="connections-add"
-            onClick={()=>setDealCreating(value=>!value)}>+ Deal</Button>}
+          {tab==='deals'&&layouts.deals==='table'&&<BoardQuickCreate kind="Deal"
+             onCreate={(name,details)=>createDealFromQuickCreate(name,details,pipelineFilter)}
+             initialPipeline={pipelineFilter}/>}
           {tab==='activity'&&<Button variant="primary" className="connections-add"
             onClick={()=>openActivityComposer({})}>+ Activity</Button>}
           {tab==='tasks'&&<Button variant="primary" className="connections-add"
@@ -968,15 +955,15 @@ export function Connections() {
       {preview&&<RecordPreviewDrawer record={preview}
         onClose={()=>setPreview(null)} onSelect={setPreview}
         onGoToQuotePage={openQuoteMetadata}/>}
-      {(companyCreating||personCreating||dealCreating)&&createPortal(
+      {(companyCreating||personCreating)&&createPortal(
         <div className="connections-create-backdrop" onPointerDown={event=>{
           if(event.target===event.currentTarget)closeNewRecord();
         }}>
           <section ref={newRecordRef} className="connections-create-dialog" role="dialog" aria-modal="true"
-            aria-label={companyCreating?'New company':personCreating?'New person':'New deal'}>
+            aria-label={companyCreating?'New company':'New person'}>
             <header className="connections-create-heading">
               <div><small>RECORDS · CREATE</small>
-                <h2>{companyCreating?'New company':personCreating?'New person':'New deal'}</h2>
+                <h2>{companyCreating?'New company':'New person'}</h2>
               </div>
               <PreviewPanelClose onClose={closeNewRecord} label="Close new record" initialFocus={false}/>
             </header>
@@ -1000,22 +987,6 @@ export function Connections() {
                 </select></label>
                 <div><button type="button" onClick={() => setPersonCreating(false)}>Cancel</button><button className="primary" type="submit" disabled={!newPerson.trim() && !newPersonEmail.trim()}>Add person</button></div>
               </form>}
-            {dealCreating && <form className="connections-add-form" onSubmit={addDeal}>
-              
-              <label><span>Deal name</span><input data-dialog-initial-focus autoFocus required value={newDeal} onChange={event => setNewDeal(event.target.value)} placeholder="e.g. Parkside Apartments" /></label>
-              <label><span>Pipeline</span><select value={newDealPipeline}
-                 onChange={event=>setNewDealPipeline(event.target.value as DealPipeline | '')}>
-                 <option value="">Unassigned</option>
-                 {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
-               </select></label>
-               <label><span>Company</span><select value={newDealCompanyId} onChange={event => setNewDealCompanyId(event.target.value)}>
-                <option value="">No company yet</option>
-                {companies.slice().sort((a,b) => a.name.localeCompare(b.name)).map(company =>
-                  <option key={company.id} value={company.id}>{company.name}</option>)}
-              </select></label>
-              <div><button type="button" onClick={() => setDealCreating(false)}>Cancel</button>
-                <button type="submit" className="primary" disabled={!newDeal.trim()}>Create & open</button></div>
-            </form>}
           </section>
         </div>,document.body)}
     </main>

@@ -203,7 +203,7 @@ function AccountEditor({ company, onClose }: { company: Company; onClose: () => 
 }
 
 export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isStageCollapsed,onToggleStage,
-  searchQuery='',onSearchChange,embedded=false,allowedCompanyIds,toolbarControl,onOpenQuoteMetadata}:{
+  searchQuery='',onSearchChange,embedded=false,allowedCompanyIds,onOpenQuoteMetadata}:{
   onShowProjects:()=>void;
   embedded?:boolean;
   searchQuery?:string;

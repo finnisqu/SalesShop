@@ -346,24 +346,12 @@ function ProjectEditor({ project, onClose }: { project: Project; onClose: () => 
   );
 }
 
-export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds,
-  companyToolbarControl,onOpenQuoteMetadata,pipelineFilter,onPipelineFilterChange}:{
-  embeddedMode?:'projects'|'accounts';searchQuery?:string;
-  allowedDealIds?:ReadonlySet<string>;allowedCompanyIds?:ReadonlySet<string>;
-  companyToolbarControl?:ReactNode;onOpenQuoteMetadata?:(id:string)=>void;
-  pipelineFilter?:DealPipelineFilter;onPipelineFilterChange?:(value:DealPipelineFilter)=>void;
-}={}) {
-  const hydrate = useCrmStore((state) => state.hydrate);
-  const hydrated = useCrmStore((state) => state.hydrated);
-  const projects = useCrmStore((state) => state.projects);
-  const createProject = useCrmStore((state) => state.createProject);
-  const setProjectCompany = useCrmStore((state) => state.setProjectCompany);
-  const updateProject = useCrmStore((state) => state.updateProject);
-  const resolveCompany = useCrmStore((state) => state.resolveCompany);
-  const updateCompany = useCrmStore((state) => state.updateCompany);
-  const createContact = useCrmStore((state) => state.createContact);
-  const moveProject = useCrmStore((state) => state.moveProject);
-  const createDealWithDetails=async(name:string,details?:BoardDealCreateDetails)=>{
+/** Shared Deal creation for Table and Board; validates related records before
+ * creating the Deal and returns its ID if any optional link fails. */
+export const createDealFromQuickCreate=async(name:string,details:BoardDealCreateDetails|undefined,
+ pipelineView:DealPipelineFilter='all')=>{
+  const {createProject,setProjectCompany,updateProject,resolveCompany,updateCompany,createContact}=
+   useCrmStore.getState();
     const crm=useCrmStore.getState(),existing=crm.companies;
     if(details?.companyId&&!existing.some(c=>c.id===details.companyId))
       throw new Error('The chosen Company is no longer available.');
@@ -428,6 +416,20 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
         ' Open the existing Deal; do not create it again.'} satisfies BoardPartialCreate;
     }
   };
+
+export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds,
+  companyToolbarControl,onOpenQuoteMetadata,pipelineFilter,onPipelineFilterChange}:{
+  embeddedMode?:'projects'|'accounts';searchQuery?:string;
+  allowedDealIds?:ReadonlySet<string>;allowedCompanyIds?:ReadonlySet<string>;
+  companyToolbarControl?:ReactNode;onOpenQuoteMetadata?:(id:string)=>void;
+  pipelineFilter?:DealPipelineFilter;onPipelineFilterChange?:(value:DealPipelineFilter)=>void;
+}={}) {
+  const hydrate = useCrmStore((state) => state.hydrate);
+  const hydrated = useCrmStore((state) => state.hydrated);
+  const projects = useCrmStore((state) => state.projects);
+  const moveProject = useCrmStore((state) => state.moveProject);
+  const createDealWithDetails=async(name:string,details?:BoardDealCreateDetails)=>
+    createDealFromQuickCreate(name,details,pipelineView);
   const focusedProjectId = useNavigationStore((state) => state.focusedProjectId);
   const focusedCompanyId = useNavigationStore((state) => state.focusedCompanyId);
   const clearFocusedProject = useNavigationStore((state) => state.clearFocusedProject);

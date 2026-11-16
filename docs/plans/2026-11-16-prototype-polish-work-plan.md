@@ -140,6 +140,13 @@
 - **Deferred:** Table-mode + Deal still has its existing form. Both modes now display one consistent header button but detailed form parity needs a focused follow-up to avoid copying sensitive Deal/People save logic.
 - Source committed, Cloudflare and device QA pending.
 
+### November 16 #355d — one Deal creation flow
+
+- `createDealFromQuickCreate` in Board.tsx is now shared by Records Table and the embedded Board. It preserves Company/People prevalidation, pipeline defaults, initial stage/value/owner and typed partial-create recovery.
+- Table + Deal uses the same `BoardQuickCreate` UI as Board + Deal; the obsolete parallel form/state was removed.
+- The release gate must continue to enforce the preflight → creation → linking order, and `recordCreateLinkRecovery345.test.ts` should remain green because the underlying code and order are unchanged.
+- Cloudflare, table/board UI and authenticated links must be checked before marking verified.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.
