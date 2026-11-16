@@ -91,6 +91,9 @@ describe('Batch 330: external submission remote Deal acknowledgement',()=>{
   vi.restoreAllMocks();
   useAuthStore.setState({mode:'local',organizationId:null,user:null,teamRole:null});
  });
+ // This cross-store integration case can be paused by the Cloudflare CPU-limited
+ // parallel release gate. Retain all remote acknowledgement assertions; only
+ // relax this case's wall-clock budget (not its behavior or failure conditions).
  it('waits for both Activity and Deal acknowledgement before reporting success',async()=>{
   expect(await submit()).toBe(true);
   expect(cloud.insertCount).toBe(1);
@@ -102,7 +105,7 @@ describe('Batch 330: external submission remote Deal acknowledgement',()=>{
   expect(useCrmStore.getState().projects[0]).toMatchObject({
    stage:'Bid Sent',amount:12000,dueDate:undefined});
   expect(useCrmStore.getState().activities).toHaveLength(1);
- });
+ },30_000);
  it('does not overwrite a second Deal edited while cloud confirmation is in flight',async()=>{
   const unrelated={...deal,id:'deal-two',name:'Other GC job',
    updatedAt:'2026-11-13T13:10:00Z'};

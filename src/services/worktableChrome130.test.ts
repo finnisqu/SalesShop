@@ -160,7 +160,7 @@ describe('Batch #130 — common Records/Catalog worktable chrome',()=>{
   expect(quotes).toContain('<WorktableActionMenu label="Views"');
   expect(quotes).toContain('<WorktableActionMenu label="Actions"');
   expect(quotes).toContain("label:'Documents',active:!followUpsTab");
-  expect(quotes).toContain("label:'Follow-ups',active:followUpsTab");
+  expect(quotes).toContain("label:'Customer follow-ups',active:followUpsTab");
   // Detailed Editor was retired in Batch 353b; the modern Quotes worktable
   // must not offer a path back to the old quote builder.
   expect(quotes).not.toContain("label:'Detailed Editor'");

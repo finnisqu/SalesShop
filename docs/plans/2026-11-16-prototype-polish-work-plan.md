@@ -155,6 +155,14 @@
 - Quote Views menu says "Customer follow-ups" to distinguish it from task reminders.
 - Source committed; authenticated browser QC and exact Cloudflare green still pending.
 
+
+### November 16, 2026 — #355f release-gate repair
+
+- Cloudflare on #355e (ad2a059) completed TypeScript and ran 798 quick-Quote release-gate tests: 796 passed, 2 failed. No Vite bundle was produced because Vitest exited nonzero.
+- `worktableChrome130.test.ts` was asserting the old `Follow-ups` menu label. The product now says `Customer follow-ups`; update the source contract to reflect that deliberate wording change.
+- `externalQuoteCloudConfirmation330.test.ts` case "waits for both Activity and Deal acknowledgement..." exceeded the default 5000 ms timeout under Cloudflare's highly parallel test run (reported 16.08 s). The other five scenarios in that file passed. Increase the wall-clock limit **for that first case only** to 30 s, retaining all remote Activity and Deal acknowledgement assertions, stage/amount/deadline checks, and safe failure/duplicate handling.
+- Source committed to main; Cloudflare and authenticated smoke checks still pending. A repeated timeout beyond the new threshold requires further investigation, not bypassing the test.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

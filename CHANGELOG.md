@@ -8,7 +8,8 @@ Status meanings: **Source committed** = in GitHub; **Build green** = confirmed C
 
 | Version / commit | Delivered | Release status | Follow-up / deferred |
 | --- | --- | --- | --- |
-| #355e (this commit) | Focused zoom/header and floating calendar legibility follow-up; clearer Quote follow-up menu name | Source committed / build pending | Check 100/125/150/175% zoom and calendar at desktop and phone widths |
+| #355f (this commit) | Corrected stale Customer follow-ups test expectation; raised one slow external-Quote cloud-confirmation test's wall-clock budget to handle contended CI workers, preserving all business assertions | Source committed / Cloudflare pending | Verify next gate; if same case exceeds 30 s, investigate test runner/resource contention rather than weakening confirmation rules |
+| #355e (ad2a059) | Focused zoom/header and floating calendar legibility follow-up; clearer Quote follow-up menu name | **Red gate** on November 16 (2 tests failed; 796 passed) | Check 100/125/150/175% zoom and calendar at desktop and phone widths |
 | #355d (0870c43) | Table and Board now use the identical Deal quick-create form and one shared relationship-safe save method | Source committed / build pending | Verify both layouts, partial link failures and board filter defaults |
 | #355c (676133c) | Embedded Deals and Companies Board controls consolidated into Records header; one visible create launcher | Source committed / build pending | Table Deal form retains older flow pending full parity review |
 | #355b (984fbed) | Deal/Company new Quotes require template+name; Home Outstanding Tasks Today action; Settings header standardized | Source committed / build pending | Verify cancelled quote creation and Task update in browser |
