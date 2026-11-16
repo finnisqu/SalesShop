@@ -90,6 +90,13 @@
 - New configuration/cloud-RLS features remain outside these polish commits.
 - **Analytics #354a is now source-implemented** under Records → More. Confirm real filters, data interpretation and scope after Cloudflare. Do not call it released until build and hands-on checks pass. Next prototype after Analytics: Files v0.1.
 
+### November 16 Analytics build recovery — Cloudflare 18:38 UTC
+
+- **Observed:** `a3c12c0` passed TypeScript and 781/782 quick-quote tests, but one new Analytics test failed: `uses actual delivered date, never a mere issued native document` expected 2 and received 3. Records gate/Vite bundle did not run.
+- **Cause:** The test described a quote sent on October 1 as historical/excluded, even though October 1 falls **inside** the November 16 90-day report window (beginning August 19). The Analytics date filter correctly counted it.
+- **Fix:** Use July 1 as the out-of-window fixture. Add a separate regression test proving October 1 **is included** in the 90-day view but excluded from the 30-day view. No production Analytics logic or data changed.
+- **Validation:** Source-reviewed; Cloudflare must confirm the new head. 782 previous tests were attempted, 781 passed. Authenticated Analytics owner-scope and mobile QA still pending.
+
 ### Analytics #354a acceptance and date-window correction
 
 - Analytics is **source committed** under Records → More: owner/pipeline/30–90–365-day/all-time selectors, current Deal-stage cohort charts, confirmed external/native quote counts, activity trends and direct record navigation.

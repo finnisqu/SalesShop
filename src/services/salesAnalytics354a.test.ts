@@ -34,10 +34,17 @@ describe('Analytics 354a — real records and filter semantics',()=>{
  });
  it('uses actual delivered date, never a mere issued native document',()=>{
   const result=run([deal('a')],[row('notDelivered',{sentDate:undefined}),row('delivered',{sentDate:'2026-11-16'}),
-    row('historical',{sentDate:'2026-10-01'}),row('unknown',{value:undefined})]);
+    row('historical',{sentDate:'2026-07-01'}),row('unknown',{value:undefined})]);
   expect(result.sentQuotes).toBe(2);
   expect(result.sentValue).toBe(1200);
   expect(result.missingQuoteValues).toBe(1);
+ });
+ it('includes October deliveries in a 90-day view, but excludes them from a 30-day view',()=>{
+  const recent=row('recent',{sentDate:'2026-11-16'});
+  const october=row('october',{sentDate:'2026-10-01'});
+  const source=[recent,october];
+  expect(run([deal('a')],source).sentQuotes).toBe(2);
+  expect(run([deal('a')],source,[],{period:'30d',ownerId:'all',pipeline:'all'}).sentQuotes).toBe(1);
  });
  it('filters Deal cohort by creation date, owner and pipeline and reports outcomes explicitly',()=>{
   const old=deal('old',{createdAt:'2026-01-01T12:00:00Z',amount:99999});
