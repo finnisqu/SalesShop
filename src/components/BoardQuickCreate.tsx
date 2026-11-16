@@ -8,11 +8,15 @@ import {useNavigationStore} from '../store/navigationStore';
 import {isOurOrgCompany} from '../services/ourOrganizationDirectory';
 import {isOurCompany} from '../services/companyRelationship';
 import {recordNameKey} from '../services/recordNameKey';
+import {PROJECT_STAGES,DEAL_PIPELINES,dealPipelineLabel,type ProjectStage,type DealPipeline,type DealPipelineFilter} from '../types/crm';
+import {DealAssigneeSelect} from '../services/dealAssignees';
+import {useAuthStore} from '../store/authStore';
 import {createPortal} from 'react-dom';
 import './board-quick-create-mobile.css';
 
 export interface BoardDealCreateDetails{
  companyId?:string;newCompanyName?:string;personIds:string[];newPeopleNames:string[];dueDate?:string;
+ stage?:ProjectStage;pipeline?:DealPipeline|'unassigned';amount?:number;assignedUserId?:string;
 }
 /** A Deal may be created before an optional Company/Person link fails. Keep
  * that record's ID so the UI cannot accidentally create a duplicate on retry. */
@@ -22,9 +26,10 @@ export interface BoardPartialCreate{
 type BoardCreateOutcome=string|null|undefined|BoardPartialCreate;
 /** Name-first Board creation with optional details; navigation only for
  * explicit recovery of a record already created with partial links. */
-export function BoardQuickCreate({kind,onCreate}:{
+export function BoardQuickCreate({kind,onCreate,initialPipeline}:{
   kind:'Deal'|'Company'|'Account';
   onCreate:(name:string,details?:BoardDealCreateDetails)=>BoardCreateOutcome|Promise<BoardCreateOutcome>;
+  initialPipeline?:DealPipelineFilter;
 }) {
   const companies=useCrmStore(state=>state.companies);
   const people=useCrmStore(state=>state.contacts);
@@ -33,6 +38,13 @@ export function BoardQuickCreate({kind,onCreate}:{
   const [companyId,setCompanyId]=useState(''),[newCompanyName,setNewCompanyName]=useState('');
   const [personIds,setPersonIds]=useState<string[]>([]),[newPeopleNames,setNewPeopleNames]=useState<string[]>([]);
   const [dueDate,setDueDate]=useState('');
+  const [stage,setStage]=useState<ProjectStage>('Discovery');
+  const [pipeline,setPipeline]=useState<DealPipeline|'unassigned'|''>('');
+  const [amount,setAmount]=useState('');
+  // null inherits the creator, whereas '' intentionally leaves the Deal unassigned.
+  const [assignedUserId,setAssignedUserId]=useState<string|null>(null);
+  const authMode=useAuthStore(state=>state.mode);
+  const authUserId=useAuthStore(state=>state.user?.id);
   const [name,setName]=useState('');
   const [error,setError]=useState('');
   const [pendingCreated,setPendingCreated]=useState<string|null>(null);
@@ -45,6 +57,7 @@ export function BoardQuickCreate({kind,onCreate}:{
   const reset=()=>{
     setOpen(false);setName('');setError('');setMore(false);
     setCompanyId('');setNewCompanyName('');setPersonIds([]);setNewPeopleNames([]);setDueDate('');
+    setStage('Discovery');setPipeline('');setAmount('');setAssignedUserId(null);
     setPendingCreated(null);trigger.current?.focus();
   };
   const close=()=>{if(!savingRef.current)reset();};
@@ -60,12 +73,22 @@ export function BoardQuickCreate({kind,onCreate}:{
   const submit=async(event:FormEvent<HTMLFormElement>)=>{
     event.preventDefault();
     const clean=name.trim();if(!clean||savingRef.current||pendingCreated)return;
+    // Do not create any record when the optional value is invalid.
+    const amountValue=amount.trim()?Number(amount):undefined;
+    if(kind==='Deal'&&more&&amountValue!==undefined&&
+      (!Number.isFinite(amountValue)||amountValue<0)){
+      setError('Deal value must be a nonnegative number.');return;
+    }
     // Block a second Enter or click before React paints the disabled button.
     savingRef.current=true;setSaving(true);setError('');
     try{
       const details:BoardDealCreateDetails={
         ...(companyId?{companyId}:{}),...(newCompanyName?{newCompanyName}:{}),
         personIds,newPeopleNames,...(dueDate?{dueDate}:{}),
+        ...(more?{stage,...(pipeline?{pipeline}:{}),
+          ...(amountValue!==undefined?{amount:amountValue}:{}),
+          ...(assignedUserId!==null?{assignedUserId}:{}),
+        }:{}),
       };
       const result=await onCreate(clean,kind==='Deal'&&more?details:undefined);
       if(!result){setError('This name could not be saved. Check for duplicates and try again.');return;}
@@ -152,9 +175,37 @@ export function BoardQuickCreate({kind,onCreate}:{
                     }}
                     helper="Select multiple People. New People are created only when you save."/>
                 </div>
-                <label htmlFor={inputId+'-date'}>Bid due date</label>
-                <input type="date" id={inputId+'-date'} value={dueDate}
-                  disabled={formLocked} onChange={event=>setDueDate(event.target.value)}/>
+                <div className="board-create-extra-grid">
+                  <label>Deal stage
+                    <select value={stage} disabled={formLocked} aria-label="New Deal stage"
+                      onChange={event=>setStage(event.target.value as ProjectStage)}>
+                      {PROJECT_STAGES.slice(0,3).map(item=><option key={item} value={item}>{item}</option>)}
+                    </select>
+                  </label>
+                  <label>Pipeline
+                    <select value={pipeline} disabled={formLocked} aria-label="New Deal pipeline"
+                      onChange={event=>setPipeline(event.target.value as DealPipeline|'unassigned'|'')}>
+                      <option value="">Use Board pipeline ({dealPipelineLabel(initialPipeline)})</option>
+                      <option value="unassigned">Unassigned</option>
+                      {DEAL_PIPELINES.map(item=><option value={item.id} key={item.id}>{item.label}</option>)}
+                    </select>
+                  </label>
+                  <label>Estimated Deal value ($)
+                    <input type="number" min="0" step="0.01" value={amount} disabled={formLocked}
+                      aria-label="New Deal estimated value" placeholder="Optional"
+                      onChange={event=>setAmount(event.target.value)}/>
+                  </label>
+                  <label>Bid due date
+                    <input type="date" id={inputId+'-date'} value={dueDate}
+                      disabled={formLocked} onChange={event=>setDueDate(event.target.value)}/>
+                  </label>
+                </div>
+                <div className="board-create-related">
+                  <strong>Assigned salesperson</strong>
+                  <DealAssigneeSelect value={assignedUserId??(authMode==='cloud'?authUserId??'':'')}
+                    onChange={setAssignedUserId} disabled={formLocked}/>
+                  <small>Choose a salesperson before saving. Submission tasks follow the Deal assignment.</small>
+                </div>
               </div>}
             </>}
             {error&&<p role="alert" className="board-create-error">{error}</p>}

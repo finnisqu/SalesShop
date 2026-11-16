@@ -188,6 +188,8 @@ export interface CreateProjectDetails {
   companyName?: string;
   pipeline?: DealPipeline;
   amount?: number;
+  /** New Deal owner; undefined inherits the creator, empty string means unassigned. */
+  assignedUserId?: string;
   lastTouchpoint?: string;
   source?: 'manual' | 'quote' | 'system';
   quoteId?: string;

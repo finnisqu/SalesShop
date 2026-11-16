@@ -133,3 +133,9 @@
 :root[data-sales-theme] .board-create-sheet .board-create-details .ss-unified-picker-trigger:focus-visible{
  outline:2px solid var(--ss-focus);outline-offset:2px;
 }
+
+/* Nov 16: compact responsive advanced Deal creation fields. */
+.board-create-extra-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.board-create-extra-grid>label{display:flex;flex-direction:column;gap:5px;min-width:0}
+.board-create-extra-grid :is(select,input){width:100%;max-width:100%;min-width:0}
+@media(max-width:520px){.board-create-extra-grid{grid-template-columns:1fr}}

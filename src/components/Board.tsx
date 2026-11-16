@@ -385,8 +385,11 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
     }
     // Create the Deal first; don't leave a newly-created orphan Company if
     // the Deal itself cannot be saved. Related names were already validated.
-    const id=createProject(name,'Discovery',{
-      pipeline:pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView,
+    const id=createProject(name,details?.stage??'Discovery',{
+      pipeline:details?.pipeline==='unassigned'?undefined:details?.pipeline??
+        (pipelineView==='all'||pipelineView==='unassigned'?undefined:pipelineView),
+      amount:details?.amount,
+      ...(details?.assignedUserId!==undefined?{assignedUserId:details.assignedUserId}:{}),
     });
     if(!id)return null;
     // From this point on the Deal exists. Never throw away its ID: a retry
@@ -562,7 +565,7 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
         ]}/>}
         search={<input type="search" aria-label="Search Board deals" placeholder="Search deals…"
           value={boardSearch} onChange={event=>setBoardSearch(event.target.value)}/>}
-        primary={<BoardQuickCreate kind="Deal" onCreate={createDealWithDetails}/>}
+        primary={<BoardQuickCreate kind="Deal" onCreate={createDealWithDetails} initialPipeline={pipelineView}/>}
       />}
 
       {embeddedMode&&<div className="connections-board-tools" role="group" aria-label="Deal board controls">
@@ -579,7 +582,7 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
           aria-pressed={compactCards} onClick={toggleCompact}>
           {compactCards?'Standard cards':'Compact cards'}
         </button>
-        <BoardQuickCreate kind="Deal" onCreate={createDealWithDetails}/>
+        <BoardQuickCreate kind="Deal" onCreate={createDealWithDetails} initialPipeline={pipelineView}/>
        </div>}
       <MobileBoardStagePicker
         boardRef={boardRef}

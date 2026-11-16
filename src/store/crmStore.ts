@@ -497,7 +497,8 @@ export const useCrmStore = create<CrmState>((set, get) => ({
       pipeline: details.pipeline,
       // Newly created Deals are mine by default; reassignment remains explicit.
       assignedUserId:useAuthStore.getState().mode==='cloud'
-        ?useAuthStore.getState().user?.id:undefined,
+        ?(details.assignedUserId===undefined?useAuthStore.getState().user?.id:
+          details.assignedUserId||undefined):undefined,
       stageChangedAt: timestamp,
       amount: typeof details.amount === 'number' && Number.isFinite(details.amount) ? details.amount : undefined,
       lastTouchpoint: details.lastTouchpoint,
