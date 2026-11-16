@@ -16,7 +16,7 @@ SalesShop's plug-and-play CRM remains an empty stable core. Building on #352e1's
 - Imports merge **additively**: enabled module planning flags can be carried over but a false incoming flag will never silently turn off an existing local plan. No global app feature flags are modified.
 - Settings → CRM Setup includes **Module plans · local draft only** with four conceptual future modules (lead intake, pipeline reviews, project handoff and renewal follow-up). These are planning preferences only, not working routes, CRM forms, automations or backend modules.
 - Export JSON can be copied to clipboard where browser permissions allow, otherwise manually selected; import uses a paste box and explicit apply button. Read-only roles cannot perform import/export or alter draft module plans.
-- Existing #352b definition drafts remain in organization/account-specific browser storage. New module plans use a separately scoped local browser key. Sample preview values remain memory-only.
+- Existing #352b definition drafts remain in organization/account-specific browser storage. New module plans use a separately scoped local browser key. Sample preview values and pending pasted import JSON remain memory-only, each scoped to the active workspace/account. Import notices and errors are also scope-isolated.
 
 ### Safety boundaries
 

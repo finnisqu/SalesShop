@@ -56,9 +56,14 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
   },
   (key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));}
    catch{/* browser storage optional */}});
- const [importText,setImportText]=useState('');
- const [importNotice,setImportNotice]=useState('');
- const [importError,setImportError]=useState('');
+ // Pending pasted JSON and feedback must not cross accounts/organizations,
+ // and are never persisted (unlike the saved field/module definitions).
+ const [importText,setImportText]=useWorktableDirectoryState<string>(
+  scope+':pending-config-import',()=> '');
+ const [importNotice,setImportNotice]=useWorktableDirectoryState<string>(
+  scope+':config-import-notice',()=> '');
+ const [importError,setImportError]=useWorktableDirectoryState<string>(
+  scope+':config-import-error',()=> '');
  let importPreview:ReturnType<typeof previewCrmConfigurationImport>|null=null;
  let importPreviewError='';
  if(importText.trim()){

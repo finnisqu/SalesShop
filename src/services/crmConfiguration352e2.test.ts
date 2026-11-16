@@ -164,6 +164,9 @@ describe('Batch 352e2 — portable CRM draft configuration',()=>{
   expect(ui).toContain('Portable CRM configuration');
   expect(ui).toContain('Module plans · local draft only');
   expect(ui).toContain('No actual CRM tabs, automations or workflow rules change.');
+  expect(ui).toContain("scope+':pending-config-import'");
+  expect(ui).toContain("scope+':config-import-notice'");
+  expect(ui).toContain("scope+':config-import-error'");
   expect(ui).not.toContain('supabase.from(');
  });
 });
