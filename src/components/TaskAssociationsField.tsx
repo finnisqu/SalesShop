@@ -68,7 +68,7 @@ export function TaskAssociationsField({options,value,onChange,verifiedTypes={}}:
      if(event.key==='Escape'&&open){
        event.stopPropagation();setOpen(false);setReplacingKey(null);
        if(popoverRef.current?.contains(document.activeElement))
-         searchRef.current?.querySelector('select')?.focus();
+         requestAnimationFrame(()=>searchRef.current?.querySelector('select')?.focus());
      }
    };
    document.addEventListener('pointerdown',outside);
@@ -171,7 +171,8 @@ export function TaskAssociationsField({options,value,onChange,verifiedTypes={}}:
        <div className="tasks-associations-popover-foot">
          <small>{matches.length?String(matches.length)+' matches · ↑↓ to choose · Enter to link':'Try another name or record type'}</small>
          <button type="button" className="tasks-associations-close"
-           onClick={()=>{setOpen(false);setReplacingKey(null);searchRef.current?.querySelector('select')?.focus();}}>Done</button>
+           onClick={()=>{setOpen(false);setReplacingKey(null);
+            requestAnimationFrame(()=>searchRef.current?.querySelector('select')?.focus());}}>Done</button>
        </div>
      </div>,document.body)}
  </div>;
