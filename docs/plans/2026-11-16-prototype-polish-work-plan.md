@@ -87,6 +87,13 @@
 - New configuration/cloud-RLS features remain outside these polish commits.
 - **Next feature after polish acceptance:** Analytics v0.1 using existing Deals, Quotes, Tasks and Activities. Make charts and filters actually work before treating the prototype as delivered.
 
+### November 16 build recovery — Cloudflare 18:09 UTC
+
+- **Observed:** `a709688` passed TypeScript, but the quick-quote test suite failed at `src/services/recordCreateLinkRecovery345.test.ts:107`: **774 passed / 1 failed**. Record gate and Vite bundle were not reached.
+- **Cause:** Batch #353c correctly expanded `createProject(name,'Discovery',...)` to `createProject(name,details?.stage??'Discovery',...)`. The older test was searching the removed literal call, returning `-1` despite the correct preflight→create→link order.
+- **Fix:** Update the static regression assertion to match the current defaulted-stage creation call while preserving the existing ordering and partial-link recovery checks. No app runtime logic changed.
+- **Validation:** Source-reviewed; next Cloudflare build still pending. Mark green only after its exact SHA passes all gates.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

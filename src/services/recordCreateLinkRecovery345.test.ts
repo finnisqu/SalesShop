@@ -101,10 +101,13 @@ describe('Batch 345 — record creation links and recoverable partial saves',()=
  it('validates all Board related People before creating the Deal and reports failed new People',()=>{
   const board=source('components/Board.tsx');
   const preflight=board.indexOf('for(const id of details?.personIds??[])');
-  const create=board.indexOf("const id=createProject(name,'Discovery'");
+  const create=board.indexOf("const id=createProject(name,details?.stage??'Discovery'");
   const linked=board.indexOf('for(const personId of personIds)');
   expect(preflight).toBeGreaterThan(0);
   expect(create).toBeGreaterThan(preflight);
+  // Flexible pre-bid stage is now supplied by More details; preflight still
+  // must happen before any Deal is created or linked.
+  expect(board).toContain("details?.stage??'Discovery'");
   expect(linked).toBeGreaterThan(create);
   expect(board).toContain("else failed.push(newName+' (Person creation failed)')");
  });
