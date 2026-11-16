@@ -20,7 +20,7 @@ import { DealRecordPage } from './DealRecordPage';
 import {DealTimelineBetaOverview} from './DealTimelineBeta';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
 import { Button, StatusText } from '../design-system/components';
-import {WorkspaceHeader} from './WorkspaceHeader';
+import {WorkspaceHeader,WorkspaceMoreMenu} from './WorkspaceHeader';
 import {RecordsSectionNav,RECORDS_MAIN_TABS,RECORDS_SECTIONS,rememberRecordsSection,requestRecordsQuotesLibrary,
  type RecordsSection} from './RecordsSectionNav';
 import {WorkspaceHelp} from './WorkspaceHelp';
@@ -670,12 +670,30 @@ export function Connections() {
             tab==='deals'?'Search deals…':tab==='organization'?'Search internal people…':
             tab==='suppliers'?'Search suppliers and brands…':
             tab==='quotes'?'Search quotes…':tab==='tasks'?'Search tasks…':tab==='pages'?'Search pages…':'Search activities…'}/>}
+        more={(tab==='companies'||tab==='deals')&&layouts[activeLayoutKind]==='board'?
+          <WorkspaceMoreMenu label="Board options" items={[
+            ...(tab==='deals'?[
+              {section:'Pipeline',label:'All pipelines',active:pipelineFilter==='all',onClick:()=>choosePipelineFilter('all')},
+              ...DEAL_PIPELINES.map(item=>({label:item.label,active:pipelineFilter===item.id,
+                 onClick:()=>choosePipelineFilter(item.id)})),
+              {label:'Unassigned',active:pipelineFilter==='unassigned',onClick:()=>choosePipelineFilter('unassigned')},
+            ]:[
+              {section:'Company relationship',label:'All companies',active:companyFilter==='all',
+                onClick:()=>chooseCompanyFilter('all')},
+              ...(['prospect','customer','partner','unclassified','self'] as CompanyFilter[]).map(item=>({
+                 label:item==='self'?'Our Company':item==='unclassified'?'Not classified':
+                   item.charAt(0).toUpperCase()+item.slice(1),
+                 active:companyFilter===item,onClick:()=>chooseCompanyFilter(item)})),
+            ]),
+            {section:'Cards',label:'Toggle compact cards',
+              onClick:()=>window.dispatchEvent(new Event('salesshop:toggle-embedded-board-compact'))}
+           ]}/> :undefined}
         primary={<>
           {tab==='companies'&&layouts.companies==='table'&&<Button variant="primary" className="connections-add"
             onClick={()=>setCompanyCreating(value=>!value)}>+ Company</Button>}
           {(tab==='deals'||tab==='companies')&&layouts[activeLayoutKind]==='board'&&
            <button type="button" className="connections-board-header-create" disabled={!recordsReady}
-            onClick={()=>document.querySelector<HTMLButtonElement>('.connections-board-host .board-add-button')?.click()}>
+            onClick={()=>window.dispatchEvent(new Event('salesshop:board-header-create'))}>
             {tab==='deals'?'+ Deal':'+ Company'}
            </button>}
           {tab==='people'&&<Button variant="primary" className="connections-add"

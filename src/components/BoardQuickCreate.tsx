@@ -1,4 +1,4 @@
-import {useId,useRef,useState,type FormEvent} from 'react';
+import {useEffect,useId,useRef,useState,type FormEvent} from 'react';
 import {useModalScrollLock} from '../lib/useModalScrollLock';
 import {useDismissibleLayer} from '../lib/useDismissibleLayer';
 import {MobileSheetHandle} from './MobileSheetHandle';
@@ -26,14 +26,22 @@ export interface BoardPartialCreate{
 type BoardCreateOutcome=string|null|undefined|BoardPartialCreate;
 /** Name-first Board creation with optional details; navigation only for
  * explicit recovery of a record already created with partial links. */
-export function BoardQuickCreate({kind,onCreate,initialPipeline}:{
+export function BoardQuickCreate({kind,onCreate,initialPipeline,hideLauncher=false,launchEvent}:{
   kind:'Deal'|'Company'|'Account';
   onCreate:(name:string,details?:BoardDealCreateDetails)=>BoardCreateOutcome|Promise<BoardCreateOutcome>;
   initialPipeline?:DealPipelineFilter;
+  hideLauncher?:boolean;launchEvent?:string;
 }) {
   const companies=useCrmStore(state=>state.companies);
   const people=useCrmStore(state=>state.contacts);
   const [open,setOpen]=useState(false);
+  // Embedded Board creation is triggered from the shared Records header.
+  useEffect(()=>{
+   if(!launchEvent)return;
+   const handler=()=>{setError('');setPendingCreated(null);setOpen(true);};
+   window.addEventListener(launchEvent,handler);
+   return()=>window.removeEventListener(launchEvent,handler);
+  },[launchEvent]);
   const [more,setMore]=useState(false),[saving,setSaving]=useState(false);
   const [companyId,setCompanyId]=useState(''),[newCompanyName,setNewCompanyName]=useState('');
   const [personIds,setPersonIds]=useState<string[]>([]),[newPeopleNames,setNewPeopleNames]=useState<string[]>([]);
@@ -58,7 +66,9 @@ export function BoardQuickCreate({kind,onCreate,initialPipeline}:{
     setOpen(false);setName('');setError('');setMore(false);
     setCompanyId('');setNewCompanyName('');setPersonIds([]);setNewPeopleNames([]);setDueDate('');
     setStage('Discovery');setPipeline('');setAmount('');setAssignedUserId(null);
-    setPendingCreated(null);trigger.current?.focus();
+    setPendingCreated(null);
+    if(hideLauncher)document.querySelector<HTMLButtonElement>('.connections-board-header-create')?.focus();
+    else trigger.current?.focus();
   };
   const close=()=>{if(!savingRef.current)reset();};
   const openPendingCreated=()=>{
@@ -102,9 +112,9 @@ export function BoardQuickCreate({kind,onCreate,initialPipeline}:{
     finally{savingRef.current=false;setSaving(false);}
   };
   return <>
-    <button type="button" ref={trigger} className="board-add-button"
+    {!hideLauncher&&<button type="button" ref={trigger} className="board-add-button"
       aria-haspopup="dialog" aria-expanded={open}
-      onClick={()=>{setError('');setPendingCreated(null);setOpen(true);}}>+ {kind}</button>
+      onClick={()=>{setError('');setPendingCreated(null);setOpen(true);}}>+ {kind}</button>}
     {open&&createPortal(
       <div className="board-create-backdrop ss-mobile-sheet-backdrop" onPointerDown={event=>{
         if(event.target===event.currentTarget)close();

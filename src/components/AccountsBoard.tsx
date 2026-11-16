@@ -288,18 +288,14 @@ export function AccountsBoard({onShowProjects,compactCards,onToggleCompact,isSta
             return id;
           }}/>}
       />}
-      {embedded&&<div className="connections-board-tools" role="group" aria-label="Company board controls">
-        {toolbarControl??<span className="connections-board-subtitle">Grouped by relationship health</span>}
-        <button type="button" className="connections-board-compact" aria-pressed={compactCards}
-         onClick={onToggleCompact}>{compactCards?'Standard cards':'Compact cards'}</button>
-        <BoardQuickCreate kind="Company" onCreate={name=>{
+      {embedded&&<BoardQuickCreate kind="Company" hideLauncher
+        launchEvent="salesshop:board-header-create" onCreate={name=>{
           const before=new Set(useCrmStore.getState().companies.map(c=>c.id));
           const id=resolveCompany(name,'customer');
           if(id&&!before.has(id))
             useCrmStore.getState().updateCompany(id,companyRelationshipPatch({aliases:[]},'prospect'));
           return id;
-        }}/>
-       </div>}
+        }}/>}
       <MobileBoardStagePicker
         boardRef={boardRef}
         stages={ACCOUNT_STAGES}

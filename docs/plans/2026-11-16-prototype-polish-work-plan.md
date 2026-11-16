@@ -132,6 +132,14 @@
 - Settings uses only the shared workspace header and shared SectionTabs for its quick views, removing the duplicated PageHeader title.
 - Cloudflare and authenticated/mobile verification pending.
 
+### November 16 #355c — Board header consolidation
+
+- Embedded Deal and Company Boards no longer show the duplicate internal toolbar; only the Records header shows + Deal/+ Company.
+- Header Board options exposes pipeline/relationship filters and Compact Cards toggle.
+- Board quick create retains the original link preflight, partial-create recovery and dialog; embedded instances listen for one header-launch event and keep the launch button hidden.
+- **Deferred:** Table-mode + Deal still has its existing form. Both modes now display one consistent header button but detailed form parity needs a focused follow-up to avoid copying sensitive Deal/People save logic.
+- Source committed, Cloudflare and device QA pending.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

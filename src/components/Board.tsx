@@ -447,6 +447,12 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
   });
   const [collapsedStages,setCollapsedStages]=useState<string[]>(savedCollapsedStages);
   const toggleCompact=()=>setCompactCards(current=>!current);
+  useEffect(()=>{
+   if(!embeddedMode)return;
+   const listener=()=>setCompactCards(current=>!current);
+   window.addEventListener('salesshop:toggle-embedded-board-compact',listener);
+   return()=>window.removeEventListener('salesshop:toggle-embedded-board-compact',listener);
+  },[embeddedMode]);
   const isStageCollapsed=(mode:'projects'|'accounts',stage:string)=>
     collapsedStages.includes(mode+':'+stage);
   const toggleStage=(mode:'projects'|'accounts',stage:string)=>{
@@ -568,22 +574,8 @@ export function Board({embeddedMode,searchQuery,allowedDealIds,allowedCompanyIds
         primary={<BoardQuickCreate kind="Deal" onCreate={createDealWithDetails} initialPipeline={pipelineView}/>}
       />}
 
-      {embeddedMode&&<div className="connections-board-tools" role="group" aria-label="Deal board controls">
-        <label className="connections-pipeline-dropdown">
-          <select aria-label="Board pipeline" value={pipelineView}
-            onChange={event=>{setPipelineView(event.target.value as DealPipelineFilter);
-              boardRef.current?.scrollTo({left:0});}}>
-            <option value="all">All pipelines</option>
-            {DEAL_PIPELINES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
-            <option value="unassigned">Unassigned</option>
-          </select>
-        </label>
-        <button type="button" className="connections-board-compact"
-          aria-pressed={compactCards} onClick={toggleCompact}>
-          {compactCards?'Standard cards':'Compact cards'}
-        </button>
-        <BoardQuickCreate kind="Deal" onCreate={createDealWithDetails} initialPipeline={pipelineView}/>
-       </div>}
+      {embeddedMode&&<BoardQuickCreate kind="Deal" onCreate={createDealWithDetails}
+        initialPipeline={pipelineView} hideLauncher launchEvent="salesshop:board-header-create"/>}
       <MobileBoardStagePicker
         boardRef={boardRef}
         stages={PROJECT_STAGES}
