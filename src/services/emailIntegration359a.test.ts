@@ -1,6 +1,6 @@
 import {describe,it,expect,vi,beforeEach} from 'vitest';
 import {readFileSync} from 'node:fs';
-import {extractAddresses,summarizeGmailThread,displayGmailThread} from './gmailRead359a';
+import {extractAddresses,summarizeGmailThread,displayGmailThread,gmailThreadPage,gmailThreadDetails} from './gmailRead359a';
 import {emailWorkspaceScope,emailLinksKey,normalizeMailbox,validateEmailLink,
  loadEmailLinks,saveEmailLinks} from './emailThreadLinks359a';
 import {emailTargetSuggestions} from './emailThreadMatching359a';
@@ -59,18 +59,38 @@ describe('Gmail provider / CRM linking #359a',()=>{
   expect(()=>validateEmailLink({mailbox:'a@example.com',threadId:'18df9',
    targetKind:'deal',targetId:''})).toThrow();
  });
+ it('fetches Gmail metadata first, and only reads full message bodies on demand',async()=>{
+  const requests:Array<{url:string;auth:string}>=[];
+  vi.stubGlobal('fetch',async (input:string,init:{headers:Record<string,string>})=>{
+   requests.push({url:input,auth:init.headers.Authorization});
+   return {ok:true,status:200,json:async()=>input.includes('/threads/18df9?')?sample:
+    {threads:[{id:'18df9'}]}};
+  });
+  const page=await gmailThreadPage('memory-only-token','from:builder@customer.com');
+  expect(page.threads).toHaveLength(1);
+  expect(page.threads[0].subject).toBe('Pricing for Cedar Apartments');
+  expect(requests).toHaveLength(2);
+  expect(requests.every(r=>r.auth==='Bearer memory-only-token')).toBe(true);
+  expect(requests[0].url).toContain('q=from%3Abuilder%40customer.com');
+  expect(requests[1].url).toContain('format=metadata');
+  await gmailThreadDetails('memory-only-token','18df9');
+  expect(requests[2].url).toContain('format=full');
+ });
  it('has a real Connected Email page and record-scoped conversation readers',()=>{
   expect(read('components/RecordsSectionNav.tsx')).toContain("id:'email',label:'Email'");
   expect(read('components/Connections.tsx')).toContain("tab==='email'&&<EmailWorkspace");
   expect(read('components/DealRecordPage.tsx')).toContain('<RecordEmailThreadsPanel kind="deal"');
   expect(read('components/PersonRecordPage.tsx')).toContain('<RecordEmailThreadsPanel kind="person"');
   expect(read('App.tsx')).toContain('<EmailAccountBoundary/>');
+  expect(read('components/EmailAccountBoundary.tsx')).toContain('bindScope(null)');
+  expect(read('components/RecordEmailThreadsPanel.tsx')).toContain('perspective?null:validGmailToken(scope)');
  });
  it('does not save tokens or message bodies and requires explicit CRM linking',()=>{
   const storage=read('services/emailThreadLinks359a.ts');
   expect(storage).not.toContain('access_token');
   expect(storage).not.toContain('messageBody');
   expect(read('components/EmailWorkspace.tsx')).toContain('Link conversation');
-  expect(read('components/EmailWorkspace.tsx')).toContain('No email or text');
+  expect(read('components/EmailWorkspace.tsx')).toContain('This did not log an email Activity.');
+  expect(read('components/EmailWorkspace.tsx')).not.toContain('recordActivity(');
  });
 });

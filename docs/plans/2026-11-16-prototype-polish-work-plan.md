@@ -272,6 +272,13 @@
 - No production database or permissions changes; no provider sending. Added functional parsing, matching, tenant-scoping and UI contract tests registered in the Cloudflare quick-quote gate.
 - **Pending:** Cloudflare exact SHA green, real Google test account consent, mailbox switching, scoped link persistence and authenticated phone/role QA. Do not describe this as persistent provider connection or supported background sync.
 
+### November 16 #359c — Gmail lifecycle and tests
+
+- Added API-mocked Gmail metadata/full request tests (verifies bearer token remains in request header and full content fetched only when explicitly requested).
+- Corrected new UI contract test to check the actual `This did not log an email Activity` copy.
+- Gmail session and linked references now reset on App unmount or SalesShop identity handoff. Record email detail resets when mailbox changes, and role preview blocks fetching/private content.
+- No provider credentials configured from this chat; Cloudflare build remains pending.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

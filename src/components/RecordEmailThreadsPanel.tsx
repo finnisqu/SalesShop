@@ -23,11 +23,13 @@ export function RecordEmailThreadsPanel({kind,id}:{kind:EmailTargetKind;id:strin
  const [error,setError]=useState('');
  const mine=useMemo(()=>linkScope===scope?links.filter(row=>row.targetKind===kind&&row.targetId===id):[],
   [links,linkScope,scope,kind,id]);
- const account=validGmailToken(scope);
+ const account=perspective?null:validGmailToken(scope);
  const active=mine.filter(row=>!!account&&row.mailbox===account.mailbox);
  const canEdit=!!scope&&!perspective&&canEditTeamArea(role,department,'crm');
  useEffect(()=>{
-  if(!account){setSummaries({});setSelected(null);return;}
+  // A mailbox switch must never briefly show previously fetched message text.
+  setSummaries({});setSelected(null);setError('');
+  if(!account)return;
   const connectedToken=account.token;
   let alive=true;
   const ids=[...new Set(mine.filter(link=>link.mailbox===account.mailbox).map(link=>link.threadId))].slice(0,12);

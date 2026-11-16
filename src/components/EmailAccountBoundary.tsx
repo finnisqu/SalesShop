@@ -12,6 +12,12 @@ export function EmailAccountBoundary(){
  useEffect(()=>{
   useGmailSessionStore.getState().bindScope(scope);
   useEmailThreadLinkStore.getState().hydrate(scope);
+  return ()=>{
+   // On logout/identity handoff, clear in-memory Gmail headers and token even
+   // if React unmounts App before rendering the next SalesShop identity.
+   useGmailSessionStore.getState().bindScope(null);
+   useEmailThreadLinkStore.getState().hydrate(null);
+  };
  },[scope]);
  return null;
 }

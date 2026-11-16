@@ -23,7 +23,6 @@ export function EmailWorkspace({contacts,deals}:{
  const expectedScope=emailWorkspaceScope(mode,org,user);
  const sessionScope=useGmailSessionStore(s=>s.scope);
  const mailbox=useGmailSessionStore(s=>s.mailbox),status=useGmailSessionStore(s=>s.status);
- const token=useGmailSessionStore(s=>s.token);
  const loading=useGmailSessionStore(s=>s.loading),error=useGmailSessionStore(s=>s.error);
  const threads=useGmailSessionStore(s=>s.threads),nextPage=useGmailSessionStore(s=>s.nextPageToken);
  const connect=useGmailSessionStore(s=>s.connect),disconnect=useGmailSessionStore(s=>s.disconnect);
@@ -41,7 +40,7 @@ export function EmailWorkspace({contacts,deals}:{
  const [notice,setNotice]=useState('');
  const openPerson=useNavigationStore(s=>s.openPerson),openDeal=useNavigationStore(s=>s.openProject);
  const canWrite=!!expectedScope&&!perspective&&canEditTeamArea(role,department,'crm');
- const ready=!!expectedScope&&expectedScope===sessionScope&&expectedScope===linkScope;
+ const ready=!!expectedScope&&!perspective&&expectedScope===sessionScope&&expectedScope===linkScope;
  const connected=ready&&!!validGmailToken(expectedScope);
  const links=ready?storedLinks:[];
  const current=threads.find(t=>t.id===activeId);
