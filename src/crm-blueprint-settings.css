@@ -246,3 +246,57 @@
  .crm-starter-pack-select select,.crm-starter-pack-apply{min-height:44px;}
  .crm-starter-pack-select select{font-size:16px;}
 }
+
+/* Batch 352e2 — portable local-only CRM configuration drafts. */
+.crm-config-portability{min-width:0;}
+.crm-config-help,.crm-config-footnote,.crm-config-transfer-part p{
+ margin:0 0 12px;color:var(--ss-theme-muted);font-size:11px;line-height:1.55;
+}
+.crm-config-modules{
+ display:grid;gap:8px;border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-base);padding:12px;margin-bottom:14px;
+}
+.crm-config-modules>strong{font-size:12px;}
+.crm-config-modules>p{font-size:11px;color:var(--ss-theme-muted);margin:0 0 2px;}
+.crm-config-module{display:flex;align-items:flex-start;gap:10px;min-width:0;}
+.crm-config-module input{flex-shrink:0;width:17px;height:17px;accent-color:var(--ss-theme-accent);}
+.crm-config-module span{display:grid;gap:2px;min-width:0;}
+.crm-config-module strong{font-size:11px;}
+.crm-config-module small{font-size:11px;color:var(--ss-theme-muted);line-height:1.45;}
+.crm-config-transfer{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.crm-config-transfer-part{display:grid;align-content:start;gap:7px;min-width:0;}
+.crm-config-transfer-part label strong{font-size:11px;}
+.crm-config-transfer-part textarea{
+ box-sizing:border-box;display:block;width:100%;min-width:0;resize:vertical;
+ min-height:125px;padding:9px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
+}
+.crm-config-transfer-part p{margin:0;}
+.crm-config-transfer-part button{justify-self:start;margin:0;}
+.crm-config-review{
+ margin-top:12px;padding:10px;border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-base);
+}
+.crm-config-review>strong{font-size:12px;}
+.crm-config-review p{margin:6px 0;font-size:11px;line-height:1.5;color:var(--ss-theme-muted);}
+.crm-config-review ul{list-style:none;margin:8px 0;padding:0;display:grid;gap:4px;}
+.crm-config-review li{
+ display:flex;gap:8px;justify-content:space-between;min-width:0;
+ padding:7px 8px;border:1px solid var(--ss-theme-border);
+ border-radius:7px;background:var(--ss-theme-card);font-size:11px;
+}
+.crm-config-review li>span{overflow-wrap:anywhere;}
+.crm-config-review li>small{flex-shrink:0;color:var(--ss-theme-muted);}
+.crm-config-apply{margin:12px 0;}
+.crm-config-apply:disabled{opacity:.45;cursor:default;}
+.crm-config-footnote{margin:0;}
+.crm-config-portability :is(button,textarea,input):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+@media(max-width:760px){
+ .crm-config-transfer{grid-template-columns:1fr;}
+ .crm-config-module{min-height:44px;align-items:center;}
+ .crm-config-transfer-part button,.crm-config-apply{min-height:44px;}
+ .crm-config-transfer-part textarea{font-size:16px;}
+}

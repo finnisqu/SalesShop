@@ -4,6 +4,12 @@ import {CrmCustomFieldEditor} from './CrmCustomFieldEditor';
 import {CRM_STARTER_FIELD_PACKS,previewCrmStarterPack,applyCrmStarterPack,
  type CrmStarterPackId} from '../services/crmStarterPacks352e1';
 import type {CrmCustomFieldValues} from '../services/crmFieldEditor352d1';
+import {
+ CRM_MODULE_PLANS,blankCrmModulePlans,readCrmModulePlans,crmModulePlansStorageKey,
+ setCrmModulePlan,exportCrmConfiguration,previewCrmConfigurationImport,
+ applyCrmConfigurationImport,
+ type CrmModulePlans,
+} from '../services/crmConfiguration352e2';
 import {blankCrmFieldBlueprint,crmBlueprintStorageKey,readCrmFieldBlueprint,
  createCrmCustomField,toggleCrmCustomField,moveCrmCustomField,setCrmFieldVisibility,
  CRM_FIELD_TARGETS,CRM_FIELD_TYPES,CRM_FIELD_VISIBILITIES,
@@ -43,6 +49,23 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
  const [starterNotice,setStarterNotice]=useState('');
  const [starterError,setStarterError]=useState('');
  const starterPlan=previewCrmStarterPack(blueprint,starterPackId);
+ const [modulePlans,setModulePlans]=useWorktableDirectoryState<CrmModulePlans>(
+  crmModulePlansStorageKey(scope),key=>{
+   try{return readCrmModulePlans(localStorage.getItem(key));}
+   catch{return blankCrmModulePlans();}
+  },
+  (key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));}
+   catch{/* browser storage optional */}});
+ const [importText,setImportText]=useState('');
+ const [importNotice,setImportNotice]=useState('');
+ const [importError,setImportError]=useState('');
+ let importPreview:ReturnType<typeof previewCrmConfigurationImport>|null=null;
+ let importPreviewError='';
+ if(importText.trim()){
+  try{importPreview=previewCrmConfigurationImport(blueprint,modulePlans,importText);}
+  catch(error){importPreviewError=error instanceof Error?error.message:'Invalid configuration.';}
+ }
+ const exportText=editable?exportCrmConfiguration(blueprint,modulePlans):'';
 
  const fields=blueprint.fields.filter(field=>field.target===target);
  const title=CRM_FIELD_TARGETS.find(item=>item.id===target)?.label??'Records';
@@ -231,6 +254,110 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
    <p className="crm-starter-pack-disclaimer">
     Local design only · No live CRM records, team settings or Supabase data are changed.
     Existing fields can be paused or re-enabled individually.
+   </p>
+  </article>
+  <article className="company-settings-card crm-config-portability">
+   <header><div>
+    <strong>Portable CRM configuration</strong>
+    <small>Copy your optional field blueprint and module plans between workspaces.</small>
+   </div></header>
+   <p className="crm-config-help">
+    Exports contain field definitions and module intentions only. No Company, Person,
+    Deal, customer values, sample values or organization/account identifiers are included.
+    Sharing a bundle does not share permissions or publish it to your team.
+   </p>
+   <div className="crm-config-modules">
+    <strong>Module plans · local draft only</strong>
+    <p>No actual CRM tabs, automations or workflow rules change.</p>
+    {CRM_MODULE_PLANS.map(module=><label key={module.id} className="crm-config-module">
+     <input type="checkbox" disabled={!editable}
+      checked={modulePlans[module.id]}
+      onChange={event=>setModulePlans(current=>
+       setCrmModulePlan(current,module.id,event.target.checked))}/>
+     <span><strong>{module.label}</strong><small>{module.description}</small></span>
+    </label>)}
+   </div>
+   <div className="crm-config-transfer">
+    <div className="crm-config-transfer-part">
+     <label htmlFor="crm-config-export"><strong>Export configuration JSON</strong></label>
+     <textarea id="crm-config-export" readOnly rows={5}
+      value={exportText}
+      aria-label="Export CRM configuration JSON"
+      placeholder={editable?'':'Only owners and admins can export configuration drafts.'}/>
+     <button type="button" className="crm-blueprint-create"
+      disabled={!editable||!exportText}
+      onClick={()=>{
+       void (async()=>{
+        try{
+         if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable.');
+         await navigator.clipboard.writeText(exportText);
+         setImportNotice('Configuration copied. Save the JSON wherever you keep templates.');
+         setImportError('');
+        }catch{
+         setImportError('Clipboard unavailable. Select and copy the JSON from the export box.');
+         setImportNotice('');
+        }
+       })();
+      }}>Copy configuration JSON</button>
+    </div>
+    <div className="crm-config-transfer-part">
+     <label htmlFor="crm-config-import"><strong>Import configuration JSON</strong></label>
+     <textarea id="crm-config-import" value={importText} rows={5}
+      disabled={!editable} maxLength={80001}
+      placeholder="Paste a SalesShop CRM configuration bundle to review it"
+      onChange={event=>{setImportText(event.target.value);setImportNotice('');setImportError('');}}
+      aria-describedby="crm-config-import-help"/>
+     <p id="crm-config-import-help">Review before applying. Matching fields stay unchanged;
+      type conflicts are skipped. Imported module intentions only turn plans on.</p>
+    </div>
+   </div>
+   {importPreviewError&&<p role="alert" className="crm-blueprint-error">
+    Cannot preview import: {importPreviewError}</p>}
+   {importPreview&&<>
+    <div className="crm-config-review" aria-label="CRM import preview" aria-live="polite">
+     <strong>Import review</strong>
+     <p>{importPreview.additions} fields to add · {importPreview.alreadyPresent}
+      {' '}already defined · {importPreview.conflicts} type conflicts ·
+      {' '}{importPreview.modulesToPlan} new module plans</p>
+     <ul>
+      {importPreview.fields.map(({field,status,message})=>
+       <li key={field.target+':'+field.key}>
+        <span>{CRM_FIELD_TARGETS.find(item=>item.id===field.target)?.label}
+         {' · '}{field.label}</span>
+        <small title={message}>{status==='add'?'Add':
+         status==='present'?'Keep existing':'Skip type conflict'}</small>
+       </li>)}
+     </ul>
+     {importPreview.modulesToPlan>0&&<p>New module plans:
+      {' '}{importPreview.modules.filter(item=>item.status==='plan')
+       .map(item=>item.label).join(', ')}</p>}
+    </div>
+    {importPreview.blockedReason&&<p role="alert" className="crm-blueprint-error">
+     No changes will be imported: {importPreview.blockedReason}</p>}
+   </>}
+   <button type="button" className="crm-blueprint-create crm-config-apply"
+    disabled={!editable||!importPreview||Boolean(importPreview.blockedReason)||
+     (importPreview.additions===0&&importPreview.modulesToPlan===0)}
+    onClick={()=>{
+     if(!editable)return;
+     try{
+      const next=applyCrmConfigurationImport(blueprint,modulePlans,importText);
+      // Both are scoped, device-local preference drafts; no remote save.
+      setBlueprint(next.blueprint);
+      setModulePlans(next.modules);
+      setImportNotice('Imported configuration into local drafts. Existing fields kept.');
+      setImportError('');
+      setImportText('');
+     }catch(error){
+      setImportError(error instanceof Error?error.message:'Could not import configuration.');
+      setImportNotice('');
+     }
+    }}>Apply reviewed changes locally</button>
+   {importNotice&&<p role="status" className="crm-blueprint-notice">{importNotice}</p>}
+   {importError&&<p role="alert" className="crm-blueprint-error">{importError}</p>}
+   <p className="crm-config-footnote">
+    Design only · These settings do not activate real fields, change team access,
+    or sync to Supabase. Reimporting does not overwrite your edits.
    </p>
   </article>
   <article className="company-settings-card crm-blueprint-preview">
