@@ -42,6 +42,7 @@ import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
 import './developer-playground.css';
 import { SalesShopShell, WorkspaceViewport } from './design-system/shell';
 import {TaskModalHost} from './components/TaskModalHost';
+import {AutomationRuntime} from './components/AutomationRuntime';
 import {HomeNoteModalHost} from './components/HomeNoteModalHost';
 import {NotebookCalendarDateModalHost} from './components/NotebookCalendarDateModalHost';
 import {NotebookLinkedAgenda} from './components/NotebookLinkedAgenda';
@@ -460,6 +461,7 @@ function App() {
         </main>
       )}
       </WorkspaceViewport>
+      {!inRolePreview&&<AutomationRuntime/>}
       {!inRolePreview&&<TaskModalHost/>}
       {!inRolePreview&&<HomeNoteModalHost/>}
       {!inRolePreview&&<NotebookCalendarDateModalHost/>}

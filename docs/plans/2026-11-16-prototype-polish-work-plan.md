@@ -37,7 +37,7 @@
 | --- | --- | --- | --- | --- |
 | P1 | Analytics v0.1 | Actual KPI cards/charts for deal value/stages, bids, quotes and activity; owner/date filters using current records | Date range is a Deal creation cohort; cloud quotes use the same private visible index as Records | Source committed / build pending (#354a) |
 | P2 | Files v0.1 | Store/open/link real file URLs under Company/Deal/Quote, with editable labels; not a mock button | Browser-local per user/tenant and developer-playground namespace. No cloud sharing or provider access yet | Source committed / build pending (#357a) |
-| P3 | Automations v0.1 | Opt-in follow-up on confirmed quote delivery, inactive Deal reminder and won Deal handoff Task; auditable/no duplicate firing | Server-backed execution required before claiming background reliability | Queued |
+| P3 | Automations v0.1 | Opt-in follow-up on confirmed quote delivery, inactive Deal reminder and won Deal handoff Task; auditable/no duplicate firing | User-scoped browser configuration + private Task source identity, manual Run and auto-run only while app is open. Server scheduler / atomic multi-device uniqueness deferred | Source committed / build pending (#358b) |
 | P4 | Email v0.1 | Connect one real provider, read conversations, selectively link threads to CRM People/Deals | OAuth and least-privilege; never infer a sent email from a copied link | Queued |
 | P5 | CAD-Lite bridge v0.1 | Open a linked CAD-Lite project from Deal/Quote; import manual takeoff export | Technical data owned by CAD-Lite; no implicit repricing | Queued |
 | P6 | Slack and QuickBooks | Real Slack notification or authenticated export flow; QuickBooks export first, API sync later | Explicit provider permissions and safe credentials | Queued |
@@ -217,6 +217,14 @@
 - Files v0.1 Create/Edit link form now opens in a body portal centered modal, with independent background, theme-matched styling, Escape/backdrop dismissal, focus capture and background-scroll lock; existing browser-local persistence unchanged.
 - Our Organization +Person and editing existing team directory records use the same modal. The existing roster membership/group/role validation, duplicate checks and save path were kept.
 - Added static regressions to quick-quote gate. Pending Cloudflare and authenticated/mobile QA.
+
+### November 16 #358b — Automations prototype
+
+- Records → More → Automations now exposes three off-by-default workflows: confirmed native/external Quote delivery → private follow-up, inactive open Deal → private reminder, and logged Closed Won stage change → handoff checklist Task. Configurable 1–60-day delays, preview, manual Run, history and optional automatic run while SalesShop is open.
+- The app-level AutomationRuntime uses the existing authoritative CRM/Quote stores and user-visible native/external bid registry. No server-side scheduler, unattended task execution, email/SMS sending or external accounting integration is claimed.
+- Each task has a stable sourceObjectId and is not recreated after completion/deletion/cancellation. Existing private Task store, role preview guard, workspace-user scope, and explicit quote delivery evidence are preserved.
+- Automation config + log are per-user browser localStorage (not shared team rules). 20 new Tasks maximum per execution cycle. Without server transactions, cross-device simultaneous execution is not globally atomic; this is still a prototype.
+- New tests exercise default opt-out, delivery proof, date math, idle window, owner checks, won stage evidence, and integration. Exact Cloudflare build and authenticated functional checks pending.
 
 ## Carry-forward notes for next chat
 

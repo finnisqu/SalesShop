@@ -12,6 +12,7 @@ import {TasksWorkspace} from './TasksWorkspace';
 import {RecordsPagesDirectory} from './RecordsPagesDirectory';
 import {SalesAnalyticsWorkspace} from './SalesAnalyticsWorkspace';
 import {FilesWorkspace} from './FilesWorkspace';
+import {AutomationsWorkspace} from './AutomationsWorkspace';
 import '../records-workspace-polish.css';
 import {SuppliersWorkspace} from './SuppliersWorkspace';
 import '../suppliers-connections.css';
@@ -55,7 +56,7 @@ import {personLastContactIndex} from '../services/personLastContact';
 import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
  type ActivityLogFilters} from '../services/activityLogFilters';
 
-type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages' | 'analytics' | 'files';
+type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages' | 'analytics' | 'files' | 'automations';
 type CompanyFilter = CompanyRelationship | 'self' | 'all';
 type DirectoryLayout='board'|'table';
 type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
@@ -93,7 +94,7 @@ function initialTabSearches():Partial<Record<ConnectionsTab,string>>{
     const raw=JSON.parse(sessionStorage.getItem(SEARCH_KEY)??'{}') as Record<string,unknown>;
     if(!raw||typeof raw!=='object')return {};
     const saved:Partial<Record<ConnectionsTab,string>>={};
-    for(const tab of ['tasks','companies','people','deals','activity','organization','suppliers','quotes','pages','analytics','files'] as ConnectionsTab[]){
+    for(const tab of ['tasks','companies','people','deals','activity','organization','suppliers','quotes','pages','analytics','files','automations'] as ConnectionsTab[]){
       if(typeof raw[tab]==='string')saved[tab]=(raw[tab] as string).slice(0,300);
     }
     return saved;
@@ -730,6 +731,7 @@ export function Connections() {
 
 
           {notice && <p className="connections-notice" role="status">{notice}</p>}
+          {tab==='automations'&&<AutomationsWorkspace/>}
           {tab==='files'&&<FilesWorkspace companies={companies} deals={projects}
             quotes={personalQuoteRecords} query={query}/>}
           {tab==='analytics'&&<SalesAnalyticsWorkspace projects={projects}
