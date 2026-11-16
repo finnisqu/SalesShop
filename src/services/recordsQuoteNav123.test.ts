@@ -40,6 +40,7 @@ describe('Batch 123 — Quotes consolidation into Records',()=>{
   expect(quotes).toContain('if(!hydrated||!routeQuoteId||consumedRoute.current===routeQuoteId)return');
   expect(quotes).toContain('QuoteMatrixBuilder');
   expect(main).toContain("view === 'quotes' ? (");
-  expect(main).toContain('mobileQuotesBetaEnabled ? <QuotesMobileBeta /> : <Quotes />');
+  expect(main).toContain('<QuotesMobileBeta />');
+  expect(main).not.toContain('<Quotes />');
  });
 });

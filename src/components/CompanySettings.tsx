@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
 import {useDealTimelineBetaStore} from '../store/dealTimelineBetaStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { supabase } from '../lib/supabase';
@@ -34,7 +33,7 @@ const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
   { id: 'account', title: 'My Account', subtitle: 'Salesperson profile' },
   { id: 'team', title: 'Team', subtitle: 'People in your shop' },
   { id: 'appearance', title: 'Appearance & Accessibility', subtitle: 'Personal preferences' },
-  { id: 'beta', title: 'Beta Features', subtitle: 'Quote editor & project timeline' },
+  { id: 'beta', title: 'Beta Features', subtitle: 'Optional project timeline' },
   { id: 'data', title: 'Data Management', subtitle: 'Delete & archive records' },
   { id: 'advanced', title: 'Advanced', subtitle: 'Optional tools' },
 ];
@@ -62,8 +61,6 @@ export function CompanySettings() {
   const resetAppearance = useAppearanceStore((state) => state.reset);
   const [tab, setTab] = useState<SettingsTab>('company');
   const [sectionSearch,setSectionSearch]=useState('');
-  const quotesBetaEnabled = useQuotesMobileBetaStore((state) => state.enabled);
-  const setQuotesBetaEnabled = useQuotesMobileBetaStore((state) => state.setEnabled);
   const timelineBetaEnabled=useDealTimelineBetaStore(state=>state.enabled);
   const setTimelineBetaEnabled=useDealTimelineBetaStore(state=>state.setEnabled);
   const setAppView = useNavigationStore((state) => state.setView);
@@ -348,24 +345,6 @@ export function CompanySettings() {
           </article>
         </section>}
         {tab === 'beta' && <section className="settings-panel-grid" aria-label="Beta features">
-          <article className="company-settings-card settings-main-card">
-            <header><div><strong>Choose your Quote editor</strong>
-              <small>Use Quick Quote for everyday estimating; keep Detailed Editor for specialist tools.</small></div>
-              <span className="settings-card-save">{quotesBetaEnabled ? 'Quick Quote' : 'Detailed Editor'}</span>
-            </header>
-            <label className="settings-preference-row">
-              <div><strong>Use Quick Quote as my editor</strong>
-                <small>Compact spreadsheet workflow on phone and desktop. Detailed Editor remains available for advanced and legacy workflows.</small></div>
-              <input type="checkbox" checked={quotesBetaEnabled}
-                onChange={event=>setQuotesBetaEnabled(event.target.checked)} />
-            </label>
-            <p className="settings-help">Both editors open the same records. Switching changes this device's editor preference only; no data is migrated, copied, or deleted. Detailed Editor retains specialist workbook and split-view workflows while parity is validated.</p>
-            <div className="settings-inline-actions">
-              <Button variant="primary" onClick={()=>{setQuotesBetaEnabled(true);setAppView('quotes');}}>Open Quick Quote</Button>
-              <Button variant="secondary" onClick={()=>{setQuotesBetaEnabled(false);setAppView('quotes');}}>Open Detailed Editor</Button>
-            </div>
-            <small className="settings-muted">This preference is saved on the device. You can also switch from a Quote's Document options menu.</small>
-          </article>
           <article className="company-settings-card settings-secondary-card">
             <header><div><strong>Project Timeline (Beta)</strong>
               <small>Start simple: editable milestone dates and statuses under each Deal.</small></div>

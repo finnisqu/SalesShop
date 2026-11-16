@@ -1,17 +1,8 @@
 import { create } from 'zustand';
 
-/**
- * Presentation-only opt-in. The beta and classic editors share quoteStore,
- * tenant/cloud permissions, catalog stores and quote data.
- * No quote is duplicated or migrated by switching this preference.
- */
-const KEY = 'salesshop:quotes-mobile-beta-v1';
+/** Quick Quote is the sole customer-facing editor. Retain the old state API
+ * for older internal call sites, but never honor the retired classic preference. */
 const LOCATION_KEY='salesshop:quotes-mobile-beta-location-v1';
-
-function readOptIn(): boolean {
-  try { return typeof window !== 'undefined' && window.localStorage.getItem(KEY) === '1'; }
-  catch { return false; }
-}
 
 export interface QuotesBetaLocation {
   quoteId?:string;
@@ -55,13 +46,9 @@ interface QuotesMobileBetaState {
 }
 
 export const useQuotesMobileBetaStore = create<QuotesMobileBetaState>((set) => ({
-  enabled: readOptIn(),
+  enabled: true,
   location:readLocation(),
   setLocation:location=>{saveLocation(location);set({location});},
-  setEnabled: (enabled) => {
-    try { window.localStorage.setItem(KEY, enabled ? '1' : '0'); } catch { /* private mode */ }
-    const location=enabled?readLocation():{...DEFAULT_LOCATION};
-    if(!enabled)try{window.sessionStorage.removeItem(LOCATION_KEY);}catch{ /* private mode */ }
-    set({enabled,location});
-  },
+  // Obsolete editor-toggle calls cannot reactivate the legacy builder.
+  setEnabled: () => set({enabled:true}),
 }));

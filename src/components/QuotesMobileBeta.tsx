@@ -11,7 +11,6 @@ import { useCrmStore } from '../store/crmStore';
 import { useAuthStore } from '../store/authStore';
 import { useQuoteLibraryStore } from '../store/quoteLibraryStore';
 import { useQuotesMobileBetaStore } from '../store/quotesMobileBetaStore';
-import {openDetailedQuoteEditor} from '../services/quoteEditorNavigation';
 import { useNavigationStore } from '../store/navigationStore';
 import { useRolePerspectiveStore } from '../store/rolePerspectiveStore';
 import { canIssueTeamQuote,canEditTeamArea } from '../services/teamDepartments';
@@ -912,7 +911,6 @@ export function QuotesMobileBeta() {
   const libraryActionItems:WorktableActionItem[]=[
     {label:'Record external quote',onClick:()=>setRecordExternalOpen(true),
       disabled:!canManageLibrary},
-    {label:'Detailed Editor',onClick:()=>openDetailedQuoteEditor(quote?.id)},
   ];
   const renderLibraryToolbarMenus=()=> <>
     <WorktableActionMenu label="Views" items={libraryViewItems}/>
@@ -973,10 +971,6 @@ export function QuotesMobileBeta() {
   const quoteMenuActions=(target:Quote):AppContextAction[]=>{
     const actions:AppContextAction[]=[];
     if(!target.archivedAt)actions.push({label:'Open document',onSelect:()=>openQuote(target.id)});
-    if(target.documentType!=='pricing-schedule'&&
-       (!target.archivedAt||canManageLibrary))actions.push({
-       label:'Open in Detailed Editor',onSelect:()=>openDetailedQuoteEditor(target.id),
-    });
     if(canManageLibrary){
       if(target.archivedAt)actions.push({label:'Restore to active',onSelect:()=>restoreQuote(target.id)});
       else{

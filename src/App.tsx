@@ -82,9 +82,7 @@ import {WorkspaceHelp} from './components/WorkspaceHelp';
 import { AccountMenu } from './components/AccountMenu';
 import { BuildBadge } from './components/BuildBadge';
 import { GlobalPostItLauncher, GlobalPostItLayer } from './components/GlobalPostIt';
-import { Quotes } from './components/Quotes';
 import { QuotesMobileBeta } from './components/QuotesMobileBeta';
-import { useQuotesMobileBetaStore } from './store/quotesMobileBetaStore';
 import { CatalogWorkspace } from './components/CatalogWorkspace';
 import { Sidebar } from './components/Sidebar';
 import { TextEditor } from './components/TextEditor';
@@ -116,7 +114,6 @@ function App() {
   const effectiveDepartment = preview?.department ?? department;
   const inRolePreview = Boolean(preview);
   const quoteLibraryMode = useQuoteLibraryStore((state) => state.mode);
-  const mobileQuotesBetaEnabled = useQuotesMobileBetaStore((state) => state.enabled);
   const teamQuotesOverview = view === 'quotes' && quoteLibraryMode === 'team' && mode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin') && !inRolePreview;
   const viewer = mode === 'cloud' && effectiveRole === 'viewer';
   const scopedMember = mode === 'cloud' && effectiveRole === 'member' && effectiveDepartment !== 'general';
@@ -349,7 +346,7 @@ function App() {
       ) : view === 'tasks' ? (
         <TasksWorkspace />
       ) : view === 'quotes' ? (
-        mobileQuotesBetaEnabled ? <QuotesMobileBeta /> : <Quotes />
+        <QuotesMobileBeta />
       ) : view === 'catalog' ? (
         <CatalogWorkspace />
       ) : view === 'dashboard' ? (

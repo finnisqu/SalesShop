@@ -61,7 +61,6 @@ export function MobileAppChrome() {
   const department = useAuthStore((state) => state.teamDepartment);
   const previewId = useRolePerspectiveStore((state) => state.activePerspective);
   const quoteLibraryMode = useQuoteLibraryStore((state) => state.mode);
-  const betaQuotesEnabled = useQuotesMobileBetaStore((state) => state.enabled);
   const betaQuoteLocation = useQuotesMobileBetaStore((state) => state.location);
   const activeQuote = useQuoteStore((state) => state.quotes.find(q => q.id === state.activeQuoteId) ?? null);
   const quoteUndoDepth = useQuoteStore((state) => state.activeQuoteId ? state.undoStacks[state.activeQuoteId]?.length ?? 0 : 0);
@@ -160,9 +159,7 @@ export function MobileAppChrome() {
   },[open,drawerRef]);
   const activeEntry = entries.find((entry) => entry.id === activeEntryId) ?? null;
 
-  if (view === 'quotes' && !betaQuotesEnabled && !quoteReadOnly && !preview && !(quoteLibraryMode === 'team' && mode === 'cloud' && (teamRole === 'owner' || teamRole === 'admin'))) return null;
-
-  const isEditingQuote = view === 'quotes' && betaQuotesEnabled && !quoteReadOnly && !preview &&
+  const isEditingQuote = view === 'quotes' && !quoteReadOnly && !preview &&
     quoteLibraryMode !== 'team' && betaQuoteLocation.page !== 'library' && activeQuote !== null;
   const canEditQuote = isEditingQuote && activeQuote !== null && quoteIsCommerciallyEditable(activeQuote);
   const backFromQuote = () => window.dispatchEvent(new Event('sales-shop:quotes-beta-back'));

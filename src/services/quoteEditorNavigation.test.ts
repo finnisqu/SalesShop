@@ -6,18 +6,18 @@ vi.mock('../store/navigationStore',()=>({useNavigationStore:{getState:()=>({setV
 vi.mock('../store/quotesMobileBetaStore',()=>({useQuotesMobileBetaStore:{getState:()=>({setEnabled:mock.setEnabled})}}));
 import {openDetailedQuoteEditor} from './quoteEditorNavigation';
 
-describe('Detailed Editor remains a non-migrating Quick Quote fallback',()=>{
+describe('Legacy Quote navigation redirects to the current Quick Quote workspace',()=>{
  beforeEach(()=>{mock.selectQuote.mockClear();mock.setView.mockClear();mock.setEnabled.mockClear();});
  it('opens the same selected Quote record',()=>{
   openDetailedQuoteEditor('quote-17');
   expect(mock.selectQuote).toHaveBeenCalledExactlyOnceWith('quote-17');
   expect(mock.setView).toHaveBeenCalledExactlyOnceWith('quotes');
-  expect(mock.setEnabled).toHaveBeenCalledExactlyOnceWith(false);
+  expect(mock.setEnabled).toHaveBeenCalledExactlyOnceWith(true);
  });
- it('opens the alternative editor from the Documents list without making a quote',()=>{
+ it('opens the standard Quotes route without making a duplicate quote',()=>{
   openDetailedQuoteEditor();
   expect(mock.selectQuote).not.toHaveBeenCalled();
   expect(mock.setView).toHaveBeenCalledWith('quotes');
-  expect(mock.setEnabled).toHaveBeenCalledWith(false);
+  expect(mock.setEnabled).toHaveBeenCalledWith(true);
  });
 });
