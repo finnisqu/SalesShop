@@ -201,6 +201,11 @@
 - User proposed Bring Your Own SaaS Google Docs export: choose/copy authorized Drive template, merge `{{placeholders}}`, handle repeating pricing rows, save resulting editable Google Doc as a linked output. Must restrict customer exports to approved customer-visible fields, preserve revisions, avoid implicit delivery. See `docs/product/quote-links-files-and-google-docs-template-exports.md`. **Planning only**, no OAuth/cloud implementation committed.
 - Next prototype queue stays Automations P3 unless user prioritizes the Google Docs export.
 
+### November 16 #357c — external Quote source contract follow-up
+
+- Reviewed the committed #357b test against both real Quick View components before build. They use distinct callbacks (`recordExternal` in TaskModalHost vs inline `setExternalDealId(...)` in TasksWorkspace). Updated common static assertion to require actual recorder state activation in both paths instead of the callback name used by only one. All other protected bid submission checks remain.
+- Next Cloudflare check should cover #357b's five stale expectation fixes and #357c's callback-contract adjustment. Pending; no green claim.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

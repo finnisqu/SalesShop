@@ -36,7 +36,9 @@ describe('bid submission Task confirmation boundary',()=>{
    expect(view).toContain('<TaskPreviewDueControls');
    expect(view).toContain('Quote required');
    expect(view).toContain('initialDealId={externalDealId}');
-   expect(view).toContain('onClick={recordExternal}');
+   // Both quick views may use different callbacks, but both open the real
+   // external bid recorder against the linked Deal.
+   expect(view).toContain('setExternalDealId(');
    expect(view).toContain('taskCompletionBlocker(task)');
    expect(view).toContain('<PencilIcon/> Edit');
    expect(view).toContain('tasks-preview-actions-left');
