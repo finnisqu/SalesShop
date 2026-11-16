@@ -1,0 +1,190 @@
+-- #352c4 — expanded disposable role + data integrity matrix.
+-- Requires #352c3 staging schema and #352c4 fixture, never production.
+-- Every temporary mutation in this file is rolled back, including a
+-- simulated membership revocation and expanded choice-field definitions.
+\set ON_ERROR_STOP on
+BEGIN;
+DO $gate$
+BEGIN
+ IF coalesce(current_setting('app.salesshop_disposable_custom_field_test',true),'') <> 'yes' THEN
+  RAISE EXCEPTION 'Refusing role tests outside explicitly marked disposable DB';
+ END IF;
+ IF EXISTS(
+  SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+  WHERE n.nspname='public' AND c.relname IN ('crm_field_definitions','crm_field_values')
+   AND NOT c.relrowsecurity
+ ) THEN
+  RAISE EXCEPTION 'RLS disabled on a custom-field table';
+ END IF;
+ IF has_table_privilege('anon','public.crm_field_definitions','SELECT')
+  OR has_table_privilege('anon','public.crm_field_values','SELECT') THEN
+  RAISE EXCEPTION 'Anonymous custom-field SELECT privilege unexpectedly enabled';
+ END IF;
+ IF has_table_privilege('authenticated','public.crm_field_definitions','DELETE') THEN
+  RAISE EXCEPTION 'Definitions are not intended to be hard-deleted by authenticated users';
+ END IF;
+END
+$gate$;
+
+SELECT set_config('app.test_org_a',:'org_a',true);
+SELECT set_config('app.test_org_b',:'org_b',true);
+SELECT set_config('app.test_field_org',:'field_org',true);
+SELECT set_config('app.test_field_editor',:'field_editor',true);
+SELECT set_config('app.test_field_admin',:'field_admin',true);
+SELECT set_config('app.test_company_a',:'company_a',true);
+SELECT set_config('app.test_company_b',:'company_b',true);
+SELECT set_config('app.test_contact_a',:'contact_a',true);
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub',:'editor_uid',true);
+DO $editor$
+DECLARE changed integer; denied boolean;
+BEGIN
+ -- Positive control: the test editor truly has CRM edit permission.
+ UPDATE public.crm_field_values SET value_text='352c4 editor permitted'
+ WHERE organization_id=current_setting('app.test_org_a')::uuid
+  AND field_id=current_setting('app.test_field_editor');
+ GET DIAGNOSTICS changed=ROW_COUNT;
+ IF changed<>1 THEN RAISE EXCEPTION 'CRM editor cannot update an allowed custom field'; END IF;
+ UPDATE public.crm_field_definitions SET active=false,revision=revision+1
+ WHERE organization_id=current_setting('app.test_org_a')::uuid
+  AND id=current_setting('app.test_field_org');
+ GET DIAGNOSTICS changed=ROW_COUNT;
+ IF changed<>0 THEN RAISE EXCEPTION 'CRM editor modified organization field definition'; END IF;
+ -- A guessed admins-only field ID must not authorize a new value.
+ denied:=false;
+ BEGIN
+  INSERT INTO public.crm_field_values
+   (organization_id,field_id,record_type,company_id,value_text)
+  VALUES (current_setting('app.test_org_a')::uuid,
+   current_setting('app.test_field_admin'),'company',
+   current_setting('app.test_company_a'),'forbidden');
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Editor inserted into hidden admins-only field'; END IF;
+END
+$editor$;
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub',:'admin_uid',true);
+DO $admin$
+DECLARE denied boolean; number_of_rows integer;
+BEGIN
+ -- Test the choice validator with a *fresh* field and a valid positive write.
+ INSERT INTO public.crm_field_definitions
+  (organization_id,id,record_type,field_key,label,field_type,visibility,options)
+ VALUES (current_setting('app.test_org_a')::uuid,
+  '352c4_choice','company','352c4_choice','Fixture Choice',
+  'choice','admins','["Warm","Cool"]'::jsonb);
+ INSERT INTO public.crm_field_values
+  (organization_id,field_id,record_type,company_id,value_choice)
+ VALUES (current_setting('app.test_org_a')::uuid,'352c4_choice','company',
+  current_setting('app.test_company_a'),'Warm');
+ SELECT count(*) INTO number_of_rows FROM public.crm_field_values
+  WHERE organization_id=current_setting('app.test_org_a')::uuid
+   AND field_id='352c4_choice' AND value_choice='Warm';
+ IF number_of_rows<>1 THEN RAISE EXCEPTION 'Admin positive choice value write failed'; END IF;
+
+ denied:=false;
+ BEGIN
+  INSERT INTO public.crm_field_values
+   (organization_id,field_id,record_type,company_id,value_choice)
+  VALUES (current_setting('app.test_org_a')::uuid,'352c4_choice','company',
+   current_setting('app.test_company_a'),'Invalid');
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Invalid choice inserted'; END IF;
+
+ denied:=false;
+ BEGIN
+  UPDATE public.crm_field_definitions
+  SET options='["Cool","New"]'::jsonb,revision=revision+1
+  WHERE organization_id=current_setting('app.test_org_a')::uuid
+   AND id='352c4_choice';
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Removed an in-use choice option'; END IF;
+
+ denied:=false;
+ BEGIN
+  INSERT INTO public.crm_field_values
+   (organization_id,field_id,record_type,contact_id,value_text)
+  VALUES (current_setting('app.test_org_a')::uuid,
+   current_setting('app.test_field_org'),'person',
+   current_setting('app.test_contact_a'),'wrong target');
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Wrong record type attached to Company definition'; END IF;
+
+ denied:=false;
+ BEGIN
+  INSERT INTO public.crm_field_values
+   (organization_id,field_id,record_type,company_id,value_number)
+  VALUES (current_setting('app.test_org_a')::uuid,
+   current_setting('app.test_field_org'),'company',
+   current_setting('app.test_company_a'),123);
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Number inserted into Text definition'; END IF;
+
+ denied:=false;
+ BEGIN
+  UPDATE public.crm_field_values SET company_id=current_setting('app.test_company_b')
+  WHERE organization_id=current_setting('app.test_org_a')::uuid
+   AND field_id=current_setting('app.test_field_org');
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Moved an existing custom value across records'; END IF;
+
+ denied:=false;
+ BEGIN
+  INSERT INTO public.crm_field_values
+   (organization_id,field_id,record_type,company_id,value_text,value_boolean)
+  VALUES (current_setting('app.test_org_a')::uuid,
+   current_setting('app.test_field_org'),'company',
+   current_setting('app.test_company_a'),'mixed',true);
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Stored multiple typed value columns'; END IF;
+
+ denied:=false;
+ BEGIN
+  INSERT INTO public.crm_field_values
+   (organization_id,field_id,record_type,company_id,value_text)
+  VALUES (current_setting('app.test_org_a')::uuid,
+   current_setting('app.test_field_org'),'company',
+   current_setting('app.test_company_a'),'duplicate');
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Duplicate field/record value was stored'; END IF;
+
+ UPDATE public.crm_field_definitions SET active=false,revision=revision+1
+ WHERE organization_id=current_setting('app.test_org_a')::uuid
+  AND id='352c4_choice';
+ denied:=false;
+ BEGIN
+  UPDATE public.crm_field_values SET value_choice='Cool'
+  WHERE organization_id=current_setting('app.test_org_a')::uuid
+   AND field_id='352c4_choice';
+ EXCEPTION WHEN OTHERS THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Updated a value while its field was paused'; END IF;
+
+ -- Revoked editor permission is tested below in a separate auth context.
+END
+$admin$;
+RESET ROLE;
+
+-- An impersonated user with a revoked membership must lose access even if
+-- their JWT still names the same UUID. The transaction rollback restores
+-- the membership fixture for another test run.
+DELETE FROM public.organization_members
+ WHERE organization_id=:'org_a'::uuid AND user_id=:'editor_uid'::uuid;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub',:'editor_uid',true);
+DO $revoked$
+DECLARE n integer;
+BEGIN
+ SELECT count(*) INTO n FROM public.crm_field_definitions
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>0 THEN RAISE EXCEPTION 'Revoked editor can still read definitions'; END IF;
+ SELECT count(*) INTO n FROM public.crm_field_values
+ WHERE organization_id=current_setting('app.test_org_a')::uuid;
+ IF n<>0 THEN RAISE EXCEPTION 'Revoked editor can still read values'; END IF;
+END
+$revoked$;
+RESET ROLE;
+ROLLBACK;
+\echo '352c4 negative tests passed; temporary mutations rolled back.'

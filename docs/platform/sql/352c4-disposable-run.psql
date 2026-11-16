@@ -1,0 +1,24 @@
+-- #352c4 disposable runner. ALWAYS verify the target project_ref externally.
+-- DO NOT run against the SalesShop production database. All changes before
+-- the negative matrix are intentionally persistent on the throwaway branch.
+-- Example: psql "$DISPOSABLE_DB_URL" -X -v disposable_confirmed=1
+--          -f docs/platform/sql/352c4-disposable-run.psql
+\set ON_ERROR_STOP on
+\if :{?disposable_confirmed}
+ \if :disposable_confirmed
+ \else
+  \echo 'Operator has not confirmed a disposable project. Exiting.'
+  \quit 2
+ \endif
+\else
+ \echo 'Pass -v disposable_confirmed=1 only after verifying branch ref != production ref.'
+ \quit 2
+\endif
+\echo 'WARNING: This will write fake auth users and CRM fixtures to your target DB.'
+\echo 'Proceed ONLY when this connection is to a separate disposable branch.'
+SET app.salesshop_disposable_custom_field_test = 'yes';
+\ir 352c3-staging-only-schema.sql
+\ir 352c4-disposable-fixtures.psql
+\ir 352c3-disposable-role-matrix.psql
+\ir 352c4-disposable-negative-matrix.psql
+\echo '352c4 SQL/RLS matrix completed. Review SQL output and advisors.'

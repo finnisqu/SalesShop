@@ -1,0 +1,80 @@
+-- #352c4 — DISPOSABLE Supabase branch fixtures, not production data.
+-- Run only after the operator independently confirms the branch project_ref
+-- is NOT the SalesShop production project. See 81-custom-field-rls-runbook-352c4.md.
+-- These users are fake database rows; they cannot sign into the app.
+-- Run as a role that can seed auth.users and public CRM fixtures.
+\set ON_ERROR_STOP on
+\set org_a f352c400-0000-4000-8000-000000000001
+\set org_b f352c400-0000-4000-8000-000000000002
+\set viewer_uid f352c400-0000-4000-8000-000000000101
+\set limited_uid f352c400-0000-4000-8000-000000000102
+\set editor_uid f352c400-0000-4000-8000-000000000103
+\set admin_uid f352c400-0000-4000-8000-000000000104
+\set outsider_uid f352c400-0000-4000-8000-000000000105
+\set field_org 352c4_public_note
+\set field_editor 352c4_editors_note
+\set field_admin 352c4_admin_note
+\set company_a 352c4-company-a
+\set company_b 352c4-company-b
+\set contact_a 352c4-contact-a
+\set project_a 352c4-project-a
+
+BEGIN;
+DO $guard$
+BEGIN
+ IF coalesce(current_setting('app.salesshop_disposable_custom_field_test',true),'') <> 'yes' THEN
+  RAISE EXCEPTION 'Fixture setup is restricted to operator-confirmed disposable databases';
+ END IF;
+ IF to_regclass('public.crm_field_definitions') IS NULL
+  OR to_regclass('public.crm_field_values') IS NULL THEN
+  RAISE EXCEPTION 'Missing staging-only schema; do not run fixture setup';
+ END IF;
+ IF EXISTS(SELECT 1 FROM public.organizations WHERE id='f352c400-0000-4000-8000-000000000001'::uuid) THEN
+  RAISE EXCEPTION 'Fixture already exists; reset the disposable branch before rerunning';
+ END IF;
+END
+$guard$;
+
+-- The existing SalesShop auth.users trigger may also create a personal
+-- organization for each fake user. That is acceptable on the disposable DB.
+INSERT INTO auth.users(id,aud,role,email,created_at,updated_at)
+VALUES
+ (:'viewer_uid'::uuid,'authenticated','authenticated','352c4-viewer@invalid.example',now(),now()),
+ (:'limited_uid'::uuid,'authenticated','authenticated','352c4-limited@invalid.example',now(),now()),
+ (:'editor_uid'::uuid,'authenticated','authenticated','352c4-editor@invalid.example',now(),now()),
+ (:'admin_uid'::uuid,'authenticated','authenticated','352c4-admin@invalid.example',now(),now()),
+ (:'outsider_uid'::uuid,'authenticated','authenticated','352c4-outsider@invalid.example',now(),now());
+
+INSERT INTO public.organizations(id,name)
+VALUES (:'org_a'::uuid,'352c4 Security Fixture A'),
+       (:'org_b'::uuid,'352c4 Security Fixture B');
+INSERT INTO public.organization_members(organization_id,user_id,role,job_function)
+VALUES
+ (:'org_a'::uuid,:'viewer_uid'::uuid,'viewer','general'),
+ (:'org_a'::uuid,:'limited_uid'::uuid,'member','purchasing'),
+ (:'org_a'::uuid,:'editor_uid'::uuid,'member','salesperson'),
+ (:'org_a'::uuid,:'admin_uid'::uuid,'admin','general'),
+ (:'org_b'::uuid,:'outsider_uid'::uuid,'member','salesperson');
+
+INSERT INTO public.companies(organization_id,id,name)
+VALUES (:'org_a'::uuid,:'company_a','352c4 Fixture Company A'),
+       (:'org_b'::uuid,:'company_b','352c4 Fixture Company B');
+INSERT INTO public.contacts(organization_id,id,name)
+VALUES (:'org_a'::uuid,:'contact_a','352c4 Fixture Contact A');
+INSERT INTO public.projects(organization_id,id,name,stage)
+VALUES (:'org_a'::uuid,:'project_a','352c4 Fixture Project A','Discovery');
+
+INSERT INTO public.crm_field_definitions
+ (organization_id,id,record_type,field_key,label,field_type,visibility,active)
+VALUES
+ (:'org_a'::uuid,:'field_org','company','352c4_public_note','Fixture public note','text','organization',true),
+ (:'org_a'::uuid,:'field_editor','company','352c4_editors_note','Fixture editors note','text','crm_editors',true),
+ (:'org_a'::uuid,:'field_admin','company','352c4_admin_note','Fixture admin note','text','admins',true);
+
+INSERT INTO public.crm_field_values(organization_id,field_id,record_type,company_id,value_text)
+VALUES
+ (:'org_a'::uuid,:'field_org','company',:'company_a','Public fixture value'),
+ (:'org_a'::uuid,:'field_editor','company',:'company_a','Editor fixture value'),
+ (:'org_a'::uuid,:'field_admin','company',:'company_a','Admin fixture value');
+COMMIT;
+\echo 'Seeded disposable-only 352c4 role, tenant and record fixtures.'
