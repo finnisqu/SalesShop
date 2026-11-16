@@ -1,4 +1,8 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
+import {createPortal} from 'react-dom';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import './record-form-modal.css';
 import {useAuthStore} from '../store/authStore';
 import {useFileLinkStore} from '../store/fileLinkStore';
 import {fileLinkProvider,fileLinksScope,fileTargetKey,
@@ -25,6 +29,9 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
  const [targetKey,setTargetKey]=useState('');
  const [showForm,setShowForm]=useState(false);
  const [editingId,setEditingId]=useState<string|null>(null);
+ const closeForm=()=>{setShowForm(false);setError('');};
+ useModalScrollLock(showForm);
+ const modalRef=useDismissibleLayer<HTMLElement>(showForm,closeForm);
  const [title,setTitle]=useState(''),[url,setUrl]=useState(''),
   [kind,setKind]=useState<FileLinkKind>('file'),[error,setError]=useState('');
  const chosen=target??allTargets.find(item=>fileTargetKey(item)===targetKey);
@@ -61,10 +68,14 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
    <span>{visible.length} {visible.length===1?'link':'links'}{target?' for this record':''}</span>
    <button type="button" onClick={startNew}>+ Link file or folder</button>
   </div>}
-  {showForm&&<form className="ss-file-links-form" onSubmit={submit}>
+  {showForm&&createPortal(<div className="ss-record-form-backdrop"
+      onPointerDown={event=>{if(event.currentTarget===event.target)closeForm();}}>
+     <section ref={modalRef} className="ss-record-form-modal" role="dialog" aria-modal="true"
+       aria-label={editingId?'Edit linked file or folder':'Link file or folder'}>
+      <form className="ss-file-links-form" onSubmit={submit}>
    <div className="ss-file-links-form-head">
     <strong>{editingId?'Edit link':'Link a document or folder'}</strong>
-    <button type="button" onClick={()=>{setShowForm(false);setError('');}}>Cancel</button>
+    <button type="button" aria-label="Close file form" onClick={closeForm}>×</button>
    </div>
    {!target&&!editingId&&<label>Related record
     <select value={chosen?fileTargetKey(chosen):''} required
@@ -95,9 +106,14 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
     value={url} placeholder="https://drive.google.com/…"
     onChange={e=>setUrl(e.target.value)}/></label>
    {error&&<p className="ss-files-error" role="alert">{error}</p>}
-   <button type="submit" className="ss-files-save" disabled={!title.trim()||!url.trim()||(!chosen&&!editingId)}>
-    {editingId?'Save changes':'Save link'}</button>
-  </form>}
+   <div className="ss-record-form-modal-actions">
+    <button type="button" onClick={closeForm}>Cancel</button>
+    <button type="submit" className="ss-files-save" disabled={!title.trim()||!url.trim()||(!chosen&&!editingId)}>
+      {editingId?'Save changes':'Save link'}</button>
+   </div>
+      </form>
+     </section>
+    </div>,document.body)}
   <div className="ss-file-links-list" aria-label="Saved file links">
    {visible.map(row=>{
     const linked=targetsByKey.get(fileTargetKey({kind:row.targetKind,id:row.targetId}));

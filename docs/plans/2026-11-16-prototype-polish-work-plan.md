@@ -212,6 +212,12 @@
 - Current next prototype remains **P3 Workflow Automations v0.1**, after exact-head Cloudflare green: quote delivery → follow-up, inactive Deal → reminder, Won Deal → handoff. First version must be consented/opt-in and duplicate-safe; never claim unattended background execution without an actual scheduler.
 - The last user-supplied log for `0174f55` showed five stale assertion failures; #357b/#357c source fixes committed but their Cloudflare result is still unknown.
 
+### November 16 #358a — centered creation dialogs
+
+- Files v0.1 Create/Edit link form now opens in a body portal centered modal, with independent background, theme-matched styling, Escape/backdrop dismissal, focus capture and background-scroll lock; existing browser-local persistence unchanged.
+- Our Organization +Person and editing existing team directory records use the same modal. The existing roster membership/group/role validation, duplicate checks and save path were kept.
+- Added static regressions to quick-quote gate. Pending Cloudflare and authenticated/mobile QA.
+
 ## Carry-forward notes for next chat
 
 1. Ask for **Cloudflare errors only if a new build actually fails**. Fix stale test expectations without reverting a deliberately removed feature.

@@ -1,4 +1,8 @@
-import {useEffect,useRef,useState,type FormEvent} from 'react';
+import {useEffect,useState,type FormEvent} from 'react';
+import {createPortal} from 'react-dom';
+import {useDismissibleLayer} from '../lib/useDismissibleLayer';
+import {useModalScrollLock} from '../lib/useModalScrollLock';
+import './record-form-modal.css';
 import {useCrmStore} from '../store/crmStore';
 import {ConnectionsTable} from './ConnectionsTable';
 import {useNavigationStore} from '../store/navigationStore';
@@ -34,12 +38,9 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
  const [group,setGroup]=useState<RosterGroup>('employees');
  const [editingId,setEditingId]=useState<string|null>(null);
  const [showEditor,setShowEditor]=useState(false);
- const formRef=useRef<HTMLFormElement>(null);
- useEffect(()=>{
-  if(!showEditor)return;
-  const frame=window.requestAnimationFrame(()=>formRef.current?.scrollIntoView({block:'start',behavior:'smooth'}));
-  return()=>window.cancelAnimationFrame(frame);
- },[showEditor,editingId]);
+ const closeEditor=()=>{setShowEditor(false);setError('');};
+ useModalScrollLock(showEditor&&editable);
+ const dialogRef=useDismissibleLayer<HTMLElement>(showEditor&&editable,closeEditor);
  const [draft,setDraft]=useState<Draft>(()=>empty('employees'));
  const [error,setError]=useState('');
  const [roleCreating,setRoleCreating]=useState(false);
@@ -140,9 +141,13 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
     {item.title} <span>{count(item.id)}</span></button>)}
   </div>
   </div>
-  {showEditor&&editable&&<form ref={formRef} className="our-org-form" onSubmit={save}>
+  {showEditor&&editable&&createPortal(<div className="ss-record-form-backdrop"
+    onPointerDown={event=>{if(event.currentTarget===event.target)closeEditor();}}>
+    <section ref={dialogRef} className="ss-record-form-modal" role="dialog" aria-modal="true"
+      aria-label={editingId?'Edit organization person':'Add organization person'}>
+     <form className="our-org-form" onSubmit={save}>
    <div className="our-org-form-title"><strong>{editingId?'Edit':'Add'} person</strong>
-    <button type="button" onClick={()=>{setShowEditor(false);setError('');}}>Cancel</button></div>
+    <button type="button" aria-label="Close person form" onClick={closeEditor}>×</button></div>
    <label>Name<input required maxLength={180} value={draft.name}
     onChange={e=>setDraft(d=>({...d,name:e.target.value}))}/></label>
    <label>Relationship<select value={draft.group} onChange={e=>setDraft(d=>({...d,group:e.target.value as RosterGroup,title:''}))}>
@@ -173,8 +178,13 @@ export function OurOrganizationDirectory({onOpenPerson,query,createRequest,onCre
    <label>Email<input type="email" value={draft.email} onChange={e=>setDraft(d=>({...d,email:e.target.value}))}/></label>
    <label>Phone<input type="tel" value={draft.phone} onChange={e=>setDraft(d=>({...d,phone:e.target.value}))}/></label>
    {error&&<p role="alert" className="our-org-error">{error}</p>}
-   <div className="our-org-form-actions"><button type="submit">Save person</button></div>
-  </form>}
+   <div className="our-org-form-actions">
+    <button type="button" className="ss-record-form-secondary" onClick={closeEditor}>Cancel</button>
+    <button type="submit">Save person</button>
+   </div>
+     </form>
+    </section>
+   </div>,document.body)}
   <ConnectionsTable tableKey="organization" onOpen={onOpenPerson}
    toolbarControls={ownCompany&&<button type="button" className="our-org-self-company-link"
      onClick={()=>openCompany(ownCompany.id)}>View SELF company ↗</button>}

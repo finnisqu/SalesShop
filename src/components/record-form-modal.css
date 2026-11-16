@@ -1,0 +1,40 @@
+/* Shared centered, accessible CRM create/edit modal for Files and Our Org. */
+.ss-record-form-backdrop{position:fixed;inset:0;z-index:1800;display:grid;place-items:center;
+ padding:clamp(12px,4vh,32px);box-sizing:border-box;
+ background:rgba(18,22,28,.56);overscroll-behavior:contain}
+.ss-record-form-modal{box-sizing:border-box;display:block;min-width:0;
+ width:min(100%,575px);max-height:calc(100dvh - 24px);overflow:auto;
+ background:var(--ss-theme-card,#fffaf0);color:var(--ss-theme-ink,#242424);
+ border:1px solid var(--ss-theme-border,#d3c8ba);border-radius:15px;
+ box-shadow:0 20px 65px rgba(0,0,0,.27);padding:16px;
+ scrollbar-color:var(--ss-theme-border) var(--ss-theme-base)}
+.ss-record-form-modal .ss-file-links-form,
+.ss-record-form-modal .our-org-form{padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;
+ width:100%;max-width:none}
+.ss-record-form-modal .our-org-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ss-record-form-modal .ss-file-links-form-head,
+.ss-record-form-modal .our-org-form-title{margin-bottom:8px;padding-bottom:13px;
+ border-bottom:1px solid var(--ss-theme-border)}
+.ss-record-form-modal .ss-file-links-form-head strong,
+.ss-record-form-modal .our-org-form-title strong{
+ color:var(--ss-theme-ink);font-size:17px;font-weight:780}
+.ss-record-form-modal .ss-file-links-form-head>button,
+.ss-record-form-modal .our-org-form-title>button{
+ width:38px;height:38px;min-width:38px;min-height:38px;padding:0;display:grid;place-items:center;
+ font-size:22px;line-height:1;border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-base);color:var(--ss-theme-ink)}
+.ss-record-form-modal .ss-record-form-modal-actions{
+ display:flex;justify-content:flex-end;gap:9px;flex-wrap:nowrap}
+.ss-record-form-modal .our-org-form-actions{display:flex;justify-content:flex-end;gap:9px}
+.ss-record-form-modal .ss-record-form-secondary{
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);font-size:12px;font-weight:700;padding:8px 12px}
+.ss-record-form-modal :is(input,select,button):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+@media(max-width:650px){
+ .ss-record-form-backdrop{padding:10px}
+ .ss-record-form-modal{width:100%;max-height:calc(100dvh - 20px);padding:14px}
+ .ss-record-form-modal .our-org-form{grid-template-columns:1fr}
+ .ss-record-form-modal :is(input,select){min-height:44px;font-size:16px}
+ .ss-record-form-modal :is(button){min-height:44px}
+}
