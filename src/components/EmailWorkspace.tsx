@@ -12,7 +12,7 @@ import {emailTargetSuggestions} from '../services/emailThreadMatching359a';
 import {classifyGmailTriage,filterGmailTriage,gmailTriageCounts,
  mayNeedGmailReplyReview,type GmailTriageFilter} from '../services/gmailTriage367';
 import {currentGmailReviewDecision,readGmailReviewDecisions,
- saveGmailReviewDecisions,withGmailReviewDecision,
+ saveGmailReviewDecisions,withGmailReviewDecision,withBulkGmailReviewDecisions,
  type GmailReviewDecision,type GmailReviewKind} from '../services/gmailReview368';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useNavigationStore} from '../store/navigationStore';
@@ -23,6 +23,9 @@ import {localDateKey} from '../services/salesCalendar';
 import {gmailActivitySourceKey} from '../services/gmailActivity363';
 import {gmailTriageWorkStatus,gmailTriageTaskLabel,
  type GmailTriageWorkStatus} from '../services/gmailTriageWork369';
+import {DEFAULT_GMAIL_REVIEW_RULES,GMAIL_REVIEW_MIN_DAYS,GMAIL_REVIEW_MAX_DAYS,
+ loadGmailReviewRules,storeGmailReviewRules,type GmailReviewRules}
+ from '../services/gmailTriagePrefs370';
 import {EmailPersonCreate362} from './EmailPersonCreate362';
 import {EmailActivityLogger363} from './EmailActivityLogger363';
 import './email-workspace.css';
@@ -47,6 +50,9 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const dealPeople=useDealPeopleStore(s=>s.links),dealPeopleStoreScope=useDealPeopleStore(s=>s.scope);
  const [query,setQuery]=useState('newer_than:90d');
  const [triageFilter,setTriageFilter]=useState<GmailTriageFilter|'aside'|'followups'>('all');
+ const [ruleStorage,setRuleStorage]=useState<{
+  identity:string|null;rules:GmailReviewRules
+ }>({identity:null,rules:{...DEFAULT_GMAIL_REVIEW_RULES}});
  const [messageFingerprints,setMessageFingerprints]=useState<{
   identity:string|null;
   rows:Record<string,{messageId:string;fingerprint:string}>;
@@ -69,6 +75,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const reviewIdentity=connected&&expectedScope&&mailbox?
   expectedScope+'|'+mailbox.toLowerCase():null;
  const reviewDecisions=reviewStorage.identity===reviewIdentity?reviewStorage.decisions:[];
+ const reviewRules=ruleStorage.identity===reviewIdentity
+  ?ruleStorage.rules:DEFAULT_GMAIL_REVIEW_RULES;
  const taskRows=usePersonalTaskStore(s=>s.tasks);
  const taskStoreScope=usePersonalTaskStore(s=>s.scope);
  const crmActivities=useCrmStore(s=>s.activities);
@@ -88,8 +96,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
   return result;
  },[threads,matchedFingerprints,taskRows,crmActivities,workReady]);
  const current=threads.find(t=>t.id===activeId);
- const triage=useMemo(()=>classifyGmailTriage(threads,contacts,mailbox),
-  [threads,contacts,mailbox]);
+ const triage=useMemo(()=>classifyGmailTriage(threads,contacts,mailbox,
+  Date.now(),reviewRules),[threads,contacts,mailbox,reviewRules]);
  const triageCounts=useMemo(()=>{
   const count=gmailTriageCounts(triage);
   const active=triage.filter(item=>item.reviewReply&&
@@ -145,6 +153,13 @@ export function EmailWorkspace({contacts,deals,companies}:{
  },[workIdentity,expectedScope,org,mailbox,connected,threads]);
  useEffect(()=>{
   if(!reviewIdentity||!expectedScope||!mailbox){
+   setRuleStorage({identity:null,rules:{...DEFAULT_GMAIL_REVIEW_RULES}});return;
+  }
+  setRuleStorage({identity:reviewIdentity,
+   rules:loadGmailReviewRules(expectedScope,mailbox)});
+ },[reviewIdentity,expectedScope,mailbox]);
+ useEffect(()=>{
+  if(!reviewIdentity||!expectedScope||!mailbox){
    setReviewStorage({identity:null,decisions:[]});return;
   }
   setReviewStorage({identity:reviewIdentity,
@@ -163,12 +178,29 @@ export function EmailWorkspace({contacts,deals,companies}:{
    await useGmailSessionStore.getState().search(query);
   }catch{/* The session store explains the OAuth denial or setup problem. */}
  };
+ const runSearch=(searchQuery:string)=>{
+  if(!connected||loading)return;
+  setQuery(searchQuery);
+  requestVersion.current+=1;
+  setActiveId(null);setDetails(null);setDetailError('');setDetailsLoading(false);
+  setSelectedTarget('');
+  void searchGmail(searchQuery);
+ };
  const findThreads=(event:FormEvent)=>{
   event.preventDefault();
-  if(!connected)return;
-  requestVersion.current+=1;
-  setActiveId(null);setDetails(null);setDetailError('');
-  void searchGmail(query);
+  runSearch(query);
+ };
+ const updateReviewRules=(change:Partial<GmailReviewRules>)=>{
+  const session=validGmailToken(expectedScope);
+  if(!session||!expectedScope||!mailbox||session.mailbox!==mailbox||
+   !reviewIdentity){setNotice('Reconnect Gmail before changing your review settings.');return;}
+  try{
+   const next=storeGmailReviewRules(expectedScope,mailbox,{...reviewRules,...change});
+   setRuleStorage({identity:reviewIdentity,rules:next});
+   setNotice('Personal Gmail review settings saved in this browser.');
+  }catch(error){
+   setNotice(error instanceof Error?error.message:'Could not save Gmail settings.');
+  }
  };
  const changeTriage=(next:GmailTriageFilter|'aside'|'followups')=>{
   if(next===triageFilter)return;
@@ -185,7 +217,9 @@ export function EmailWorkspace({contacts,deals,companies}:{
    setNotice('Reconnect Gmail or refresh the conversation before changing its review status.');
    return;
   }
-  if(kind!==null&&!mayNeedGmailReplyReview(thread,mailbox)){
+  if(kind!==null&&(!mayNeedGmailReplyReview(thread,mailbox,Date.now(),reviewRules)||
+   (reviewRules.knownOnly&&!triage.some(item=>item.thread.id===thread.id&&
+    item.people.length>0)))){
    setNotice('This conversation is no longer flagged for reply review.');return;
   }
   try{
@@ -203,6 +237,40 @@ export function EmailWorkspace({contacts,deals,companies}:{
    }
   }catch(e){
    setNotice(e instanceof Error?e.message:'Could not save the review choice.');
+  }
+ };
+ const bulkReview=(kind:GmailReviewKind)=>{
+  if(!connected||loading||triageFilter!=='review'||!expectedScope||!mailbox||
+   !reviewIdentity)return;
+  const candidates=shownTriage.filter(item=>item.reviewReply&&
+   !threadWork.get(item.thread.id)?.alreadyHandled&&
+   !currentGmailReviewDecision(item.thread,reviewDecisions));
+  if(!candidates.length)return;
+  if(candidates.length>400){
+   setNotice('Too many conversations loaded for one batch. Narrow your Gmail search first.');return;
+  }
+  const title=kind==='reviewed'?'Mark reviewed':'Snooze for 3 days';
+  if(!window.confirm(title+' for '+candidates.length+
+    ' visible conversation(s)? This will only change your private SalesShop review list.'))return;
+  const active=validGmailToken(expectedScope),live=useGmailSessionStore.getState();
+  if(!active||active.mailbox!==mailbox||live.scope!==expectedScope||
+   candidates.some(item=>!live.threads.some(row=>row.id===item.thread.id&&
+    row.date===item.thread.date))){
+   setNotice('Gmail data changed. Search again before using batch review actions.');return;
+  }
+  try{
+   const next=withBulkGmailReviewDecisions(
+    readGmailReviewDecisions(expectedScope,mailbox),candidates.map(item=>item.thread),
+    kind,Date.now());
+   saveGmailReviewDecisions(expectedScope,mailbox,next);
+   setReviewStorage({identity:reviewIdentity,decisions:next});
+   setNotice(kind==='reviewed'?
+    candidates.length+' visible conversations marked reviewed.':
+    candidates.length+' visible conversations snoozed for three days (no reminders scheduled).');
+   requestVersion.current+=1;
+   setActiveId(null);setDetails(null);setDetailError('');setDetailsLoading(false);
+  }catch(error){
+   setNotice(error instanceof Error?error.message:'Could not save batch review choices.');
   }
  };
  const showThread=async(id:string)=>{
@@ -269,12 +337,51 @@ export function EmailWorkspace({contacts,deals,companies}:{
      Disconnect</button>:<button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
      onClick={()=>{void connectInbox();}}>Connect Gmail</button>}
    </div>
-   {connected&&<form onSubmit={findThreads} className="ss-email-search">
-    <label htmlFor="ss-email-query">Gmail search</label>
-    <input id="ss-email-query" value={query} maxLength={180}
-     onChange={e=>setQuery(e.target.value)} placeholder="from:customer@example.com or newer_than:90d"/>
-    <button type="submit" disabled={loading}>Search</button>
-   </form>}
+   {connected&&<>
+    <form onSubmit={findThreads} className="ss-email-search">
+     <label htmlFor="ss-email-query">Gmail search</label>
+     <input id="ss-email-query" value={query} maxLength={180}
+      onChange={e=>setQuery(e.target.value)} placeholder="from:customer@example.com or newer_than:90d"/>
+     <button type="submit" disabled={loading}>Search</button>
+    </form>
+    <div className="ss-email-shortcuts">
+     <label htmlFor="ss-email-quick-search">Quick searches</label>
+     <select id="ss-email-quick-search" value="" disabled={loading}
+      onChange={event=>{if(event.target.value)runSearch(event.target.value);}}>
+      <option value="">Choose a Gmail search…</option>
+      <option value="newer_than:7d">Last 7 days</option>
+      <option value="newer_than:30d">Last 30 days</option>
+      <option value="newer_than:90d">Last 90 days</option>
+      <option value="in:sent newer_than:90d">Sent in last 90 days</option>
+     </select>
+    </div>
+    <details className="ss-email-review-settings">
+     <summary>Review settings</summary>
+     <div className="ss-email-review-settings-fields">
+      <label>Review messages older than
+       <select value={reviewRules.minDays} onChange={event=>
+        updateReviewRules({minDays:Number(event.target.value)})}>
+        {GMAIL_REVIEW_MIN_DAYS.map(days=><option value={days} key={days}>
+         {days} {days===1?'day':'days'}</option>)}
+       </select>
+      </label>
+      <label>And newer than
+       <select value={reviewRules.maxDays} onChange={event=>
+        updateReviewRules({maxDays:Number(event.target.value)})}>
+        {GMAIL_REVIEW_MAX_DAYS.map(days=><option value={days} key={days}>
+         {days} days</option>)}
+       </select>
+      </label>
+      <label className="ss-email-review-known-only">
+       <input type="checkbox" checked={reviewRules.knownOnly}
+        onChange={event=>updateReviewRules({knownOnly:event.target.checked})}/>
+       Only suggest replies involving existing CRM People
+      </label>
+     </div>
+     <p>Personal browser preferences for this Gmail mailbox. No email logging,
+      notifications, automatic Tasks, or Gmail changes.</p>
+    </details>
+   </>}
   </div>
   {error&&<p className="ss-email-error" role="alert">{error}</p>}
   {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
@@ -294,12 +401,22 @@ export function EmailWorkspace({contacts,deals,companies}:{
       </button>)}
     </div>
     <p className="ss-email-triage-note">
-     Filters apply to loaded conversations only. Review replies is a preliminary
-     sender/date hint, not proof a message is unanswered. Open a thread to verify.
-     Reviewed suggestions return if a new message arrives; snoozed ones return after
-     three days. Existing Tasks for the latest email stay in Follow-ups, not
-     Review replies. Counts reflect loaded conversations only, not your whole inbox.
+     Filters cover loaded conversations only. Reply review: {reviewRules.minDays}–{reviewRules.maxDays}
+     days old{reviewRules.knownOnly?', existing CRM People only':''}. These are
+     candidate replies, not confirmed unanswered messages. Tasks, reviewed and snoozed
+     conversations stay in their separate views.
     </p>
+    {triageFilter==='review'&&shownTriage.length>1&&
+     <details className="ss-email-bulk-triage">
+      <summary>Batch actions · {shownTriage.length} visible</summary>
+      <div>
+       <button type="button" disabled={loading} onClick={()=>bulkReview('reviewed')}>
+        Mark visible reviewed</button>
+       <button type="button" disabled={loading} onClick={()=>bulkReview('snoozed')}>
+        Snooze visible 3 days</button>
+      </div>
+      <small>Confirmation required. Only loaded conversations currently shown in Review replies.</small>
+     </details>}
     {loading&&!threads.length&&<p>Reading Gmail…</p>}
     {!loading&&!threads.length&&<p className="ss-email-empty">No conversations match. Try another search.</p>}
     {!loading&&threads.length>0&&!shownTriage.length&&
@@ -397,7 +514,9 @@ export function EmailWorkspace({contacts,deals,companies}:{
       contacts={contacts} companies={companies} deals={deals}
       suppressReplyHint={!!current&&(
        !!currentGmailReviewDecision(current,reviewDecisions)||
-       !!threadWork.get(current.id)?.alreadyHandled)}/>}
+       !!threadWork.get(current.id)?.alreadyHandled||
+       (reviewRules.knownOnly&&!triage.some(item=>item.thread.id===current.id&&item.people.length>0)))}
+      reviewRules={reviewRules}/>}
     {canWrite&&mailbox&&<EmailPersonCreate362
      key={current.id+'|'+mailbox} thread={current} mailbox={mailbox} contacts={contacts}
      companies={companies} scope={expectedScope} canWrite={canWrite}

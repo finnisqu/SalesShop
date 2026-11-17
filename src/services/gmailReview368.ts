@@ -76,3 +76,15 @@ export function withGmailReviewDecision(decisions:readonly GmailReviewDecision[]
   ...(kind==='snoozed'?{until:new Date(now+3*DAYS).toISOString()}:{})
  }]);
 }
+
+
+/** Explicit batch action, capped and normalized, persisted once by the caller.
+ * Never examines or persists Gmail message text or recipient addresses.
+ */
+export function withBulkGmailReviewDecisions(decisions:readonly GmailReviewDecision[],
+ threads:readonly GmailThreadSummary[],kind:GmailReviewKind,now=Date.now()):GmailReviewDecision[]{
+ if(threads.length>MAX_ROWS)throw new Error('Narrow the search before reviewing a larger batch.');
+ let next=normalizeGmailReviewDecisions(decisions);
+ for(const thread of threads)next=withGmailReviewDecision(next,thread,kind,now);
+ return next;
+}

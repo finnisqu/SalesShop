@@ -13,6 +13,12 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## November 17 — final Gmail refinement and next work area
+
+**Build #370 (email wrap-up):** Configurable private reply-review age windows (1–7 day minimum; 7/14/30 day maximum), option to suggest replies only for existing CRM People, four one-click Gmail query presets, and explicit batch Mark reviewed / Snooze 3 days actions with confirmation. Preferences and review choices remain scoped to a single SalesShop user/Gmail mailbox and stored only in that browser. They are not email writes, automatic Activities, Tasks, notifications, or background Gmail monitoring. Build/check status and real-account acceptance are tracked separately.
+
+**After #370:** Pause Gmail feature expansion except reported bugs. Resume non-email **P5 · CAD-Lite bridge v0.1** on the existing integration roadmap: inspect the current Deal/Quote/CAD-Lite linkage, build one useful deep link and manual takeoff import flow with explicit review, no automatic quote repricing or undocumented cross-app synchronization. Preserve the user's plug-and-play industry-neutral CRM architecture. Provider expansion P6 and deferred document exports follow only when reprioritized.
+
 ## November 16 polish batches
 
 | ID | Feature / acceptance target | Starting point | Status | Blockers / evidence |
