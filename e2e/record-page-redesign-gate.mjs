@@ -132,8 +132,8 @@ assert(contains(inline,[
 const recents=source('src/components/RecordRecentsPanel.tsx');
 assert(contains(recents,[
   'role="tablist"','role="tab"',
-  "useState<'quotes'|'activities'|'history'>('quotes')",
-  "selected==='quotes'?quotes:selected==='activities'?activities:history"
+  "useState<'quotes'|'history'>('quotes')",
+  "tab==='quotes'?quotes:historyContent"
 ]),'Recents tabs changed');
 const tabbed=source('src/components/RecordTabbedGroup372.tsx');
 assert(contains(tabbed,[
