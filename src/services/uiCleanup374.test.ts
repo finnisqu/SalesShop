@@ -13,7 +13,7 @@ describe('Build #374 — Records layout and record-linked inline Notebook',()=>{
  });
  it('allows only record-created simple text pages to be edited inline',()=>{
   const entry={id:'page_record_inline_abc',contentHtml:'<p>Safe</p>',
-    strokes:[],objects:[]} as NotebookEntry;
+    strokes:[],objects:[]} as unknown as NotebookEntry;
   expect(isInlineRecordTextPage(entry)).toBe(true);
   expect(isInlineRecordTextPage({...entry,id:'page_older'})).toBe(false);
   expect(isInlineRecordTextPage({...entry,objects:[{id:'o'} as never]})).toBe(false);
