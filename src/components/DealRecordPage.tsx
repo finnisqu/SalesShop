@@ -4,6 +4,7 @@ import {RecordInlineProperty} from './RecordInlineProperty';
 import {RecordActionsMenu} from './RecordActionsMenu';
 import {RecordRecentsPanel} from './RecordRecentsPanel';
 import {RecordTabbedGroup372} from './RecordTabbedGroup372';
+import {RecordNotebookPanel374} from './RecordNotebookPanel374';
 import {QuickCreate} from './QuickCreate';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordUnlinkAction} from './RecordUnlinkAction';
@@ -15,7 +16,7 @@ import {DealBidReminder} from './DealBidReminder';
 import {DealPeopleRelationships} from './DealPersonRelationships';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
-import { ProjectNotebookLinks } from './ProjectNotebookLinks';
+
 import { dealRecordView } from '../services/dealRecordView';
 import { PrivateDealContactRoles } from './PrivateDealContactRoles';
 import { DEAL_PIPELINES, PROJECT_STAGES, dealPipelineLabel, type DealPipeline, type ProjectStage } from '../types/crm';
@@ -73,6 +74,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
   const quotes = useQuoteStore(state => state.quotes);
   const hydrateQuotes = useQuoteStore(state => state.hydrate);
   const openQuote = useNavigationStore(state => state.openQuote);
+  const openNotebookPage=useNavigationStore(state=>state.openNotebookPage);
   const openCompany = useNavigationStore(state => state.openCompany);
   const openPerson = useNavigationStore(state => state.openPerson);
   const [editing, setEditing] = useState(false);
@@ -224,7 +226,9 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
       <QuickCreate context={{kind:'deal',id:deal.id,name:deal.name}} launcherLabel="+ New"/>
     </>}
     left={<>
-      <RecordCard title="About this deal">
+      <RecordTabbedGroup372 title={deal.name} initialTab="about" items={[
+ {id:'about',label:'About',content:<>
+ <RecordCard title="About this deal">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate
           aria-busy={saving} onChange={()=>setSaveError('')} onSubmit={saveDeal}>
@@ -353,14 +357,12 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
           <RecordProperty label="Created">{displayDate(deal.createdAt)}</RecordProperty>
         </div>}
       </RecordCard>
-    <RecordTabbedGroup372 title="Deal resources" items={[
+ </>},
  {id:'files',label:'Files',content:<>
 <RecordFilesPanel target={{kind:'deal',id:deal.id,title:deal.name}}/>
  </>},
  {id:'notebook',label:'Notebook',content:<>
-<RecordCard title="Notebook">
-        <ProjectNotebookLinks project={deal} />
-      </RecordCard>
+<RecordNotebookPanel374 kind="deal" id={deal.id} title={deal.name} onOpenPage={openNotebookPage}/>
  </>},
  {id:'email',label:'Email',content:<>
 <RecordEmailThreadsPanel kind="deal" id={deal.id}/>

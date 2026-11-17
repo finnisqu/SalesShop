@@ -125,7 +125,7 @@ export function PersonDealRelationships({personId,deals,onOpenDeal,editing=false
   finally{setBusy(false);}
  };
  return <section className="ss-deal-relations" aria-label="Directly linked Deals">
-  <div className="ss-deal-relations-heading"><strong>Directly linked Deals</strong><span>{direct.length}</span></div>
+  <div className="ss-deal-relations-heading"><strong>Deals</strong><span>{direct.length}</span></div>
   {!manager.ready?<p role="status" className="connections-record-helper">
    {manager.error?'Unable to load links: '+manager.error:'Loading shared Deal links…'}
    {manager.error&&<button type="button" onClick={manager.retry}>Retry</button>}</p>:

@@ -4,6 +4,7 @@ import {RecordInlineProperty} from './RecordInlineProperty';
 import {RecordActionsMenu} from './RecordActionsMenu';
 import {RecordRecentsPanel} from './RecordRecentsPanel';
 import {RecordTabbedGroup372} from './RecordTabbedGroup372';
+import {RecordNotebookPanel374} from './RecordNotebookPanel374';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {QuickCreate} from './QuickCreate';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
@@ -31,7 +32,6 @@ import {externalQuoteActivities} from '../services/salesQuoteRegistry';
 import {requestTaskModal} from '../services/taskModalEvents';
 import { useQuoteStore } from '../store/quoteStore';
 import {openGuidedQuoteCreation} from '../services/quoteCreationNavigation';
-import {useNotebookStore} from '../store/notebookStore';
 import { useNavigationStore } from '../store/navigationStore';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -55,7 +55,6 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
   const openPerson = useNavigationStore((state) => state.openPerson);
   const openCompany = useNavigationStore((state) => state.openCompany);
   const openNotebookPage=useNavigationStore(state=>state.openNotebookPage);
-  const notebookEntries=useNotebookStore(state=>state.entries);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editing, setEditing] = useState(false);
   const [unlinking,setUnlinking]=useState(false);
@@ -170,7 +169,6 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
   };
 
   return <><RecordPageLayout entityType="company" recordKey={company.id} title={company.name} onBack={onBack} backLabel={backLabel}
-    subtitle={companyRelationshipLabel(company)}
     badge={<><span className={'connections-record-stage'+(isOurCompany(company)?' is-self-company':'')}>
       {isOurCompany(company)?'SELF · Our Company':companyRelationshipLabel(company)}
       </span><span>{related.relatedProjects.length} deals</span>
@@ -191,7 +189,9 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
       <QuickCreate context={{kind:'company',id:company.id,name:company.name}} launcherLabel="+ New"/>
     </>}
     left={<>
-      <RecordCard title="About this company">
+      <RecordTabbedGroup372 title={company.name} initialTab="about" items={[
+ {id:'about',label:'About',content:<>
+ <RecordCard title="About this company">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={saveCompany}>
           <RecordEditField label="Company name" required error={editError==='Enter a company name.'?editError:undefined}>
@@ -238,7 +238,8 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
         </div>}
         {editing&&<CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId}/>}
       </RecordCard>
-      <RecordCard title="Known aliases">
+ <h3 className="ss-record-subsection-title">Aliases</h3>
+ <RecordCard title="Known aliases">
         <div className="connections-record-aliases">
           {visibleCompanyAliases(company).map((alias) => <span key={alias}>{alias}
             <button type="button" aria-label={'Remove alias ' + alias} onClick={() => updateCompany(company.id, { aliases: (company.aliases ?? []).filter((item) => item !== alias) })}>×</button>
@@ -250,7 +251,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
           <button type="submit" disabled={!newAlias.trim()}>Add</button>
         </form>
       </RecordCard>
-    <RecordTabbedGroup372 title="Company resources" items={[
+ </>},
  ...(company.kind==='customer'?[{id:'forecast',label:'Forecast',content:<>
 {company.kind === 'customer' && <RecordCard title="Account forecast">
         <div className="connections-record-properties-list">
@@ -282,20 +283,11 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
         </div>
       </RecordCard>}
  </>}]:[]),
- {id:'files',label:'Files & folders',content:<>
+ {id:'files',label:'Files',content:<>
 <RecordFilesPanel target={{kind:'company',id:company.id,title:company.name}}/>
  </>},
- {id:'notebook',label:'Notebook pages',content:<>
-<RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.companyId===company.id).length} linked</span>}>
-        <div className="connections-record-entity-list">
-          {notebookEntries.filter(entry=>entry.context?.companyId===company.id).map(entry=>
-            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
-              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
-            </button>)}
-          {!notebookEntries.some(entry=>entry.context?.companyId===company.id)&&
-            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
-        </div>
-      </RecordCard>
+ {id:'notebook',label:'Notebook',content:<>
+<RecordNotebookPanel374 kind="company" id={company.id} title={company.name} onOpenPage={openNotebookPage}/>
  </>},
 ]}/>
     </>}
