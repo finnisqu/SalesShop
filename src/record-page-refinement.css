@@ -512,7 +512,8 @@
 /* Tabbed record panels: tabs and contextual actions share one compact row.
    Preserve the panel names only as accessible tablist labels, not visible headings. */
 :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
- .ss-record-tabbed-panel>.ss-record-tabbed-header{
+ .connections-record-columns>:is(.connections-record-properties,.connections-record-center)
+ >.ss-record-tabbed-panel>.ss-record-tabbed-header{
   display:flex!important;flex-direction:row!important;
   align-items:center!important;justify-content:space-between!important;
   flex-wrap:nowrap!important;gap:8px!important;min-width:0;
