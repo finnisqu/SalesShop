@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState,type FormEvent} from 'react';
+import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react';
 import type {Company,Contact,Project} from '../types/crm';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
@@ -9,6 +9,8 @@ import {emailWorkspaceScope,type EmailTarget,type EmailTargetKind} from '../serv
 import {gmailClientId,gmailThreadDetails,
  type GmailThreadDetails} from '../services/gmailRead359a';
 import {emailTargetSuggestions} from '../services/emailThreadMatching359a';
+import {classifyGmailTriage,filterGmailTriage,gmailTriageCounts,
+ type GmailTriageFilter} from '../services/gmailTriage367';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useNavigationStore} from '../store/navigationStore';
 import {EmailPersonCreate362} from './EmailPersonCreate362';
@@ -34,6 +36,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const linkThread=useEmailThreadLinkStore(s=>s.link),unlinkThread=useEmailThreadLinkStore(s=>s.unlink);
  const dealPeople=useDealPeopleStore(s=>s.links),dealPeopleStoreScope=useDealPeopleStore(s=>s.scope);
  const [query,setQuery]=useState('newer_than:90d');
+ const [triageFilter,setTriageFilter]=useState<GmailTriageFilter>('all');
+ const requestVersion=useRef(0);
  const [activeId,setActiveId]=useState<string|null>(null);
  const [selectedTarget,setSelectedTarget]=useState('');
  const [details,setDetails]=useState<GmailThreadDetails|null>(null);
@@ -46,6 +50,11 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const connected=ready&&!!validGmailToken(expectedScope);
  const links=ready?storedLinks:[];
  const current=threads.find(t=>t.id===activeId);
+ const triage=useMemo(()=>classifyGmailTriage(threads,contacts,mailbox),
+  [threads,contacts,mailbox]);
+ const triageCounts=useMemo(()=>gmailTriageCounts(triage),[triage]);
+ const shownTriage=useMemo(()=>filterGmailTriage(triage,triageFilter),
+  [triage,triageFilter]);
  const directLinks=dealPeopleStoreScope===dealPeopleScope(mode,org)?dealPeople:[];
  const suggestions=useMemo(()=>current?
   emailTargetSuggestions(current,contacts,deals,directLinks):[],
@@ -59,7 +68,9 @@ export function EmailWorkspace({contacts,deals,companies}:{
   targetByKey.has(row.targetKind+':'+row.targetId));
  // Changing Gmail identity invalidates all currently displayed mail and metadata.
  useEffect(()=>{
+  requestVersion.current+=1;
   setActiveId(null);setDetails(null);setDetailError('');setSelectedTarget('');setNotice('');
+  setTriageFilter('all');
  },[mailbox,expectedScope]);
  const connectInbox=async()=>{
   setNotice('');
@@ -71,21 +82,34 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const findThreads=(event:FormEvent)=>{
   event.preventDefault();
   if(!connected)return;
+  requestVersion.current+=1;
   setActiveId(null);setDetails(null);setDetailError('');
   void searchGmail(query);
  };
+ const changeTriage=(next:GmailTriageFilter)=>{
+  if(next===triageFilter)return;
+  requestVersion.current+=1;
+  setTriageFilter(next);setActiveId(null);setDetails(null);
+  setDetailError('');setDetailsLoading(false);setSelectedTarget('');
+ };
  const showThread=async(id:string)=>{
+  const request=++requestVersion.current;
   setActiveId(id);setDetails(null);setDetailError('');setDetailsLoading(true);
   setSelectedTarget('');
   const session=validGmailToken(expectedScope);
-  if(!session){setDetailsLoading(false);setDetailError('Reconnect Gmail to read this conversation.');return;}
+  if(!session){
+   setDetailsLoading(false);setDetailError('Reconnect Gmail to read this conversation.');return;
+  }
   try{
    const result=await gmailThreadDetails(session.token,id);
-   if(validGmailToken(expectedScope)?.token===session.token&&
+   if(request===requestVersion.current&&validGmailToken(expectedScope)?.token===session.token&&
     useGmailSessionStore.getState().scope===expectedScope)setDetails(result);
   }catch(e){
-   setDetailError(e instanceof Error?e.message:'Could not read this conversation.');
-  }finally{setDetailsLoading(false);}
+   if(request===requestVersion.current)
+    setDetailError(e instanceof Error?e.message:'Could not read this conversation.');
+  }finally{
+   if(request===requestVersion.current)setDetailsLoading(false);
+  }
  };
  const applyLink=()=>{
   if(!canWrite||!connected||!mailbox||!current)return;
@@ -139,17 +163,40 @@ export function EmailWorkspace({contacts,deals,companies}:{
   {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
   {connected&&<div className="ss-email-content">
    <div className="ss-email-threads" role="region" aria-label="Gmail search results">
-    <h3>Conversations <small>{threads.length} loaded</small></h3>
+    <h3>Conversations <small>{shownTriage.length} shown · {threads.length} loaded</small></h3>
+    <div className="ss-email-triage-tabs" role="group" aria-label="Email triage filters">
+     {([{id:'all',title:'All',count:triageCounts.all},
+       {id:'review',title:'Review replies',count:triageCounts.review},
+       {id:'known',title:'Existing People',count:triageCounts.known},
+       {id:'new',title:'Unknown participants',count:triageCounts.new}] as const).map(item=>
+      <button type="button" key={item.id} className="ss-email-triage-tab"
+       aria-pressed={triageFilter===item.id} onClick={()=>changeTriage(item.id)}>
+       {item.title} <small>{item.count}</small>
+      </button>)}
+    </div>
+    <p className="ss-email-triage-note">
+     Filters apply to loaded conversations only. Review replies is a preliminary
+     sender/date hint, not proof a message is unanswered. Open a thread to verify.
+    </p>
     {loading&&!threads.length&&<p>Reading Gmail…</p>}
     {!loading&&!threads.length&&<p className="ss-email-empty">No conversations match. Try another search.</p>}
-    {threads.map(t=>{
+    {!loading&&threads.length>0&&!shownTriage.length&&
+     <p className="ss-email-empty">No loaded conversations match this filter. Try All or load more.</p>}
+    {shownTriage.map(({thread:t,people,unknownAddresses,reviewReply})=>{
      const linked=links.filter(l=>l.threadId===t.id&&l.mailbox===mailbox).length;
-     const matches=emailTargetSuggestions(t,contacts,deals,directLinks);
      return <button key={t.id} type="button" className={'ss-email-thread'+(activeId===t.id?' is-selected':'')}
       aria-pressed={activeId===t.id} onClick={()=>{void showThread(t.id);}}>
       <strong>{t.subject}</strong>
-      <span>{t.from}</span><small>{new Date(t.date).toLocaleDateString()} · {t.messageCount} messages
-       {linked?' · '+linked+' linked':''}{matches.length?' · '+matches.length+' suggested':''}</small>
+      <span>{t.from}</span>
+      <small>{new Date(t.date).toLocaleDateString()} · {t.messageCount} messages
+       {linked?' · '+linked+' linked':''}</small>
+      <small className="ss-email-triage-thread-meta">
+       {people.length?'In CRM: '+people.slice(0,2).map(p=>p.name||p.email).join(', ')+
+        (people.length>2?' +'+(people.length-2):''):'No matching Person'}
+       {unknownAddresses.length?' · '+unknownAddresses.length+
+        (unknownAddresses.length===1?' unknown participant':' unknown participants'):''}
+       {reviewReply?' · Review reply':''}
+      </small>
       <p>{t.snippet}</p>
      </button>;
     })}
