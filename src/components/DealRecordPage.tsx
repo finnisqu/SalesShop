@@ -82,7 +82,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
   const [newCompanyName,setNewCompanyName]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
   useEffect(()=>{if(!canEditCrm){setEditing(false);setUnlinking(false);}},[canEditCrm]);
-  const [historyOpen, setHistoryOpen] = useState(false);
+
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [timelineOpen,setTimelineOpen]=useState(false);
   const timelineBetaEnabled=useDealTimelineBetaStore(state=>state.enabled);
@@ -103,7 +103,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
   });
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
-  useEffect(() => { setEditing(false);setTimelineOpen(false);setHistoryOpen(false);setActivityPreviewId(null);
+  useEffect(() => { setEditing(false);setTimelineOpen(false);setActivityPreviewId(null);
     setExternalQuoteOpen(false);setExternalQuoteDialogOpen(false);setNewCompanyName('');setUnlinking(false);
     setSaveError('');setNotice(null); }, [dealId]);
   useEffect(()=>{if(!timelineBetaEnabled)setTimelineOpen(false);},[timelineBetaEnabled]);
@@ -209,16 +209,17 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
     badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length+outsideQuotes.length} linked quotes</span></>}
     actions={<>
-      {canEditCrm&&<button type="button" onClick={() => {
-        setNotice(null);setSaveError('');
-        if(editing)setNewCompanyName('');
-        setEditing(value=>!value);
-      }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>}
       <RecordActionsMenu unlinking={unlinking} disabled={!canEditCrm}
         onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
         onDelete={canEditCrm&&!related.linkedQuotes.length&&!outsideQuotes.length&&!directIds.size
           ?async()=>{await useCrmStore.getState().deleteCleanProject(deal.id);onBack();}
           :undefined}/>
+      {canEditCrm&&<button type="button" onClick={() => {
+        setNotice(null);setSaveError('');
+        if(editing)setNewCompanyName('');
+        setEditing(value=>!value);
+      }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>}
+      
       {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
       <QuickCreate context={{kind:'deal',id:deal.id,name:deal.name}} launcherLabel="+ New"/>
     </>}
@@ -467,14 +468,8 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
           </button>)}
         {!related.directHistory.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>} history={<>
-<section className="connections-record-panel connections-record-history">
-        <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
-          onClick={() => setHistoryOpen(value => !value)}>
-          <span>Activity history</span><small>{historyOpen ? 'Hide' : 'View'} <span aria-hidden="true">{historyOpen ? '▴' : '▾'}</span></small>
-        </button>
-        {historyOpen && <div className="connections-record-panel-body">
-          <p className="connections-record-helper">Only events explicitly linked to this deal or its quotes.</p>
-          <ol className="connections-record-timeline">
+<div className="ss-record-history-timeline" aria-label="Deal Activity and relationship history">
+ <ol className="connections-record-timeline">
             {related.directHistory.map(activity => <li key={activity.id}>
               <div><button type="button" onClick={()=>setActivityPreviewId(activity.id)}><strong>{activity.summary}</strong></button>
                 <time dateTime={activity.occurredAt}>{displayDate(activity.occurredAt)}</time></div>
@@ -483,9 +478,8 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
                 <button type="button" onClick={() => openQuote(activity.quoteId!)}>Open linked quote →</button>}
             </li>)}
           </ol>
-          {!related.directHistory.length && <p className="connections-record-empty">No directly linked history available.</p>}
-        </div>}
-      </section>
+ {!related.directHistory.length&&<p className="connections-record-empty">No linked history yet.</p>}
+ </div>
  </>} historyCount={related.directHistory.length}/>
     </>}
   />

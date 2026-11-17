@@ -33,11 +33,12 @@ interface Props {
  initialDealId?:string;
  suppressReplyHint?:boolean;
  reviewRules?:Readonly<GmailReviewRules>;
+ defaultLogOpen?:boolean;
 }
 /** Explicit human-confirmed Activity: a Gmail read or match alone never writes CRM. */
 export function EmailActivityLogger363({details,mailbox,scope,contacts,companies,deals,
  initialPersonId,initialDealId,suppressReplyHint=false,
- reviewRules=DEFAULT_GMAIL_REVIEW_RULES}:Props){
+ reviewRules=DEFAULT_GMAIL_REVIEW_RULES,defaultLogOpen=false}:Props){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   department=useAuthStore(s=>s.teamDepartment);
@@ -284,7 +285,7 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
    scope={scope} mailbox={mailbox} message={chosenMessage} fingerprint={key}
    person={person} company={companies.find(c=>c.id===chosenCompany)}
    deal={chosenDeal} participants={details.summary.participants}/>}
-  <details className="ss-email-standalone ss-email-log-panel">
+  <details className="ss-email-standalone ss-email-log-panel" defaultOpen={defaultLogOpen}>
    <summary>{alreadyLogged?'Email Activity already logged · View details':
     'Log this email as an Activity (optional)'}</summary>
    <form onSubmit={log}>

@@ -67,6 +67,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const [detailError,setDetailError]=useState('');
  const [detailsLoading,setDetailsLoading]=useState(false);
  const [notice,setNotice]=useState('');
+ const [emailAction,setEmailAction]=useState<'task'|'log'|'person'|'link'|null>(null);
  const openPerson=useNavigationStore(s=>s.openPerson),openDeal=useNavigationStore(s=>s.openProject);
  const canWrite=!!expectedScope&&!perspective&&canEditTeamArea(role,department,'crm');
  const ready=!!expectedScope&&!perspective&&expectedScope===sessionScope&&expectedScope===linkScope;
@@ -275,7 +276,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
  };
  const showThread=async(id:string)=>{
   const request=++requestVersion.current;
-  setActiveId(id);setDetails(null);setDetailError('');setDetailsLoading(true);
+  setActiveId(id);setDetails(null);setDetailError('');setDetailsLoading(true);setEmailAction(null);
   setSelectedTarget('');
   const session=validGmailToken(expectedScope);
   if(!session){
@@ -400,12 +401,14 @@ export function EmailWorkspace({contacts,deals,companies}:{
        {item.title} <small>{item.count}</small>
       </button>)}
     </div>
-    <p className="ss-email-triage-note">
+    <details className="ss-email-filter-hints"><summary>About filters</summary><p className="ss-email-triage-note">
      Filters cover loaded conversations only. Reply review: {reviewRules.minDays}–{reviewRules.maxDays}
      days old{reviewRules.knownOnly?', existing CRM People only':''}. These are
      candidate replies, not confirmed unanswered messages. Tasks, reviewed and snoozed
      conversations stay in their separate views.
-    </p>
+    </p></details>
+    <div className="ss-email-list-columns" aria-hidden="true"><span>Subject</span><span>Correspondents</span><span>Date</span></div>
+    <div className="ss-email-thread-list" role="list">
     {triageFilter==='review'&&shownTriage.length>1&&
      <details className="ss-email-bulk-triage">
       <summary>Batch actions · {shownTriage.length} visible</summary>
@@ -425,7 +428,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
      const linked=links.filter(l=>l.threadId===t.id&&l.mailbox===mailbox).length;
      const reviewDecision=reviewReply?currentGmailReviewDecision(t,reviewDecisions):null;
      const work=threadWork.get(t.id);
-     return <div key={t.id} className="ss-email-thread-row">
+     return <div key={t.id} className="ss-email-thread-row" role="listitem">
       <button type="button" className={'ss-email-thread'+(activeId===t.id?' is-selected':'')}
        aria-pressed={activeId===t.id} onClick={()=>{void showThread(t.id);}}>
        <strong>{t.subject}</strong>
@@ -461,6 +464,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
     })}
     {nextPage&&<button type="button" disabled={loading} className="ss-email-more"
       onClick={()=>{void searchGmail(query,nextPage);}}>Load more conversations</button>}
+    </div>
    </div>
    <section className="ss-email-detail" aria-label="Selected conversation">
     {!activeId&&<div className="ss-email-empty">Choose a conversation to read messages and link it to a record.</div>}
@@ -476,6 +480,21 @@ export function EmailWorkspace({contacts,deals,companies}:{
       <pre>{message.text||'(No plain text message content)'}</pre>
      </article>)}
     </div>}
+    <div className="ss-email-action-toolbar" role="toolbar" aria-label="Gmail CRM actions">
+     <span>CRM actions</span>
+     {([['task','New task'],['log','Log Activity'],['person','Create Person'],['link','Link record']] as const).map(([id,label])=>
+      <button type="button" key={id} disabled={!canWrite||((id==='task'||id==='log')&&details?.summary.id!==current.id)}
+       aria-expanded={emailAction===id} aria-pressed={emailAction===id}
+       onClick={()=>setEmailAction(emailAction===id?null:id)}>{label}</button>)}
+    </div>
+    {emailAction&&<div className="ss-email-action-popover" role="dialog" aria-modal="false"
+     aria-label={'Email '+emailAction+' actions'}
+     onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();setEmailAction(null);}}}>
+     <header><strong>{emailAction==='task'?'Follow-up task':emailAction==='log'?'Log email Activity':
+      emailAction==='person'?'Create CRM Person':'Linked records'}</strong>
+      <button type="button" aria-label="Close email actions" onClick={()=>setEmailAction(null)}>×</button></header>
+     <div className="ss-email-action-content">
+      {emailAction==='link'?<>
     <div className="ss-email-associations">
      <h4>Linked CRM records</h4>
      {activeLinks.length?activeLinks.map(item=>{
@@ -508,7 +527,15 @@ export function EmailWorkspace({contacts,deals,companies}:{
       <button type="button" disabled={!selectedTarget} onClick={applyLink}>Link conversation</button>
      </div>}
     </div>
-    {canWrite&&mailbox&&details?.summary.id===current.id&&
+    
+      </>:emailAction==='person'?<>
+{canWrite&&mailbox&&<EmailPersonCreate362
+     key={current.id+'|'+mailbox} thread={current} mailbox={mailbox} contacts={contacts}
+     companies={companies} scope={expectedScope} canWrite={canWrite}
+     onCreated={id=>{setNotice('Person created in CRM. You can continue working in this email.');setEmailAction(null);}} onOpen={openPerson}/>}
+
+      </>:<>
+{canWrite&&mailbox&&details?.summary.id===current.id&&
      <EmailActivityLogger363 key={current.id+'|'+mailbox+'|logger'}
       details={details} mailbox={mailbox} scope={expectedScope}
       contacts={contacts} companies={companies} deals={deals}
@@ -516,19 +543,19 @@ export function EmailWorkspace({contacts,deals,companies}:{
        !!currentGmailReviewDecision(current,reviewDecisions)||
        !!threadWork.get(current.id)?.alreadyHandled||
        (reviewRules.knownOnly&&!triage.some(item=>item.thread.id===current.id&&item.people.length>0)))}
-      reviewRules={reviewRules}/>}
-    {canWrite&&mailbox&&<EmailPersonCreate362
-     key={current.id+'|'+mailbox} thread={current} mailbox={mailbox} contacts={contacts}
-     companies={companies} scope={expectedScope} canWrite={canWrite}
-     onCreated={openPerson} onOpen={openPerson}/>}
+      reviewRules={reviewRules} defaultLogOpen={emailAction==='log'}/>}
+    
+      </>}
+     </div>
+    </div>}
     </>}
    </section>
   </div>}
-  <footer className="ss-email-disclaimer">
+  <details className="ss-email-disclaimer"><summary>Email privacy and storage</summary><p>
    Automatically matched Gmail conversations are NOT CRM Activities. Use Log email Activity only
    when you want to record a message; Create follow-up Task works independently. Message bodies and
    access tokens are not saved to CRM. Manual thread links are browser-local; saved Activities and
    private follow-up Tasks use normal SalesShop storage. Gmail stays read-only.
-  </footer>
+  </p></details>
  </section>;
 }

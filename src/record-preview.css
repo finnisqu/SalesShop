@@ -657,3 +657,46 @@
 @media(max-width:760px){
  .activity-preview-external-edit input{min-height:44px;}
 }
+
+
+/* #373 — contact shortcuts and the close button are a single flex cluster.
+ * No absolute positioning, no overlapping Email/X at narrow widths. */
+:root[data-sales-theme] .record-preview-panel>header.record-preview-person-header{
+ display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
+ gap:9px!important;min-width:0;box-sizing:border-box;
+}
+:root[data-sales-theme] .record-preview-person-header>.ss-preview-heading{
+ flex:1 1 0!important;min-width:0!important;max-width:100%;
+}
+:root[data-sales-theme] .record-preview-person-controls{
+ display:inline-flex;align-items:center;justify-content:flex-end;
+ flex:0 0 auto;gap:8px;min-width:0;
+}
+:root[data-sales-theme] .record-preview-person-controls
+ .record-preview-person-quick-actions{
+ display:flex;flex:0 0 auto;gap:5px;align-items:center;
+}
+:root[data-sales-theme] .record-preview-person-header
+ .record-preview-person-controls>.ss-preview-close{
+ position:static!important;top:auto!important;right:auto!important;
+ left:auto!important;bottom:auto!important;transform:none!important;
+ margin:0!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ flex:0 0 37px!important;width:37px!important;height:37px!important;
+ min-width:37px!important;min-height:37px!important;
+}
+@media(max-width:430px){
+ :root[data-sales-theme] .record-preview-panel>header.record-preview-person-header{
+  gap:4px!important;
+ }
+ :root[data-sales-theme] .record-preview-person-controls{gap:5px}
+ :root[data-sales-theme] .record-preview-person-controls
+ .record-preview-person-quick-actions>a{
+  flex:0 0 30px;width:30px;height:34px;min-height:34px;
+ }
+ :root[data-sales-theme] .record-preview-person-header
+ .record-preview-person-controls>.ss-preview-close{
+  flex-basis:34px!important;width:34px!important;height:34px!important;
+  min-width:34px!important;min-height:34px!important;
+ }
+}

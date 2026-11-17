@@ -275,7 +275,7 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
         :returnToLabel?<button type="button" className="record-preview-back"
          onClick={onClose} aria-label={'Back to '+returnToLabel}>← Back to {returnToLabel}</button>:null}
        <PreviewPanelHeading eyebrow={capture?'Deal · Record external quote':center?'QUOTE · QUICK VIEW':label+' · Quick preview'} title={heading}/>
-       {person&&<div className="record-preview-person-quick-actions" aria-label="Contact this person">
+       {person&&<div className="record-preview-person-controls"><div className="record-preview-person-quick-actions" aria-label="Contact this person">
         {person.phone&&(['call','text'] as const).map(method=><a key={method}
           href={(method==='call'?'tel:':'sms:')+person.phone!.replace(/[^0-9+*#]/g,'')}
           title={method==='call'?'Call '+person.name:'Text '+person.name}
@@ -288,8 +288,8 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
           onClick={()=>beginPersonContact('email')}>
           <PersonQuickMethodIcon method="email"/>
         </a>}
-       </div>}
-       <PreviewPanelClose onClose={onClose} label="Close preview" className="editor-close"/>
+       </div><PreviewPanelClose onClose={onClose} label="Close preview" className="editor-close"/></div>}
+       {!person&&<PreviewPanelClose onClose={onClose} label="Close preview" className="editor-close"/>}
      </header>
      <div className={(center?'tasks-preview-body record-preview-body':'record-preview-body')+
        (capture?' record-preview-capture-body':'')+' ss-mobile-sheet-body'}>

@@ -487,3 +487,96 @@
 .sales-app.view-dashboard .connections-company-self-inline{
  color:var(--ss-theme-muted);font-size:11px;
 }
+
+
+/* #373 — compact record identity; page edge owns the vertical scrollbar. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page{
+ gap:8px!important;min-width:0;min-height:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-breadcrumb{
+ gap:6px;font-size:11px;line-height:1.2;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-breadcrumb button{
+ padding:2px 0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-header{
+ gap:9px!important;min-height:0!important;
+ align-items:end!important;padding:1px 0 9px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-heading{
+ gap:3px;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-heading h1{
+ font-size:clamp(22px,2vw,27px);line-height:1.15;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-badges{
+ gap:4px;margin-top:1px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-badges>span{
+ padding:3px 8px;font-size:10px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-actions{
+ align-self:end;align-items:center;gap:6px;flex-wrap:wrap;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-actions>button,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-actions
+ .ss-record-actions-menu>summary{
+ min-height:36px;padding:7px 10px;
+}
+/* Person title stays visible; these shortcuts are independent from the
+ * header's edit/unlink operations and never imply an Activity was logged. */
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-header-shortcuts{
+ display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:2px 0 1px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-header-shortcuts :is(a,button){
+ display:inline-flex;align-items:center;justify-content:center;
+ box-sizing:border-box;width:32px;height:30px;min-height:30px;min-width:32px;
+ padding:2px 5px;border:1px solid var(--ss-theme-border);
+ border-radius:7px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font-size:16px;font-weight:650;line-height:1;text-decoration:none;cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-header-shortcuts :is(a,button):hover{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint)
+}
+@media(min-width:1101px){
+ /* The main Records scrollport stretches to the right edge of the app. Only
+  * the internal content measure is centered, so its scrollbar isn't inset. */
+ :root[data-sales-theme] .sales-app.view-dashboard main.connections-workspace:has(>.connections-record-page){
+  box-sizing:border-box;width:100%!important;max-width:none!important;
+  min-width:0;min-height:0;height:100%!important;
+  margin:0!important;padding:10px 0 24px!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  scrollbar-gutter:stable!important;overscroll-behavior-y:contain;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ main.connections-workspace>.connections-record-page{
+  box-sizing:border-box;width:calc(100% - 36px);max-width:1600px;
+  margin-inline:auto;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-columns{
+  min-height:max(480px,calc(100dvh - 220px));
+  align-items:stretch!important;gap:12px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related){
+  display:flex!important;flex-direction:column;align-items:stretch;
+  min-width:0;min-height:100%;gap:12px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+ >.connections-record-panel:last-child{
+  flex:1 1 auto;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-columns
+ .connections-record-panel{
+  min-width:0;
+ }
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-header{
+  align-items:stretch!important;padding-bottom:10px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-actions{
+  justify-content:flex-start;
+ }
+}
