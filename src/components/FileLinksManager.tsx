@@ -5,17 +5,20 @@ import {useModalScrollLock} from '../lib/useModalScrollLock';
 import './record-form-modal.css';
 import {useAuthStore} from '../store/authStore';
 import {useFileLinkStore} from '../store/fileLinkStore';
-import {fileLinkProvider,fileLinksScope,fileTargetKey,
- type FileLinkDraft,type FileLinkKind,type FileLinkRecord,type FileTarget} from '../services/fileLinks357a';
+import {fileLinkProvider,fileLinksScope,fileTargetKey,relatedFileTargetKeys,
+ FILE_LINK_CATEGORIES,fileLinkCategoryLabel,
+ type FileLinkDraft,type FileLinkKind,type FileLinkCategory,type FileLinkRecord,
+ type FileTarget} from '../services/fileLinks357a';
 import './file-links.css';
 
 type Props={
  target?:FileTarget;targets?:readonly FileTarget[];
  search?:string;onOpenTarget?:(target:FileTarget)=>void;
+ directory?:boolean;
 };
 /** Stores and opens real provider URLs; it does not upload their contents or
  * imply Dropbox/Drive authorization. Safe, explicit local-only first slice. */
-export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Props){
+export function FileLinksManager({target,targets=[],search='',onOpenTarget,directory=false}:Props){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   user=useAuthStore(s=>s.user?.id);
  const expectedScope=fileLinksScope(mode,org,user);
@@ -27,36 +30,48 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
  useEffect(()=>hydrate(expectedScope),[hydrate,expectedScope]);
  const allTargets=useMemo(()=>target?[target]:[...targets],[target,targets]);
  const [targetKey,setTargetKey]=useState('');
+ const [filterKey,setFilterKey]=useState('');
+ const [includeRelated,setIncludeRelated]=useState(true);
+ const [filterCategory,setFilterCategory]=useState<'all'|FileLinkCategory>('all');
  const [showForm,setShowForm]=useState(false);
  const [editingId,setEditingId]=useState<string|null>(null);
  const closeForm=()=>{setShowForm(false);setError('');};
  useModalScrollLock(showForm);
  const modalRef=useDismissibleLayer<HTMLElement>(showForm,closeForm);
  const [title,setTitle]=useState(''),[url,setUrl]=useState(''),
-  [kind,setKind]=useState<FileLinkKind>('file'),[error,setError]=useState('');
+  [kind,setKind]=useState<FileLinkKind>('file'),
+  [category,setCategory]=useState<FileLinkCategory>('other'),[error,setError]=useState('');
  const chosen=target??allTargets.find(item=>fileTargetKey(item)===targetKey);
  const targetsByKey=useMemo(()=>new Map(allTargets.map(row=>[fileTargetKey(row),row])),[allTargets]);
  const scoped=storedScope===expectedScope&&!!expectedScope?records:[];
+ const filterTarget=targetsByKey.get(filterKey);
+ const relatedKeys=filterTarget?relatedFileTargetKeys(filterTarget,allTargets,includeRelated):null;
  const visible=scoped.filter(row=>{
   if(target)return row.targetKind===target.kind&&row.targetId===target.id;
-  return targetsByKey.has(fileTargetKey({kind:row.targetKind,id:row.targetId}));
+  const key=fileTargetKey({kind:row.targetKind,id:row.targetId});
+  return targetsByKey.has(key)&&(!relatedKeys||relatedKeys.has(key));
  }).filter(row=>{
+  if(directory&&filterCategory!=='all'&&(row.category??'other')!==filterCategory)return false;
   if(!search.trim())return true;
   const label=targetsByKey.get(fileTargetKey({kind:row.targetKind,id:row.targetId}))?.title??'';
-  return [row.title,row.url,label,fileLinkProvider(row.url)].join(' ').toLowerCase()
+  return [row.title,row.url,label,fileLinkProvider(row.url),fileLinkCategoryLabel(row.category)].join(' ').toLowerCase()
    .includes(search.trim().toLowerCase());
  }).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
  const startNew=()=>{setEditingId(null);setTitle('');setUrl('');setKind('file');
+  setCategory(filterCategory==='all'?'other':filterCategory);
+  if(!target)setTargetKey(filterKey);
   setError('');setShowForm(true);};
  const startEdit=(row:FileLinkRecord)=>{setEditingId(row.id);setTitle(row.title);
-  setUrl(row.url);setKind(row.kind);setError('');setShowForm(true);};
+  setUrl(row.url);setKind(row.kind);setCategory(row.category??'other');
+  setError('');setShowForm(true);};
  const submit=(event:FormEvent)=>{
   event.preventDefault();
   if(!chosen&&!editingId){setError('Choose a Company, Deal or Quote first.');return;}
   try{
-   if(editingId)edit(editingId,{title,url,kind});
+   if(editingId)edit(editingId,{title,url,kind,category});
    else if(chosen){
-    const draft:FileLinkDraft={title,url,kind,targetKind:chosen.kind,targetId:chosen.id};
+    const draft:FileLinkDraft={title,url,kind,category,
+     targetKind:chosen.kind,targetId:chosen.id};
     add(draft);
    }
    setError('');setShowForm(false);setEditingId(null);setTitle('');setUrl('');
@@ -68,6 +83,31 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
    <span>{visible.length} {visible.length===1?'link':'links'}{target?' for this record':''}</span>
    <button type="button" onClick={startNew}>+ Link file or folder</button>
   </div>
+  {directory&&<div className="ss-file-directory-filters">
+   <label>Record
+    <select value={filterKey} onChange={event=>setFilterKey(event.target.value)}>
+     <option value="">All records</option>
+     {(['company','deal','quote','externalQuote'] as const).map(kind=>
+      <optgroup key={kind} label={kind==='company'?'Companies':kind==='deal'?'Deals':
+       kind==='quote'?'SalesShop Quotes':'External Quotes'}>
+       {allTargets.filter(row=>row.kind===kind).map(row=>
+        <option key={fileTargetKey(row)} value={fileTargetKey(row)}>{row.title}</option>)}
+      </optgroup>)}
+    </select>
+   </label>
+   <label>Category
+    <select value={filterCategory} onChange={event=>
+      setFilterCategory(event.target.value as 'all'|FileLinkCategory)}>
+     <option value="all">All categories</option>
+     {FILE_LINK_CATEGORIES.map(item=><option value={item.id} key={item.id}>{item.label}</option>)}
+    </select>
+   </label>
+   {filterTarget&&<label className="ss-file-directory-related">
+    <input type="checkbox" checked={includeRelated}
+     onChange={event=>setIncludeRelated(event.target.checked)}/>
+    Include files on related records
+   </label>}
+  </div>}
   {showForm&&createPortal(<div className="ss-record-form-backdrop"
       onPointerDown={event=>{if(event.currentTarget===event.target)closeForm();}}>
      <section ref={modalRef} className="ss-record-form-modal" role="dialog" aria-modal="true"
@@ -102,6 +142,11 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
      <option value="file">Document / file</option><option value="folder">Folder</option>
     </select></label>
    </div>
+   <label>Category
+    <select value={category} onChange={event=>setCategory(event.target.value as FileLinkCategory)}>
+     {FILE_LINK_CATEGORIES.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+    </select>
+   </label>
    <label>File or folder URL<input type="url" required maxLength={2048}
     value={url} placeholder="https://drive.google.com/…"
     onChange={e=>setUrl(e.target.value)}/></label>
@@ -122,8 +167,9 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget}:Prop
      <div className="ss-file-links-details">
       <a href={row.url} target="_blank" rel="noopener noreferrer" title={'Open '+row.title}>
        {row.title} <span aria-hidden="true">↗</span></a>
-      <small>{fileLinkProvider(row.url)}{!target&&linked?' · '+linked.title:''}
-       {' · '}{row.kind==='folder'?'Folder':'File'}</small>
+      <small>{fileLinkProvider(row.url)}{' · '}{fileLinkCategoryLabel(row.category)}
+       {' · '}{row.kind==='folder'?'Folder':'File'}
+       {!target&&linked?' · '+linked.title:''}</small>
      </div>
      <div className="ss-file-links-row-actions">
       {!target&&linked&&onOpenTarget&&
