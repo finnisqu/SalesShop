@@ -70,7 +70,7 @@ export function TaskModalHost(){
   (quote.projectId===linkedDealId||normalizedTaskAssociations(task)
    .some(link=>link.type==='quote'&&link.id===quote.id))):undefined;
  const editTarget=request?.mode==='create'?{
-  title:request.title??'',dueDate:request.dueDate??notebookToday(),type:request.type??'todo',
+  title:request.title??'',dueDate:request.dueDate,type:request.type??'todo',
   associations:request.associations??[],notes:request.notes,
   ...(request.agendaSource?{draftIdentity:'notebook-agenda:'+request.agendaSource.entryId}:{}),
   ...(request.noteSource?{
