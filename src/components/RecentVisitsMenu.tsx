@@ -102,7 +102,9 @@ export function RecentVisitsMenu({disabled=false}:{disabled?:boolean}){
   }
   if(visit.kind==='catalog')
    return {visit,title:CATALOG_TITLES[visit.id]||'Catalog',detail:'Catalog'};
-  return {visit,title:VIEW_TITLES[visit.id],detail:'Workspace'};
+  if(visit.kind==='view')
+   return {visit,title:VIEW_TITLES[visit.id],detail:'Workspace'};
+  return null;
  }).filter((item):item is Item=>item!==null);
 
  const openVisit=(visit:RecentVisit)=>{
