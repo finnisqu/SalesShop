@@ -24,13 +24,13 @@ describe('SalesShop browser and bookmark icon assets',()=>{
    const len=ico.readUInt32LE(at+8);
    const offset=ico.readUInt32LE(at+12);
    expect(offset+len).toBeLessThanOrEqual(ico.length);
-   expect(ico.subarray(offset,offset+8)).toEqual(
-    Buffer.from([137,80,78,71,13,10,26,10]));
+   expect(Array.from(ico.subarray(offset,offset+8))).toEqual(
+    [137,80,78,71,13,10,26,10]);
   }
  });
  it('serves a 180px touch icon and cache-busted icon links',()=>{
   const png=file('public/apple-touch-icon.png');
-  expect(png.subarray(0,8)).toEqual(Buffer.from([137,80,78,71,13,10,26,10]));
+  expect(Array.from(png.subarray(0,8))).toEqual([137,80,78,71,13,10,26,10]);
   expect(png.readUInt32BE(16)).toBe(180);
   expect(png.readUInt32BE(20)).toBe(180);
   const html=file('index.html').toString('utf8');
