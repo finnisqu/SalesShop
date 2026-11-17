@@ -282,3 +282,28 @@
  .ss-email-workspace .ss-email-triage-tab{min-height:44px;padding:9px 11px}
  .ss-email-triage-tabs{gap:7px}
 }
+
+
+/* #368 — visible, personal Gmail review decisions; never a CRM Activity. */
+.ss-email-thread-row{display:grid;gap:3px;min-width:0}
+.ss-email-threads .ss-email-thread-row > .ss-email-thread{
+ box-sizing:border-box;width:100%
+}
+.ss-email-triage-row-actions{
+ display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+ padding:0 4px 6px
+}
+.ss-email-workspace .ss-email-triage-row-actions button{
+ background:transparent;border:1px solid transparent;
+ min-height:30px;padding:5px 7px;border-radius:7px;
+ color:var(--ss-theme-muted);font-size:10px;font-weight:700
+}
+.ss-email-workspace .ss-email-triage-row-actions button:is(:hover,:focus-visible){
+ background:var(--ss-theme-tint);border-color:var(--ss-theme-border);
+ color:var(--ss-theme-ink)
+}
+@media(max-width:600px){
+ .ss-email-workspace .ss-email-triage-row-actions button{
+  min-height:44px;font-size:11px;padding:9px 10px
+ }
+}
