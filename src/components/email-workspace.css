@@ -307,3 +307,13 @@
   min-height:44px;font-size:11px;padding:9px 10px
  }
 }
+
+
+/* #369: compact tracked-follow-up status within the same email triage row. */
+.ss-email-thread .ss-email-triage-thread-meta{line-height:1.55}
+.ss-email-workspace .ss-email-triage-tab[aria-pressed="true"] small{
+ color:var(--ss-theme-ink)
+}
+.ss-email-triage-row-actions button:first-child{
+ white-space:nowrap
+}
