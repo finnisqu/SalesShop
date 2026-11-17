@@ -46,7 +46,7 @@ export function gmailFollowUpNotes(subject:string,date:string):string{
 export function gmailFollowUpAssociations(person:Contact,companies:readonly Company[],
  deal?:Project,explicitCompanyId?:string):TaskAssociation[]{
  const result:TaskAssociation[]=[{type:'contact',id:person.id,label:'Person · '+person.name}];
- const personCompany=person.companyId&&companies.find(c=>c.id===person.companyId);
+ const personCompany=person.companyId?companies.find(c=>c.id===person.companyId):undefined;
  const company=personCompany??companies.find(c=>!person.companyId&&c.id===explicitCompanyId);
  if(company)result.push({type:'company',id:company.id,label:'Company · '+company.name});
  if(deal){
