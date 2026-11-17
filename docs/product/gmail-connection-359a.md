@@ -30,3 +30,7 @@
 - No production Supabase schema, Edge secrets, DNS or customer data is modified by the code change.
 
 Reference: Google Identity Services token model and Gmail API threads docs.
+
+## Automatic Person matching (v0.2a)
+
+Person records with valid email addresses now display live, exact-address Gmail conversation matches by default while the user is connected. You can refresh, load more, disable auto-matching for a Person, or hide and restore individual automatic results. This does not persist Gmail message contents, write CRM Activities, or automatically associate Deals. See [Gmail automatic Person matching](gmail-person-auto-matching-361.md).

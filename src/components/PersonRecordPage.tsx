@@ -251,7 +251,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
           </button>)}
         {!related.directActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>}/>
-      <RecordEmailThreadsPanel kind="person" id={person.id}/>
+      <RecordEmailThreadsPanel kind="person" id={person.id} email={person.email}/>
       <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
       <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
         <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>

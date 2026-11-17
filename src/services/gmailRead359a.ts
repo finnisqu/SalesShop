@@ -159,7 +159,7 @@ export async function gmailThreadSummary(token:string,id:string,signal?:AbortSig
 export interface GmailPage {threads:GmailThreadSummary[];nextPageToken?:string}
 export async function gmailThreadPage(token:string,query:string,pageToken?:string,
  signal?:AbortSignal):Promise<GmailPage>{
- const search=query.trim().slice(0,180)||'newer_than:90d';
+ const search=query.trim().slice(0,900)||'newer_than:90d';
  const params=new URLSearchParams({q:search,maxResults:'20'});
  if(pageToken)params.set('pageToken',pageToken);
  const result=await gmailGet<GmailListResponse>(token,'threads?'+params.toString(),signal);
