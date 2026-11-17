@@ -14,6 +14,11 @@ import {recordActivityOnce} from '../services/activitySaveRecovery351d';
 import {gmailActivityId,gmailActivitySourceKey,gmailMessageDate,gmailMessageDirection,
  loggedGmailActivity} from '../services/gmailActivity363';
 import {EmailFollowUp364} from './EmailFollowUp364';
+import {usePersonalTaskStore,taskScope,type TaskPriority} from '../store/personalTaskStore';
+import {gmailFollowUpSourceId,existingGmailFollowUp,gmailFollowUpTomorrow,
+ gmailFollowUpDateAfter,isValidGmailFollowUpDate,gmailFollowUpTitle,
+ gmailFollowUpNotes,gmailFollowUpAssociations} from '../services/gmailFollowUp364';
+import {gmailCombinedSaveState,suggestGmailReply} from '../services/gmailCombinedWorkflow365';
 import './email-workspace.css';
 
 interface Props {
@@ -54,6 +59,16 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
  const [error,setError]=useState('');
  const [notice,setNotice]=useState('');
  const [saving,setSaving]=useState(false);
+ const [withFollowUp,setWithFollowUp]=useState(false);
+ const [followUpDueDate,setFollowUpDueDate]=useState(()=>gmailFollowUpTomorrow());
+ const [followUpPriority,setFollowUpPriority]=useState<TaskPriority>('normal');
+ const [followUpTitle,setFollowUpTitle]=useState(()=>
+  gmailFollowUpTitle(people.find(p=>p.id===startingPerson)?.name??'customer'));
+ const [followUpNotes,setFollowUpNotes]=useState(()=>
+  gmailFollowUpNotes(last?.subject??details.summary.subject,
+   last?.date??details.summary.date));
+ const taskRows=usePersonalTaskStore(s=>s.tasks),storedTaskScope=usePersonalTaskStore(s=>s.scope);
+ const taskSyncStatus=usePersonalTaskStore(s=>s.syncStatus);
  const pending=useRef(false);
  const access=validGmailToken(scope);
  const canLog=!!access&&access.mailbox===mailbox&&
@@ -67,7 +82,21 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
  const chosenCompany=personCompany??(companies.some(c=>c.id===extraCompanyId)?extraCompanyId:undefined);
  const chosenMessage=details.messages.find(m=>m.id===messageId);
  const key=keyState?.messageId===messageId?keyState.key:null;
- const alreadyLogged=key?loggedGmailActivity(activities,key):undefined;
+ const combined=key?gmailCombinedSaveState(activities,taskRows,key,withFollowUp):null;
+ const alreadyLogged=combined?.activity;
+ const existingFollowUp=combined?.task;
+ const privateScope=taskScope(mode,org,userId);
+ const taskReady=!!privateScope&&storedTaskScope===privateScope;
+ const replyHint=useMemo(()=>suggestGmailReply(details,mailbox),[details,mailbox]);
+
+ useEffect(()=>{
+  setFollowUpTitle(gmailFollowUpTitle(person?.name??'customer'));
+ },[person?.id]);
+ useEffect(()=>{
+  setFollowUpNotes(gmailFollowUpNotes(
+   chosenMessage?.subject??details.summary.subject,
+   chosenMessage?.date??details.summary.date));
+ },[messageId,details]);
 
  useEffect(()=>{
   setKeyState(null);setError('');setNotice('');
@@ -84,12 +113,20 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
 
  const log=(event:FormEvent)=>{
   event.preventDefault();
-  if(pending.current||saving)return;
+  if(pending.current||saving||!combined?.canSubmit)return;
   setError('');setNotice('');
   const msg=chosenMessage;
   const date=msg?gmailMessageDate(msg):null;
   if(!msg||!date){setError('Choose a Gmail message with a valid past date.');return;}
   if(!person||!key){setError('Select an existing Person and a verified Gmail message.');return;}
+  const wantsTask=withFollowUp;
+  const taskDueDate=followUpDueDate,taskPriority=followUpPriority;
+  const taskTitle=followUpTitle.trim(),taskNotes=followUpNotes.trim().slice(0,5000);
+  if(wantsTask&&!existingFollowUp&&(!taskReady||
+     !isValidGmailFollowUpDate(taskDueDate)||!taskTitle||taskTitle.length>240)){
+   setError(!taskReady?'Personal Tasks are still loading. Reopen or retry.':
+    'Choose a valid Task title and a follow-up date of today or later.');return;
+  }
   const auth=useAuthStore.getState(),accessNow=validGmailToken(scope);
   if(!canLog||!auth.organizationId||!accessNow||accessNow.mailbox!==mailbox||
    scope!==emailWorkspaceScope(auth.mode,auth.organizationId,auth.user?.id)||
@@ -98,12 +135,14 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
    setError('Your Gmail connection or SalesShop access changed. Reopen the conversation.');return;
   }
   pending.current=true;setSaving(true);
-  // Key derivation and identity recheck are inside the protected saving attempt.
+  let activitySaved=false;
   void (async()=>{
    try{
     const fingerprint=await gmailActivitySourceKey(auth.organizationId!,mailbox,msg.id);
     if(fingerprint!==key)throw new Error('The selected Gmail message changed. Reopen it to log.');
     const latestAuth=useAuthStore.getState(),latestAccess=validGmailToken(scope);
+    const latestPrivateScope=taskScope(latestAuth.mode,latestAuth.organizationId,
+     latestAuth.user?.id);
     if(!latestAccess||latestAccess.token!==accessNow.token||
       latestAccess.mailbox!==mailbox||
       emailWorkspaceScope(latestAuth.mode,latestAuth.organizationId,latestAuth.user?.id)!==scope||
@@ -131,30 +170,72 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
      ...(latestCompany?[{type:'company' as const,id:latestCompany.id,
        label:'Company · '+latestCompany.name}]:[]),
     ],state.contacts,state.projects,[]);
+
+    // Prevalidate the Task and all record associations BEFORE writing the Activity.
+    const taskState=usePersonalTaskStore.getState();
+    const existingTask=wantsTask?existingGmailFollowUp(taskState.tasks,fingerprint):undefined;
+    const taskAssociations=wantsTask&&!existingTask?gmailFollowUpAssociations(latestPerson,
+     state.companies,latestDeal,latestCompany?.id):[];
+    if(wantsTask&&!existingTask){
+     if(!latestPrivateScope||taskState.scope!==latestPrivateScope||
+      !isValidGmailFollowUpDate(taskDueDate))
+      throw new Error('Your personal Task session or follow-up date changed. Retry.');
+    }
     const activityId=gmailActivityId(fingerprint);
-    const existing=loggedGmailActivity(state.activities,fingerprint)||
+    const existingActivity=loggedGmailActivity(state.activities,fingerprint)||
       state.activities.find(a=>a.id===activityId);
-    if(existing){setNotice('This Gmail message has already been logged as an Activity.');return;}
-    const primary=primaryActivityRelations(relationships);
-    recordActivityOnce(activityId,state.activities,id=>state.recordActivity({
-     id,type:'manual-touchpoint',
-     summary:'Email with '+latestPerson.name,
-     occurredAt:date,...primary,
-     metadata:{
-      interactionMethod:'email',source:'manual',recordedAt:new Date().toISOString(),
-      relatedRecords:relationships,notes:notes.trim().slice(0,5000)||undefined,
-      gmailMessageFingerprint:fingerprint,
-      gmailDirection:gmailMessageDirection(msg,mailbox),
-     },
-    }));
-    setNotice('Email Activity logged. The Person and any linked Company/Deal timelines and Last Contacted now use this date.');
-   }catch(reason){setError(reason instanceof Error?reason.message:'Could not log Gmail Activity.');}
-   finally{pending.current=false;setSaving(false);}
+    if(!existingActivity){
+     const primary=primaryActivityRelations(relationships);
+     recordActivityOnce(activityId,state.activities,id=>state.recordActivity({
+      id,type:'manual-touchpoint',
+      summary:'Email with '+latestPerson.name,
+      occurredAt:date,...primary,
+      metadata:{
+       interactionMethod:'email',source:'manual',recordedAt:new Date().toISOString(),
+       relatedRecords:relationships,notes:notes.trim().slice(0,5000)||undefined,
+       gmailMessageFingerprint:fingerprint,
+       gmailDirection:gmailMessageDirection(msg,mailbox),
+      },
+     }));
+    }
+    activitySaved=true;
+    if(wantsTask&&!existingGmailFollowUp(usePersonalTaskStore.getState().tasks,fingerprint)){
+     // Explicit follow-up, scoped to the signed-in user's own Task store.
+     const currentTasks=usePersonalTaskStore.getState();
+     if(currentTasks.scope!==latestPrivateScope||
+       validGmailToken(scope)?.token!==accessNow.token||
+       emailWorkspaceScope(useAuthStore.getState().mode,
+        useAuthStore.getState().organizationId,useAuthStore.getState().user?.id)!==scope)
+      throw new Error('Account changed before Task creation. Reconnect and retry.');
+     const created=currentTasks.createTask(taskTitle,{
+      type:'follow-up',priority:taskPriority,dueDate:taskDueDate,status:'open',
+      queue:'Follow-ups',associations:taskAssociations,
+      sourceObjectId:gmailFollowUpSourceId(fingerprint),
+      notes:taskNotes||undefined,
+     });
+     if(!created)throw new Error('Task creation could not be confirmed. Retry to finish the follow-up.');
+    }
+    setNotice(wantsTask?'Email Activity and follow-up Task are saved. Last Contacted uses the original message date.':
+     'Email Activity logged. Related CRM timelines and Last Contacted now use the original message date.');
+   }catch(reason){
+    const message=reason instanceof Error?reason.message:'Could not save the Gmail interaction.';
+    setError(activitySaved&&wantsTask?
+     'Email Activity is saved, but the follow-up Task was not confirmed. Retry to finish without logging the email twice. '+message:
+     message);
+   }finally{pending.current=false;setSaving(false);}
   })();
  };
  if(!canLog)return null;
  return <section className="ss-email-activity" aria-label="Log Gmail as CRM Activity">
-  <header><h4>Log email Activity</h4><small>Record a specific Gmail message in CRM.</small></header>
+  <header><h4>Log email Activity</h4>
+   <small>Record an email, with an optional personal follow-up in one step.</small></header>
+  {replyHint&&<div className="ss-email-reply-hint">
+   <strong>Possible reply needed</strong>
+   <p>{replyHint.description} This is a suggestion, not a confirmed unanswered message.</p>
+   <button type="button" disabled={saving} onClick={()=>{
+    setMessageId(replyHint.messageId);setWithFollowUp(true);
+   }}>Plan a follow-up</button>
+  </div>}
   <form onSubmit={log}>
    <label>Message
     <select value={messageId} disabled={saving} onChange={e=>setMessageId(e.target.value)}>
@@ -192,27 +273,77 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
     </label>
    </div>}
    <label>Activity notes
-    <textarea value={notes} maxLength={5000} rows={2} disabled={saving}
+    <textarea value={notes} maxLength={5000} rows={2} disabled={saving||!!alreadyLogged}
      onChange={e=>setNotes(e.target.value)}
      placeholder="Optional subject or follow-up notes"/>
    </label>
-   <p className="ss-email-create-helper">Only when you press Log will the Activity be
-    shared with your CRM team. The notes above are saved; email bodies, mailbox,
-    thread IDs and message IDs are not copied into the CRM.</p>
+   <label className="ss-email-combined-toggle">
+    <input type="checkbox" checked={withFollowUp} disabled={saving}
+     onChange={e=>setWithFollowUp(e.target.checked)}/>
+    <span>Also create a personal follow-up Task</span>
+   </label>
+   {withFollowUp&&<div className="ss-email-combined-details">
+    {existingFollowUp?<p className="ss-email-notice">
+     Follow-up already exists: {existingFollowUp.title}. It won't be duplicated.</p>:<>
+     <div className="ss-email-followup-fields">
+      <label>Due date
+       <input type="date" value={followUpDueDate}
+        min={gmailFollowUpDateAfter(0)} disabled={saving}
+        onChange={e=>setFollowUpDueDate(e.target.value)}/>
+      </label>
+      <label>Priority
+       <select value={followUpPriority} disabled={saving}
+        onChange={e=>setFollowUpPriority(e.target.value as TaskPriority)}>
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+        <option value="low">Low</option>
+       </select>
+      </label>
+     </div>
+     <div className="ss-email-followup-presets" aria-label="Follow-up due date shortcuts">
+      {[{label:'Today',days:0},{label:'Tomorrow',days:1},
+        {label:'In 3 days',days:3},{label:'Next week',days:7}].map(preset=>
+       <button type="button" key={preset.days} disabled={saving}
+        aria-pressed={followUpDueDate===gmailFollowUpDateAfter(preset.days)}
+        onClick={()=>setFollowUpDueDate(gmailFollowUpDateAfter(preset.days))}>{preset.label}</button>)}
+     </div>
+     <label>Task title
+      <input value={followUpTitle} maxLength={240} disabled={saving}
+       onChange={e=>setFollowUpTitle(e.target.value)}/>
+     </label>
+     <label>Task notes (private)
+      <textarea rows={2} value={followUpNotes} maxLength={5000} disabled={saving}
+       onChange={e=>setFollowUpNotes(e.target.value)}/>
+     </label>
+     {!taskReady&&<p className="ss-email-error">Personal Tasks are loading; follow-up creation isn't available yet.</p>}
+    </>}
+   </div>}
+   <p className="ss-email-create-helper">The confirmed email Activity is shared with CRM;
+    the optional follow-up is a personal Task. Only the notes you enter are saved.
+    Gmail message bodies, recipients and raw Gmail IDs are not copied into SalesShop.</p>
    {alreadyLogged?<p className="ss-email-notice" role="status">
-    This specific Gmail message is already logged in CRM.</p>:null}
+    This Gmail message is already logged. You can still create its missing follow-up.</p>:null}
    {error&&<p className="ss-email-error" role="alert">{error}</p>}
    {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
+   {taskSyncStatus==='error'&&withFollowUp&&<p className="ss-email-error">
+    Personal Task sync reports an error. Verify the Task in RECORDS → TASKS.</p>}
    <div className="ss-email-auto-actions">
     <button type="submit" disabled={saving||!person||!key||!chosenMessage||
-     !!alreadyLogged||!gmailMessageDate(chosenMessage)}>
-     {saving?'Logging…':'Log email Activity'}</button>
+     !combined?.canSubmit||!gmailMessageDate(chosenMessage)||
+     (withFollowUp&&!existingFollowUp&&(!taskReady||
+      !isValidGmailFollowUpDate(followUpDueDate)||!followUpTitle.trim()))}>
+     {saving?'Saving…':alreadyLogged?'Create missing follow-up Task':
+      withFollowUp?'Log email + create follow-up':'Log email Activity'}</button>
    </div>
   </form>
-  {person&&chosenMessage&&key&&<EmailFollowUp364
-   key={messageId+'|'+person.id}
-   scope={scope} mailbox={mailbox} message={chosenMessage} fingerprint={key}
-   person={person} company={companies.find(c=>c.id===chosenCompany)}
-   deal={chosenDeal} participants={details.summary.participants}/>}
+  {person&&chosenMessage&&key&&<details className="ss-email-standalone">
+   <summary>Create follow-up without logging email</summary>
+   <EmailFollowUp364
+    key={messageId+'|'+person.id}
+    scope={scope} mailbox={mailbox} message={chosenMessage} fingerprint={key}
+    person={person} company={companies.find(c=>c.id===chosenCompany)}
+    deal={chosenDeal} participants={details.summary.participants}/>
+  </details>}
  </section>;
 }
