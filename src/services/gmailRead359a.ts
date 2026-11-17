@@ -69,6 +69,9 @@ interface GmailListResponse {threads?:Array<{id?:string}>;nextPageToken?:string}
 export interface GmailThreadSummary{
  id:string;subject:string;from:string;date:string;snippet:string;
  participants:string[];messageCount:number;
+ /** Latest Gmail message identity, held in memory for per-message Task/Activity status.
+  * Never persist this raw ID to CRM or browser review storage. */
+ latestMessageId?:string;
 }
 export interface GmailVisibleMessage{
  id:string;from:string;to:string;date:string;subject:string;text:string;
@@ -116,7 +119,8 @@ export function summarizeGmailThread(thread:GmailApiThread):GmailThreadSummary{
   gmailHeader(last,'Subject')||'(No subject)',
   from:gmailHeader(last,'From')||'Unknown sender',date:day,
   snippet:(last.snippet??thread.snippet??'').slice(0,260),
-  participants,messageCount:messages.length};
+  participants,messageCount:messages.length,
+  ...(/^[A-Za-z0-9_-]{3,128}$/.test(last.id??'')?{latestMessageId:last.id}:{})};
 }
 function parsePlainText(part?:GmailApiPayload):string{
  if(!part)return '';
