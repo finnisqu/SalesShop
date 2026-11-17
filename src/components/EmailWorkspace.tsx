@@ -12,6 +12,7 @@ import {emailTargetSuggestions} from '../services/emailThreadMatching359a';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useNavigationStore} from '../store/navigationStore';
 import {EmailPersonCreate362} from './EmailPersonCreate362';
+import {EmailActivityLogger363} from './EmailActivityLogger363';
 import './email-workspace.css';
 
 export function EmailWorkspace({contacts,deals,companies}:{
@@ -201,6 +202,10 @@ export function EmailWorkspace({contacts,deals,companies}:{
       <button type="button" disabled={!selectedTarget} onClick={applyLink}>Link conversation</button>
      </div>}
     </div>
+    {canWrite&&mailbox&&details?.summary.id===current.id&&
+     <EmailActivityLogger363 key={current.id+'|'+mailbox+'|logger'}
+      details={details} mailbox={mailbox} scope={expectedScope}
+      contacts={contacts} companies={companies} deals={deals}/>}
     {canWrite&&mailbox&&<EmailPersonCreate362
      key={current.id+'|'+mailbox} thread={current} mailbox={mailbox} contacts={contacts}
      companies={companies} scope={expectedScope} canWrite={canWrite}
@@ -211,7 +216,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
   <footer className="ss-email-disclaimer">
    Gmail messages stay in Gmail; only explicit thread-to-record IDs are stored in this browser for
    your SalesShop user and organization. Access tokens and message text are never stored. This does
-   not send emails, log Activities, confirm Quote delivery, or sync across team members/devices.
+   not send emails, or confirm Quote delivery. Reading/linking does not log Activities:
+   use Log email Activity explicitly. Connections are not synced across devices.
   </footer>
  </section>;
 }

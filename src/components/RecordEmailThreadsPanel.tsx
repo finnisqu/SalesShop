@@ -8,6 +8,8 @@ import {emailWorkspaceScope,type EmailTargetKind} from '../services/emailThreadL
 import {gmailThreadSummary,gmailThreadDetails,gmailThreadPage,
  type GmailThreadSummary,type GmailThreadDetails} from '../services/gmailRead359a';
 import {canEditTeamArea} from '../services/teamDepartments';
+import {useCrmStore} from '../store/crmStore';
+import {EmailActivityLogger363} from './EmailActivityLogger363';
 import {gmailPersonQuery,matchingPersonThreads,mergePersonThreads,personEmailAddress,
  readPersonEmailPreferences,savePersonEmailPreferences} from '../services/emailAutoMatch361';
 import './email-workspace.css';
@@ -28,6 +30,7 @@ export function RecordEmailThreadsPanel({kind,id,email}:{kind:EmailTargetKind;id
   user=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   department=useAuthStore(s=>s.teamDepartment);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
+ const people=useCrmStore(s=>s.contacts),companies=useCrmStore(s=>s.companies),deals=useCrmStore(s=>s.projects);
  const scope=emailWorkspaceScope(mode,org,user);
  const linkScope=useEmailThreadLinkStore(s=>s.scope),links=useEmailThreadLinkStore(s=>s.links);
  const unlink=useEmailThreadLinkStore(s=>s.unlink);
@@ -197,8 +200,15 @@ export function RecordEmailThreadsPanel({kind,id,email}:{kind:EmailTargetKind;id
     <strong>{message.from}</strong><small>{new Date(message.date).toLocaleString()}</small>
     <pre>{message.text||'(No plain text content)'}</pre>
    </article>)}
+   {canEdit&&account&&<EmailActivityLogger363
+    key={recordKey+'|'+shownDetails.summary.id+'|logger'}
+    details={shownDetails} mailbox={account.mailbox} scope={scope}
+    contacts={people} companies={companies} deals={deals}
+    initialPersonId={kind==='person'?id:undefined}
+    initialDealId={kind==='deal'?id:undefined}/>}
   </div>}
   <p className="connections-record-helper">Automatic matches are live from Gmail; linked emails are
-   browser-local references. Neither logs an Activity nor confirms Quote delivery.</p>
+   browser-local references. Only Log email Activity records a touchpoint;
+   reading or linking alone never confirms Quote delivery.</p>
  </RecordCard>;
 }

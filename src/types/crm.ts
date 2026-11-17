@@ -131,6 +131,10 @@ export interface Project {
 }
 
 export interface ActivityMetadata {
+  /** Non-reversible source hash for explicit Gmail message logging deduplication.
+   * Never persist raw Gmail message/thread IDs, mailbox or body. */
+  gmailMessageFingerprint?:string;
+  gmailDirection?:'sent'|'received';
   /** Completed interaction saved in existing CRM metadata; no new table required. */
   interactionMethod?: 'email'|'call'|'text'|'video-call'|'in-person';
   /** Source actor for personal calendar display; remains in existing JSON metadata. */

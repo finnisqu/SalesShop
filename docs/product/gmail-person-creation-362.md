@@ -11,3 +11,7 @@ From **Tools → Email**, select a conversation. Under **Create Person from emai
 - No Supabase migration or change to Google OAuth scopes. Email bodies, tokens and headers are not persisted in this feature. Incoming/outgoing auto-match remains live/read-only while Gmail is connected.
 
 Acceptance: choose unknown sender, create with suggested existing Company; choose another participant; test personal Gmail address (no employer inferred); create new Company as prospect; duplicate existing email; unauthorized CRM role; change email account or org mid-form; narrow mobile layout; connected Cloudflare build.
+
+## Next: explicit Gmail Activity logging (#363)
+
+The next batch adds a per-message Log email Activity control on Gmail thread detail and the Person/Deal record conversation reader. Last Contacted and standard CRM Activities are driven by this user-confirmed action, never simply by reading Gmail. See docs/product/gmail-activities-363.md.
