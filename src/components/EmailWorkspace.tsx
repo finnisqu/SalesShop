@@ -7,10 +7,13 @@ import {useGmailSessionStore,validGmailToken} from '../store/gmailSession359a';
 import {useEmailThreadLinkStore} from '../store/emailThreadLinkStore359a';
 import {emailWorkspaceScope,type EmailTarget,type EmailTargetKind} from '../services/emailThreadLinks359a';
 import {gmailClientId,gmailThreadDetails,
- type GmailThreadDetails} from '../services/gmailRead359a';
+ type GmailThreadDetails,type GmailThreadSummary} from '../services/gmailRead359a';
 import {emailTargetSuggestions} from '../services/emailThreadMatching359a';
 import {classifyGmailTriage,filterGmailTriage,gmailTriageCounts,
- type GmailTriageFilter} from '../services/gmailTriage367';
+ mayNeedGmailReplyReview,type GmailTriageFilter} from '../services/gmailTriage367';
+import {currentGmailReviewDecision,readGmailReviewDecisions,
+ saveGmailReviewDecisions,withGmailReviewDecision,
+ type GmailReviewDecision,type GmailReviewKind} from '../services/gmailReview368';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useNavigationStore} from '../store/navigationStore';
 import {EmailPersonCreate362} from './EmailPersonCreate362';
@@ -36,7 +39,10 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const linkThread=useEmailThreadLinkStore(s=>s.link),unlinkThread=useEmailThreadLinkStore(s=>s.unlink);
  const dealPeople=useDealPeopleStore(s=>s.links),dealPeopleStoreScope=useDealPeopleStore(s=>s.scope);
  const [query,setQuery]=useState('newer_than:90d');
- const [triageFilter,setTriageFilter]=useState<GmailTriageFilter>('all');
+ const [triageFilter,setTriageFilter]=useState<GmailTriageFilter|'aside'>('all');
+ const [reviewStorage,setReviewStorage]=useState<{
+  identity:string|null;decisions:GmailReviewDecision[]
+ }>({identity:null,decisions:[]});
  const requestVersion=useRef(0);
  const [activeId,setActiveId]=useState<string|null>(null);
  const [selectedTarget,setSelectedTarget]=useState('');
@@ -49,12 +55,27 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const ready=!!expectedScope&&!perspective&&expectedScope===sessionScope&&expectedScope===linkScope;
  const connected=ready&&!!validGmailToken(expectedScope);
  const links=ready?storedLinks:[];
+ const reviewIdentity=connected&&expectedScope&&mailbox?
+  expectedScope+'|'+mailbox.toLowerCase():null;
+ const reviewDecisions=reviewStorage.identity===reviewIdentity?reviewStorage.decisions:[];
  const current=threads.find(t=>t.id===activeId);
  const triage=useMemo(()=>classifyGmailTriage(threads,contacts,mailbox),
   [threads,contacts,mailbox]);
- const triageCounts=useMemo(()=>gmailTriageCounts(triage),[triage]);
- const shownTriage=useMemo(()=>filterGmailTriage(triage,triageFilter),
-  [triage,triageFilter]);
+ const triageCounts=useMemo(()=>{
+  const count=gmailTriageCounts(triage);
+  const active=triage.filter(item=>item.reviewReply&&
+   !currentGmailReviewDecision(item.thread,reviewDecisions)).length;
+  const aside=triage.filter(item=>item.reviewReply&&
+   !!currentGmailReviewDecision(item.thread,reviewDecisions)).length;
+  return {...count,review:active,aside};
+ },[triage,reviewDecisions]);
+ const shownTriage=useMemo(()=>{
+  if(triageFilter==='aside')return triage.filter(item=>item.reviewReply&&
+   !!currentGmailReviewDecision(item.thread,reviewDecisions));
+  if(triageFilter==='review')return triage.filter(item=>item.reviewReply&&
+   !currentGmailReviewDecision(item.thread,reviewDecisions));
+  return filterGmailTriage(triage,triageFilter);
+ },[triage,triageFilter,reviewDecisions]);
  const directLinks=dealPeopleStoreScope===dealPeopleScope(mode,org)?dealPeople:[];
  const suggestions=useMemo(()=>current?
   emailTargetSuggestions(current,contacts,deals,directLinks):[],
@@ -66,6 +87,13 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const targetByKey=useMemo(()=>new Map(targets.map(t=>[t.kind+':'+t.id,t])),[targets]);
  const activeLinks=links.filter(row=>row.mailbox===mailbox&&row.threadId===activeId&&
   targetByKey.has(row.targetKind+':'+row.targetId));
+ useEffect(()=>{
+  if(!reviewIdentity||!expectedScope||!mailbox){
+   setReviewStorage({identity:null,decisions:[]});return;
+  }
+  setReviewStorage({identity:reviewIdentity,
+   decisions:readGmailReviewDecisions(expectedScope,mailbox)});
+ },[reviewIdentity,expectedScope,mailbox]);
  // Changing Gmail identity invalidates all currently displayed mail and metadata.
  useEffect(()=>{
   requestVersion.current+=1;
@@ -86,11 +114,40 @@ export function EmailWorkspace({contacts,deals,companies}:{
   setActiveId(null);setDetails(null);setDetailError('');
   void searchGmail(query);
  };
- const changeTriage=(next:GmailTriageFilter)=>{
+ const changeTriage=(next:GmailTriageFilter|'aside')=>{
   if(next===triageFilter)return;
   requestVersion.current+=1;
   setTriageFilter(next);setActiveId(null);setDetails(null);
   setDetailError('');setDetailsLoading(false);setSelectedTarget('');
+ };
+ const saveReview=(thread:GmailThreadSummary,kind:GmailReviewKind|null)=>{
+  const access=validGmailToken(expectedScope);
+  const live=useGmailSessionStore.getState();
+  if(!connected||!access||!expectedScope||!mailbox||
+   access.mailbox!==mailbox||live.scope!==expectedScope||
+   !threads.some(item=>item.id===thread.id&&item.date===thread.date)){
+   setNotice('Reconnect Gmail or refresh the conversation before changing its review status.');
+   return;
+  }
+  if(kind!==null&&!mayNeedGmailReplyReview(thread,mailbox)){
+   setNotice('This conversation is no longer flagged for reply review.');return;
+  }
+  try{
+   const existing=readGmailReviewDecisions(expectedScope,mailbox);
+   const next=withGmailReviewDecision(existing,thread,kind);
+   saveGmailReviewDecisions(expectedScope,mailbox,next);
+   setReviewStorage({identity:reviewIdentity,decisions:next});
+   setNotice(kind==='reviewed'?'Conversation marked reviewed until a new message arrives.':
+    kind==='snoozed'?'Reply review snoozed for three days (no notification scheduled).':
+    'Conversation returned to reply review.');
+   if(activeId===thread.id&&((triageFilter==='review'&&kind!==null)||
+     (triageFilter==='aside'&&kind===null))){
+    requestVersion.current+=1;setActiveId(null);setDetails(null);
+    setDetailError('');setDetailsLoading(false);
+   }
+  }catch(e){
+   setNotice(e instanceof Error?e.message:'Could not save the review choice.');
+  }
  };
  const showThread=async(id:string)=>{
   const request=++requestVersion.current;
@@ -167,6 +224,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
     <div className="ss-email-triage-tabs" role="group" aria-label="Email triage filters">
      {([{id:'all',title:'All',count:triageCounts.all},
        {id:'review',title:'Review replies',count:triageCounts.review},
+       {id:'aside',title:'Set aside',count:triageCounts.aside},
        {id:'known',title:'Existing People',count:triageCounts.known},
        {id:'new',title:'Unknown participants',count:triageCounts.new}] as const).map(item=>
       <button type="button" key={item.id} className="ss-email-triage-tab"
@@ -177,6 +235,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
     <p className="ss-email-triage-note">
      Filters apply to loaded conversations only. Review replies is a preliminary
      sender/date hint, not proof a message is unanswered. Open a thread to verify.
+     Reviewed suggestions return if a new message arrives; snoozed ones return after
+     three days. These choices are browser-local, not reminder notifications.
     </p>
     {loading&&!threads.length&&<p>Reading Gmail…</p>}
     {!loading&&!threads.length&&<p className="ss-email-empty">No conversations match. Try another search.</p>}
@@ -184,21 +244,34 @@ export function EmailWorkspace({contacts,deals,companies}:{
      <p className="ss-email-empty">No loaded conversations match this filter. Try All or load more.</p>}
     {shownTriage.map(({thread:t,people,unknownAddresses,reviewReply})=>{
      const linked=links.filter(l=>l.threadId===t.id&&l.mailbox===mailbox).length;
-     return <button key={t.id} type="button" className={'ss-email-thread'+(activeId===t.id?' is-selected':'')}
-      aria-pressed={activeId===t.id} onClick={()=>{void showThread(t.id);}}>
-      <strong>{t.subject}</strong>
-      <span>{t.from}</span>
-      <small>{new Date(t.date).toLocaleDateString()} · {t.messageCount} messages
-       {linked?' · '+linked+' linked':''}</small>
-      <small className="ss-email-triage-thread-meta">
-       {people.length?'In CRM: '+people.slice(0,2).map(p=>p.name||p.email).join(', ')+
-        (people.length>2?' +'+(people.length-2):''):'No matching Person'}
-       {unknownAddresses.length?' · '+unknownAddresses.length+
-        (unknownAddresses.length===1?' unknown participant':' unknown participants'):''}
-       {reviewReply?' · Review reply':''}
-      </small>
-      <p>{t.snippet}</p>
-     </button>;
+     const reviewDecision=reviewReply?currentGmailReviewDecision(t,reviewDecisions):null;
+     return <div key={t.id} className="ss-email-thread-row">
+      <button type="button" className={'ss-email-thread'+(activeId===t.id?' is-selected':'')}
+       aria-pressed={activeId===t.id} onClick={()=>{void showThread(t.id);}}>
+       <strong>{t.subject}</strong>
+       <span>{t.from}</span>
+       <small>{new Date(t.date).toLocaleDateString()} · {t.messageCount} messages
+        {linked?' · '+linked+' linked':''}</small>
+       <small className="ss-email-triage-thread-meta">
+        {people.length?'In CRM: '+people.slice(0,2).map(p=>p.name||p.email).join(', ')+
+         (people.length>2?' +'+(people.length-2):''):'No matching Person'}
+        {unknownAddresses.length?' · '+unknownAddresses.length+
+         (unknownAddresses.length===1?' unknown participant':' unknown participants'):''}
+        {reviewReply?' · '+(reviewDecision?reviewDecision.kind==='reviewed'?'Reviewed':
+         'Snoozed until '+new Date(reviewDecision.until!).toLocaleDateString():'Review reply'):''}
+       </small>
+       <p>{t.snippet}</p>
+      </button>
+      {reviewReply&&<div className="ss-email-triage-row-actions" aria-label="Review conversation">
+       {reviewDecision?<button type="button" disabled={!connected} onClick={()=>saveReview(t,null)}>
+        Resume review</button>:<>
+        <button type="button" disabled={!connected} onClick={()=>saveReview(t,'reviewed')}>
+         Mark reviewed</button>
+        <button type="button" disabled={!connected} onClick={()=>saveReview(t,'snoozed')}>
+         Snooze 3 days</button>
+       </>}
+      </div>}
+     </div>;
     })}
     {nextPage&&<button type="button" disabled={loading} className="ss-email-more"
       onClick={()=>{void searchGmail(query,nextPage);}}>Load more conversations</button>}
@@ -252,7 +325,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
     {canWrite&&mailbox&&details?.summary.id===current.id&&
      <EmailActivityLogger363 key={current.id+'|'+mailbox+'|logger'}
       details={details} mailbox={mailbox} scope={expectedScope}
-      contacts={contacts} companies={companies} deals={deals}/>}
+      contacts={contacts} companies={companies} deals={deals}
+      suppressReplyHint={!!current&&!!currentGmailReviewDecision(current,reviewDecisions)}/>}
     {canWrite&&mailbox&&<EmailPersonCreate362
      key={current.id+'|'+mailbox} thread={current} mailbox={mailbox} contacts={contacts}
      companies={companies} scope={expectedScope} canWrite={canWrite}

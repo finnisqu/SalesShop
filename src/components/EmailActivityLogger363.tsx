@@ -30,10 +30,11 @@ interface Props {
  deals:readonly Project[];
  initialPersonId?:string;
  initialDealId?:string;
+ suppressReplyHint?:boolean;
 }
 /** Explicit human-confirmed Activity: a Gmail read or match alone never writes CRM. */
 export function EmailActivityLogger363({details,mailbox,scope,contacts,companies,deals,
- initialPersonId,initialDealId}:Props){
+ initialPersonId,initialDealId,suppressReplyHint=false}:Props){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   department=useAuthStore(s=>s.teamDepartment);
@@ -87,7 +88,8 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
  const existingFollowUp=combined?.task;
  const privateScope=taskScope(mode,org,userId);
  const taskReady=!!privateScope&&storedTaskScope===privateScope;
- const replyHint=useMemo(()=>suggestGmailReply(details,mailbox),[details,mailbox]);
+ const replyHint=useMemo(()=>suppressReplyHint?null:suggestGmailReply(details,mailbox),
+  [details,mailbox,suppressReplyHint]);
 
  useEffect(()=>{
   setFollowUpTitle(gmailFollowUpTitle(person?.name??'customer'));
