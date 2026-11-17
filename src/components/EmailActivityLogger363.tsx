@@ -42,6 +42,8 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   department=useAuthStore(s=>s.teamDepartment);
+ const logPanelRef=useRef<HTMLDetailsElement>(null);
+ useEffect(()=>{if(defaultLogOpen)logPanelRef.current?.setAttribute('open','');},[defaultLogOpen]);
  const perspective=useRolePerspectiveStore(s=>s.activePerspective);
  const activities=useCrmStore(s=>s.activities);
  const hydrated=useCrmStore(s=>s.hydrated);
@@ -285,7 +287,7 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
    scope={scope} mailbox={mailbox} message={chosenMessage} fingerprint={key}
    person={person} company={companies.find(c=>c.id===chosenCompany)}
    deal={chosenDeal} participants={details.summary.participants}/>}
-  <details className="ss-email-standalone ss-email-log-panel" defaultOpen={defaultLogOpen}>
+  <details className="ss-email-standalone ss-email-log-panel" ref={logPanelRef}>
    <summary>{alreadyLogged?'Email Activity already logged · View details':
     'Log this email as an Activity (optional)'}</summary>
    <form onSubmit={log}>
