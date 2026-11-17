@@ -175,11 +175,21 @@ assert(contains(tasks,[
   "confirmation={'Unlink this Task from '+name"
 ]),'Task unlink protections changed');
 const people=source('src/components/DealPersonRelationships.tsx');
-assert(people.includes('const editingThisRole=editingRole===person.id'),'Direct person role edit changed');
+// The per-person Role button is intentionally gone; optional roles remain on
+// newly linked contacts. Add Person lives in the People tab's action toolbar.
+assert(people.includes('<RecordTabToolbar label="People"'),
+  'Deal People toolbar missing');
+assert(people.includes('triggerLabel="+ Add Person"'),
+  'Add Person must remain in the tab toolbar');
+assert(!people.includes('>Role</button>'),
+  'Removed per-person Role button was restored');
+assert(people.includes('link.role||person.title'),
+  'Existing Deal contact roles must remain readable');
 assert.equal((people.match(/<RecordUnlinkButton /g)||[]).length,2,
   'People unlink control mismatch');
 assert(contains(people,[
-  'editing&&<RecordUnlinkButton disabled={busy}',
+  'editing&&manager.editable&&<div className="ss-deal-relations-row-actions">',
+  '<RecordUnlinkButton disabled={busy}',
   'editing&&manager.editable&&<RecordUnlinkButton disabled={busy}',
   'manager.remove(dealId,person.id)',
   'manager.remove(deal.id,personId)'
