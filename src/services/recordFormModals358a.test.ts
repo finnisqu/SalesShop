@@ -12,7 +12,10 @@ describe('Centered create/edit modals #358a',()=>{
   expect(s).toContain('Save link');
   expect(s).toContain('data-dialog-initial-focus');
   expect(s).toContain('<div className="ss-file-links-actions">');
-  expect(s).toContain('</div>\n  {showForm&&createPortal(');
+  expect(s).toContain('{directory&&<div className="ss-file-directory-filters">');
+  expect(s).toContain('  {showForm&&createPortal(');
+  expect(s.indexOf('  {showForm&&createPortal(')).toBeGreaterThan(
+   s.indexOf('className="ss-file-links-actions"'));
   expect(s).not.toContain('</div>}\n  {showForm&&createPortal(');
  });
  it('Our Org +Person uses same modal without changing role/roster save logic',()=>{
