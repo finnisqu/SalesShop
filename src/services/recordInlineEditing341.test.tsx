@@ -77,7 +77,12 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
   const actions=source('components/RecordActionsMenu.tsx');
   expect(input).toContain('if(disabled&&editing&&!saving)');
   expect(input).toContain('event.preventDefault();if(saving||disabled)return;');
-  expect(deal).toContain('{canEditCrm&&<div className="ss-record-local-actions">');
+  // The About editor moved from the body into the selected tab's header.
+  // The edit action must still be permission-gated.
+  expect(deal).toContain("{id:'about',label:'About',tools:canEditCrm?<button");
+  expect(deal).toContain("editing?'Cancel editing':'Edit details'");
+  expect(source('components/RecordTabbedGroup372.tsx')).toContain(
+   '{selected.tools&&<div className="ss-record-tab-tools">{selected.tools}</div>}');
   expect(preview).toContain("{canLog&&onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&");
   expect(actions).toContain('aria-disabled={disabled}');
   expect(actions).toContain('if(disabled)event.preventDefault()');
