@@ -77,7 +77,7 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
   const actions=source('components/RecordActionsMenu.tsx');
   expect(input).toContain('if(disabled&&editing&&!saving)');
   expect(input).toContain('event.preventDefault();if(saving||disabled)return;');
-  expect(deal).toContain('{canEditCrm&&<button type="button" onClick={() => {');
+  expect(deal).toContain('{canEditCrm&&<div className="ss-record-local-actions">');
   expect(preview).toContain("{canLog&&onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&");
   expect(actions).toContain('aria-disabled={disabled}');
   expect(actions).toContain('if(disabled)event.preventDefault()');
@@ -90,10 +90,12 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
   ]){
    const code=source('components/'+filename);
    expect(code).toContain('useEffect(()=>{if(!'+grant+
-    '){setEditing(false);setUnlinking(false);}},['+grant+'])');
+    '){setEditing(false);setUnlinking(false);setUnlinkingQuotes(false);}},['+grant+'])');
    expect(code).toContain('if(!'+grant+'){'+state+
     "('You no longer have permission to edit this "+entity+".');return;}");
-   expect(code).toContain('<RecordActionsMenu unlinking={unlinking} disabled={!'+grant+'}');
+   expect(code).toContain('<RecordActionsMenu');
+    expect(code).toContain('Edit details');
+    expect(code).toContain('tools:canEdit');
   }
   const css=source('record-page-refinement.css');
   expect(css).toContain('.ss-record-pencil:disabled');

@@ -4,10 +4,11 @@ import {join} from 'node:path';
 const source=(path:string)=>readFileSync(join(process.cwd(),path),'utf8');
 
 describe('CRM record page action and relationship parity',()=>{
- it('shows the shared three primary actions on Company, Person and Deal records',()=>{
+ it('keeps Log Activity and Quick Create in the header, with editing inside About',()=>{
   for(const page of ['CompanyRecordPage','PersonRecordPage','DealRecordPage']){
    const content=source('src/components/'+page+'.tsx');
-   expect(content).toContain('Edit Page');
+   expect(content).not.toContain('Edit Page');
+    expect(content).toContain('Edit details');
    expect(content).toContain('Log Activity');
    expect(content).toContain('<QuickCreate context={{kind:');
    expect(content).toContain('launcherLabel="+ New"');
