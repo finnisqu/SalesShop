@@ -157,3 +157,42 @@
  outline:2px solid var(--ss-theme-accent);outline-offset:2px}
 .ss-email-activity :is(select,textarea,button):disabled{opacity:.6}
 @media(max-width:600px){.ss-email-activity select{font-size:16px;min-height:44px}}
+
+
+/* Gmail follow-up Tasks reuse the same small, native input language as Activities. */
+.ss-email-followup{display:grid;gap:10px;min-width:0;margin-top:14px;
+ padding-top:14px;border-top:1px solid var(--ss-theme-border)}
+.ss-email-followup header{display:grid;gap:4px}
+.ss-email-followup h4{font-size:12px;margin:0}
+.ss-email-followup header small,.ss-email-followup .ss-email-create-helper{
+ font-size:11px;line-height:1.5;color:var(--ss-theme-muted)}
+.ss-email-followup form,.ss-email-followup-existing{display:grid;gap:9px;min-width:0}
+.ss-email-followup label{display:grid;gap:5px;font-size:11px;font-weight:700;
+ color:var(--ss-theme-ink)}
+.ss-email-followup :is(input,select,textarea){
+ min-width:0;width:100%;box-sizing:border-box;padding:8px 10px;min-height:40px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:600 12px/1.45 var(--ss-font-body,system-ui,sans-serif)}
+.ss-email-followup textarea{min-height:70px;resize:vertical}
+.ss-email-followup-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(115px,.75fr);
+ gap:9px;align-items:end}
+.ss-email-followup-presets{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ss-email-followup-presets button,.ss-email-followup-existing button{
+ cursor:pointer;border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:700 11px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ padding:7px 10px;min-height:36px}
+.ss-email-followup-presets button[aria-pressed=true]{
+ background:var(--ss-theme-tint);border-color:var(--ss-theme-accent)}
+.ss-email-followup-existing{padding:10px;border:1px solid var(--ss-theme-border);
+ border-radius:9px;font-size:11px;color:var(--ss-theme-ink)}
+.ss-email-followup-existing span{color:var(--ss-theme-muted)}
+.ss-email-followup-existing button{justify-self:start}
+.ss-email-followup :is(input,select,textarea,button):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+.ss-email-followup :is(input,select,textarea,button):disabled{opacity:.6;cursor:not-allowed}
+@media(max-width:600px){
+ .ss-email-followup :is(input,select,textarea){font-size:16px;min-height:44px}
+ .ss-email-followup-presets button,.ss-email-followup-existing button{min-height:44px}
+}
