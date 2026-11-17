@@ -196,3 +196,43 @@
  .ss-email-followup :is(input,select,textarea){font-size:16px;min-height:44px}
  .ss-email-followup-presets button,.ss-email-followup-existing button{min-height:44px}
 }
+
+
+/* Gmail #365: combined email + personal follow-up, optional and compact. */
+.ss-email-reply-hint{display:grid;gap:6px;margin:2px 0 4px;padding:10px 12px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-tint)}
+.ss-email-reply-hint strong{font-size:12px;color:var(--ss-theme-ink)}
+.ss-email-reply-hint p{font-size:11px;color:var(--ss-theme-muted);line-height:1.45;margin:0}
+.ss-email-reply-hint button{justify-self:start;cursor:pointer;min-height:36px;
+ border:1px solid var(--ss-theme-border);background:var(--ss-theme-base);
+ border-radius:8px;padding:7px 11px;color:var(--ss-theme-ink);
+ font:700 11px/1.3 var(--ss-font-body,system-ui,sans-serif)}
+.ss-email-activity .ss-email-combined-toggle{
+ display:flex;flex-wrap:wrap;align-items:center;gap:9px;cursor:pointer;
+ padding:10px 12px;border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-tint);font-size:12px;line-height:1.4;
+}
+.ss-email-combined-toggle input[type="checkbox"]{
+ width:16px;height:16px;min-width:16px;flex:none;accent-color:var(--ss-theme-accent)}
+.ss-email-combined-details{display:grid;gap:9px;min-width:0;padding:0 2px 3px}
+.ss-email-combined-details :is(input,select,textarea){
+ box-sizing:border-box;min-width:0;width:100%;padding:8px 10px;
+ min-height:40px;color:var(--ss-theme-ink);background:var(--ss-theme-base);
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ font:600 12px/1.45 var(--ss-font-body,system-ui,sans-serif)}
+.ss-email-combined-details textarea{min-height:66px;resize:vertical}
+.ss-email-combined-details :is(input,select,textarea):focus-visible,
+.ss-email-reply-hint button:focus-visible,
+.ss-email-standalone summary:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+.ss-email-combined-details :is(input,select,textarea):disabled{opacity:.65}
+.ss-email-standalone{border-top:1px solid var(--ss-theme-border);
+ margin-top:11px;padding-top:11px;min-width:0}
+.ss-email-standalone > summary{cursor:pointer;list-style:revert;
+ font-size:11px;font-weight:700;color:var(--ss-theme-muted);padding:8px 4px}
+.ss-email-standalone > .ss-email-followup{border-top:0;margin-top:4px;padding-top:6px}
+@media(max-width:600px){
+ .ss-email-combined-details :is(input,select,textarea){font-size:16px;min-height:44px}
+ .ss-email-reply-hint button{min-height:44px}
+}
