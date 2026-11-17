@@ -252,3 +252,33 @@
  border-bottom:1px solid var(--ss-theme-border);margin-bottom:10px}
 .ss-email-log-panel > form{margin:0 12px}
 @media(max-width:600px){.ss-email-log-panel > summary{min-height:44px;box-sizing:border-box}}
+
+
+/* #367 Gmail inbox triage: compact, neutral, loaded-results-only filters. */
+.ss-email-triage-tabs{
+ display:flex;gap:5px;flex-wrap:wrap;align-items:center;
+ padding:2px 0 4px;min-width:0
+}
+.ss-email-workspace .ss-email-triage-tab{
+ display:inline-flex;align-items:center;justify-content:space-between;gap:6px;
+ min-height:36px;padding:7px 10px;border-radius:8px;
+ color:var(--ss-theme-ink);background:var(--ss-theme-base);
+ border:1px solid var(--ss-theme-border);
+ font-size:11px;font-weight:700;line-height:1.3
+}
+.ss-email-workspace .ss-email-triage-tab[aria-pressed="true"]{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint)
+}
+.ss-email-triage-tab small{
+ font-size:10px;color:var(--ss-theme-muted);font-variant-numeric:tabular-nums
+}
+.ss-email-triage-note{margin:0 0 4px;font-size:10px;line-height:1.5;
+ color:var(--ss-theme-muted)}
+.ss-email-thread .ss-email-triage-thread-meta{
+ font-size:10px;line-height:1.45;color:var(--ss-theme-muted);
+ overflow-wrap:anywhere
+}
+@media(max-width:600px){
+ .ss-email-workspace .ss-email-triage-tab{min-height:44px;padding:9px 11px}
+ .ss-email-triage-tabs{gap:7px}
+}

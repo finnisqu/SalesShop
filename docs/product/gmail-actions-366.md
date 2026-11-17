@@ -22,3 +22,6 @@ Gmail Person matching automatically displays conversations but does not create C
 5. Expand Activity logging and test the combined save, already-logged case, invalid Gmail token, role permissions and mobile layout.
 
 Validated in the Cloudflare-equivalent QA build; interactive Gmail account acceptance remains for the user.
+## Next increment: on-demand triage (#367)
+
+TOOLS → EMAIL now filters the currently loaded Gmail conversations into All, Review replies, Existing People and Unknown participants. A conversation can appear in multiple views when it has both existing and unknown CRM participants. All matching is exact email-address matching, not name/domain guessing. Review replies is only a sender/date *candidate* and never automatically logs or schedules a Task. It does not prove the mailbox has no response. Counts are explicitly scoped to loaded pages; Load more fetches additional records. Quick filter changes invalidate in-flight detail requests so rapidly switching filters cannot show the wrong email.
