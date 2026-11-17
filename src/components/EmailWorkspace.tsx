@@ -68,6 +68,16 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const [detailsLoading,setDetailsLoading]=useState(false);
  const [notice,setNotice]=useState('');
  const [emailAction,setEmailAction]=useState<'task'|'log'|'person'|'link'|null>(null);
+ useEffect(()=>{
+  if(!emailAction)return;
+  const dismiss=(event:PointerEvent)=>{
+   const target=event.target;
+   if(target instanceof Element&&!target.closest('.ss-email-action-toolbar,.ss-email-action-popover'))
+    setEmailAction(null);
+  };
+  document.addEventListener('pointerdown',dismiss);
+  return()=>document.removeEventListener('pointerdown',dismiss);
+ },[emailAction]);
  const openPerson=useNavigationStore(s=>s.openPerson),openDeal=useNavigationStore(s=>s.openProject);
  const canWrite=!!expectedScope&&!perspective&&canEditTeamArea(role,department,'crm');
  const ready=!!expectedScope&&!perspective&&expectedScope===sessionScope&&expectedScope===linkScope;
@@ -471,15 +481,6 @@ export function EmailWorkspace({contacts,deals,companies}:{
     {current&&<><div className="ss-email-detail-heading">
      <h3>{current.subject}</h3><small>{current.messageCount} message(s) · {current.participants.join(', ')}</small>
     </div>
-    {detailsLoading&&<p>Loading conversation…</p>}
-    {detailError&&<p role="alert" className="ss-email-error">{detailError}</p>}
-    {details&&<div className="ss-email-messages">
-     {details.messages.map(message=><article key={message.id} className="ss-email-message">
-      <div><strong>{message.from}</strong><small>{new Date(message.date).toLocaleString()}</small></div>
-      <small>To: {message.to||'Not provided'}</small>
-      <pre>{message.text||'(No plain text message content)'}</pre>
-     </article>)}
-    </div>}
     <div className="ss-email-action-toolbar" role="toolbar" aria-label="Gmail CRM actions">
      <span>CRM actions</span>
      {([['task','New task'],['log','Log Activity'],['person','Create Person'],['link','Link record']] as const).map(([id,label])=>
@@ -547,6 +548,15 @@ export function EmailWorkspace({contacts,deals,companies}:{
     
       </>}
      </div>
+    </div>}
+    {detailsLoading&&<p>Loading conversation…</p>}
+    {detailError&&<p role="alert" className="ss-email-error">{detailError}</p>}
+    {details&&<div className="ss-email-messages">
+     {details.messages.map(message=><article key={message.id} className="ss-email-message">
+      <div><strong>{message.from}</strong><small>{new Date(message.date).toLocaleString()}</small></div>
+      <small>To: {message.to||'Not provided'}</small>
+      <pre>{message.text||'(No plain text message content)'}</pre>
+     </article>)}
     </div>}
     </>}
    </section>
