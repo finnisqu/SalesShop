@@ -664,3 +664,79 @@
  border-color:var(--ss-theme-border)!important;
  background:var(--ss-theme-base)!important;color:var(--ss-theme-ink)!important;
 }
+
+
+/* #378 — compact record headers and dense About / Forecast rows.
+   Three columns retain precisely matching header heights. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ >.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+ >.connections-record-panel>header{
+ height:54px!important;min-height:54px!important;
+ padding:7px 12px!important;gap:6px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .ss-record-tabbed-header>.ss-record-panel-tabs,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-related>.connections-record-panel>header>.ss-record-recents-tabs{
+ height:36px!important;min-height:36px!important;padding:2px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .ss-record-tabbed-header>.ss-record-panel-tabs>button,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-related>.connections-record-panel>header>.ss-record-recents-tabs>button{
+ box-sizing:border-box!important;height:30px!important;min-height:30px!important;
+ padding:4px 7px!important;font-size:10px!important;line-height:1.15!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .ss-record-tabbed-header>.ss-record-tab-tools>button{
+ height:36px!important;min-height:36px!important;padding:5px 10px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property{
+ box-sizing:border-box!important;min-height:31px!important;
+ padding:3px 0!important;gap:2px 7px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property>span{
+ font-size:9.5px!important;line-height:1.2!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property
+ >:is(strong,.ss-record-inline-value,.ss-record-inline-editor){
+ font-size:10.5px!important;line-height:1.25!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property
+ .ss-record-inline-value strong{
+ font-size:10.5px!important;line-height:1.25!important;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  >.connections-record-columns
+  >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+  >.connections-record-panel>header{
+  height:60px!important;min-height:60px!important;padding:7px 9px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .ss-record-tabbed-header>.ss-record-panel-tabs,
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .connections-record-related>.connections-record-panel>header>.ss-record-recents-tabs{
+  min-height:44px!important;height:44px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .ss-record-tabbed-header>.ss-record-panel-tabs>button,
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .connections-record-related>.connections-record-panel>header>.ss-record-recents-tabs>button{
+  min-height:40px!important;height:40px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .ss-record-tabbed-header>.ss-record-tab-tools>button{
+  height:42px!important;min-height:42px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .connections-record-properties-list>.connections-record-property>span{font-size:10px!important}
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .connections-record-properties-list>.connections-record-property
+  :is(strong,.ss-record-inline-value){font-size:11px!important}
+}

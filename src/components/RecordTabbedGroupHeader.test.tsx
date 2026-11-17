@@ -49,6 +49,22 @@ describe('record panel header actions',()=>{
    items={[{id:'files',label:'Files',internalToolbar:true,content:<p>File panel</p>}]}/>);
   expect(html).not.toContain('ss-record-tab-toolbar');
  });
+ it('keeps the Record headers and property rows compact, and moves Deal Add Person into the toolbar',()=>{
+  const style=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
+  const relationships=readFileSync(new URL('./DealPersonRelationships.tsx',import.meta.url),'utf8');
+  const deal=readFileSync(new URL('./DealRecordPage.tsx',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../../index.html',import.meta.url),'utf8');
+  expect(style).toContain('height:54px!important;min-height:54px!important;');
+  expect(style).toContain('min-height:31px!important;');
+  expect(style).toContain('font-size:10.5px!important;');
+  expect(deal).toContain('internalToolbar:true,content:<>');
+  expect(relationships).toContain('triggerLabel="+ Add Person"');
+  expect(relationships).toContain('<RecordTabToolbar label="People"');
+  expect(relationships).not.toContain('>Role</button>');
+  expect(relationships).toContain('link.role||person.title');
+  expect(html).toContain('href="/favicon.svg"');
+  expect(html).toContain('href="/favicon.ico"');
+ });
  it('all record About panels use inline editors without the Edit button',()=>{
   for(const page of ['Company','Deal','Person']){
    const text=readFileSync(new URL('./'+page+'RecordPage.tsx',import.meta.url),'utf8');

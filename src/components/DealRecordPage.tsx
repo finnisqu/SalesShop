@@ -376,9 +376,10 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
  {id:'people',label:'People',count:new Set([...related.dealPeople.map(person=>person.id),...directIds]).size,
   tools:canEditCrm?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
     onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
-  content:<>
+  internalToolbar:true,content:<>
 <RecordCard title="People" extra={<span>{new Set([...related.dealPeople.map(p=>p.id),...directIds]).size} linked</span>}>
-        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={unlinking}/>
+        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={unlinking}
+          linkedCount={new Set([...related.dealPeople.map(person=>person.id),...directIds]).size}/>
         {related.dealPeople.some(person=>!directIds.has(person.id))&&<>
          <h3 className="ss-record-people-subheading">Other linked People</h3>
          <div className="connections-record-entity-list">

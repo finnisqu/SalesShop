@@ -1,5 +1,6 @@
 import {useEffect,useState} from 'react';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
+import {RecordTabToolbar} from './RecordTabToolbar';
 import {RecordUnlinkButton} from './RecordUnlinkButton';
 import {useCrmStore} from '../store/crmStore';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
@@ -19,25 +20,22 @@ function useLinks(){
  const active=useDealPeopleStore(s=>s.scope),loaded=useDealPeopleStore(s=>s.loaded),
   loading=useDealPeopleStore(s=>s.loading),error=useDealPeopleStore(s=>s.error),
   links=useDealPeopleStore(s=>s.links),load=useDealPeopleStore(s=>s.load);
- const add=useDealPeopleStore(s=>s.add),setRole=useDealPeopleStore(s=>s.setRole),
-  remove=useDealPeopleStore(s=>s.remove);
+ const add=useDealPeopleStore(s=>s.add),remove=useDealPeopleStore(s=>s.remove);
  useEffect(()=>{void load(scope);},[load,scope]);
  return {ready:loaded&&active===scope,loading,error,links:active===scope?links:[],
   editable:!perspective&&Boolean(scope)&&(mode==='local'||
     Boolean(user&&org&&canEditTeamArea(role,department,'crm'))),
-  add,setRole,remove,retry:()=>void load(scope,true)};
+  add,remove,retry:()=>void load(scope,true)};
 }
 
-export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=false}:{
- dealId:string;people:readonly Contact[];onOpenPerson:(id:string)=>void;editing?:boolean;
+export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=false,linkedCount}:{
+ dealId:string;people:readonly Contact[];onOpenPerson:(id:string)=>void;editing?:boolean;linkedCount?:number;
 }){
  const manager=useLinks();
  const createPerson=useCrmStore(s=>s.createContact);
  const deals=useCrmStore(s=>s.projects);
- const [role,setRole]=useState(''),
-  [editingRole,setEditingRole]=useState<string|null>(null),[editedRole,setEditedRole]=useState(''),
-  [busy,setBusy]=useState(false),[error,setError]=useState('');
- useEffect(()=>{setRole('');setError('');setEditingRole(null);},[dealId]);
+ const [role,setRole]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{setRole('');setError('');},[dealId]);
  const direct=manager.links.filter(link=>link.dealId===dealId);
  const linkedIds=new Set(direct.map(link=>link.personId));
  const choices=people.filter(p=>!linkedIds.has(p.id))
@@ -48,34 +46,8 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
   finally{setBusy(false);}
  };
  return <section className="ss-deal-relations" aria-label="Direct Deal people">
-  {!manager.ready&&<p role="status" className="connections-record-helper">
-   {manager.error?'Unable to load direct links: '+manager.error:'Loading Deal contacts…'}
-   {manager.error&&<button type="button" onClick={manager.retry}>Retry</button>}</p>}
-  {manager.ready&&<div className="ss-deal-relations-list">
-   {direct.map(link=>{
-    const person=people.find(p=>p.id===link.personId);
-    if(!person)return null;
-    const editingThisRole=editingRole===person.id;
-    return <div key={person.id} className="ss-deal-relations-row">
-     <button type="button" className="ss-deal-relations-name"
-      onClick={()=>onOpenPerson(person.id)}><strong>{person.name||person.email||'Unnamed person'}</strong>
-      <small>{link.role||person.title||'Direct contact'} · Open Person →</small></button>
-     {manager.editable&&<div className="ss-deal-relations-row-actions">
-      {editingThisRole?<><input value={editedRole} aria-label={'Role for '+person.name}
-       maxLength={120} onChange={e=>setEditedRole(e.target.value)}/>
-       <button type="button" disabled={busy} onClick={()=>void update(async()=>{
-        await manager.setRole(dealId,person.id,editedRole);setEditingRole(null);
-       })}>Save</button></>:<button type="button"
-       onClick={()=>{setEditingRole(person.id);setEditedRole(link.role??'');}}>Role</button>}
-      {editing&&<RecordUnlinkButton disabled={busy}
-       ariaLabel={'Unlink '+person.name+' from Deal'}
-       confirmation={'Remove '+person.name+' from this Deal? Their Person record and Activities stay intact.'}
-       onUnlink={()=>update(()=>manager.remove(dealId,person.id))}/>}
-     </div>}
-    </div>;
-   })}
-  </div>}
-  {manager.ready&&manager.editable&&<UnifiedRecordPicker kind="Person"
+  <RecordTabToolbar label="People" meta={(linkedCount??direct.length)+' linked'}
+   actions={manager.ready&&manager.editable?<UnifiedRecordPicker kind="Person" triggerLabel="+ Add Person"
     items={choices.map(person=>({id:person.id,name:person.name||person.email||'Unnamed person',
       detail:person.email||person.title}))}
     disabled={busy}
@@ -99,7 +71,27 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
         throw new Error('Person created, but the Deal link did not save. Select the new Person above and retry. '+detail);
       }
     }}
-    />}
+    />:undefined}/>
+  {!manager.ready&&<p role="status" className="connections-record-helper">
+   {manager.error?'Unable to load direct links: '+manager.error:'Loading Deal contacts…'}
+   {manager.error&&<button type="button" onClick={manager.retry}>Retry</button>}</p>}
+  {manager.ready&&<div className="ss-deal-relations-list">
+   {direct.map(link=>{
+    const person=people.find(p=>p.id===link.personId);
+    if(!person)return null;
+    return <div key={person.id} className="ss-deal-relations-row">
+     <button type="button" className="ss-deal-relations-name"
+      onClick={()=>onOpenPerson(person.id)}><strong>{person.name||person.email||'Unnamed person'}</strong>
+      <small>{link.role||person.title||'Direct contact'} · Open Person →</small></button>
+     {editing&&manager.editable&&<div className="ss-deal-relations-row-actions">
+      <RecordUnlinkButton disabled={busy}
+       ariaLabel={'Unlink '+person.name+' from Deal'}
+       confirmation={'Remove '+person.name+' from this Deal? Their Person record and Activities stay intact.'}
+       onUnlink={()=>update(()=>manager.remove(dealId,person.id))}/>
+     </div>}
+    </div>;
+   })}
+  </div>}
   {error&&<p role="alert" className="ss-deal-relations-error">{error}</p>}
  </section>;
 }

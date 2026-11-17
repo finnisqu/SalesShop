@@ -59,3 +59,20 @@
 :root[data-sales-theme] .sales-app .ss-deal-relations-name :is(strong,small){
  white-space:normal!important;overflow-wrap:anywhere!important;
 }
+
+
+/* Direct Deal People now owns its tab toolbar (including + Add Person).
+   Remove the extra divider and margin left from the old below-list picker. */
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-deal-relations[aria-label="Direct Deal people"]{
+ margin:0!important;padding:0!important;border:0!important;gap:7px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-deal-relations[aria-label="Direct Deal people"]>.ss-record-tab-toolbar{
+ margin-bottom:3px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-deal-relations[aria-label="Direct Deal people"]
+ .ss-record-tab-toolbar-actions .ss-unified-picker-trigger{
+ width:auto!important;min-height:33px!important;padding:6px 10px!important;
+}
