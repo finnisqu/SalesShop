@@ -77,10 +77,10 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
   const actions=source('components/RecordActionsMenu.tsx');
   expect(input).toContain('if(disabled&&editing&&!saving)');
   expect(input).toContain('event.preventDefault();if(saving||disabled)return;');
-  // The About editor moved from the body into the selected tab's header.
-  // The edit action must still be permission-gated.
-  expect(deal).toContain("{id:'about',label:'About',tools:canEditCrm?<button");
+  // About now uses permission-gated inline fields instead of a bulk Edit header button.
+  expect(deal).toContain("{id:'about',label:'About',content:<>");
   expect(deal).not.toContain("{id:'about',label:'About',tools:");
+  expect(deal).toContain('<RecordInlineProperty label="Deal name" value={deal.name} disabled={!canEditCrm}');
   expect(deal).toContain('disabled={!canEditCrm}');
   expect(source('components/RecordTabbedGroup372.tsx')).toContain(
    '{selected.tools&&<div className="ss-record-tab-tools">{selected.tools}</div>}');
