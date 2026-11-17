@@ -149,8 +149,8 @@ for(const page of ['CompanyRecordPage','DealRecordPage','PersonRecordPage']){
   assert(right.includes('<RecordRecentsPanel'),page+' missing right-column Recents');
   assert(right.includes('historyCount={'),page+' missing relationship history in Recents');
   assert(!right.includes('<RecordTasksPanel'),page+' Tasks duplicated in right column');
-  assert(contains(content,['<RecordActionsMenu unlinking={unlinking}','<RecordInlineProperty','onUnlink={()=>']),
-    page+' missing edit/unlink assets');
+  assert(contains(content,['<RecordActionsMenu','<RecordInlineProperty','Edit details','RecordUnlinkAction']),
+    page+' missing local edit and guarded connection unlink assets');
 }
 for(const page of ['DealRecordPage','PersonRecordPage'])
   assert(source('src/components/'+page+'.tsx').split('center={<>')[1].includes('<RecordCard title="Company"'),

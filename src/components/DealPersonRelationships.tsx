@@ -48,8 +48,7 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
   finally{setBusy(false);}
  };
  return <section className="ss-deal-relations" aria-label="Direct Deal people">
-  <div className="ss-deal-relations-heading"><strong>Direct Deal contacts</strong><span>{direct.length}</span></div>
-  <p className="connections-record-helper">Shared contact assignments. Link people without creating an Activity or changing a Quote.</p>
+  <div className="ss-deal-relations-heading"><strong>People</strong><span>{direct.length}</span></div>
   {!manager.ready&&<p role="status" className="connections-record-helper">
    {manager.error?'Unable to load direct links: '+manager.error:'Loading Deal contacts…'}
    {manager.error&&<button type="button" onClick={manager.retry}>Retry</button>}</p>}
@@ -76,7 +75,6 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
      </div>}
     </div>;
    })}
-   {!direct.length&&<p className="connections-record-empty">No direct contacts assigned yet.</p>}
   </div>}
   {manager.ready&&manager.editable&&<UnifiedRecordPicker kind="Person"
     items={choices.map(person=>({id:person.id,name:person.name||person.email||'Unnamed person',
@@ -102,7 +100,7 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
         throw new Error('Person created, but the Deal link did not save. Select the new Person above and retry. '+detail);
       }
     }}
-    helper="Links directly to the Deal without creating an Activity or changing a Quote."/>}
+    />}
   {error&&<p role="alert" className="ss-deal-relations-error">{error}</p>}
  </section>;
 }

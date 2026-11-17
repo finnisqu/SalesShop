@@ -79,11 +79,12 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
   const openPerson = useNavigationStore(state => state.openPerson);
   const [editing, setEditing] = useState(false);
   const [unlinking,setUnlinking]=useState(false);
+  const [unlinkingQuotes,setUnlinkingQuotes]=useState(false);
   const [saving,setSaving]=useState(false);
   const [saveError,setSaveError]=useState('');
   const [newCompanyName,setNewCompanyName]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
-  useEffect(()=>{if(!canEditCrm){setEditing(false);setUnlinking(false);}},[canEditCrm]);
+  useEffect(()=>{if(!canEditCrm){setEditing(false);setUnlinking(false);setUnlinkingQuotes(false);}},[canEditCrm]);
 
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [timelineOpen,setTimelineOpen]=useState(false);
@@ -209,25 +210,26 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
 
   return <><RecordPageLayout entityType="project" recordKey={deal.id} recordTypeLabel="Deal" collectionLabel="Deals" title={deal.name} onBack={onBack} backLabel={backLabel}
     subtitle={related.company?.name || deal.companyName || 'No associated company'}
-    badge={<><span className="connections-record-stage">{deal.stage}</span><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length+outsideQuotes.length} linked quotes</span></>}
+    badge={<><select className="ss-deal-stage-control" aria-label="Deal stage" title="Change Deal stage"
+ value={deal.stage} disabled={!canEditCrm}
+ onChange={event=>updateDeal(deal.id,{stage:event.target.value as ProjectStage})}>
+ {PROJECT_STAGES.map(stage=><option key={stage} value={stage}>{stage}</option>)}
+ </select><span>{dealPipelineLabel(deal.pipeline)}</span><span>{related.linkedQuotes.length+outsideQuotes.length} linked quotes</span></>}
     actions={<>
-      <RecordActionsMenu unlinking={unlinking} disabled={!canEditCrm}
-        onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
-        onDelete={canEditCrm&&!related.linkedQuotes.length&&!outsideQuotes.length&&!directIds.size
-          ?async()=>{await useCrmStore.getState().deleteCleanProject(deal.id);onBack();}
-          :undefined}/>
-      {canEditCrm&&<button type="button" onClick={() => {
-        setNotice(null);setSaveError('');
-        if(editing)setNewCompanyName('');
-        setEditing(value=>!value);
-      }}>{editing ? 'Cancel Edit Page' : 'Edit Page'}</button>}
-      
-      {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
+      {canEditCrm&&!related.linkedQuotes.length&&!outsideQuotes.length&&!directIds.size&&
+ <RecordActionsMenu onDelete={async()=>{await useCrmStore.getState().deleteCleanProject(deal.id);onBack();}}/>}
+ {canEditCrm&&<button type="button" onClick={()=>logDealActivity()}>Log Activity</button>}
       <QuickCreate context={{kind:'deal',id:deal.id,name:deal.name}} launcherLabel="+ New"/>
     </>}
     left={<>
       <RecordTabbedGroup372 title={deal.name} initialTab="about" items={[
  {id:'about',label:'About',content:<>
+ {canEditCrm&&<div className="ss-record-local-actions">
+  <button type="button" onClick={()=>{
+   setNotice(null);setSaveError('');if(editing)setNewCompanyName('');
+   setEditing(v=>!v);
+  }}>{editing?'Cancel editing':'Edit details'}</button>
+ </div>}
  <RecordCard title="About this deal">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate
@@ -376,27 +378,22 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
 ]}/>
     </>}
     center={<>
-      {unlinking&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
-        Unlink removes a direct association immediately after confirmation. It does not delete
-        the related record or its history. Cancel Edit Page does not restore an unlinked association.
-      </p>}
       <RecordTabbedGroup372 title="Connections" items={[
  {id:'people',label:'People',count:new Set([...related.dealPeople.map(person=>person.id),...directIds]).size,
+  tools:canEditCrm?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
   content:<>
-<RecordCard title="People" extra={<span>{new Set([
-        ...related.dealPeople.map(person=>person.id),...directIds]).size} linked</span>}>
-        <p className="connections-record-helper">Linked People from Quotes and Activities appear below. Assign direct Deal contacts separately.</p>
-        <div className="connections-record-entity-list">
-          {related.dealPeople.map(person=><div key={person.id} className="ss-deal-person-entry">
-            <button type="button" onClick={()=>openPerson(person.id)}>
-              <strong>{person.name||person.email||'Unnamed person'}</strong>
-              <small>{person.title||'Linked contact'} · Open person →</small>
-            </button>
-            {canEditCrm&&<button type="button" onClick={()=>logDealActivity(person.id)}>Log</button>}
-          </div>)}
-          {!related.dealPeople.length&&<p className="connections-record-empty">No contacts linked through Quotes or Activities. Add a direct Deal Person below.</p>}
-        </div>
-        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={editing||unlinking}/>
+<RecordCard title="People" extra={<span>{new Set([...related.dealPeople.map(p=>p.id),...directIds]).size} linked</span>}>
+        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={unlinking}/>
+        {related.dealPeople.some(person=>!directIds.has(person.id))&&<>
+         <h3 className="ss-record-people-subheading">Other linked People</h3>
+         <div className="connections-record-entity-list">
+          {related.dealPeople.filter(person=>!directIds.has(person.id)).map(person=>
+           <button type="button" key={person.id} onClick={()=>openPerson(person.id)}>
+            <strong>{person.name||person.email||'Unnamed person'}</strong>
+            <small>{person.title||'Linked contact'} · Open Person →</small>
+           </button>)}
+         </div>
+        </>}
         {related.companyPeople.some(person=>!directIds.has(person.id))&&<details className="ss-deal-company-people">
           <summary>Other people at this company ({related.companyPeople.filter(person=>!directIds.has(person.id)).length})</summary>
           <div className="connections-record-entity-list">
@@ -412,21 +409,23 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
       </RecordCard>
 <PrivateDealContactRoles dealId={deal.id} contacts={contacts} quotes={related.linkedQuotes} />
  </>},
- {id:'tasks',label:'Tasks',content:<>
-<RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing||unlinking}
+ {id:'tasks',label:'Tasks',tools:canEditCrm?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  content:<>
+<RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={unlinking}
         quickActions={<DealBidReminder deal={deal}/>}/>
  </>},
- {id:'company',label:'Company',content:<>
+ {id:'company',label:'Company',tools:canEditCrm?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  content:<>
 <RecordCard title="Company">
         {related.company ? <div className="connections-record-entity-list">
           <div className="ss-record-associated-row">
             <button type="button" onClick={() => openCompany(related.company!.id)}>
               <strong>{related.company.name}</strong><small>Open company →</small>
             </button>
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
+            {unlinking&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
               target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
           </div>
-        </div> : <p className="connections-record-empty">No associated company. Edit the deal to select one.</p>}
+        </div> : <p className="connections-record-empty">No company linked yet.</p>}
         <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
       </RecordCard>
  </>},
@@ -444,13 +443,16 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
         {externalQuoteOpen&&<ExternalQuoteSentForm key={deal.id} deal={deal}
           onCancel={()=>setExternalQuoteOpen(false)}
           onRecorded={()=>{setExternalQuoteOpen(false);setNotice({kind:"applied",message:"External quote saved. It is now linked to this Deal and appears in Quotes."});}}/>}
+        {canEditCrm&&related.linkedQuotes.length>0&&<div className="ss-record-local-actions">
+         <button type="button" onClick={()=>setUnlinkingQuotes(v=>!v)}>{unlinkingQuotes?'Done managing Quote links':'Manage Quote links'}</button>
+        </div>}
         <div className="connections-record-entity-list">
           {related.linkedQuotes.map(quote => <div className="ss-record-associated-row" key={quote.id}>
             <button type="button" onClick={() => openQuote(quote.id)}>
               <strong>{quote.title || displayQuoteNumber(quote)}</strong>
               <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
             </button>
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
+            {unlinkingQuotes&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
               target={{kind:'quote',id:quote.id,name:quote.title||displayQuoteNumber(quote)}}/>}
           </div>)}
           {outsideQuotes.map(activity=><button type="button" key={activity.id}

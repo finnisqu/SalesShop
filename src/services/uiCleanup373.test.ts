@@ -51,13 +51,16 @@ describe('Build #373 — viewport Email and Records UI',()=>{
   }
   expect(source('record-page-refinement.css')).toContain('max-height:calc(100dvh - 265px)');
  });
- it('places record More before Edit, with uniform tab capsules and full-width scrollbar',()=>{
+ it('keeps global menus for record deletion and localizes editing, with uniform tab capsules',()=>{
   for(const file of ['PersonRecordPage','DealRecordPage','CompanyRecordPage']){
    const page=source('components/'+file+'.tsx');
-   const a=page.indexOf('actions={<>'),b=page.indexOf('</>}',a);
+   const a=page.indexOf('actions={<>'),b=page.indexOf('left={<>',a);
    const actions=page.slice(a,b);
-   expect(actions.indexOf('<RecordActionsMenu')).toBeGreaterThan(-1);
-   expect(actions.indexOf('<RecordActionsMenu')).toBeLessThan(actions.indexOf('Edit Page'));
+   expect(actions).toContain('<RecordActionsMenu');
+   expect(actions).not.toContain('Edit Page');
+   expect(actions).not.toContain('onUnlink');
+   expect(page).toContain('Edit details');
+   expect(page).toContain('tools:canEdit');
   }
   const css=source('connections-record-pages.css');
   expect(css).toContain('main.connections-workspace:has(>.connections-record-page)');

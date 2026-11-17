@@ -383,3 +383,127 @@
  :root[data-sales-theme] .sales-app.view-dashboard .connections-record-panel
  .ss-record-panel-tabs button{min-height:41px!important}
 }
+
+
+/* Build #375 — panel-specific edit/link controls, direct Deal stage, and
+ * History entries with a non-wrapping date column. */
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-local-actions,
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-tools{
+ display:flex!important;align-items:center;justify-content:flex-end;
+ flex-wrap:wrap;gap:7px;min-width:0;
+ margin:0 0 9px!important;padding:0!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-local-actions button,
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-tools button{
+ min-height:32px!important;padding:6px 10px!important;border:1px solid var(--ss-theme-border)!important;
+ border-radius:7px!important;background:var(--ss-theme-base)!important;
+ color:var(--ss-theme-ink)!important;white-space:nowrap;
+ font-size:10px!important;font-weight:700!important;cursor:pointer!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-local-actions button:hover,
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-tools button:hover{
+ background:var(--ss-theme-tint)!important;border-color:var(--ss-theme-accent)!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-people-subheading{
+ margin:11px 0 5px;padding-top:9px;border-top:1px solid var(--ss-theme-border);
+ color:var(--ss-theme-muted);font-size:11px;font-weight:800;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-deal-stage-control{
+ box-sizing:border-box;max-width:190px;min-width:105px;min-height:27px;
+ padding:3px 20px 3px 8px;border:1px solid var(--ss-theme-accent);
+ border-radius:99px;background:var(--ss-theme-tint);
+ color:var(--ss-theme-ink);font:750 11px/1.15 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-deal-stage-control:disabled{
+ border-color:var(--ss-theme-border);opacity:.75;cursor:default;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline li{
+ box-sizing:border-box;min-width:0;max-width:100%;
+ padding-bottom:15px;overflow:visible;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline li>div{
+ display:grid!important;grid-template-columns:minmax(0,1fr) max-content!important;
+ align-items:start!important;gap:7px 9px!important;
+ flex-wrap:nowrap!important;justify-content:normal!important;
+ min-width:0!important;width:100%!important;max-width:100%!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline li>div>button{
+ appearance:none!important;box-sizing:border-box!important;
+ min-width:0!important;max-width:100%!important;width:auto!important;
+ display:block!important;grid-column:1!important;grid-row:1!important;
+ padding:0!important;margin:0!important;min-height:0!important;
+ border:0!important;border-radius:0!important;outline-offset:2px;
+ background:transparent!important;background-color:transparent!important;
+ box-shadow:none!important;color:var(--ss-theme-ink)!important;
+ font:700 11px/1.45 var(--ss-font-body,system-ui,sans-serif)!important;
+ text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ cursor:pointer!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline li>div>button:hover{
+ text-decoration:underline!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline li>div>button strong{
+ display:inline!important;max-width:100%!important;
+ padding:0!important;margin:0!important;border:0!important;
+ background:none!important;box-shadow:none!important;color:inherit!important;
+ font:inherit!important;text-align:left!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline li>div>time{
+ grid-column:2!important;grid-row:1!important;align-self:start!important;
+ justify-self:end!important;flex:0 0 auto!important;
+ display:block!important;min-width:max-content!important;
+ max-width:none!important;white-space:nowrap!important;
+ margin:2px 0 0!important;padding:0!important;
+ background:transparent!important;color:var(--ss-theme-muted)!important;
+ font-size:10px!important;font-weight:500!important;line-height:1.35!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline li>small{
+ display:block!important;margin:3px 0 0!important;
+ color:var(--ss-theme-muted)!important;
+ text-transform:none;font-size:10px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-forecast{display:grid;gap:10px;min-width:0;max-width:100%}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-forecast>.ss-record-local-actions{justify-content:space-between}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-forecast>.ss-record-local-actions small{
+ color:var(--ss-theme-muted);font-size:10px;font-weight:700
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-forecast-form{display:grid;gap:10px;min-width:0;}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-forecast-form>label{
+ display:grid;gap:4px;min-width:0;font-size:11px;font-weight:700;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-forecast-form input{
+ box-sizing:border-box;width:100%;max-width:100%;min-width:0;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ min-height:37px;padding:7px 9px;font:600 12px/1.4 inherit;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-forecast-form .ss-record-local-actions{margin:4px 0 0!important}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-error{
+ color:var(--ss-danger,#c24e4e);font-size:11px;margin:0;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-local-actions button,
+ :root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-tools button{
+  min-height:42px!important;
+ }
+}

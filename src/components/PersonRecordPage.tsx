@@ -60,11 +60,12 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
   const person = people.find((candidate) => candidate.id === contactId);
   const [editing, setEditing] = useState(false);
   const [unlinking,setUnlinking]=useState(false);
+  const [unlinkingQuotes,setUnlinkingQuotes]=useState(false);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editError,setEditError]=useState('');
   const [newCompanyName,setNewCompanyName]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
-  useEffect(()=>{if(!canEditRecord){setEditing(false);setUnlinking(false);}},[canEditRecord]);
+  useEffect(()=>{if(!canEditRecord){setEditing(false);setUnlinking(false);setUnlinkingQuotes(false);}},[canEditRecord]);
   const [draft, setDraft] = useState({
     name: person?.name ?? '', email: person?.email ?? '', phone: person?.phone ?? '',
     title: person?.title ?? '', companyId: person?.companyId ?? '',
@@ -76,7 +77,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
 
   useEffect(() => {
-    setEditing(false);setUnlinking(false);
+    setEditing(false);setUnlinking(false);setUnlinkingQuotes(false);
     setActivityPreviewId(null);
     setNewCompanyName('');
     setEditError('');setNotice(null);
@@ -152,23 +153,19 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
          }]})}><RecordContactIcon374 kind="activity"/></button>}
      </>}
     actions={<>
-      <RecordActionsMenu unlinking={unlinking} disabled={!canEditRecord}
-        onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
-        onDelete={canEditRecord&&!isOurOrgContact(person,companies)?async()=>{
-          await useCrmStore.getState().deleteContact(person.id);onBack();
-        }:undefined}/>
-      {canEditRecord&&<button type="button" onClick={() => {
-        setNotice(null);setEditError('');setUnlinking(false);
-        if(editing)setNewCompanyName('');
-        setEditing(value=>!value);
-      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
-      
-      <QuickCreate context={{kind:'person',id:person.id,name:displayName}} launcherLabel="+ New"/>
+      {canEditRecord&&!isOurOrgContact(person,companies)&&<RecordActionsMenu
+    onDelete={async()=>{await useCrmStore.getState().deleteContact(person.id);onBack();}}/>}
+    <QuickCreate context={{kind:'person',id:person.id,name:displayName}} launcherLabel="+ New"/>
     </>}
     left={<>
  <RecordTabbedGroup372 title={displayName} initialTab="about" items={[
  {id:'about',label:'About',content:<>
- <RecordCard title="About this person">
+ {canEditRecord&&<div className="ss-record-local-actions">
+   <button type="button" onClick={()=>{setNotice(null);setEditError('');
+    if(editing)setNewCompanyName('');setEditing(v=>!v);
+   }}>{editing?'Cancel editing':'Edit details'}</button>
+  </div>}
+  <RecordCard title="About this person">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={save}>
           <RecordEditField label="Name" error={editError==='Enter a name or email.'?editError:undefined}
@@ -243,12 +240,9 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
  ]}/>
  </>}
  center={<>
-      {unlinking&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
-        Unlink removes a direct association immediately after confirmation. It does not delete
-        the related record or its history. Cancel Edit Page does not restore an unlinked association.
-      </p>}
       <RecordTabbedGroup372 title="Connections" items={[
- {id:'deals',label:'Deals',count:related.linkedDeals.length,content:<>
+ {id:'deals',label:'Deals',count:related.linkedDeals.length,tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  content:<>
 <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
         {related.linkedDeals.length>0&&<div className="connections-record-entity-list">
           {related.linkedDeals.map(({ project, quoteCount }) =>
@@ -257,13 +251,15 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
               <small>Quote contact · {quoteCount} {quoteCount === 1 ? 'linked quote' : 'linked quotes'} →</small>
             </button>)}
           </div>}
-        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing||unlinking}/>
+        <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={unlinking}/>
       </RecordCard>
  </>},
- {id:'tasks',label:'Tasks',content:<>
+ {id:'tasks',label:'Tasks',tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  content:<>
 <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
  </>},
- {id:'company',label:'Company',content:<>
+ {id:'company',label:'Company',tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  content:<>
 <RecordCard title="Company">
         {(related.company||associatedOwnCompany) ? <div className="connections-record-entity-list">
           {associatedOwnCompany&&<button type="button" onClick={()=>openCompany(associatedOwnCompany.id)}>
@@ -276,13 +272,13 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
                <strong>{related.company.name}</strong>
                <small>{isInternal?'Subcontractor firm':'Associated company'} · View company record →</small>
              </button>
-             {(editing||unlinking)&&!isInternal&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
+             {unlinking&&!isInternal&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
                target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
            </div>}
           {isInternal&&!associatedOwnCompany&&<p className="connections-record-helper">
             Listed in Our Organization. Mark your company SELF to connect its record automatically.
           </p>}
-        </div> : <p className="connections-record-empty">No company is assigned. Select Edit person to associate one.</p>}
+        </div> : <p className="connections-record-empty">No company assigned yet.</p>}
         {!isInternal&&<>
           <RecordRelationshipPicker source={{kind:'person',id:person.id,name:displayName}} target="company"/>
         </>}
@@ -296,14 +292,19 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
 <RecordRecentsPanel
         quoteCount={quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}
         activityCount={related.directActivities.length} quotes={<>
-       <div className="connections-record-entity-list">
+       {canEditRecord&&quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&
+        <div className="ss-record-local-actions">
+         <button type="button" onClick={()=>setUnlinkingQuotes(v=>!v)}>
+          {unlinkingQuotes?'Done managing Quote links':'Manage Quote links'}</button>
+        </div>}
+        <div className="connections-record-entity-list">
         {quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).map(q=><div
           className="ss-record-associated-row" key={q.id}>
           <button type="button" onClick={()=>openQuote(q.id)}>
             <strong>{q.title||displayName+' quote'}</strong>
             <small>{q.status} · Open quote →</small>
           </button>
-          {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
+          {unlinkingQuotes&&<RecordUnlinkAction source={{kind:'person',id:person.id,name:displayName}}
             target={{kind:'quote',id:q.id,name:q.title||displayName+' quote'}}/>}
          </div>)}
         {!quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&

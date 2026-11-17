@@ -4,6 +4,7 @@ import {RecordInlineProperty} from './RecordInlineProperty';
 import {RecordActionsMenu} from './RecordActionsMenu';
 import {RecordRecentsPanel} from './RecordRecentsPanel';
 import {RecordTabbedGroup372} from './RecordTabbedGroup372';
+import {CompanyForecastEditor375} from './CompanyForecastEditor375';
 import {RecordNotebookPanel374} from './RecordNotebookPanel374';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {QuickCreate} from './QuickCreate';
@@ -15,7 +16,7 @@ import {RecordFilesPanel} from './RecordFilesPanel';
 import {ourOrgPeople,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 import {RecordEditField,RecordFormFeedback,nonnegativeFieldError,RECORD_CHANGE_APPLIED_MESSAGE,type RecordFormNotice} from './RecordFormFeedback';
 import { companyRecordView } from '../services/companyRecordView';
-import { companyAnnualPotential, companyEstimatedAnnualWork,type CompanyPatch } from '../types/crm';
+import {type CompanyPatch} from '../types/crm';
 import {companyRelationship,companyRelationshipLabel,companyRelationshipPatch,
  isOurCompany,visibleCompanyAliases,type EditableCompanyRelationship}
  from '../services/companyRelationship';
@@ -58,6 +59,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editing, setEditing] = useState(false);
   const [unlinking,setUnlinking]=useState(false);
+  const [unlinkingQuotes,setUnlinkingQuotes]=useState(false);
   const [newAlias, setNewAlias] = useState('');
   const [editError,setEditError]=useState('');
   const [notice,setNotice]=useState<RecordFormNotice|null>(null);
@@ -71,7 +73,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
 
   useEffect(() => { hydrateQuotes(); }, [hydrateQuotes]);
   useEffect(() => {
-    setEditing(false);setUnlinking(false);
+    setEditing(false);setUnlinking(false);setUnlinkingQuotes(false);
     setActivityPreviewId(null);
     setNewAlias('');
     setEditError('');setNotice(null);
@@ -174,15 +176,8 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
       </span><span>{related.relatedProjects.length} deals</span>
       <span>{related.relatedQuotes.length+externalQuotes.length} linked quotes</span></>}
     actions={<>
-      <RecordActionsMenu unlinking={unlinking} disabled={!canEditRecord}
-        onUnlink={()=>{setEditing(false);setUnlinking(value=>!value);}}
-        onDelete={canEditRecord&&!isOurCompany(company)?async()=>{
-          await useCrmStore.getState().deleteCompany(company.id);onBack();
-        }:undefined}/>
-      {canEditRecord&&<button type="button" onClick={() => {
-        setNotice(null);setEditError('');setUnlinking(false);setEditing(current=>!current);
-      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
-      
+      {canEditRecord&&!isOurCompany(company)&&<RecordActionsMenu
+         onDelete={async()=>{await useCrmStore.getState().deleteCompany(company.id);onBack();}}/>}
       <button type="button" onClick={()=>openActivityComposer({associations:[{
         type:'company',id:company.id,label:'Company · '+company.name,
       }]})}>Log Activity</button>
@@ -191,7 +186,11 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
     left={<>
       <RecordTabbedGroup372 title={company.name} initialTab="about" items={[
  {id:'about',label:'About',content:<>
- <RecordCard title="About this company">
+ {canEditRecord&&<div className="ss-record-local-actions">
+   <button type="button" onClick={()=>{setNotice(null);setEditError('');setEditing(v=>!v);}}>
+    {editing?'Cancel editing':'Edit details'}</button>
+  </div>}
+  <RecordCard title="About this company">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={saveCompany}>
           <RecordEditField label="Company name" required error={editError==='Enter a company name.'?editError:undefined}>
@@ -253,35 +252,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
       </RecordCard>
  </>},
  ...(company.kind==='customer'?[{id:'forecast',label:'Forecast',content:<>
-{company.kind === 'customer' && <RecordCard title="Account forecast">
-        <div className="connections-record-properties-list">
-          <RecordInlineProperty label="Annual units" type="number"
-            value={company.annualUnits?.toString()??''} disabled={!canEditRecord}
-            onSave={value=>{
-              const e=nonnegativeFieldError(value,'Annual units');
-              if(e)throw new Error(e);
-              updateCompany(company.id,{annualUnits:optionalNumber(value)});
-            }}/>
-          <RecordInlineProperty label="Revenue / unit" type="number"
-            value={company.averageUnitValue?.toString()??''}
-            display={company.averageUnitValue===undefined?'Not set':money.format(company.averageUnitValue)}
-            disabled={!canEditRecord}
-            onSave={value=>{
-              const e=nonnegativeFieldError(value,'Revenue / unit');if(e)throw new Error(e);
-              updateCompany(company.id,{averageUnitValue:optionalNumber(value)});
-            }}/>
-          <RecordInlineProperty label="Expected share (%)" type="number"
-            value={company.expectedSharePct?.toString()??''}
-            display={company.expectedSharePct===undefined?'Not set':company.expectedSharePct+'%'}
-            disabled={!canEditRecord}
-            onSave={value=>{
-              const e=nonnegativeFieldError(value,'Expected share',100);if(e)throw new Error(e);
-              updateCompany(company.id,{expectedSharePct:optionalNumber(value)});
-            }}/>
-          <RecordProperty label="Annual potential">{companyAnnualPotential(company) === undefined ? 'Not set' : money.format(companyAnnualPotential(company)!)}</RecordProperty>
-          <RecordProperty label="Expected annual work">{companyEstimatedAnnualWork(company) === undefined ? 'Not set' : money.format(companyEstimatedAnnualWork(company)!)}</RecordProperty>
-        </div>
-      </RecordCard>}
+<CompanyForecastEditor375 company={company} canEdit={canEditRecord}/>
  </>}]:[]),
  {id:'files',label:'Files',content:<>
 <RecordFilesPanel target={{kind:'company',id:company.id,title:company.name}}/>
@@ -292,19 +263,16 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
 ]}/>
     </>}
     center={<>
-      {unlinking&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
-        Unlink removes a direct association immediately after confirmation. It does not delete
-        the related record or its history. Cancel Edit Page does not restore an unlinked association.
-      </p>}
       <RecordTabbedGroup372 title="Connections" items={[
- {id:'deals',label:'Deals',count:related.relatedProjects.length,content:<>
+ {id:'deals',label:'Deals',count:related.relatedProjects.length,tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  content:<>
 <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
         <div className="connections-record-entity-list">
           {related.relatedProjects.map((project) => <div className="ss-record-associated-row" key={project.id}>
             <button type="button" onClick={() => openProject(project.id)}>
               <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
             </button>
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+            {unlinking&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
               target={{kind:'deal',id:project.id,name:project.name}}/>}
           </div>)}
           {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
@@ -312,10 +280,12 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
       </RecordCard>
  </>},
- {id:'tasks',label:'Tasks',content:<>
-<RecordTasksPanel kind="company" id={company.id} name={company.name} editing={editing||unlinking}/>
+ {id:'tasks',label:'Tasks',tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  content:<>
+<RecordTasksPanel kind="company" id={company.id} name={company.name} editing={unlinking}/>
  </>},
- {id:'people',label:'People',count:listedPeople.length,content:<>
+ {id:'people',label:'People',count:listedPeople.length,tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  content:<>
 <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
         <div className="connections-record-entity-list">
           {listedPeople.map((person) => <article key={person.id}>
@@ -328,7 +298,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
             {person.title && <small>{person.title}</small>}
             {person.email && <a href={'mailto:' + person.email}>{person.email}</a>}
             {person.phone && <a href={'tel:' + person.phone}>{person.phone}</a>}
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+            {unlinking&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
               target={{kind:'person',id:person.id,name:person.name||person.email||'Unnamed person'}}/>}
           </article>)}
           {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
@@ -342,13 +312,17 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
 <RecordRecentsPanel quoteCount={related.relatedQuotes.length+externalQuotes.length}
         activityCount={related.relatedActivities.length}
         quotes={<>
+        {canEditRecord&&related.relatedQuotes.length>0&&<div className="ss-record-local-actions">
+         <button type="button" onClick={()=>setUnlinkingQuotes(v=>!v)}>
+          {unlinkingQuotes?'Done managing Quote links':'Manage Quote links'}</button>
+        </div>}
         <div className="connections-record-entity-list">
           {related.relatedQuotes.map((quote) => <div className="ss-record-associated-row" key={quote.id}>
             <button type="button" onClick={() => openQuote(quote.id)}>
               <strong>{quote.title || displayQuoteNumber(quote)}</strong>
               <small>SalesShop · {displayQuoteNumber(quote)} · {quote.status} · {money.format(quoteTotal(quote))}</small>
             </button>
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+            {unlinkingQuotes&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
               target={{kind:'quote',id:quote.id,name:quote.title||displayQuoteNumber(quote)}}/>}
           </div>)}
           {externalQuotes.map(activity=><button type="button" key={activity.id}
