@@ -21,7 +21,7 @@ export function RecordProperty({ label, children }: { label: string; children: R
 
 /** Reusable entity record shell: one scroll surface, three responsive information regions. */
 export function RecordPageLayout({
-  entityType, recordKey, recordTypeLabel, collectionLabel, title, subtitle, badge, actions, onBack, backLabel='Records', left, center, right,
+  entityType, recordKey, recordTypeLabel, collectionLabel, title, subtitle, badge, headerShortcuts, actions, onBack, backLabel='Records', left, center, right,
 }: {
   entityType: 'company' | 'person' | 'project';
   /** Stable database ID: reset editor state on record changes, not renaming. */
@@ -31,6 +31,7 @@ export function RecordPageLayout({
   title: string;
   subtitle?: ReactNode;
   badge?: ReactNode;
+  headerShortcuts?:ReactNode;
   actions?: ReactNode;
   onBack: () => void;
   backLabel?: string;
@@ -63,6 +64,7 @@ export function RecordPageLayout({
         <span className="connections-record-type">{recordTypeLabel ?? (entityType === 'project' ? 'Deal' : entityType)}</span>
         <h1>{title}</h1>
         {subtitle && <p>{subtitle}</p>}
+        {headerShortcuts && <div className="ss-record-header-shortcuts">{headerShortcuts}</div>}
         {badge && <div className="connections-record-badges">{badge}</div>}
       </div>
       {actions && <div className="connections-record-actions ss-record-page-actions">{actions}</div>}

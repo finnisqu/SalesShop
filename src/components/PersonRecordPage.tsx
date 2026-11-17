@@ -60,7 +60,6 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
   const person = people.find((candidate) => candidate.id === contactId);
   const [editing, setEditing] = useState(false);
   const [unlinking,setUnlinking]=useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [activityPreviewId,setActivityPreviewId]=useState<string|null>(null);
   const [editError,setEditError]=useState('');
   const [newCompanyName,setNewCompanyName]=useState('');
@@ -78,7 +77,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
 
   useEffect(() => {
     setEditing(false);setUnlinking(false);
-    setHistoryOpen(false);setActivityPreviewId(null);
+    setActivityPreviewId(null);
     setNewCompanyName('');
     setEditError('');setNotice(null);
   }, [contactId]);
@@ -142,24 +141,34 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
   return <><RecordPageLayout entityType="person" recordKey={person.id} title={displayName} onBack={onBack} backLabel={backLabel}
     subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
     badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
+     headerShortcuts={<>
+       {person.email&&<a href={'mailto:'+person.email.trim()} aria-label={'Email '+displayName} title="Email Person">✉</a>}
+       {person.phone&&<a href={'tel:'+person.phone.replace(/[^0-9+*#]/g,'')} aria-label={'Call '+displayName} title="Call Person">☎</a>}
+       {person.phone&&<a href={'sms:'+person.phone.replace(/[^0-9+*#]/g,'')} aria-label={'Text '+displayName} title="Text Person">▤</a>}
+       {canEditRecord&&<button type="button" title="Log Activity with this Person"
+         aria-label={'Log Activity with '+displayName}
+         onClick={()=>openActivityComposer({associations:[{
+          type:'contact',id:person.id,label:'Person · '+displayName,
+         }]})}>✎</button>}
+     </>}
     actions={<>
-      {canEditRecord&&<button type="button" onClick={() => {
-        setNotice(null);setEditError('');setUnlinking(false);
-        if(editing)setNewCompanyName('');
-        setEditing(value=>!value);
-      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
       <RecordActionsMenu unlinking={unlinking} disabled={!canEditRecord}
         onUnlink={()=>{setEditing(false);setUnlinking(v=>!v);}}
         onDelete={canEditRecord&&!isOurOrgContact(person,companies)?async()=>{
           await useCrmStore.getState().deleteContact(person.id);onBack();
         }:undefined}/>
-      <button type="button" onClick={()=>openActivityComposer({associations:[{
-        type:'contact',id:person.id,label:'Person · '+displayName,
-      }]})}>Log Activity</button>
+      {canEditRecord&&<button type="button" onClick={() => {
+        setNotice(null);setEditError('');setUnlinking(false);
+        if(editing)setNewCompanyName('');
+        setEditing(value=>!value);
+      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
+      
       <QuickCreate context={{kind:'person',id:person.id,name:displayName}} launcherLabel="+ New"/>
     </>}
     left={<>
-      <RecordCard title="About this person">
+ <RecordTabbedGroup372 title={displayName} initialTab="about" items={[
+ {id:'about',label:'About',content:<>
+ <RecordCard title="About this person">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={save}>
           <RecordEditField label="Name" error={editError==='Enter a name or email.'?editError:undefined}
@@ -222,7 +231,8 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
           <RecordProperty label="Updated">{dateLabel(person.updatedAt)}</RecordProperty>
         </div>}
       </RecordCard>
-    <RecordTabbedGroup372 title="Person resources" items={[
+ </>},
+ 
  {id:'email',label:'Email',content:<>
 <RecordEmailThreadsPanel kind="person" id={person.id} email={person.email}/>
  </>},
@@ -238,9 +248,10 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
         </div>
       </RecordCard>
  </>},
-]}/>
-    </>}
-    center={<>
+
+ ]}/>
+ </>}
+ center={<>
       {unlinking&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
         Unlink removes a direct association immediately after confirmation. It does not delete
         the related record or its history. Cancel Edit Page does not restore an unlinked association.
@@ -248,15 +259,13 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
       <RecordTabbedGroup372 title="Connections" items={[
  {id:'deals',label:'Deals',count:related.linkedDeals.length,content:<>
 <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
-        <p className="connections-record-helper">These links mean this person was explicitly selected on a quote. They do not imply a wider role on the deal.</p>
         <div className="connections-record-entity-list">
           {related.linkedDeals.map(({ project, quoteCount }) =>
             <button type="button" key={project.id} onClick={() => openProject(project.id)}>
               <strong>{project.name}</strong>
               <small>Quote contact · {quoteCount} {quoteCount === 1 ? 'linked quote' : 'linked quotes'} →</small>
             </button>)}
-          {!related.linkedDeals.length && <p className="connections-record-empty">No deals explicitly linked through this person's quotes.</p>}
-        </div>
+          </div>
         <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing||unlinking}/>
       </RecordCard>
  </>},
@@ -290,16 +299,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
           Change an internal Person's Company from Our Organization to preserve their roster membership.</p>}
       </RecordCard>
  </>},
- {id:'contact',label:'Contact',content:<>
-<RecordCard title="Contact details">
-        <div className="connections-person-contact-actions">
-          {person.email ? <a href={'mailto:' + person.email}>✉ Email</a> : <span>Email not provided</span>}
-          {person.phone ? <a href={'tel:' + person.phone}>☎ Call</a> : <span>Phone not provided</span>}
-        </div>
-        <p className="connections-record-helper">Opening your email or phone app does not automatically log an activity.</p>
-      </RecordCard>
- </>},
-]}/>
+ ]}/>
     </>}
     right={<>
 <RecordRecentsPanel
@@ -326,14 +326,8 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
           </button>)}
         {!related.directActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>} history={<>
-<section className="connections-record-panel connections-record-history">
-        <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
-          onClick={() => setHistoryOpen((value) => !value)}>
-          <span>Activity history</span><small>{historyOpen ? 'Hide' : 'View'} <span aria-hidden="true">{historyOpen ? '▴' : '▾'}</span></small>
-        </button>
-        {historyOpen && <div className="connections-record-panel-body">
-          <p className="connections-record-helper">Only events explicitly linked to this person appear here.</p>
-          <ol className="connections-record-timeline">
+<div className="ss-record-history-timeline" aria-label="Person activity and relationship history">
+ <ol className="connections-record-timeline">
             {related.directActivities.map((activity) => <li key={activity.id}>
               <div><button type="button" className="connections-activity-history-open"
                 onClick={()=>setActivityPreviewId(activity.id)}
@@ -345,9 +339,8 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
               {!activity.quoteId && activity.projectId && <button type="button" onClick={() => openProject(activity.projectId!)}>Open linked deal →</button>}
             </li>)}
           </ol>
-          {!related.directActivities.length && <p className="connections-record-empty">No directly linked history on this contact.</p>}
-        </div>}
-      </section>
+ {!related.directActivities.length&&<p className="connections-record-empty">No linked history yet.</p>}
+ </div>
  </>} historyCount={related.directActivities.length}/>
     </>}
   />

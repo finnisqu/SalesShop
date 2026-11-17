@@ -176,14 +176,15 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
       </span><span>{related.relatedProjects.length} deals</span>
       <span>{related.relatedQuotes.length+externalQuotes.length} linked quotes</span></>}
     actions={<>
-      {canEditRecord&&<button type="button" onClick={() => {
-        setNotice(null);setEditError('');setUnlinking(false);setEditing(current=>!current);
-      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
       <RecordActionsMenu unlinking={unlinking} disabled={!canEditRecord}
         onUnlink={()=>{setEditing(false);setUnlinking(value=>!value);}}
         onDelete={canEditRecord&&!isOurCompany(company)?async()=>{
           await useCrmStore.getState().deleteCompany(company.id);onBack();
         }:undefined}/>
+      {canEditRecord&&<button type="button" onClick={() => {
+        setNotice(null);setEditError('');setUnlinking(false);setEditing(current=>!current);
+      }}>{editing?'Cancel Edit Page':'Edit Page'}</button>}
+      
       <button type="button" onClick={()=>openActivityComposer({associations:[{
         type:'company',id:company.id,label:'Company · '+company.name,
       }]})}>Log Activity</button>
@@ -377,13 +378,13 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
         {!related.relatedActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>} history={<>
 <RecordCard title="Relationship history" extra={<span>{timeline.length} events</span>}>
-        <CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{
+        <div className="ss-record-history-timeline" aria-label="Company relationship history"><CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{
           if(target.kind==='activity'){setActivityPreviewId(target.id);return;}
           if(target.kind==='person')openPerson(target.id);
           if(target.kind==='deal')openProject(target.id);
           if(target.kind==='quote')openQuote(target.id);
           if(target.kind==='task')requestTaskModal({mode:'preview',id:target.id});
-        }}/>
+        }}/></div>
       </RecordCard>
  </>} historyCount={timeline.length}/>
     </>}
