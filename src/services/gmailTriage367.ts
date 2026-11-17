@@ -5,6 +5,7 @@ import type {Contact} from '../types/crm';
 import type {GmailThreadSummary} from './gmailRead359a';
 import {extractAddresses} from './gmailRead359a';
 import {personEmailAddress} from './emailAutoMatch361';
+import {reviewAgeMatches,DEFAULT_GMAIL_REVIEW_RULES,type GmailReviewRules} from './gmailTriagePrefs370';
 
 export type GmailTriageFilter='all'|'review'|'known'|'new';
 export interface GmailTriageItem {
@@ -14,7 +15,6 @@ export interface GmailTriageItem {
  reviewReply:boolean;
 }
 export interface GmailTriageCounts {all:number;review:number;known:number;new:number}
-const DAYS=24*60*60*1000;
 const BOT_LOCAL=/^(?:no[\W_]*reply|do[\W_]*not[\W_]*reply|mailer[\W_]*daemon|notifications?|bounce)(?:[\W_]|$)/i;
 
 /** "Review replies" is NOT a statement that the mailbox has no response:
@@ -22,7 +22,8 @@ const BOT_LOCAL=/^(?:no[\W_]*reply|do[\W_]*not[\W_]*reply|mailer[\W_]*daemon|not
  * include all messages. The detailed reader offers a more specific suggestion.
  */
 export function mayNeedGmailReplyReview(thread:GmailThreadSummary,
- mailbox:string|null,now=Date.now()):boolean{
+ mailbox:string|null,now=Date.now(),
+ rules:Readonly<GmailReviewRules>=DEFAULT_GMAIL_REVIEW_RULES):boolean{
  const own=personEmailAddress(mailbox);
  const senders=extractAddresses(thread.from);
  if(!own||senders.length!==1||senders[0]===own)return false;
@@ -30,11 +31,11 @@ export function mayNeedGmailReplyReview(thread:GmailThreadSummary,
  if(BOT_LOCAL.test(local))return false;
  // The thread must involve our mailbox, even if not necessarily addressed to it last.
  if(!thread.participants.some(address=>personEmailAddress(address)===own))return false;
- const age=now-Date.parse(thread.date);
- return Number.isFinite(age)&&age>=DAYS&&age<=14*DAYS;
+ return reviewAgeMatches(thread.date,now,rules);
 }
 export function classifyGmailTriage(threads:readonly GmailThreadSummary[],
- contacts:readonly Contact[],mailbox:string|null,now=Date.now()):GmailTriageItem[]{
+ contacts:readonly Contact[],mailbox:string|null,now=Date.now(),
+ rules:Readonly<GmailReviewRules>=DEFAULT_GMAIL_REVIEW_RULES):GmailTriageItem[]{
  const own=personEmailAddress(mailbox);
  const peopleByEmail=new Map<string,Contact[]>();
  for(const contact of contacts){
@@ -55,7 +56,8 @@ export function classifyGmailTriage(threads:readonly GmailThreadSummary[],
    }
   }
   return {thread,people,unknownAddresses,
-   reviewReply:mayNeedGmailReplyReview(thread,mailbox,now)};
+   reviewReply:(!rules.knownOnly||people.length>0)&&
+    mayNeedGmailReplyReview(thread,mailbox,now,rules)};
  });
 }
 export function gmailTriageCounts(items:readonly GmailTriageItem[]):GmailTriageCounts{

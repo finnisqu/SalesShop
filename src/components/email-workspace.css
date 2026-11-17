@@ -317,3 +317,54 @@
 .ss-email-triage-row-actions button:first-child{
  white-space:nowrap
 }
+
+
+/* #370 — configurable personal review rules, search shortcuts, guarded batch triage. */
+.ss-email-shortcuts{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.ss-email-shortcuts label{font-size:11px;font-weight:700;color:var(--ss-theme-muted)}
+.ss-email-shortcuts select,.ss-email-review-settings select{
+ box-sizing:border-box;min-width:0;min-height:38px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ padding:8px 10px;background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:600 12px/1.35 var(--ss-font-body,system-ui,sans-serif)
+}
+.ss-email-review-settings{min-width:0;border-top:1px solid var(--ss-theme-border);padding-top:9px}
+.ss-email-review-settings > summary,.ss-email-bulk-triage > summary{
+ cursor:pointer;list-style:revert;font-size:11px;font-weight:750;color:var(--ss-theme-ink);
+ padding:5px 3px;line-height:1.4;
+}
+.ss-email-review-settings-fields{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 12px;
+ align-items:end;padding:10px 1px 2px
+}
+.ss-email-review-settings-fields label{
+ display:grid;gap:6px;min-width:0;font-size:11px;font-weight:700
+}
+.ss-email-review-settings-fields select{width:100%}
+.ss-email-review-settings-fields .ss-email-review-known-only{
+ display:flex;align-items:center;gap:8px;grid-column:1/-1;line-height:1.45
+}
+.ss-email-review-known-only input{accent-color:var(--ss-theme-accent);
+ width:16px;height:16px;flex:none}
+.ss-email-review-settings > p{margin:7px 0 2px;font-size:10px;
+ color:var(--ss-theme-muted);line-height:1.5}
+.ss-email-bulk-triage{margin:3px 0 6px;padding:8px 10px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;min-width:0}
+.ss-email-bulk-triage > div{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.ss-email-bulk-triage > small{display:block;font-size:10px;line-height:1.4;
+ color:var(--ss-theme-muted)}
+.ss-email-review-settings > summary:focus-visible,
+.ss-email-bulk-triage > summary:focus-visible,
+.ss-email-shortcuts select:focus-visible,
+.ss-email-review-settings select:focus-visible,
+.ss-email-review-known-only input:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px
+}
+@media(max-width:600px){
+ .ss-email-shortcuts{align-items:stretch;flex-direction:column}
+ .ss-email-shortcuts select,.ss-email-review-settings select{
+  width:100%;min-height:44px;font-size:16px
+ }
+ .ss-email-review-settings-fields{grid-template-columns:minmax(0,1fr)}
+ .ss-email-workspace .ss-email-bulk-triage button{min-height:44px}
+}

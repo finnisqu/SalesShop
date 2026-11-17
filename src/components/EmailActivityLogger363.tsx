@@ -19,6 +19,7 @@ import {gmailFollowUpSourceId,existingGmailFollowUp,gmailFollowUpTomorrow,
  gmailFollowUpDateAfter,isValidGmailFollowUpDate,gmailFollowUpTitle,
  gmailFollowUpNotes,gmailFollowUpAssociations} from '../services/gmailFollowUp364';
 import {gmailCombinedSaveState,suggestGmailReply} from '../services/gmailCombinedWorkflow365';
+import {DEFAULT_GMAIL_REVIEW_RULES,type GmailReviewRules} from '../services/gmailTriagePrefs370';
 import './email-workspace.css';
 
 interface Props {
@@ -31,10 +32,12 @@ interface Props {
  initialPersonId?:string;
  initialDealId?:string;
  suppressReplyHint?:boolean;
+ reviewRules?:Readonly<GmailReviewRules>;
 }
 /** Explicit human-confirmed Activity: a Gmail read or match alone never writes CRM. */
 export function EmailActivityLogger363({details,mailbox,scope,contacts,companies,deals,
- initialPersonId,initialDealId,suppressReplyHint=false}:Props){
+ initialPersonId,initialDealId,suppressReplyHint=false,
+ reviewRules=DEFAULT_GMAIL_REVIEW_RULES}:Props){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   userId=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   department=useAuthStore(s=>s.teamDepartment);
@@ -88,8 +91,8 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
  const existingFollowUp=combined?.task;
  const privateScope=taskScope(mode,org,userId);
  const taskReady=!!privateScope&&storedTaskScope===privateScope;
- const replyHint=useMemo(()=>suppressReplyHint?null:suggestGmailReply(details,mailbox),
-  [details,mailbox,suppressReplyHint]);
+ const replyHint=useMemo(()=>suppressReplyHint?null:suggestGmailReply(details,mailbox,
+  Date.now(),reviewRules),[details,mailbox,suppressReplyHint,reviewRules]);
 
  useEffect(()=>{
   setFollowUpTitle(gmailFollowUpTitle(person?.name??'customer'));
