@@ -51,7 +51,7 @@ describe('UI cleanup batch #372',()=>{
   expect(deal).toContain('title="Deal resources"');
   expect(deal).toContain("label:'People'");
   expect(deal).toContain("label:'Tasks'");
-  expect(code('components/RecordRecentsPanel.tsx')).toContain("label:'History'");
+  expect(code('components/RecordRecentsPanel.tsx')).toContain('History <span>');
  });
  it('fixes the Deal People sliver, Tools active tabs and calendar popover borders',()=>{
   expect(code('deal-person-relationships.css')).toContain('grid-template-columns:minmax(0,1fr) auto');
