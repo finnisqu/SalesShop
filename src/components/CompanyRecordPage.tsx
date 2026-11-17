@@ -378,13 +378,13 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
         {!related.relatedActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
       </div>} history={<>
 <RecordCard title="Relationship history" extra={<span>{timeline.length} events</span>}>
-        <CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{
+        <div className="ss-record-history-timeline" aria-label="Company relationship history"><CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{
           if(target.kind==='activity'){setActivityPreviewId(target.id);return;}
           if(target.kind==='person')openPerson(target.id);
           if(target.kind==='deal')openProject(target.id);
           if(target.kind==='quote')openQuote(target.id);
           if(target.kind==='task')requestTaskModal({mode:'preview',id:target.id});
-        }}/>
+        }}/></div>
       </RecordCard>
  </>} historyCount={timeline.length}/>
     </>}
