@@ -107,8 +107,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
  };
  return <section className="ss-email-workspace" aria-label="Connected Email">
   <header className="ss-email-heading">
-   <div><small>EMAIL · PROTOTYPE V0.1</small><h2>Connected Email</h2>
-    <p>Read Gmail conversations, suggest related CRM records, and link threads deliberately.</p></div>
+   <div><small>EMAIL · CONNECTED GMAIL</small><h2>Connected Email</h2>
+    <p>Match Gmail conversations to CRM People, create follow-up Tasks, and explicitly log Activities.</p></div>
    <span>Gmail · read-only</span>
   </header>
   {!gmailClientId&&<div className="ss-email-state">
@@ -214,10 +214,10 @@ export function EmailWorkspace({contacts,deals,companies}:{
    </section>
   </div>}
   <footer className="ss-email-disclaimer">
-   Gmail messages stay in Gmail; only explicit thread-to-record IDs are stored in this browser for
-   your SalesShop user and organization. Access tokens and message text are never stored. This does
-   not send emails, or confirm Quote delivery. Reading/linking does not log Activities:
-   use Log email Activity explicitly. Connections are not synced across devices.
+   Automatically matched Gmail conversations are NOT CRM Activities. Use Log email Activity only
+   when you want to record a message; Create follow-up Task works independently. Message bodies and
+   access tokens are not saved to CRM. Manual thread links are browser-local; saved Activities and
+   private follow-up Tasks use normal SalesShop storage. Gmail stays read-only.
   </footer>
  </section>;
 }

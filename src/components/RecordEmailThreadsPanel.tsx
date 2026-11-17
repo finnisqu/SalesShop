@@ -208,7 +208,7 @@ export function RecordEmailThreadsPanel({kind,id,email}:{kind:EmailTargetKind;id
     initialDealId={kind==='deal'?id:undefined}/>}
   </div>}
   <p className="connections-record-helper">Automatic matches are live from Gmail; linked emails are
-   browser-local references. Only Log email Activity records a touchpoint;
-   reading or linking alone never confirms Quote delivery.</p>
+   browser-local references, not CRM Activities. Use Create follow-up Task independently
+   of Log email Activity. Reading or linking does not update Last Contacted or confirm Quote delivery.</p>
  </RecordCard>;
 }
