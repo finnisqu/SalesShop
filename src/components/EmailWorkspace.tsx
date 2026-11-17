@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
-import type {Contact,Project} from '../types/crm';
+import type {Company,Contact,Project} from '../types/crm';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useDealPeopleStore,dealPeopleScope} from '../store/dealPeopleStore';
@@ -11,10 +11,11 @@ import {gmailClientId,gmailThreadDetails,
 import {emailTargetSuggestions} from '../services/emailThreadMatching359a';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useNavigationStore} from '../store/navigationStore';
+import {EmailPersonCreate362} from './EmailPersonCreate362';
 import './email-workspace.css';
 
-export function EmailWorkspace({contacts,deals}:{
- contacts:readonly Contact[];deals:readonly Project[];
+export function EmailWorkspace({contacts,deals,companies}:{
+ contacts:readonly Contact[];deals:readonly Project[];companies:readonly Company[];
 }){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   user=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
@@ -199,7 +200,12 @@ export function EmailWorkspace({contacts,deals}:{
       </select>
       <button type="button" disabled={!selectedTarget} onClick={applyLink}>Link conversation</button>
      </div>}
-    </div></>}
+    </div>
+    {canWrite&&mailbox&&<EmailPersonCreate362
+     key={current.id+'|'+mailbox} thread={current} mailbox={mailbox} contacts={contacts}
+     companies={companies} scope={expectedScope} canWrite={canWrite}
+     onCreated={openPerson} onOpen={openPerson}/>}
+    </>}
    </section>
   </div>}
   <footer className="ss-email-disclaimer">

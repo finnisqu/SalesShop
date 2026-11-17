@@ -86,7 +86,7 @@ export function ToolsWorkspace(){
     {section==='files'&&<FilesWorkspace companies={companies} deals={deals}
      quotes={quoteRecords} query={query}/>}
     {section==='automations'&&<AutomationsWorkspace/>}
-    {section==='email'&&<EmailWorkspace contacts={contacts} deals={deals}/>}
+    {section==='email'&&<EmailWorkspace contacts={contacts} deals={deals} companies={companies}/>}
    </div>}
  </main>;
 }
