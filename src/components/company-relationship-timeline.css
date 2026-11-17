@@ -85,3 +85,44 @@
 .company-history:not(.is-compact) .company-history-list:focus-visible{
  outline:2px solid var(--ss-focus,var(--ss-theme-accent,#a18c4c));outline-offset:-2px;
 }
+
+
+/* #374: History is already a tab inside a scrollable record panel. Remove the
+ * horizontal filter bar and nested list scroll (both visible at 100% zoom). */
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .company-history{
+ display:block;width:100%;max-width:100%;min-width:0;
+ overflow-x:hidden;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .company-history-summary{
+ padding:6px 0 8px;gap:5px;white-space:normal;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .company-history-filters{
+ display:flex;flex-wrap:wrap!important;overflow-x:visible!important;
+ overflow-y:visible!important;gap:4px;padding:8px 0;
+ max-width:100%;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .company-history-filters button{
+ flex:0 0 auto;min-height:29px;padding:5px 7px;font-size:10px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .company-history:not(.is-compact) .company-history-list{
+ max-height:none!important;overflow:visible!important;
+ min-width:0;max-width:100%;padding:0;margin:0;
+ scrollbar-width:none;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .company-history-list li{
+ min-width:0;max-width:100%;padding:9px 1px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .company-history-list .company-history-row{
+ box-sizing:border-box;min-width:0;max-width:100%;gap:7px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .company-history-open{
+ min-width:44px;padding:4px 6px;
+}

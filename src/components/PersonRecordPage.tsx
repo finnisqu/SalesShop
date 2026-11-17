@@ -4,6 +4,8 @@ import {RecordInlineProperty} from './RecordInlineProperty';
 import {RecordActionsMenu} from './RecordActionsMenu';
 import {RecordRecentsPanel} from './RecordRecentsPanel';
 import {RecordTabbedGroup372} from './RecordTabbedGroup372';
+import {RecordContactIcon374} from './RecordContactIcon374';
+import {RecordNotebookPanel374} from './RecordNotebookPanel374';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
@@ -20,7 +22,6 @@ import {RecordEditField,RecordFormFeedback,RECORD_CHANGE_APPLIED_MESSAGE,recordE
 import { personRecordView } from '../services/personRecordView';
 import { useCrmStore } from '../store/crmStore';
 import { useQuoteStore } from '../store/quoteStore';
-import {useNotebookStore} from '../store/notebookStore';
 import { useNavigationStore } from '../store/navigationStore';
 import {isOurOrgCompany,isOurOrgContact,rosterGroupForContact} from '../services/ourOrganizationDirectory';
 import {isOurCompany,companyRelationshipPatch} from '../services/companyRelationship';
@@ -48,7 +49,6 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
   const openProject = useNavigationStore((state) => state.openProject);
   const openQuote = useNavigationStore((state) => state.openQuote);
   const openNotebookPage=useNavigationStore(state=>state.openNotebookPage);
-  const notebookEntries=useNotebookStore(state=>state.entries);
   const openPerson=useNavigationStore((state)=>state.openPerson);
 
   const mode=useAuthStore(state=>state.mode),org=useAuthStore(state=>state.organizationId),
@@ -140,16 +140,16 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
 
   return <><RecordPageLayout entityType="person" recordKey={person.id} title={displayName} onBack={onBack} backLabel={backLabel}
     subtitle={[person.title, isInternal?(ownCompany?.name??'Our Organization'):related.company?.name].filter(Boolean).join(' · ') || 'Contact'}
-    badge={<span>{isInternal?'Internal contact':related.company?'Associated company':'Unassigned'}</span>}
+    badge={isInternal?<span>Internal contact</span>:null}
      headerShortcuts={<>
-       {person.email&&<a href={'mailto:'+person.email.trim()} aria-label={'Email '+displayName} title="Email Person">✉</a>}
-       {person.phone&&<a href={'tel:'+person.phone.replace(/[^0-9+*#]/g,'')} aria-label={'Call '+displayName} title="Call Person">☎</a>}
-       {person.phone&&<a href={'sms:'+person.phone.replace(/[^0-9+*#]/g,'')} aria-label={'Text '+displayName} title="Text Person">▤</a>}
+       {person.email&&<a href={'mailto:'+person.email.trim()} aria-label={'Email '+displayName} title="Email Person"><RecordContactIcon374 kind="email"/></a>}
+       {person.phone&&<a href={'tel:'+person.phone.replace(/[^0-9+*#]/g,'')} aria-label={'Call '+displayName} title="Call Person"><RecordContactIcon374 kind="call"/></a>}
+       {person.phone&&<a href={'sms:'+person.phone.replace(/[^0-9+*#]/g,'')} aria-label={'Text '+displayName} title="Text Person"><RecordContactIcon374 kind="text"/></a>}
        {canEditRecord&&<button type="button" title="Log Activity with this Person"
          aria-label={'Log Activity with '+displayName}
          onClick={()=>openActivityComposer({associations:[{
           type:'contact',id:person.id,label:'Person · '+displayName,
-         }]})}>✎</button>}
+         }]})}><RecordContactIcon374 kind="activity"/></button>}
      </>}
     actions={<>
       <RecordActionsMenu unlinking={unlinking} disabled={!canEditRecord}
@@ -237,16 +237,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
 <RecordEmailThreadsPanel kind="person" id={person.id} email={person.email}/>
  </>},
  {id:'notebook',label:'Notebook',content:<>
-<RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.contactId===person.id).length} linked</span>}>
-        <div className="connections-record-entity-list">
-          {notebookEntries.filter(entry=>entry.context?.contactId===person.id).map(entry=>
-            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
-              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
-            </button>)}
-          {!notebookEntries.some(entry=>entry.context?.contactId===person.id)&&
-            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
-        </div>
-      </RecordCard>
+<RecordNotebookPanel374 kind="person" id={person.id} title={displayName} onOpenPage={openNotebookPage}/>
  </>},
 
  ]}/>
@@ -259,13 +250,13 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
       <RecordTabbedGroup372 title="Connections" items={[
  {id:'deals',label:'Deals',count:related.linkedDeals.length,content:<>
 <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
-        <div className="connections-record-entity-list">
+        {related.linkedDeals.length>0&&<div className="connections-record-entity-list">
           {related.linkedDeals.map(({ project, quoteCount }) =>
             <button type="button" key={project.id} onClick={() => openProject(project.id)}>
               <strong>{project.name}</strong>
               <small>Quote contact · {quoteCount} {quoteCount === 1 ? 'linked quote' : 'linked quotes'} →</small>
             </button>)}
-          </div>
+          </div>}
         <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={editing||unlinking}/>
       </RecordCard>
  </>},

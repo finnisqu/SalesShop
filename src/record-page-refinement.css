@@ -298,3 +298,88 @@
   min-height:43px!important;
  }
 }
+
+
+/* #374 — left title and tabs must never compete for the same 400px width. */
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page[data-record-type="company"]
+ .connections-record-properties>.connections-record-panel>header,
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page[data-record-type="project"]
+ .connections-record-properties>.connections-record-panel>header{
+ display:flex!important;flex-direction:column!important;
+ align-items:stretch!important;gap:7px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-properties>.connections-record-panel>header:has(.ss-record-panel-tabs) h2{
+ min-width:0;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-panel
+ .ss-record-panel-tabs{
+ display:flex!important;flex-wrap:wrap!important;align-items:center;
+ align-self:flex-start;justify-content:flex-start;
+ gap:2px;max-width:100%!important;
+ min-width:0;width:auto!important;overflow:visible;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-panel
+ .ss-record-panel-tabs button{
+ flex:0 0 auto;max-width:100%;padding:6px 8px!important;
+ min-height:32px!important;font-size:10px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-panel
+ .ss-record-panel-tabs button small{font-size:9px}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ .ss-record-tabbed-body>.connections-record-panel>header{
+ display:none!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ .ss-record-tabbed-body>.connections-record-panel{
+ border:0!important;border-radius:0!important;
+ background:transparent!important;overflow:visible!important;
+ box-shadow:none!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ .ss-record-tabbed-body>.connections-record-panel>.connections-record-panel-body{
+ padding:5px 0 0!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-tabbed-body .ss-deal-relations{
+ border:0!important;margin:0!important;padding:0!important;
+ gap:6px;align-content:start;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-tabbed-body .ss-deal-relations-heading{
+ padding:0;margin:0 0 2px;font-weight:800;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-recents-body{
+ min-width:0;max-width:100%;overflow-x:hidden!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-recents-body
+ .connections-record-panel{
+ width:100%;min-width:0;max-width:100%;
+ overflow-x:hidden!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-recents-body
+ .connections-record-panel-body{
+ min-width:0;max-width:100%;
+ overflow-x:hidden!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-history-timeline{
+ max-height:none!important;overflow:visible!important;
+ min-width:0;max-width:100%;padding:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline{
+ max-width:100%;min-width:0;padding-left:15px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-history-timeline .connections-record-timeline li{
+ min-width:0;max-width:100%;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-panel
+ .ss-record-panel-tabs button{min-height:41px!important}
+}

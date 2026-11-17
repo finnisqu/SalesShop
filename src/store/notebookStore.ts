@@ -40,6 +40,8 @@ interface NotebookState {
   canRedo: boolean;
   hydrate: () => void;
   createEntry: (folderId?: string) => void;
+  /** Add a record-linked text page inline without changing the open Notebook page. */
+  createRecordLinkedEntry:(input:{kind:'company'|'person'|'deal';id:string;title:string})=>string|null;
   appendDailyCapture: (date:string,text:string)=>string|null;
   /** Direct calendar entries live in the existing private date store, not Tasks. */
   addStandaloneCalendarDate: (input:{title:string;date:string;time?:string;annual?:boolean})=>{entryId:string;itemId:string}|null;
@@ -289,6 +291,24 @@ export const useNotebookStore = create<NotebookState>((set, get) => ({
     const first = newEntry();
     persist([first], first.id, [], []);
     set({ folders: [], trashedEntries: [], entries: [first], activeEntryId: first.id, activeTool: 'select', selectedObjectId: null, hydrated: true, ...historyFlags() });
+  },
+
+  createRecordLinkedEntry: (input) => {
+    if(!get().hydrated||!input.id||!input.title.trim())return null;
+    checkpoint(get(),'page:record-create:'+input.kind+':'+input.id);
+    const context=input.kind==='company'?{companyId:input.id}:
+      input.kind==='person'?{contactId:input.id}:{projectId:input.id};
+    // The ID marker restricts the compact text editor to pages it created.
+    const entry:NotebookEntry={
+      ...newEntry(),id:id('page_record_inline'),
+      title:input.title.trim().slice(0,180),context,contentHtml:'<p></p>',
+      paperStyle:'blank',
+    };
+    const entries=[entry,...get().entries];
+    // Keep the Notebook's current page, saved folders and trash intact.
+    persist(entries,get().activeEntryId);
+    set({entries,...historyFlags()});
+    return entry.id;
   },
 
   createEntry: (folderId) => {

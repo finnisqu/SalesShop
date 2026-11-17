@@ -580,3 +580,132 @@
   justify-content:flex-start;
  }
 }
+
+
+/* #374: restore a strict, non-overlapping DOM reading order for record
+ * breadcrumb, identity and columns. The previous compact grid rules allowed
+ * breadcrumb/title overlap at 100% browser zoom on some viewport sizes. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page{
+ display:flex!important;flex-direction:column!important;
+ justify-content:flex-start!important;align-items:stretch!important;
+ gap:7px!important;min-height:0;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ >.connections-record-breadcrumb{
+ order:0!important;position:static!important;inset:auto!important;
+ transform:none!important;float:none!important;
+ flex:0 0 auto!important;align-self:stretch!important;
+ display:flex!important;flex-wrap:wrap;align-items:center;
+ gap:5px!important;min-height:22px!important;max-height:none!important;
+ padding:0!important;margin:0!important;line-height:1.3!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ >.connections-record-header{
+ order:1!important;position:relative!important;inset:auto!important;
+ transform:none!important;float:none!important;flex:0 0 auto!important;
+ box-sizing:border-box;display:flex!important;align-items:end!important;
+ justify-content:space-between!important;flex-wrap:wrap;
+ gap:10px!important;height:auto!important;min-height:0!important;
+ max-height:none!important;margin:0!important;padding:3px 0 10px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ >.connections-record-header .connections-record-heading{
+ position:static!important;transform:none!important;inset:auto!important;
+ display:grid!important;gap:4px!important;
+ min-width:170px;flex:1 1 220px;align-content:start;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ >.connections-record-header .connections-record-type{
+ position:static!important;transform:none!important;
+ display:block!important;line-height:1.25!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ >.connections-record-header h1{
+ position:static!important;margin:0!important;padding:0!important;
+ line-height:1.16!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ >.connections-record-jump-nav{order:2!important}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ >.connections-record-columns{order:3!important}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list{gap:0!important;align-content:start}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property{
+ display:grid!important;grid-template-columns:minmax(88px,38%) minmax(0,1fr);
+ align-items:center;gap:6px 9px!important;min-width:0;
+ margin:0!important;padding:9px 0!important;
+ border-bottom:1px solid var(--ss-theme-border);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property:last-child{
+ border-bottom:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property>span{
+ font-size:10px;line-height:1.35;font-weight:700;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property
+ >:is(strong,.ss-record-inline-value,.ss-record-inline-editor){
+ min-width:0;width:100%;font-size:11px;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-panel-body{
+ gap:7px!important;align-content:start;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-subsection-title{
+ margin:10px 0 0;padding-top:7px;border-top:1px solid var(--ss-theme-border);
+ color:var(--ss-theme-muted);font-size:11px;font-weight:800;
+}
+@media(min-width:1101px){
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns{
+  height:clamp(390px,calc(100dvh - 211px),1100px)!important;
+  min-height:0!important;max-height:none!important;
+  align-items:stretch!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related){
+  height:100%;min-height:0!important;max-height:100%;
+  display:flex!important;flex-direction:column!important;gap:0!important;
+  overflow:hidden!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+ >.connections-record-panel{
+  display:flex!important;flex-direction:column!important;
+  flex:1 1 auto!important;min-height:0!important;max-height:100%;
+  overflow:hidden!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+ >.connections-record-panel>header{
+  flex:0 0 auto!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+ >.connections-record-panel>.connections-record-panel-body{
+  display:block!important;flex:1 1 auto!important;
+  min-height:0!important;max-height:none!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  overscroll-behavior:contain;scrollbar-width:thin;scrollbar-gutter:stable;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+ >.connections-record-panel>.connections-record-panel-body
+ >.ss-record-tabbed-body{
+  min-height:0;max-width:100%;
+ }
+}
+@media(max-width:1100px){
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns{
+  height:auto!important;min-height:0!important;
+ }
+}
