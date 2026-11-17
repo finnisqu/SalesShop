@@ -185,11 +185,9 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
     </>}
     left={<>
       <RecordTabbedGroup372 title={company.name} initialTab="about" items={[
- {id:'about',label:'About',content:<>
- {canEditRecord&&<div className="ss-record-local-actions">
-   <button type="button" onClick={()=>{setNotice(null);setEditError('');setEditing(v=>!v);}}>
-    {editing?'Cancel editing':'Edit details'}</button>
-  </div>}
+ {id:'about',label:'About',tools:canEditRecord?<button type="button" onClick={()=>{setNotice(null);setEditError('');setEditing(v=>!v);}}>
+    {editing?'Cancel editing':'Edit details'}</button>:undefined,
+  content:<>
   <RecordCard title="About this company">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={saveCompany}>

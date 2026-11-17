@@ -159,12 +159,10 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
     </>}
     left={<>
  <RecordTabbedGroup372 title={displayName} initialTab="about" items={[
- {id:'about',label:'About',content:<>
- {canEditRecord&&<div className="ss-record-local-actions">
-   <button type="button" onClick={()=>{setNotice(null);setEditError('');
+ {id:'about',label:'About',tools:canEditRecord?<button type="button" onClick={()=>{setNotice(null);setEditError('');
     if(editing)setNewCompanyName('');setEditing(v=>!v);
-   }}>{editing?'Cancel editing':'Edit details'}</button>
-  </div>}
+   }}>{editing?'Cancel editing':'Edit details'}</button>:undefined,
+  content:<>
   <RecordCard title="About this person">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={save}>

@@ -1,5 +1,4 @@
 import {useState,type ReactNode} from 'react';
-import {RecordCard} from './RecordPageLayout';
 
 export interface RecordPanelTab {
  id:string;label:string;content:ReactNode;count?:number;tools?:ReactNode;
@@ -13,18 +12,22 @@ export function RecordTabbedGroup372({title,items,initialTab}:{
  const [current,setCurrent]=useState(initialTab??items[0]?.id??'');
  const selected=items.find(item=>item.id===current)??items[0];
  if(!selected)return null;
- return <RecordCard title={title} extra={<nav className="ss-record-panel-tabs"
-  role="tablist" aria-label={title+' sections'}>
+ return <section className="connections-record-panel ss-record-tabbed-panel">
+  <header className="ss-record-tabbed-header">
+   <nav className="ss-record-panel-tabs" role="tablist" aria-label={title+' sections'}>
   {items.map(item=><button type="button" key={item.id} role="tab"
     aria-selected={selected.id===item.id}
     className={selected.id===item.id?'is-active':''}
     onClick={()=>setCurrent(item.id)}>
     {item.label}{item.count!==undefined&&<small>{item.count}</small>}
   </button>)}
- </nav>}>
-  <div className="ss-record-tabbed-body" role="tabpanel" aria-label={selected.label}>
+   </nav>
    {selected.tools&&<div className="ss-record-tab-tools">{selected.tools}</div>}
-   {selected.content}
+  </header>
+  <div className="connections-record-panel-body">
+   <div className="ss-record-tabbed-body" role="tabpanel" aria-label={selected.label}>
+    {selected.content}
+   </div>
   </div>
- </RecordCard>;
+ </section>;
 }
