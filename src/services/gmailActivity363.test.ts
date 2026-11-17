@@ -1,5 +1,4 @@
 import {beforeEach,afterEach,describe,expect,it,vi} from 'vitest';
-import {webcrypto} from 'node:crypto';
 import type {Activity,Contact,Project} from '../types/crm';
 import {useCrmStore} from '../store/crmStore';
 import {useAuthStore} from '../store/authStore';
@@ -12,7 +11,7 @@ import {readFileSync} from 'node:fs';
 
 const data=new Map<string,string>();
 beforeEach(()=>{
- vi.stubGlobal('crypto',webcrypto);data.clear();
+ data.clear();
  vi.stubGlobal('localStorage',{getItem:(k:string)=>data.get(k)??null,
   setItem:(k:string,v:string)=>{data.set(k,v);}});
  useAuthStore.setState({mode:'local',organizationId:null,user:null});
