@@ -185,8 +185,8 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
     </>}
     left={<>
       <RecordTabbedGroup372 title={company.name} initialTab="about" items={[
- {id:'about',label:'About',tools:canEditRecord?<button type="button" onClick={()=>{setNotice(null);setEditError('');setEditing(v=>!v);}}>
-    {editing?'Cancel editing':'Edit details'}</button>:undefined,
+ {id:'about',label:'About',tools:canEditRecord?<button type="button" aria-label={editing?'Cancel editing':'Edit details'} onClick={()=>{setNotice(null);setEditError('');setEditing(v=>!v);}}>
+    {editing?'Cancel':'Edit'}</button>:undefined,
   content:<>
   <RecordCard title="About this company">
         <RecordFormFeedback notice={notice}/>
@@ -261,8 +261,9 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
 ]}/>
     </>}
     center={<>
-      <RecordTabbedGroup372 title="Connections" items={[
- {id:'deals',label:'Deals',count:related.relatedProjects.length,tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+      <RecordTabbedGroup372 title="Connections" showTitle items={[
+ {id:'deals',label:'Deals',count:related.relatedProjects.length,tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
         <div className="connections-record-entity-list">
@@ -278,11 +279,13 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
         <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
       </RecordCard>
  </>},
- {id:'tasks',label:'Tasks',tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+ {id:'tasks',label:'Tasks',tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordTasksPanel kind="company" id={company.id} name={company.name} editing={unlinking}/>
  </>},
- {id:'people',label:'People',count:listedPeople.length,tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+ {id:'people',label:'People',count:listedPeople.length,tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
         <div className="connections-record-entity-list">

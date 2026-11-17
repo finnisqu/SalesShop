@@ -509,26 +509,79 @@
 }
 
 
-/* Tabbed record panels: tabs and contextual actions share one compact row.
-   Preserve the panel names only as accessible tablist labels, not visible headings. */
+/* Unified three-column record headers: labels left, intrinsic tab groups centered,
+   local actions right. Symmetric side tracks center tabs where width permits. */
 :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
- .connections-record-columns>:is(.connections-record-properties,.connections-record-center)
- >.ss-record-tabbed-panel>.ss-record-tabbed-header{
-  display:flex!important;flex-direction:row!important;
-  align-items:center!important;justify-content:space-between!important;
-  flex-wrap:nowrap!important;gap:8px!important;min-width:0;
-  padding:10px 12px!important;
+ >.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+ >.connections-record-panel>header{
+ display:grid!important;
+ grid-template-columns:minmax(max-content,1fr) minmax(0,max-content) minmax(max-content,1fr)!important;
+ align-items:center!important;justify-content:normal!important;
+ box-sizing:border-box!important;gap:8px!important;
+ height:70px!important;min-height:70px!important;padding:10px 12px!important;
 }
 :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
- .ss-record-tabbed-panel>.ss-record-tabbed-header>.ss-record-panel-tabs{
-  display:flex!important;flex:1 1 auto!important;align-self:center!important;
-  flex-wrap:nowrap!important;justify-content:flex-start!important;
-  min-width:0!important;width:auto!important;max-width:100%!important;
-  overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin;
+ .ss-record-tabbed-header>.ss-record-panel-title,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-related>.connections-record-panel>header>h2{
+ grid-column:1;grid-row:1;justify-self:start;
+ margin:0!important;min-width:0;max-width:100%;overflow:hidden;
+ white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:800;
 }
 :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
- .ss-record-tabbed-panel>.ss-record-tabbed-header>.ss-record-tab-tools{
-  display:flex!important;flex:0 0 auto;align-items:center!important;
-  justify-content:flex-end!important;flex-wrap:nowrap!important;
-  margin:0!important;padding:0!important;
+ .ss-record-tabbed-header>.ss-record-panel-tabs,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-related>.connections-record-panel>header>.ss-record-recents-tabs{
+ grid-column:2;grid-row:1;justify-self:center;align-self:center!important;
+ display:inline-flex!important;flex:0 1 auto!important;
+ box-sizing:border-box!important;width:max-content!important;min-width:0!important;
+ max-width:100%!important;min-height:40px;align-items:center!important;
+ justify-content:center!important;flex-wrap:nowrap!important;
+ margin:0!important;padding:3px!important;gap:2px!important;
+ overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .ss-record-tabbed-header>.ss-record-panel-tabs>button,
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-related>.connections-record-panel>header>.ss-record-recents-tabs>button{
+ box-sizing:border-box!important;flex:0 0 auto!important;
+ height:32px!important;min-height:32px!important;padding:5px 8px!important;
+ white-space:nowrap!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .ss-record-tabbed-header>.ss-record-tab-tools{
+ grid-column:3;grid-row:1;justify-self:end!important;align-self:center!important;
+ display:flex!important;flex:0 0 auto!important;flex-wrap:nowrap!important;
+ align-items:center!important;justify-content:flex-end!important;
+ min-width:max-content!important;margin:0!important;padding:0!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .ss-record-tabbed-header>.ss-record-tab-tools>button{
+ box-sizing:border-box!important;height:40px!important;min-height:40px!important;
+ margin:0!important;padding:6px 10px!important;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  >.connections-record-columns
+  >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+  >.connections-record-panel>header{
+  min-height:70px!important;height:70px!important;padding:8px 10px!important;gap:6px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .ss-record-tabbed-header>.ss-record-panel-tabs,
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .connections-record-related>.connections-record-panel>header>.ss-record-recents-tabs{
+  min-height:48px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .ss-record-tabbed-header>.ss-record-panel-tabs>button,
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .connections-record-related>.connections-record-panel>header>.ss-record-recents-tabs>button{
+  height:40px!important;min-height:40px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+  .ss-record-tabbed-header>.ss-record-tab-tools>button{
+  height:48px!important;min-height:48px!important;
+ }
 }

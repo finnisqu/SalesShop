@@ -223,10 +223,10 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
     </>}
     left={<>
       <RecordTabbedGroup372 title={deal.name} initialTab="about" items={[
- {id:'about',label:'About',tools:canEditCrm?<button type="button" onClick={()=>{
+ {id:'about',label:'About',tools:canEditCrm?<button type="button" aria-label={editing?'Cancel editing':'Edit details'} onClick={()=>{
    setNotice(null);setSaveError('');if(editing)setNewCompanyName('');
    setEditing(v=>!v);
-  }}>{editing?'Cancel editing':'Edit details'}</button>:undefined,
+  }}>{editing?'Cancel':'Edit'}</button>:undefined,
   content:<>
  <RecordCard title="About this deal">
         <RecordFormFeedback notice={notice}/>
@@ -376,9 +376,10 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
 ]}/>
     </>}
     center={<>
-      <RecordTabbedGroup372 title="Connections" items={[
+      <RecordTabbedGroup372 title="Connections" showTitle items={[
  {id:'people',label:'People',count:new Set([...related.dealPeople.map(person=>person.id),...directIds]).size,
-  tools:canEditCrm?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+  tools:canEditCrm?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordCard title="People" extra={<span>{new Set([...related.dealPeople.map(p=>p.id),...directIds]).size} linked</span>}>
         <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={unlinking}/>
@@ -407,12 +408,14 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
       </RecordCard>
 <PrivateDealContactRoles dealId={deal.id} contacts={contacts} quotes={related.linkedQuotes} />
  </>},
- {id:'tasks',label:'Tasks',tools:canEditCrm?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+ {id:'tasks',label:'Tasks',tools:canEditCrm?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={unlinking}
         quickActions={<DealBidReminder deal={deal}/>}/>
  </>},
- {id:'company',label:'Company',tools:canEditCrm?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+ {id:'company',label:'Company',tools:canEditCrm?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordCard title="Company">
         {related.company ? <div className="connections-record-entity-list">

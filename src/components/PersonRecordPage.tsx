@@ -159,9 +159,9 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
     </>}
     left={<>
  <RecordTabbedGroup372 title={displayName} initialTab="about" items={[
- {id:'about',label:'About',tools:canEditRecord?<button type="button" onClick={()=>{setNotice(null);setEditError('');
+ {id:'about',label:'About',tools:canEditRecord?<button type="button" aria-label={editing?'Cancel editing':'Edit details'} onClick={()=>{setNotice(null);setEditError('');
     if(editing)setNewCompanyName('');setEditing(v=>!v);
-   }}>{editing?'Cancel editing':'Edit details'}</button>:undefined,
+   }}>{editing?'Cancel':'Edit'}</button>:undefined,
   content:<>
   <RecordCard title="About this person">
         <RecordFormFeedback notice={notice}/>
@@ -238,8 +238,9 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
  ]}/>
  </>}
  center={<>
-      <RecordTabbedGroup372 title="Connections" items={[
- {id:'deals',label:'Deals',count:related.linkedDeals.length,tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+      <RecordTabbedGroup372 title="Connections" showTitle items={[
+ {id:'deals',label:'Deals',count:related.linkedDeals.length,tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordCard title="Deals" extra={<span>{related.linkedDeals.length} via Quotes</span>}>
         {related.linkedDeals.length>0&&<div className="connections-record-entity-list">
@@ -252,11 +253,13 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
         <PersonDealRelationships personId={person.id} deals={projects} onOpenDeal={openProject} editing={unlinking}/>
       </RecordCard>
  </>},
- {id:'tasks',label:'Tasks',tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+ {id:'tasks',label:'Tasks',tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
  </>},
- {id:'company',label:'Company',tools:canEditRecord?<button type="button" onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done managing links':'Manage links'}</button>:undefined,
+ {id:'company',label:'Company',tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
+    onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
   content:<>
 <RecordCard title="Company">
         {(related.company||associatedOwnCompany) ? <div className="connections-record-entity-list">

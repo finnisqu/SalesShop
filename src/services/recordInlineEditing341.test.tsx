@@ -80,7 +80,8 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
   // The About editor moved from the body into the selected tab's header.
   // The edit action must still be permission-gated.
   expect(deal).toContain("{id:'about',label:'About',tools:canEditCrm?<button");
-  expect(deal).toContain("editing?'Cancel editing':'Edit details'");
+  expect(deal).toContain("aria-label={editing?'Cancel editing':'Edit details'}");
+  expect(deal).toContain("editing?'Cancel':'Edit'");
   expect(source('components/RecordTabbedGroup372.tsx')).toContain(
    '{selected.tools&&<div className="ss-record-tab-tools">{selected.tools}</div>}');
   expect(preview).toContain("{canLog&&onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&");
