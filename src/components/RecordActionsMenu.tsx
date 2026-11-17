@@ -3,8 +3,8 @@ import {useDismissibleDetails} from './useDismissibleDetails';
 import {useViewportBoundDetails} from './useViewportBoundDetails';
 import {WorkspaceChromeIcon} from './WorkspaceChromeIcon';
 
-export function RecordActionsMenu({unlinking,onUnlink,onDelete,disabled=false}:{
- unlinking:boolean;onUnlink:()=>void;
+/** Only record-wide actions belong here; relationship controls live in their respective panels. */
+export function RecordActionsMenu({onDelete,disabled=false}:{
  onDelete?:()=>Promise<void>;disabled?:boolean;
 }){
  const ref=useRef<HTMLDetailsElement>(null);
@@ -31,12 +31,8 @@ export function RecordActionsMenu({unlinking,onUnlink,onDelete,disabled=false}:{
    <WorkspaceChromeIcon name="more"/>
   </summary>
   <div className="ss-record-actions-popover" role="group" aria-label="Record actions">
-   <span className="ss-record-actions-label">Connections</span>
-   <button type="button" disabled={disabled||busy} onClick={()=>{
-     closeMenu();onUnlink();
-   }}>{unlinking?'Done unlinking':'Unlink connections'}</button>
    {onDelete&&<>
-    <span className="ss-record-actions-label is-separated">Record</span>
+    <span className="ss-record-actions-label">Record</span>
     <button type="button" className="is-destructive" disabled={disabled||busy}
      onClick={()=>void runDelete()}>{busy?'Checking…':'Delete record…'}</button>
    </>}

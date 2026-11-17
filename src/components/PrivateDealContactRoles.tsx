@@ -74,6 +74,9 @@ export function PrivateDealContactRoles({
       if(currentKeyRef.current === scopeKey)setPendingContact(null);
     }
   };
+  // Quote-only labels are not a general Deal contact list. Hide this utility
+  // until the user has an eligible quote contact and a company scope.
+  if(!eligiblePeople.length||!scope)return null;
   return <RecordCard title="My Deal contact roles">
     <p className="connections-record-helper">
       Private labels for contacts explicitly selected on your own quotes.

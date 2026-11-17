@@ -43,7 +43,8 @@ describe('Batch 332e — unified Record inline property editing',()=>{
   const css=readFileSync(new URL('../record-page-refinement.css',import.meta.url),'utf8');
   expect(menu).toContain('useViewportBoundDetails(ref)');
   expect(helper).toContain('.ss-record-actions-popover');
-  expect(menu).toContain('closeMenu();onUnlink()');
+  expect(menu).not.toContain('onUnlink');
+   expect(source('RecordUnlinkButton.tsx')).toContain('try{await onUnlink();}');
   expect(menu).toContain('try{await onDelete();closeMenu();}');
   expect(menu).toContain("querySelector<HTMLElement>('summary')?.focus({preventScroll:true})");
   expect(css).toContain('.ss-record-actions-menu[data-worktable-side="above"]>.ss-record-actions-popover');

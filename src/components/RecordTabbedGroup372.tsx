@@ -2,7 +2,7 @@ import {useState,type ReactNode} from 'react';
 import {RecordCard} from './RecordPageLayout';
 
 export interface RecordPanelTab {
- id:string;label:string;content:ReactNode;count?:number;
+ id:string;label:string;content:ReactNode;count?:number;tools?:ReactNode;
 }
 /** One panel per record region instead of a tall stack of full-height cards.
  * Mounted content is kept intact within the selected tab; no CRM state is copied.
@@ -23,6 +23,7 @@ export function RecordTabbedGroup372({title,items,initialTab}:{
   </button>)}
  </nav>}>
   <div className="ss-record-tabbed-body" role="tabpanel" aria-label={selected.label}>
+   {selected.tools&&<div className="ss-record-tab-tools">{selected.tools}</div>}
    {selected.content}
   </div>
  </RecordCard>;
