@@ -6,7 +6,7 @@ interface FileLinkStore {
  scope:string|null;records:FileLinkRecord[];
  hydrate:(scope:string|null)=>void;
  add:(input:FileLinkDraft)=>FileLinkRecord;
- edit:(id:string,patch:Pick<FileLinkDraft,'title'|'url'|'kind'>)=>void;
+ edit:(id:string,patch:Pick<FileLinkDraft,'title'|'url'|'kind'|'category'>)=>void;
  remove:(id:string)=>void;
 }
 const generateId=()=>typeof crypto!=='undefined'&&'randomUUID'in crypto
@@ -41,7 +41,8 @@ export const useFileLinkStore=create<FileLinkStore>((set,get)=>({
     row.targetId===safe.targetId&&row.targetKind===safe.targetKind))
     throw new Error('This link is already attached to that record.');
   const next=state.records.map(row=>row.id===id?{
-   ...row,title:safe.title,url:safe.url,kind:safe.kind,updatedAt:new Date().toISOString(),
+   ...row,title:safe.title,url:safe.url,kind:safe.kind,category:safe.category??'other',
+   updatedAt:new Date().toISOString(),
   }:row);
   saveFileLinks(scope,next);set({records:next});
  },

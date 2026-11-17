@@ -2,14 +2,24 @@ import {scopedStorageKey} from '../lib/developerPlayground';
 
 export type FileTargetKind='company'|'deal'|'quote'|'externalQuote';
 export type FileLinkKind='file'|'folder';
-export interface FileTarget {kind:FileTargetKind;id:string;title:string}
+export type FileLinkCategory='drawing'|'bid'|'contract'|'spec'|'other';
+export const FILE_LINK_CATEGORIES:ReadonlyArray<{id:FileLinkCategory;label:string}>=[
+ {id:'drawing',label:'Drawings'}, {id:'bid',label:'Bid documents'},
+ {id:'contract',label:'Contracts'}, {id:'spec',label:'Specifications'},
+ {id:'other',label:'Other'},
+];
+export const fileLinkCategoryLabel=(value?:FileLinkCategory)=>
+ FILE_LINK_CATEGORIES.find(item=>item.id===value)?.label??'Other';
+export interface FileTarget {kind:FileTargetKind;id:string;title:string;
+ companyId?:string;projectId?:string;}
 export interface FileLinkRecord {
- id:string;title:string;url:string;kind:FileLinkKind;
+ id:string;title:string;url:string;kind:FileLinkKind;category?:FileLinkCategory;
  targetKind:FileTargetKind;targetId:string;
  createdAt:string;updatedAt:string;
 }
 export interface FileLinkDraft {
- title:string;url:string;kind:FileLinkKind;targetKind:FileTargetKind;targetId:string;
+ title:string;url:string;kind:FileLinkKind;category?:FileLinkCategory;
+ targetKind:FileTargetKind;targetId:string;
 }
 /** Local prototype intentionally scopes to the *individual* signed-in user.
  * This key is not a cloud permission mechanism or team-sharing substitute. */
@@ -53,6 +63,8 @@ export function validateFileLinkDraft(draft:FileLinkDraft):FileLinkDraft{
  if(!['company','deal','quote','externalQuote'].includes(draft.targetKind))
   throw new Error('Choose a supported CRM record.');
  if(!['file','folder'].includes(draft.kind))throw new Error('Choose file or folder.');
+ if(draft.category!==undefined&&!FILE_LINK_CATEGORIES.some(item=>item.id===draft.category))
+  throw new Error('Choose a supported document category.');
  return {...draft,title,targetId,url:normalizeFileLinkUrl(draft.url)};
 }
 export function loadFileLinks(scope:string):FileLinkRecord[]{
@@ -72,4 +84,24 @@ export function loadFileLinks(scope:string):FileLinkRecord[]{
 export function saveFileLinks(scope:string,items:readonly FileLinkRecord[]):void{
  // Persist before updating UI; quota/privacy errors must not look like a save.
  localStorage.setItem(fileLinksStorageKey(scope),JSON.stringify(items));
+}
+
+
+/** Reuses the exact source-record relationships; never matches by record name.
+ * A Quote inherits its Deal + Company; a Deal inherits its Company.
+ * Other records only join when both have a verified common link. */
+export function relatedFileTargetKeys(target:FileTarget,targets:readonly FileTarget[],
+ includeRelated:boolean):ReadonlySet<string>{
+ const result=new Set<string>([fileTargetKey(target)]);
+ if(!includeRelated)return result;
+ const companyId=target.kind==='company'?target.id:target.companyId;
+ const dealId=target.kind==='deal'?target.id:target.projectId;
+ for(const other of targets){
+  const sameCompany=!!companyId&&(other.kind==='company'&&other.id===companyId||
+    other.companyId===companyId);
+  const sameDeal=!!dealId&&(other.kind==='deal'&&other.id===dealId||
+    other.projectId===dealId);
+  if(sameCompany||sameDeal)result.add(fileTargetKey(other));
+ }
+ return result;
 }

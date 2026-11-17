@@ -3,6 +3,7 @@ import type {Company,Project} from '../types/crm';
 import type {SalesQuoteRecord} from '../services/salesQuoteRegistry';
 import type {FileTarget} from '../services/fileLinks357a';
 import {FileLinksManager} from './FileLinksManager';
+import {QuoteShareReferences371} from './QuoteShareReferences371';
 import {useNavigationStore} from '../store/navigationStore';
 
 export function FilesWorkspace({companies,deals,quotes,query}:{
@@ -11,9 +12,10 @@ export function FilesWorkspace({companies,deals,quotes,query}:{
 }){
  const targets=useMemo<FileTarget[]>(()=>[
   ...companies.map(row=>({kind:'company' as const,id:row.id,title:row.name})),
-  ...deals.map(row=>({kind:'deal' as const,id:row.id,title:row.name})),
+  ...deals.map(row=>({kind:'deal' as const,id:row.id,title:row.name,companyId:row.companyId})),
   ...quotes.map(row=>({kind:row.source==='external'?'externalQuote' as const:'quote' as const,
-   id:row.sourceId,title:row.name+(row.source==='external'?' · external':' · SalesShop')})),
+   id:row.sourceId,title:row.name+(row.source==='external'?' · external':' · SalesShop'),
+   companyId:row.companyId,projectId:row.projectId})),
  ],[companies,deals,quotes]);
  const openCompany=useNavigationStore(s=>s.openCompany);
  const openDeal=useNavigationStore(s=>s.openProject);
@@ -28,9 +30,14 @@ export function FilesWorkspace({companies,deals,quotes,query}:{
   }
  };
  return <section className="ss-files-workspace" aria-label="Files and folders">
-  <header><div><small>FILES · PROTOTYPE V0.1</small><h2>Files</h2>
-   <p>Keep drawings, bids, contracts and shared folders beside the records they belong to.</p></div>
+  <header><div><small>FILES · CONNECTED RECORDS</small><h2>Files</h2>
+   <p>Find drawings, bid documents, contracts, and folders across related records.</p></div>
    <span>Document links · no uploads yet</span></header>
-  <FileLinksManager targets={targets} search={query} onOpenTarget={openTarget}/>
+  <FileLinksManager targets={targets} search={query} onOpenTarget={openTarget} directory/>
+  <details className="ss-files-quote-lookup">
+   <summary>Customer Quote links · check existing share status</summary>
+   <QuoteShareReferences371 quotes={quotes} search={query}
+    onOpenQuote={openQuote}/>
+  </details>
  </section>;
 }
