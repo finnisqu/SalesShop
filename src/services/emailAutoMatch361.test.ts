@@ -6,12 +6,8 @@ import {gmailPersonQuery,matchingPersonThreads,mergePersonThreads,personEmailAdd
 import {gmailThreadPage,type GmailThreadSummary} from './gmailRead359a';
 const values=new Map<string,string>();
 beforeEach(()=>{
- values.clear();
- vi.stubGlobal('localStorage',{
-  getItem:(key:string)=>values.get(key)??null,
-  setItem:(key:string,value:string)=>{values.set(key,value);},
- });
  vi.unstubAllGlobals();
+ values.clear();
  vi.stubGlobal('localStorage',{
   getItem:(key:string)=>values.get(key)??null,
   setItem:(key:string,value:string)=>{values.set(key,value);},

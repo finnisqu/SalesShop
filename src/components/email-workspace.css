@@ -82,3 +82,28 @@
  .ss-email-workspace button,.ss-email-record-row button{min-height:44px}
  .ss-email-search input,.ss-email-link-controls select{min-height:44px;font-size:16px}
 }
+
+/* Person-record Gmail auto matches share the same compact, theme-aware controls. */
+.ss-email-auto-controls{
+ display:grid;gap:8px;min-width:0;margin:6px 0 10px;padding:11px 12px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-tint);
+}
+.ss-email-auto-controls label{display:flex;align-items:center;gap:8px;
+ font-size:12px;font-weight:700;line-height:1.4}
+.ss-email-auto-controls input[type="checkbox"]{
+ width:16px;height:16px;flex:none;accent-color:var(--ss-theme-accent)}
+.ss-email-auto-controls label:has(input:disabled){opacity:.65}
+.ss-email-auto-controls small{font-size:11px;color:var(--ss-theme-muted);
+ overflow-wrap:anywhere}
+.ss-email-auto-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ss-email-auto-actions button{
+ cursor:pointer;border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:700 11px/1.35 var(--ss-font-body,system-ui,sans-serif);
+ padding:8px 11px;min-height:37px}
+.ss-email-auto-actions button:disabled{opacity:.52;cursor:not-allowed}
+.ss-email-auto-actions button:focus-visible,
+.ss-email-auto-controls input:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+@media(max-width:600px){.ss-email-auto-actions button{min-height:44px}}
