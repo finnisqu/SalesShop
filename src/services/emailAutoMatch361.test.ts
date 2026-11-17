@@ -21,7 +21,7 @@ describe('Person Gmail auto association #361',()=>{
   expect(personEmailAddress('invalid')).toBeNull();
   expect(gmailPersonQuery('John+Bid@Example.com'))
    .toBe('{from:john+bid@example.com to:john+bid@example.com cc:john+bid@example.com}');
-  expect(gmailPersonQuery('bad address')).toThrow();
+  expect(()=>gmailPersonQuery('bad address')).toThrow();
  });
  it('rejects subject/body-only coincidences and partial or neighboring addresses',()=>{
   const records=[thread('thread1',['john@example.com','sales@example.com']),
