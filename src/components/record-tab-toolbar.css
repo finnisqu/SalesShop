@@ -1,0 +1,60 @@
+/* Shared, tab-specific toolbar for the three Records columns. */
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar{
+ box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:7px 12px;min-width:0;width:100%;
+ min-height:44px;margin:0 0 11px;padding:5px 0 9px;
+ border-bottom:1px solid var(--ss-theme-border);
+ background:transparent;color:var(--ss-theme-ink);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-summary{
+ display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-summary strong{
+ font:750 12px/1.35 var(--ss-font-body,system-ui,sans-serif);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-summary small{
+ font:550 10px/1.4 var(--ss-font-body,system-ui,sans-serif);
+ color:var(--ss-theme-muted);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-actions{
+ display:flex;flex:0 1 auto;align-items:center;justify-content:flex-end;
+ gap:6px;flex-wrap:wrap;min-width:0;margin-left:auto;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-actions >button,
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-actions
+ :is(.ss-unified-picker-trigger,.ss-deal-bid-reminder>summary){
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ width:auto;min-width:0;min-height:33px;margin:0;padding:6px 10px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:700 11px/1.25 var(--ss-font-body,system-ui,sans-serif);cursor:pointer;
+ white-space:nowrap;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-actions button:hover,
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-actions summary:hover{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint);
+}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar-actions
+ .ss-unified-record-picker{margin:0;width:auto;min-width:0;}
+:root[data-sales-theme] .sales-app.view-dashboard .ss-record-tabbed-body>.connections-record-panel>.connections-record-panel-body{
+ padding-top:0!important;
+}
+/* Undo the overly roomy #376 minimum: dense rows with room for wrapped values. */
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property{
+ box-sizing:border-box;min-height:35px!important;
+ padding:5px 0!important;gap:3px 9px!important;
+}
+:root[data-sales-theme] .sales-app.view-dashboard .connections-record-page
+ .connections-record-properties-list>.connections-record-property>span{
+ line-height:1.25!important;
+}
+@media(max-width:760px){
+ :root[data-sales-theme] .sales-app.view-dashboard .ss-record-tab-toolbar{
+  min-height:50px;padding:7px 0 9px;gap:7px;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .ss-record-tab-toolbar-actions :is(button,.ss-unified-picker-trigger,.ss-deal-bid-reminder>summary){
+  min-height:40px!important;
+ }
+}

@@ -3,6 +3,7 @@ import {useNotebookStore} from '../store/notebookStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import type {NotebookEntry} from '../types/notebook';
 import './record-notebook-inline374.css';
+import {RecordTabToolbar} from './RecordTabToolbar';
 
 export const inlineRecordNotebookPrefix='page_record_inline_';
 
@@ -61,11 +62,9 @@ export function RecordNotebookPanel374({kind,id,title,onOpenPage}:{
   update(selected.id,encodeInlineRecordText(value));
  };
  return <section className="ss-record-inline-notebook" aria-label={title+' Notebook pages'}>
-  <div className="ss-record-inline-notebook-toolbar">
-   <small>{linked.length} linked {linked.length===1?'page':'pages'}</small>
-   <button type="button" disabled={!hydrated||!!preview} onClick={createPage}
-    aria-label={'Create Notebook page for '+title}>+ Page</button>
-  </div>
+  <RecordTabToolbar label="Notebook" meta={linked.length+' linked '+(linked.length===1?'page':'pages')}
+   actions={<button type="button" disabled={!hydrated||!!preview} onClick={createPage}
+    aria-label={'Create Notebook page for '+title}>+ Page</button>}/>
   {error&&<small role="alert" className="ss-record-inline-notebook-error">{error}</small>}
   {linked.length>0&&<nav className="ss-record-inline-notebook-pages" aria-label="Linked Notebook pages">
    {linked.map(page=><button key={page.id} type="button"

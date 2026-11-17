@@ -1,7 +1,10 @@
 import {useState,type ReactNode} from 'react';
+import {RecordTabToolbar} from './RecordTabToolbar';
 
 export interface RecordPanelTab {
  id:string;label:string;content:ReactNode;count?:number;tools?:ReactNode;
+ /** A custom toolbar, or a nested panel that renders its own shared toolbar. */
+ toolbar?:{label?:string;meta?:ReactNode;actions?:ReactNode};internalToolbar?:boolean;
 }
 /** One panel per record region instead of a tall stack of full-height cards.
  * Mounted content is kept intact within the selected tab; no CRM state is copied.
@@ -27,6 +30,9 @@ export function RecordTabbedGroup372({title,items,initialTab,showTitle=false}:{
   </header>
   <div className="connections-record-panel-body">
    <div className="ss-record-tabbed-body" role="tabpanel" aria-label={selected.label}>
+    {!selected.internalToolbar&&<RecordTabToolbar label={selected.toolbar?.label??selected.label}
+      meta={selected.toolbar?.meta??(selected.count!==undefined?selected.count+' linked':undefined)}
+      actions={selected.toolbar?.actions}/>}
     {selected.content}
    </div>
   </div>

@@ -78,7 +78,7 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
   expect(input).toContain('if(disabled&&editing&&!saving)');
   expect(input).toContain('event.preventDefault();if(saving||disabled)return;');
   // About now uses permission-gated inline fields instead of a bulk Edit header button.
-  expect(deal).toContain("{id:'about',label:'About',content:<>");
+  expect(deal).toContain("{id:'about',label:'About',toolbar:{label:'Details'},content:<>");
   expect(deal).not.toContain("{id:'about',label:'About',tools:");
   expect(deal).toContain('<RecordInlineProperty label="Deal name" value={deal.name} disabled={!canEditCrm}');
   expect(deal).toContain('disabled={!canEditCrm}');

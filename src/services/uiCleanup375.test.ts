@@ -27,7 +27,7 @@ describe('Build #375 — minimal Deal People, local editing and History alignmen
   for(const name of ['Deal','Person','Company']){
    const code=source('components/'+name+'RecordPage.tsx');
    expect(code).toContain('Done managing links');
-   expect(code).toContain('Manage Quote links');
+   expect(code).toContain(name==='Deal'?'Manage links':'Manage Quote links');
    expect(code).toContain('<RecordUnlinkAction');
   }
   const menu=source('components/RecordActionsMenu.tsx');

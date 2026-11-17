@@ -186,7 +186,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
     </>}
     left={<>
       <RecordTabbedGroup372 title={company.name} initialTab="about" items={[
- {id:'about',label:'About',content:<>
+ {id:'about',label:'About',toolbar:{label:'Details'},content:<>
   <RecordCard title="About this company">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={saveCompany}>
@@ -251,10 +251,10 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
  ...(company.kind==='customer'?[{id:'forecast',label:'Forecast',content:<>
 <CompanyForecastEditor375 company={company} canEdit={canEditRecord}/>
  </>}]:[]),
- {id:'files',label:'Files',content:<>
+ {id:'files',label:'Files',internalToolbar:true,content:<>
 <RecordFilesPanel target={{kind:'company',id:company.id,title:company.name}}/>
  </>},
- {id:'notebook',label:'Notebook',content:<>
+ {id:'notebook',label:'Notebook',internalToolbar:true,content:<>
 <RecordNotebookPanel374 kind="company" id={company.id} title={company.name} onOpenPage={openNotebookPage}/>
  </>},
 ]}/>
@@ -263,6 +263,8 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
       <RecordTabbedGroup372 title="Connections" showTitle items={[
  {id:'deals',label:'Deals',count:related.relatedProjects.length,tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
     onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
+  toolbar:{label:'Linked deals',meta:related.relatedProjects.length+' linked',
+    actions:<RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>},
   content:<>
 <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
         <div className="connections-record-entity-list">
@@ -275,16 +277,17 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
           </div>)}
           {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
         </div>
-        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
       </RecordCard>
  </>},
  {id:'tasks',label:'Tasks',tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
     onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
-  content:<>
+  internalToolbar:true,content:<>
 <RecordTasksPanel kind="company" id={company.id} name={company.name} editing={unlinking}/>
  </>},
  {id:'people',label:'People',count:listedPeople.length,tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
     onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
+  toolbar:{label:'Linked people',meta:listedPeople.length+' linked',
+    actions:<RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="person"/>},
   content:<>
 <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
         <div className="connections-record-entity-list">
@@ -321,7 +324,6 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
           </article>)}
           {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
         </div>
-        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="person"/>
       </RecordCard>
  </>},
 ]}/>
@@ -329,12 +331,13 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
     right={<>
 <RecordRecentsPanel quoteCount={related.relatedQuotes.length+externalQuotes.length}
         activityCount={related.relatedActivities.length}
-        quotes={<>
+        quoteActions={<>
         {canEditRecord&&related.relatedQuotes.length>0&&<div className="ss-record-local-actions">
          <button type="button" onClick={()=>setUnlinkingQuotes(v=>!v)}>
           {unlinkingQuotes?'Done managing Quote links':'Manage Quote links'}</button>
         </div>}
-        <div className="connections-record-entity-list">
+        </>}
+        quotes={<>        <div className="connections-record-entity-list">
           {related.relatedQuotes.map((quote) => <div className="ss-record-associated-row" key={quote.id}>
             <button type="button" onClick={() => openQuote(quote.id)}>
               <strong>{quote.title || displayQuoteNumber(quote)}</strong>

@@ -18,6 +18,7 @@ export function DealBidReminder({deal}:{deal:Project}){
   const date=bidReminderDate(deal.dueDate!,days);
   return date!==null&&date>=todayLocal();
  });
+ if(!available.length)return null;
  const days=available.includes(leadDays)?leadDays:available[0];
  const date=days?bidReminderDate(deal.dueDate,days):null;
  const title=bidReminderTitle(deal.name);
@@ -34,17 +35,19 @@ export function DealBidReminder({deal}:{deal:Project}){
    notes:'Personal reminder ahead of the bid deadline '+deal.dueDate+
     '. Review this Task if the Deal due date changes.'});
  };
- return <div className="ss-deal-bid-reminder" aria-label="Plan a bid reminder">
-  <div><strong>Plan a bid reminder</strong>
-   <small>Personal Task · bid due {deal.dueDate}. Does not submit a quote.</small></div>
-  {available.length?<div className="ss-deal-bid-reminder-controls">
+ return <details className="ss-deal-bid-reminder">
+  <summary>Remind me</summary>
+  <div className="ss-deal-bid-reminder-popover">
+   <strong>Bid reminder</strong>
+   <small>Personal Task · due {deal.dueDate}</small>
    <label>Before deadline
     <select value={days} onChange={event=>setLeadDays(Number(event.target.value) as 1|3|7)}>
      {available.map(option=><option key={option} value={option}>
-      {option} {option===1?'day':'days'} before</option>)}
+      {option} {option===1?'day':'days'} before
+     </option>)}
     </select>
    </label>
-   <button type="button" onClick={plan}>Plan {date} ›</button>
-  </div>:<small>No earlier reminder day available. You can create a same-day Task below.</small>}
- </div>;
+   <button type="button" onClick={plan}>Plan for {date}</button>
+  </div>
+ </details>;
 }

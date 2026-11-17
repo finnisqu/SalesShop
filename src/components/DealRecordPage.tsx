@@ -223,7 +223,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
     </>}
     left={<>
       <RecordTabbedGroup372 title={deal.name} initialTab="about" items={[
- {id:'about',label:'About',content:<>
+ {id:'about',label:'About',toolbar:{label:'Details'},content:<>
  <RecordCard title="About this deal">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate
@@ -354,10 +354,10 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
         </div>}
       </RecordCard>
  </>},
- {id:'files',label:'Files',content:<>
+ {id:'files',label:'Files',internalToolbar:true,content:<>
 <RecordFilesPanel target={{kind:'deal',id:deal.id,title:deal.name}}/>
  </>},
- {id:'notebook',label:'Notebook',content:<>
+ {id:'notebook',label:'Notebook',internalToolbar:true,content:<>
 <RecordNotebookPanel374 kind="deal" id={deal.id} title={deal.name} onOpenPage={openNotebookPage}/>
  </>},
  {id:'email',label:'Email',content:<>
@@ -406,12 +406,14 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
  </>},
  {id:'tasks',label:'Tasks',tools:canEditCrm?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
     onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
-  content:<>
+  internalToolbar:true,content:<>
 <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={unlinking}
         quickActions={<DealBidReminder deal={deal}/>}/>
  </>},
  {id:'company',label:'Company',tools:canEditCrm?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
     onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
+  toolbar:{label:'Company',meta:related.company?'1 linked':'No company',
+    actions:<RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>},
   content:<>
 <RecordCard title="Company">
         {related.company ? <div className="connections-record-entity-list">
@@ -423,26 +425,26 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
               target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
           </div>
         </div> : <p className="connections-record-empty">No company linked yet.</p>}
-        <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
       </RecordCard>
  </>},
 ]}/>
     </>}
     right={<>
 <RecordRecentsPanel quoteCount={related.linkedQuotes.length+outsideQuotes.length}
-        activityCount={related.directHistory.length} quotes={<>
+        activityCount={related.directHistory.length} quoteActions={<>
         {canEditCrm&&<button type="button" className="connections-record-add"
           onClick={()=>{
             if(window.matchMedia('(max-width:760px)').matches){
               setExternalQuoteDialogOpen(true);setExternalQuoteOpen(false);
             }else setExternalQuoteOpen(open=>!open);
           }}>{externalQuoteOpen?'Cancel external quote':'Record external quote'}</button>}
-        {externalQuoteOpen&&<ExternalQuoteSentForm key={deal.id} deal={deal}
+        {canEditCrm&&related.linkedQuotes.length>0&&<button type="button"
+          onClick={()=>setUnlinkingQuotes(v=>!v)}>{unlinkingQuotes?'Done':'Manage links'}</button>}
+       </>}
+        quotes={<>        {externalQuoteOpen&&<ExternalQuoteSentForm key={deal.id} deal={deal}
           onCancel={()=>setExternalQuoteOpen(false)}
           onRecorded={()=>{setExternalQuoteOpen(false);setNotice({kind:"applied",message:"External quote saved. It is now linked to this Deal and appears in Quotes."});}}/>}
-        {canEditCrm&&related.linkedQuotes.length>0&&<div className="ss-record-local-actions">
-         <button type="button" onClick={()=>setUnlinkingQuotes(v=>!v)}>{unlinkingQuotes?'Done managing Quote links':'Manage Quote links'}</button>
-        </div>}
+
         <div className="connections-record-entity-list">
           {related.linkedQuotes.map(quote => <div className="ss-record-associated-row" key={quote.id}>
             <button type="button" onClick={() => openQuote(quote.id)}>

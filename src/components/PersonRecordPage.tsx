@@ -159,7 +159,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
     </>}
     left={<>
  <RecordTabbedGroup372 title={displayName} initialTab="about" items={[
- {id:'about',label:'About',content:<>
+ {id:'about',label:'About',toolbar:{label:'Details'},content:<>
   <RecordCard title="About this person">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={save}>
@@ -228,7 +228,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
  {id:'email',label:'Email',content:<>
 <RecordEmailThreadsPanel kind="person" id={person.id} email={person.email}/>
  </>},
- {id:'notebook',label:'Notebook',content:<>
+ {id:'notebook',label:'Notebook',internalToolbar:true,content:<>
 <RecordNotebookPanel374 kind="person" id={person.id} title={displayName} onOpenPage={openNotebookPage}/>
  </>},
 
@@ -252,11 +252,13 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
  </>},
  {id:'tasks',label:'Tasks',tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
     onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
-  content:<>
+  internalToolbar:true,content:<>
 <RecordTasksPanel kind="person" id={person.id} name={displayName} editing={editing||unlinking}/>
  </>},
  {id:'company',label:'Company',tools:canEditRecord?<button type="button" aria-label={unlinking?'Done managing links':'Manage links'}
     onClick={()=>setUnlinking(v=>!v)}>{unlinking?'Done':'Manage'}</button>:undefined,
+  toolbar:{label:'Company',meta:related.company?'1 linked':'No company',
+    actions:!isInternal?<RecordRelationshipPicker source={{kind:'person',id:person.id,name:displayName}} target="company"/>:undefined},
   content:<>
 <RecordCard title="Company">
         {(related.company||associatedOwnCompany) ? <div className="connections-record-entity-list">
@@ -277,9 +279,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
             Listed in Our Organization. Mark your company SELF to connect its record automatically.
           </p>}
         </div> : <p className="connections-record-empty">No company assigned yet.</p>}
-        {!isInternal&&<>
-          <RecordRelationshipPicker source={{kind:'person',id:person.id,name:displayName}} target="company"/>
-        </>}
+
         {isInternal&&<p className="connections-record-helper">
           Change an internal Person's Company from Our Organization to preserve their roster membership.</p>}
       </RecordCard>
@@ -289,13 +289,14 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
     right={<>
 <RecordRecentsPanel
         quoteCount={quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).length}
-        activityCount={related.directActivities.length} quotes={<>
+        activityCount={related.directActivities.length} quoteActions={<>
        {canEditRecord&&quotes.some(q=>!q.archivedAt&&q.contactId===person.id)&&
         <div className="ss-record-local-actions">
          <button type="button" onClick={()=>setUnlinkingQuotes(v=>!v)}>
           {unlinkingQuotes?'Done managing Quote links':'Manage Quote links'}</button>
         </div>}
-        <div className="connections-record-entity-list">
+       </>}
+        quotes={<>        <div className="connections-record-entity-list">
         {quotes.filter(q=>!q.archivedAt&&q.contactId===person.id).map(q=><div
           className="ss-record-associated-row" key={q.id}>
           <button type="button" onClick={()=>openQuote(q.id)}>

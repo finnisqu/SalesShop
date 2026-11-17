@@ -4,6 +4,7 @@ import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {requestTaskModal} from './TaskModalHost';
 import {RecordCard} from './RecordPageLayout';
+import {RecordTabToolbar} from './RecordTabToolbar';
 import {RecordUnlinkButton} from './RecordUnlinkButton';
 import {UnifiedRecordPicker} from './UnifiedRecordPicker';
 import type {RelatedEntityKind} from './RecordRelatedActions';
@@ -22,9 +23,36 @@ export function RecordTasksPanel({kind,id,name,editing=false,quickActions}:{kind
    .some(link=>link.type===linkType&&link.id===id)):[];
  const openTasks=related.filter(t=>t.status!=='completed'&&t.status!=='canceled');
 
- return <RecordCard title="Tasks" extra={<span>{openTasks.length} open · private</span>}>
-  <p className="connections-record-helper">Tasks linked to this record, private to your account.</p>
-  {quickActions}
+ return <RecordCard title="Tasks">
+  <RecordTabToolbar label="Tasks" meta={openTasks.length+' open · private'}
+   actions={<>{quickActions}
+  {!preview&&Boolean(scope)&&storedScope===scope&&<button type="button"
+    className="connections-record-add ss-record-schedule-meeting"
+    onClick={()=>requestTaskModal({mode:'create',type:'meeting',
+     title:kind==='deal'?'Project meeting · '+name:'Meet with '+name,
+     associations:[{type:linkType,id,label:
+      (kind==='person'?'Person':kind==='deal'?'Deal':'Company')+' · '+name}],
+     notes:'Planned meeting. Set a date and time to show it on your Calendar. Log the completed meeting separately as an Activity.'})}>
+    + Schedule meeting
+   </button>}
+  {!preview&&Boolean(scope)&&storedScope===scope&&
+   <UnifiedRecordPicker kind="Task" triggerLabel="+ Task"
+    items={tasks.filter(task=>!task.deletedAt&&task.workspaceScope===scope&&
+      !normalizedTaskAssociations(task).some(link=>link.type===linkType&&link.id===id))
+      .map(task=>({id:task.id,name:task.title,detail:task.status}))}
+    onLink={taskId=>{
+      const task=tasks.find(item=>item.id===taskId&&item.workspaceScope===scope&&!item.deletedAt);
+      if(!task)throw new Error('This Task is no longer available.');
+      updateTask(taskId,{associations:[...normalizedTaskAssociations(task),
+        {type:linkType,id,label:(kind==='person'?'Person':kind==='deal'?'Deal':'Company')+' · '+name}]});
+    }}
+    onCreate={title=>{
+      requestTaskModal({mode:'create',title,associations:[{type:linkType,id,
+       label:(kind==='person'?'Person':kind==='deal'?'Deal':'Company')+' · '+name}]});
+    }}
+    helper="Existing Tasks remain private to you. Creating a new Task opens the normal editor."/>}
+
+   </>}/>
   <div className="connections-record-entity-list">
    {related.slice().sort((a,b)=>Number(a.status==='completed')-Number(b.status==='completed')||
     (a.dueDate??'9999').localeCompare(b.dueDate??'9999')).map(task=><div
@@ -42,30 +70,5 @@ export function RecordTasksPanel({kind,id,name,editing=false,quickActions}:{kind
     </div>)}
    {!related.length&&<p className="connections-record-empty">No tasks linked yet.</p>}
   </div>
-  {!preview&&Boolean(scope)&&storedScope===scope&&<button type="button"
-    className="connections-record-add ss-record-schedule-meeting"
-    onClick={()=>requestTaskModal({mode:'create',type:'meeting',
-     title:kind==='deal'?'Project meeting · '+name:'Meet with '+name,
-     associations:[{type:linkType,id,label:
-      (kind==='person'?'Person':kind==='deal'?'Deal':'Company')+' · '+name}],
-     notes:'Planned meeting. Set a date and time to show it on your Calendar. Log the completed meeting separately as an Activity.'})}>
-    + Schedule meeting
-   </button>}
-  {!preview&&Boolean(scope)&&storedScope===scope&&
-   <UnifiedRecordPicker kind="Task"
-    items={tasks.filter(task=>!task.deletedAt&&task.workspaceScope===scope&&
-      !normalizedTaskAssociations(task).some(link=>link.type===linkType&&link.id===id))
-      .map(task=>({id:task.id,name:task.title,detail:task.status}))}
-    onLink={taskId=>{
-      const task=tasks.find(item=>item.id===taskId&&item.workspaceScope===scope&&!item.deletedAt);
-      if(!task)throw new Error('This Task is no longer available.');
-      updateTask(taskId,{associations:[...normalizedTaskAssociations(task),
-        {type:linkType,id,label:(kind==='person'?'Person':kind==='deal'?'Deal':'Company')+' · '+name}]});
-    }}
-    onCreate={title=>{
-      requestTaskModal({mode:'create',title,associations:[{type:linkType,id,
-       label:(kind==='person'?'Person':kind==='deal'?'Deal':'Company')+' · '+name}]});
-    }}
-    helper="Existing Tasks remain private to you. Creating a new Task opens the normal editor."/>}
  </RecordCard>;
 }

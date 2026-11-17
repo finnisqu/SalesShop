@@ -1,12 +1,13 @@
 import {useState,type ReactNode} from 'react';
 import {RecordCard} from './RecordPageLayout';
+import {RecordTabToolbar} from './RecordTabToolbar';
 
 /** A single right-column history tab includes logged Activities and relationship events.
  * Keep the existing Activities prop for backward-compatible callers.
  */
-export function RecordRecentsPanel({quotes,activities,quoteCount,activityCount,history,historyCount}:{
+export function RecordRecentsPanel({quotes,activities,quoteCount,activityCount,history,historyCount,quoteActions}:{
  quotes:ReactNode;activities:ReactNode;quoteCount:number;activityCount:number;
- history?:ReactNode;historyCount?:number;
+ history?:ReactNode;historyCount?:number;quoteActions?:ReactNode;
 }){
  const [tab,setTab]=useState<'quotes'|'history'>('quotes');
  const historyContent=history??activities;
@@ -23,6 +24,9 @@ export function RecordRecentsPanel({quotes,activities,quoteCount,activityCount,h
  </div>}>
   <div role="tabpanel" aria-label={tab==='quotes'?'Recent Quotes':'Relationship and Activity History'}
    className="ss-record-recents-body">
+   <RecordTabToolbar label={tab==='quotes'?'Quotes':'History'}
+    meta={(tab==='quotes'?quoteCount:historyCount??activityCount)+' '+(tab==='quotes'?'linked':'events')}
+    actions={tab==='quotes'?quoteActions:undefined}/>
    {tab==='quotes'?quotes:historyContent}
   </div>
  </RecordCard>;

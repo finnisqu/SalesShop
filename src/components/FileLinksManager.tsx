@@ -10,6 +10,7 @@ import {fileLinkProvider,fileLinksScope,fileTargetKey,relatedFileTargetKeys,
  type FileLinkDraft,type FileLinkKind,type FileLinkCategory,type FileLinkRecord,
  type FileTarget} from '../services/fileLinks357a';
 import './file-links.css';
+import {RecordTabToolbar} from './RecordTabToolbar';
 
 type Props={
  target?:FileTarget;targets?:readonly FileTarget[];
@@ -79,10 +80,13 @@ export function FileLinksManager({target,targets=[],search='',onOpenTarget,direc
  };
  if(!expectedScope)return <p className="ss-files-notice">A signed-in workspace is required for your private file links.</p>;
  return <div className="ss-file-links-manager">
-  <div className="ss-file-links-actions">
-   <span>{visible.length} {visible.length===1?'link':'links'}{target?' for this record':''}</span>
-   <button type="button" onClick={startNew}>+ Link file or folder</button>
-  </div>
+  {target?<RecordTabToolbar label="Files & folders"
+   meta={visible.length+' '+(visible.length===1?'link':'links')}
+   actions={<button type="button" onClick={startNew}>+ Link</button>}/>:
+   <div className="ss-file-links-actions">
+    <span>{visible.length} {visible.length===1?'link':'links'}</span>
+    <button type="button" onClick={startNew}>+ Link file or folder</button>
+   </div>}
   {directory&&<div className="ss-file-directory-filters">
    <label>Record
     <select value={filterKey} onChange={event=>setFilterKey(event.target.value)}>
