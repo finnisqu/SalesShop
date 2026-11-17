@@ -101,7 +101,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
   const perspective=useRolePerspectiveStore(state=>state.activePerspective);
   const canEditRecord=!perspective&&(authMode==='local'||Boolean(organizationId&&userId&&
     canEditTeamArea(teamRole,department,'crm')));
-  useEffect(()=>{if(!canEditRecord){setEditing(false);setUnlinking(false);}},[canEditRecord]);
+  useEffect(()=>{if(!canEditRecord){setEditing(false);setUnlinking(false);setUnlinkingQuotes(false);}},[canEditRecord]);
   const personalScope=taskScope(authMode,organizationId,userId);
   const timelineQuotes=useMemo(()=>authMode==='cloud'
     ?quotes.filter(q=>q.ownerUserId===userId):quotes,[authMode,quotes,userId]);

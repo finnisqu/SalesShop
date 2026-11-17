@@ -48,7 +48,6 @@ export function DealPeopleRelationships({dealId,people,onOpenPerson,editing=fals
   finally{setBusy(false);}
  };
  return <section className="ss-deal-relations" aria-label="Direct Deal people">
-  <div className="ss-deal-relations-heading"><strong>People</strong><span>{direct.length}</span></div>
   {!manager.ready&&<p role="status" className="connections-record-helper">
    {manager.error?'Unable to load direct links: '+manager.error:'Loading Deal contacts…'}
    {manager.error&&<button type="button" onClick={manager.retry}>Retry</button>}</p>}
