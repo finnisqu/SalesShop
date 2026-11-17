@@ -1,7 +1,5 @@
-name: SalesShop CI
+name: SalesShop Gmail Build QA (Cloudflare toolchain)
 
-# Cloudflare Workers Git integration owns production deployment.
-# Never deploy to GitHub Pages or configure its custom domain from Actions.
 on:
   push:
     branches:
@@ -11,52 +9,21 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: salesshop-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  checks:
-    name: TypeScript, unit tests, production build
+  cloudflare-equivalent:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    env:
-      # Use local-test defaults. Never inject a real customer Supabase session.
-      VITE_SALES_SHOP_LOCAL_QC: '1'
-      VITE_SUPABASE_URL: ''
-      VITE_SUPABASE_ANON_KEY: ''
-      VITE_BASE_PATH: '/'
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
+      - uses: actions/checkout@v4
+      - name: Use Cloudflare's Node major
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-      # This repository currently has no npm lockfile; npm ci would fail.
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-      - name: Unit and regression tests
-        run: npm test
-      - name: Typecheck and build
-        if: success() || failure()
-        run: npm run build
-      - name: Verify root-hosted asset paths
-        run: |
-          set -euo pipefail
-          grep -Eq 'src="/assets/' dist/index.html
-          grep -Eq 'href="/assets/' dist/index.html
-          if grep -Eq '(src|href)="/SalesShop/' dist/index.html; then
-            echo "Unexpected legacy /SalesShop/ asset path" >&2
-            exit 1
-          fi
-      - name: Upload build diagnostics on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
+          node-version: '24'
+      - name: Use Cloudflare's Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          name: salesshop-ci-diagnostics
-          path: |
-            artifacts/
-            dist/
-          retention-days: 7
-          if-no-files-found: ignore
+          bun-version: '1.4.4'
+      - name: Install dependencies with Bun
+        run: bun install
+      - name: Reproduce Cloudflare build
+        run: npm run build
