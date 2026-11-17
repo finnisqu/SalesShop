@@ -183,6 +183,8 @@ import './mobile-quote-review-efficiency.css';
 import './mobile-quote-viewport-reliability.css';
 // Notebook's page navigator and text/rule baseline correction run after global mobile styles.
 import './notebook-responsive-polish.css';
+// Explicit wide/compact/tablet/phone layout contract, loaded after legacy overrides.
+import './workspace-viewport-tiers379.css';
 
 recordSalesShopBoot();
 

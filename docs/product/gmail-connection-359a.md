@@ -15,7 +15,7 @@
 ## Prerequisites to enable a real Gmail connection
 
 1. In Google Cloud Console for SalesShop, enable **Gmail API**, configure an OAuth consent screen, and create an **OAuth Client ID** of type **Web application**.
-2. Add the **exact origin shown in your SalesShop browser address bar** to **Authorized JavaScript origins** (for example, **https://salesshop.work** if that is where you actually use the app). The origin has scheme and host but **no trailing slash or URL path**. If you use another host, preview URL or local Vite development server, register that separate origin. Do not add wildcards. **This browser token-client prototype does not need an OAuth redirect URI**.
+2. Add the **exact origin shown in your SalesShop browser address bar** to **Authorized JavaScript origins** (for example, **https://app.salesshop.work** when you use the app subdomain (or **https://salesshop.work** only when that is the actual host)). The origin has scheme and host but **no trailing slash or URL path**. If you use another host, preview URL or local Vite development server, register that separate origin. Do not add wildcards. **This browser token-client prototype does not need an OAuth redirect URI**.
 3. Configure Cloudflare Pages **production build** variable **VITE_GOOGLE_GMAIL_CLIENT_ID** to the Web client ID (ends in \`.apps.googleusercontent.com\`). This is a **public OAuth client identifier**, not a secret; never put a Google client secret or access token into a Vite env variable.
 4. Add test users to the Google OAuth consent screen while the app is in testing; Google's Gmail read-only scope is **restricted** and broad external deployment may require Google's scope verification, security assessment and/or Workspace admin approval.
 5. Redeploy after setting the build variable, open Tools → Email, choose **Connect Gmail**, grant the displayed Gmail read-only permission, and test loading, searching, opening, linking, and unlinking threads. Reload and confirm reconnection is needed and only ID-based links remain.
@@ -34,3 +34,11 @@ Reference: Google Identity Services token model and Gmail API threads docs.
 ## Automatic Person matching (v0.2a)
 
 Person records with valid email addresses now display live, exact-address Gmail conversation matches by default while the user is connected. You can refresh, load more, disable auto-matching for a Person, or hide and restore individual automatic results. This does not persist Gmail message contents, write CRM Activities, or automatically associate Deals. See [Gmail automatic Person matching](gmail-person-auto-matching-361.md).
+
+## Popup completes but SalesShop stays disconnected
+
+- The deployed address in recent SalesShop screenshots is **https://app.salesshop.work**. Google OAuth **Authorized JavaScript origins** must explicitly include that exact scheme and hostname; authorizing only `https://salesshop.work` is insufficient.
+- Confirm the Google OAuth Web client is the one configured in Cloudflare's `VITE_GOOGLE_GMAIL_CLIENT_ID` build variable, and that Gmail API and any consent-screen testing users are configured.
+- Cloudflare Workers static assets include `public/_headers` with `Cross-Origin-Opener-Policy: same-origin-allow-popups` to permit Google's popup to communicate with its parent window.
+- A popup close, blocked popup, or missing Google callback now displays an actionable error and returns Connect Gmail to a retryable state. Tokens and message bodies remain memory-only.
+- For security, the app does not pretend the account connected when Google does not return a read-only access token and verified mailbox address.

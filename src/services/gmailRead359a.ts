@@ -23,6 +23,11 @@ function googleIdentity():GoogleIdentity|null{
  return (window as Window&{google?:GoogleIdentity}).google??null;
 }
 export interface GmailAccess {token:string;expiresAt:number}
+/** The exact origin must be whitelisted on the OAuth Web client in Google Cloud.
+ * It is intentionally shown in errors; client IDs and tokens never are. */
+export function gmailOAuthOrigin():string{
+ return typeof window==='undefined'?'the SalesShop website':window.location.origin;
+}
 export function authorizeGmail(clientId=gmailClientId):Promise<GmailAccess>{
  if(!clientId||!clientId.endsWith('.apps.googleusercontent.com'))
   return Promise.reject(new Error('SalesShop needs a Google OAuth Web client ID before Gmail can connect.'));
@@ -30,26 +35,59 @@ export function authorizeGmail(clientId=gmailClientId):Promise<GmailAccess>{
  if(!google)return Promise.reject(new Error('Google sign-in is still loading. Please try Connect again.'));
  return new Promise((resolve,reject)=>{
   let settled=false;
-  const fail=(message:string)=>{if(!settled){settled=true;reject(new Error(message));}};
-  const client=google.accounts.oauth2.initTokenClient({
-   client_id:clientId,scope:GMAIL_READONLY_SCOPE,
-   callback(response){
-    if(response.error||!response.access_token){
-     fail(response.error_description||response.error||'Gmail connection was canceled.');return;
-    }
-    if(!google.accounts.oauth2.hasGrantedAllScopes(response,GMAIL_READONLY_SCOPE)){
-     fail('The Gmail read-only permission was not granted.');return;
-    }
-    if(!settled){
-     settled=true;
-     resolve({token:response.access_token,expiresAt:Date.now()+Math.max(
-      60,Number(response.expires_in)||3600)*1000-60_000});
-    }
-   },
-   error_callback(response){fail(response.message||response.type||'Google sign-in could not start.');},
-  });
-  // Called synchronously from a real Connect click to preserve popup permission.
-  client.requestAccessToken({prompt:'consent'});
+  // GIS may neither call callback nor error_callback after a popup is blocked,
+  // closed, or isolated by the host's cross-origin security policy.
+  // Never leave SalesShop in a permanent "Connecting" state.
+  let timeout:ReturnType<typeof setTimeout>|undefined;
+  const fail=(message:string)=>{
+   if(settled)return;
+   settled=true;clearTimeout(timeout);reject(new Error(message));
+  };
+  timeout=setTimeout(()=>fail('Google did not return an authorization result. '+
+   'Check popup permissions and add '+gmailOAuthOrigin()+
+   ' to this OAuth client\'s Authorized JavaScript origins in Google Cloud, then retry.'),90_000);
+  const success=(token:string,expiresIn?:number)=>{
+   if(settled){revokeGmailToken(token);return;}
+   settled=true;clearTimeout(timeout);
+   resolve({token,expiresAt:Date.now()+Math.max(60,Number(expiresIn)||3600)*1000-60_000});
+  };
+  try{
+   const client=google.accounts.oauth2.initTokenClient({
+    client_id:clientId,scope:GMAIL_READONLY_SCOPE,
+    callback(response){
+     if(response.error||!response.access_token){
+      fail(response.error_description||response.error||'Gmail connection was canceled.');return;
+     }
+     try{
+      if(!google.accounts.oauth2.hasGrantedAllScopes(response,GMAIL_READONLY_SCOPE)){
+       revokeGmailToken(response.access_token);
+       fail('The Gmail read-only permission was not granted.');return;
+      }
+      success(response.access_token,response.expires_in);
+     }catch{
+      revokeGmailToken(response.access_token);
+      fail('Google could not confirm Gmail access. Retry and check the OAuth client settings.');
+     }
+    },
+    error_callback(response){
+     const kind=response.type??'';
+     if(kind==='popup_closed'||kind==='popup_closed_by_user'){
+      fail('The Google authorization popup closed without completing the connection. '+
+       'If you approved access, verify that '+gmailOAuthOrigin()+
+       ' is an Authorized JavaScript origin for your Google OAuth Web client.');return;
+     }
+     if(kind==='popup_failed_to_open'){
+      fail('Your browser blocked the Google popup. Allow popups for SalesShop and retry.');return;
+     }
+     fail(response.message||kind||'Google did not complete authorization. '+
+      'Verify your OAuth client\'s Authorized JavaScript origins.');
+    },
+   });
+   // Must run synchronously in the user's click handler to preserve popup activation.
+   client.requestAccessToken({prompt:'consent'});
+  }catch(error){
+   fail(error instanceof Error?error.message:'Google could not start authorization.');
+  }
  });
 }
 export function revokeGmailToken(token:string):void{

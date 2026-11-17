@@ -31,7 +31,7 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
    const mailbox=await gmailProfile(access.token);
    if(get().scope!==scope){
     revokeGmailToken(access.token);
-    return;
+    throw new Error('Your SalesShop workspace changed during Google authorization. Open Tools → Email and retry.');
    }
    set({...reset(),status:'connected',token:access.token,expiresAt:access.expiresAt,mailbox});
   }catch(error){

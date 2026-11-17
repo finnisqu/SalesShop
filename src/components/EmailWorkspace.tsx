@@ -343,7 +343,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
   </div>}
   <div className="ss-email-toolbar">
    <div className="ss-email-connection">
-    <span>{connected?'Connected: '+mailbox:status==='connecting'?'Connecting to Google…':'No Gmail connected'}</span>
+    <span>{connected?'Connected: '+mailbox:status==='connecting'?'Waiting for Google authorization…':'No Gmail connected'}</span>
     {connected?<button type="button" onClick={()=>{disconnect();setNotice('Gmail disconnected for this session.');}}>
      Disconnect</button>:<button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
      onClick={()=>{void connectInbox();}}>Connect Gmail</button>}
@@ -394,7 +394,14 @@ export function EmailWorkspace({contacts,deals,companies}:{
     </details>
    </>}
   </div>
-  {error&&<p className="ss-email-error" role="alert">{error}</p>}
+  {error&&<div className="ss-email-error" role="alert">
+   <strong>Gmail connection not completed</strong>
+   <p>{error}</p>
+   <small>In Google Cloud → APIs &amp; Services → Credentials, your OAuth Web client
+    must list <code>{typeof window==='undefined'?'this SalesShop origin':window.location.origin}</code>
+    under Authorized JavaScript origins. Verify that Gmail API and consent-screen access
+    are enabled, then use Connect Gmail to retry. No messages were imported.</small>
+  </div>
   {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
   {connected&&<div className="ss-email-content">
    <div className="ss-email-threads" role="region" aria-label="Gmail search results">

@@ -1,0 +1,3 @@
+# Google Identity Services OAuth uses a separate popup window.
+/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups

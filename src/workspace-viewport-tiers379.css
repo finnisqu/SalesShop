@@ -1,0 +1,187 @@
+/* Breakpoint contract #379: avoid squeezed three-track workspace headers.
+   Wide desktop >=1440: legacy one-row center alignment.
+   Compact desktop 1024–1439: title/tools row + centered nav row.
+   Tablet 761–1023: same two-row chrome, smaller tools.
+   Phone <=760: existing mobile headers and tab picker own the UI.
+   Applied after workspace-zoom-fixes.css and other shell adapters. */
+@media(min-width:761px) and (max-width:1439px){
+ :root[data-sales-theme] .sales-app{--ss-workspace-header-height:116px!important}
+ :root[data-sales-theme] .sales-app .ss-workspace-header,
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-workspace>.catalog-header.catalog-foundation-heading.ss-workspace-header,
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout>.connections-heading.connections-foundation-heading.ss-workspace-header{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) max-content!important;
+  grid-template-rows:48px 46px!important;
+  column-gap:12px!important;row-gap:3px!important;
+  box-sizing:border-box!important;align-items:center!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  height:116px!important;min-height:116px!important;max-height:116px!important;
+  padding:8px 16px!important;
+  flex-wrap:nowrap!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__intro{
+  grid-column:1!important;grid-row:1!important;align-self:center!important;
+  display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
+  justify-content:flex-start!important;gap:10px!important;
+  min-width:0!important;max-width:100%!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header__intro>h1{
+  flex:0 1 auto!important;font-size:23px!important;min-width:0!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header__intro>.ss-workspace-header__after-title{
+  display:flex!important;align-items:center!important;flex:0 0 auto!important;
+  min-width:0!important;position:static!important;transform:none!important;
+  margin:0!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs{
+  position:relative!important;inset:auto!important;transform:none!important;
+  grid-column:1/-1!important;grid-row:2!important;justify-self:center!important;
+  align-self:center!important;display:flex!important;justify-content:center!important;
+  width:max-content!important;min-width:0!important;max-width:100%!important;
+  overflow:visible!important;z-index:3!important;pointer-events:auto!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tabs
+  >:is(.ss-header-tab-pill,nav,div){
+  width:max-content!important;max-width:100%!important;min-width:0!important;
+  flex:0 1 auto!important;transform:none!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tools{
+  grid-column:2!important;grid-row:1!important;justify-self:end!important;
+  position:relative!important;z-index:5!important;
+  display:grid!important;grid-template-columns:48px 44px minmax(108px,auto)!important;
+  align-items:center!important;gap:6px!important;
+  box-sizing:border-box!important;width:auto!important;min-width:0!important;
+  max-width:100%!important;margin:0!important;
+  --ss-header-more-width:48px!important;
+  --ss-header-search-width:44px!important;
+  --ss-header-create-width:112px!important;
+  --ss-header-control-height:38px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-header__more{
+  min-width:0!important;width:48px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-more>summary{
+  min-width:0!important;width:48px!important;min-height:38px!important;
+  height:38px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-header__search{
+  grid-column:2!important;position:relative!important;display:flex!important;
+  width:44px!important;min-width:44px!important;max-width:44px!important;
+  overflow:visible!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-header__search-toggle{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;height:38px!important;min-height:38px!important;
+  width:44px!important;padding:0!important;margin:0!important;
+  border:1px solid var(--ss-theme-border)!important;border-radius:9px!important;
+  color:var(--ss-theme-ink)!important;background:var(--ss-theme-card)!important;cursor:pointer;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-header__search-popover{
+  display:none!important;position:absolute!important;top:calc(100% + 8px)!important;
+  right:0!important;left:auto!important;z-index:100!important;
+  box-sizing:border-box!important;padding:8px!important;
+  width:min(340px,calc(100vw - 32px))!important;max-width:none!important;
+  border:1px solid var(--ss-theme-border)!important;border-radius:10px!important;
+  background:var(--ss-theme-card)!important;box-shadow:0 14px 34px #0002!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+  .ss-workspace-header__search.is-open>.ss-workspace-header__search-popover{
+  display:block!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+  .ss-workspace-header__search-popover input[type="search"]{
+  display:block!important;width:100%!important;max-width:none!important;
+  min-height:38px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-header__primary{
+  grid-column:3!important;min-width:0!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+  .ss-workspace-header__primary>button{
+  width:112px!important;min-width:112px!important;max-width:112px!important;
+  min-height:38px!important;height:38px!important;
+ }
+ :root[data-sales-theme] .sales-app .notebook-workspace:has(>.ss-workspace-header){
+  grid-template-rows:116px minmax(0,1fr)!important;
+ }
+ /* The left/right sections of a CRM record become a two-column first row.
+    Recents spans both columns instead of sitting under only About. */
+}
+@media(min-width:980px) and (max-width:1439px){
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-record-page>.connections-record-columns{
+  display:grid!important;grid-template-columns:minmax(300px,.82fr) minmax(0,1.18fr)!important;
+  height:auto!important;min-height:0!important;max-height:none!important;gap:12px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-record-page>.connections-record-columns>.connections-record-related{
+  grid-column:1/-1!important;grid-row:auto!important;display:block!important;
+  min-width:0!important;width:100%!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-record-page>.connections-record-columns
+  >:is(.connections-record-properties,.connections-record-center,.connections-record-related){
+  height:auto!important;min-height:0!important;max-height:none!important;
+  overflow:visible!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-record-page>.connections-record-columns
+  >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+  >.connections-record-panel{
+  height:auto!important;min-height:0!important;max-height:none!important;
+ }
+}
+@media(min-width:761px) and (max-width:1023px){
+ :root[data-sales-theme] .sales-app .ss-workspace-header,
+ :root[data-sales-theme] .sales-app.view-dashboard
+  .connections-directory-layout>.connections-heading.connections-foundation-heading.ss-workspace-header,
+ :root[data-sales-theme] .sales-app.view-catalog
+  .catalog-workspace>.catalog-header.catalog-foundation-heading.ss-workspace-header{
+  padding-inline:11px!important;column-gap:6px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header>.ss-workspace-header__tools{
+  grid-template-columns:40px 42px 104px!important;gap:4px!important;
+  --ss-header-more-width:40px!important;--ss-header-search-width:42px!important;
+  --ss-header-create-width:104px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-header__more,
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-more>summary{width:40px!important}
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-header__search,
+ :root[data-sales-theme] .sales-app .ss-workspace-header .ss-workspace-header__search-toggle{
+  width:42px!important;min-width:42px!important;max-width:42px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header
+  .ss-workspace-header__primary>button{
+  width:104px!important;min-width:104px!important;max-width:104px!important;
+ }
+ :root[data-sales-theme] .sales-app .ss-workspace-header__intro h1{font-size:21px!important}
+ :root[data-sales-theme] .sales-app>.app-header .app-tabs{
+  min-width:0!important;flex:1 1 auto!important;overflow-x:auto!important;
+  overflow-y:hidden!important;scrollbar-width:none;
+ }
+ :root[data-sales-theme] .sales-app>.app-header .app-tabs::-webkit-scrollbar{display:none}
+ :root[data-sales-theme] .sales-app>.app-header .app-tab{
+  flex:0 0 auto!important;padding-inline:9px!important;
+ }
+}
+/* Tablet record columns stack intentionally before they become unreadably thin. */
+@media(min-width:761px) and (max-width:979px){
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  height:auto!important;min-height:0!important;max-height:none!important;gap:11px!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related){
+  grid-column:1!important;display:block!important;width:100%!important;
+  height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;
+ }
+ :root[data-sales-theme] .sales-app.view-dashboard
+ .connections-record-page>.connections-record-columns
+ >:is(.connections-record-properties,.connections-record-center,.connections-record-related)
+ >.connections-record-panel{height:auto!important;max-height:none!important}
+}
