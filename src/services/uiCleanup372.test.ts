@@ -62,7 +62,7 @@ describe('UI cleanup batch #372',()=>{
  it('defaults new tasks to local Today, retaining specific supplied or recovered due dates',()=>{
   const host=code('components/TaskModalHost.tsx');
   const editor=code('components/TasksWorkspace.tsx');
-  expect(host).toContain('request.dueDate??notebookToday()');
+  expect(host).toContain('dueDate:request.dueDate');
   expect(editor).toContain("draft.dueDate??recovered?.dueDate??localDay()");
   expect(editor).toContain("recovered?.dueDate??draft.dueDate??''");
  });
