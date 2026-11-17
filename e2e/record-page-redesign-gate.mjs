@@ -185,7 +185,11 @@ assert(contains(people,[
   'manager.remove(deal.id,personId)'
 ]),'Direct Deal–Person unlink permission or persistence protection changed');
 const menu=source('src/components/RecordActionsMenu.tsx');
-assert(contains(menu,['Unlink connections','Delete record…','window.confirm(']),
-  'Record actions delete/unlink protections changed');
+const safeUnlink=source('src/components/RecordUnlinkAction.tsx');
+assert(contains(menu,['Delete record…','window.confirm('])&&
+  !menu.includes('Unlink connections')&&
+  contains(safeUnlink,['<RecordUnlinkButton',"['Draft','Ready'].includes(quote.status)",
+    "Issued and archived Quotes are immutable."]),
+  'Local unlink safety and record deletion protections changed');
 
 process.stdout.write('Board and record-page source regression gate passed.\\n');
