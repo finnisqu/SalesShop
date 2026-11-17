@@ -13,6 +13,7 @@ import {activityRelationsWithContext,primaryActivityRelations}
 import {recordActivityOnce} from '../services/activitySaveRecovery351d';
 import {gmailActivityId,gmailActivitySourceKey,gmailMessageDate,gmailMessageDirection,
  loggedGmailActivity} from '../services/gmailActivity363';
+import {EmailFollowUp364} from './EmailFollowUp364';
 import './email-workspace.css';
 
 interface Props {
@@ -208,5 +209,10 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
      {saving?'Logging…':'Log email Activity'}</button>
    </div>
   </form>
+  {person&&chosenMessage&&key&&<EmailFollowUp364
+   key={messageId+'|'+person.id}
+   scope={scope} mailbox={mailbox} message={chosenMessage} fingerprint={key}
+   person={person} company={companies.find(c=>c.id===chosenCompany)}
+   deal={chosenDeal} participants={details.summary.participants}/>}
  </section>;
 }
