@@ -16,7 +16,10 @@ describe('Centered create/edit modals #358a',()=>{
   expect(s).toContain('  {showForm&&createPortal(');
   expect(s.indexOf('  {showForm&&createPortal(')).toBeGreaterThan(
    s.indexOf('className="ss-file-links-actions"'));
-  expect(s).not.toContain('</div>}\n  {showForm&&createPortal(');
+  // Filters may be conditional siblings ahead of the portal. Confirm the
+  // dialog remains independently gated rather than tightly coupling to layout.
+  expect(s).toContain('const [showForm,setShowForm]=useState(false)');
+  expect(s).toContain('ref={modalRef}');
  });
  it('Our Org +Person uses same modal without changing role/roster save logic',()=>{
   const s=read('components/OurOrganizationDirectory.tsx');

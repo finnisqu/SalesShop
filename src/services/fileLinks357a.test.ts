@@ -24,6 +24,14 @@ describe('Files prototype #357a',()=>{
    expect(()=>normalizeFileLinkUrl(bad)).toThrow();
   }
  });
+ it('keeps native customer-share bearer URLs out of private File links',()=>{
+  for(const url of [
+   'https://salesshop.work/q/secretBearerToken',
+   'https://app.salesshop.work/q/secretBearerToken',
+   'https://salesshop.pages.dev/q/secretBearerToken',
+  ])expect(()=>normalizeFileLinkUrl(url)).toThrow('Customer Quote links');
+  expect(normalizeFileLinkUrl('https://salesshop.work/quotes')).toBe('https://salesshop.work/quotes');
+ });
  it('recognizes common providers without granting OAuth or uploading',()=>{
   expect(fileLinkProvider('https://drive.google.com/file/d/a')).toBe('Google Drive');
   expect(fileLinkProvider('https://www.dropbox.com/s/a')).toBe('Dropbox');

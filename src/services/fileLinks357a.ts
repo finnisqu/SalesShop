@@ -43,6 +43,12 @@ export function normalizeFileLinkUrl(input:string):string{
   throw new Error('Use an ordinary http(s) link without embedded credentials.');
  }
  if(url.href.length>2048)throw new Error('Link is too long (maximum 2048 characters).');
+ const hostname=url.hostname.toLowerCase();
+ const ownHost=typeof window!=='undefined'&&hostname===window.location.hostname.toLowerCase();
+ const salesShopHost=hostname==='salesshop.work'||hostname.endsWith('.salesshop.work')||
+  hostname==='salesshop.pages.dev'||hostname.endsWith('.salesshop.pages.dev');
+ if((salesShopHost||ownHost)&&/^\/q\/[^/]+/.test(url.pathname))
+  throw new Error('SalesShop customer Quote links contain access tokens. Use Customer Quote links instead of saving one as a File.');
  return url.href;
 }
 export function fileLinkProvider(value:string):string{
