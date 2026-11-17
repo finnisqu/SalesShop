@@ -69,7 +69,9 @@ describe('Gmail combined log and follow-up #365',()=>{
   expect(ui).toContain('Log email + create follow-up');
   expect(ui).toContain('gmailCombinedSaveState');
   expect(ui).toContain('recordActivityOnce');
-  expect(ui).toContain('Create follow-up without logging');
+  expect(ui).toContain('Log this email as an Activity (optional)');
+  expect(ui.indexOf('ss-email-activity-targets')).toBeLessThan(ui.indexOf('<EmailFollowUp364'));
+  expect(ui.indexOf('<EmailFollowUp364')).toBeLessThan(ui.indexOf('ss-email-log-panel'));
   expect(ui).toContain('suggestGmailReply');
   expect(ui).toContain('validGmailToken(scope)');
   expect(ui).not.toContain('localStorage.setItem(');

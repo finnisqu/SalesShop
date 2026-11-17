@@ -226,17 +226,18 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
   })();
  };
  if(!canLog)return null;
- return <section className="ss-email-activity" aria-label="Log Gmail as CRM Activity">
-  <header><h4>Log email Activity</h4>
-   <small>Record an email, with an optional personal follow-up in one step.</small></header>
+ return <section className="ss-email-activity" aria-label="Gmail CRM actions">
+  <header><h4>Email actions</h4>
+   <small>Matching conversations are not automatically logged as Activities.
+    Create a follow-up independently, or explicitly log the message below.</small></header>
   {replyHint&&<div className="ss-email-reply-hint">
    <strong>Possible reply needed</strong>
    <p>{replyHint.description} This is a suggestion, not a confirmed unanswered message.</p>
    <button type="button" disabled={saving} onClick={()=>{
-    setMessageId(replyHint.messageId);setWithFollowUp(true);
-   }}>Plan a follow-up</button>
+    setMessageId(replyHint.messageId);
+   }}>Prepare follow-up Task</button>
   </div>}
-  <form onSubmit={log}>
+  <div className="ss-email-activity-targets">
    <label>Message
     <select value={messageId} disabled={saving} onChange={e=>setMessageId(e.target.value)}>
      {details.messages.map(message=><option key={message.id} value={message.id}>
@@ -272,6 +273,16 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
      </select>
     </label>
    </div>}
+  </div>
+  {person&&chosenMessage&&key&&<EmailFollowUp364
+   key={messageId+'|'+person.id}
+   scope={scope} mailbox={mailbox} message={chosenMessage} fingerprint={key}
+   person={person} company={companies.find(c=>c.id===chosenCompany)}
+   deal={chosenDeal} participants={details.summary.participants}/>}
+  <details className="ss-email-standalone ss-email-log-panel">
+   <summary>{alreadyLogged?'Email Activity already logged · View details':
+    'Log this email as an Activity (optional)'}</summary>
+   <form onSubmit={log}>
    <label>Activity notes
     <textarea value={notes} maxLength={5000} rows={2} disabled={saving||!!alreadyLogged}
      onChange={e=>setNotes(e.target.value)}
@@ -323,7 +334,8 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
     the optional follow-up is a personal Task. Only the notes you enter are saved.
     Gmail message bodies, recipients and raw Gmail IDs are not copied into SalesShop.</p>
    {alreadyLogged?<p className="ss-email-notice" role="status">
-    This Gmail message is already logged. You can still create its missing follow-up.</p>:null}
+    This Gmail message is already logged. Use the separate follow-up Task action above,
+    or select the combined option to finish a missing Task without recording another Activity.</p>:null}
    {error&&<p className="ss-email-error" role="alert">{error}</p>}
    {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
    {taskSyncStatus==='error'&&withFollowUp&&<p className="ss-email-error">
@@ -336,14 +348,7 @@ export function EmailActivityLogger363({details,mailbox,scope,contacts,companies
      {saving?'Saving…':alreadyLogged?'Create missing follow-up Task':
       withFollowUp?'Log email + create follow-up':'Log email Activity'}</button>
    </div>
-  </form>
-  {person&&chosenMessage&&key&&<details className="ss-email-standalone">
-   <summary>Create follow-up without logging email</summary>
-   <EmailFollowUp364
-    key={messageId+'|'+person.id}
-    scope={scope} mailbox={mailbox} message={chosenMessage} fingerprint={key}
-    person={person} company={companies.find(c=>c.id===chosenCompany)}
-    deal={chosenDeal} participants={details.summary.participants}/>
-  </details>}
+   </form>
+  </details>
  </section>;
 }
