@@ -3,6 +3,7 @@ import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout
 import {RecordInlineProperty} from './RecordInlineProperty';
 import {RecordActionsMenu} from './RecordActionsMenu';
 import {RecordRecentsPanel} from './RecordRecentsPanel';
+import {RecordTabbedGroup372} from './RecordTabbedGroup372';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {QuickCreate} from './QuickCreate';
 import {openActivityComposer} from '../services/taskActivityWorkflow';
@@ -236,7 +237,21 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
         </div>}
         {editing&&<CrmOwnerControl kind="company" recordId={company.id} ownerUserId={company.ownerUserId}/>}
       </RecordCard>
-      {company.kind === 'customer' && <RecordCard title="Account forecast">
+      <RecordCard title="Known aliases">
+        <div className="connections-record-aliases">
+          {visibleCompanyAliases(company).map((alias) => <span key={alias}>{alias}
+            <button type="button" aria-label={'Remove alias ' + alias} onClick={() => updateCompany(company.id, { aliases: (company.aliases ?? []).filter((item) => item !== alias) })}>×</button>
+          </span>)}
+          {!visibleCompanyAliases(company).length && <p className="connections-record-helper">No alternate names saved.</p>}
+        </div>
+        <form className="connections-record-alias-form" onSubmit={addAlias}>
+          <input value={newAlias} onChange={(event) => setNewAlias(event.target.value)} aria-label="New company alias" placeholder="Add an alternate name" />
+          <button type="submit" disabled={!newAlias.trim()}>Add</button>
+        </form>
+      </RecordCard>
+    <RecordTabbedGroup372 title="Company resources" items={[
+ ...(company.kind==='customer'?[{id:'forecast',label:'Forecast',content:<>
+{company.kind === 'customer' && <RecordCard title="Account forecast">
         <div className="connections-record-properties-list">
           <RecordInlineProperty label="Annual units" type="number"
             value={company.annualUnits?.toString()??''} disabled={!canEditRecord}
@@ -265,25 +280,73 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
           <RecordProperty label="Expected annual work">{companyEstimatedAnnualWork(company) === undefined ? 'Not set' : money.format(companyEstimatedAnnualWork(company)!)}</RecordProperty>
         </div>
       </RecordCard>}
-      <RecordCard title="Known aliases">
-        <div className="connections-record-aliases">
-          {visibleCompanyAliases(company).map((alias) => <span key={alias}>{alias}
-            <button type="button" aria-label={'Remove alias ' + alias} onClick={() => updateCompany(company.id, { aliases: (company.aliases ?? []).filter((item) => item !== alias) })}>×</button>
-          </span>)}
-          {!visibleCompanyAliases(company).length && <p className="connections-record-helper">No alternate names saved.</p>}
+ </>}]:[]),
+ {id:'files',label:'Files & folders',content:<>
+<RecordFilesPanel target={{kind:'company',id:company.id,title:company.name}}/>
+ </>},
+ {id:'notebook',label:'Notebook pages',content:<>
+<RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.companyId===company.id).length} linked</span>}>
+        <div className="connections-record-entity-list">
+          {notebookEntries.filter(entry=>entry.context?.companyId===company.id).map(entry=>
+            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
+              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
+            </button>)}
+          {!notebookEntries.some(entry=>entry.context?.companyId===company.id)&&
+            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
         </div>
-        <form className="connections-record-alias-form" onSubmit={addAlias}>
-          <input value={newAlias} onChange={(event) => setNewAlias(event.target.value)} aria-label="New company alias" placeholder="Add an alternate name" />
-          <button type="submit" disabled={!newAlias.trim()}>Add</button>
-        </form>
       </RecordCard>
+ </>},
+]}/>
     </>}
     center={<>
       {unlinking&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
         Unlink removes a direct association immediately after confirmation. It does not delete
         the related record or its history. Cancel Edit Page does not restore an unlinked association.
       </p>}
-      <RecordRecentsPanel quoteCount={related.relatedQuotes.length+externalQuotes.length}
+      <RecordTabbedGroup372 title="Connections" items={[
+ {id:'deals',label:'Deals',count:related.relatedProjects.length,content:<>
+<RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
+        <div className="connections-record-entity-list">
+          {related.relatedProjects.map((project) => <div className="ss-record-associated-row" key={project.id}>
+            <button type="button" onClick={() => openProject(project.id)}>
+              <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
+            </button>
+            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'deal',id:project.id,name:project.name}}/>}
+          </div>)}
+          {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
+        </div>
+        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
+      </RecordCard>
+ </>},
+ {id:'tasks',label:'Tasks',content:<>
+<RecordTasksPanel kind="company" id={company.id} name={company.name} editing={editing||unlinking}/>
+ </>},
+ {id:'people',label:'People',count:listedPeople.length,content:<>
+<RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
+        <div className="connections-record-entity-list">
+          {listedPeople.map((person) => <article key={person.id}>
+            <button type="button" className="connections-person-entity-open" onClick={() => openPerson(person.id)}>
+              <strong>{person.name || person.email || 'Unnamed contact'}</strong>
+              <small>{isOurCompany(company)&&rosterGroupForContact(person,companies)?
+                rosterGroupForContact(person,companies)==='employees'?'Employee · ':'Subcontractor · ':''}
+                Open person →</small>
+            </button>
+            {person.title && <small>{person.title}</small>}
+            {person.email && <a href={'mailto:' + person.email}>{person.email}</a>}
+            {person.phone && <a href={'tel:' + person.phone}>{person.phone}</a>}
+            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+              target={{kind:'person',id:person.id,name:person.name||person.email||'Unnamed person'}}/>}
+          </article>)}
+          {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
+        </div>
+        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="person"/>
+      </RecordCard>
+ </>},
+]}/>
+    </>}
+    right={<>
+<RecordRecentsPanel quoteCount={related.relatedQuotes.length+externalQuotes.length}
         activityCount={related.relatedActivities.length}
         quotes={<>
         <div className="connections-record-entity-list">
@@ -312,56 +375,8 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
             <small>{dateLabel(activity.occurredAt)}</small>
           </button>)}
         {!related.relatedActivities.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
-      </div>}/>
-      <RecordFilesPanel target={{kind:'company',id:company.id,title:company.name}}/>
-      <RecordTasksPanel kind="company" id={company.id} name={company.name} editing={editing||unlinking}/>
-      <RecordCard title="Deals" extra={<span>{related.relatedProjects.length}</span>}>
-        <div className="connections-record-entity-list">
-          {related.relatedProjects.map((project) => <div className="ss-record-associated-row" key={project.id}>
-            <button type="button" onClick={() => openProject(project.id)}>
-              <strong>{project.name}</strong><small>{project.stage}{project.dueDate ? ' · Due ' + dateLabel(project.dueDate) : ''}</small>
-            </button>
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
-              target={{kind:'deal',id:project.id,name:project.name}}/>}
-          </div>)}
-          {!related.relatedProjects.length && <p className="connections-record-empty">No deals linked yet.</p>}
-        </div>
-        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="deal"/>
-      </RecordCard>
-      <RecordCard title="Notebook" extra={<span>{notebookEntries.filter(entry=>entry.context?.companyId===company.id).length} linked</span>}>
-        <div className="connections-record-entity-list">
-          {notebookEntries.filter(entry=>entry.context?.companyId===company.id).map(entry=>
-            <button type="button" key={entry.id} onClick={()=>openNotebookPage(entry.id)}>
-              <strong>{entry.title}</strong><small>Linked private Notebook page →</small>
-            </button>)}
-          {!notebookEntries.some(entry=>entry.context?.companyId===company.id)&&
-            <p className="connections-record-empty">No Notebook pages linked yet.</p>}
-        </div>
-      </RecordCard>
-    </>}
-    right={<>
-      <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
-        <div className="connections-record-entity-list">
-          {listedPeople.map((person) => <article key={person.id}>
-            <button type="button" className="connections-person-entity-open" onClick={() => openPerson(person.id)}>
-              <strong>{person.name || person.email || 'Unnamed contact'}</strong>
-              <small>{isOurCompany(company)&&rosterGroupForContact(person,companies)?
-                rosterGroupForContact(person,companies)==='employees'?'Employee · ':'Subcontractor · ':''}
-                Open person →</small>
-            </button>
-            {person.title && <small>{person.title}</small>}
-            {person.email && <a href={'mailto:' + person.email}>{person.email}</a>}
-            {person.phone && <a href={'tel:' + person.phone}>{person.phone}</a>}
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
-              target={{kind:'person',id:person.id,name:person.name||person.email||'Unnamed person'}}/>}
-          </article>)}
-          {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
-        </div>
-        <RecordRelationshipPicker source={{kind:'company',id:company.id,name:company.name}} target="person"/>
-      </RecordCard>
-
-
-      <RecordCard title="Relationship history" extra={<span>{timeline.length} events</span>}>
+      </div>} history={<>
+<RecordCard title="Relationship history" extra={<span>{timeline.length} events</span>}>
         <CompanyRelationshipTimeline items={timeline} onOpenTarget={target=>{
           if(target.kind==='activity'){setActivityPreviewId(target.id);return;}
           if(target.kind==='person')openPerson(target.id);
@@ -370,6 +385,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
           if(target.kind==='task')requestTaskModal({mode:'preview',id:target.id});
         }}/>
       </RecordCard>
+ </>} historyCount={timeline.length}/>
     </>}
   />
   {activityPreviewId&&<CalendarActivityPreview activityId={activityPreviewId}

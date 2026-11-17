@@ -3,6 +3,7 @@ import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout
 import {RecordInlineProperty} from './RecordInlineProperty';
 import {RecordActionsMenu} from './RecordActionsMenu';
 import {RecordRecentsPanel} from './RecordRecentsPanel';
+import {RecordTabbedGroup372} from './RecordTabbedGroup372';
 import {QuickCreate} from './QuickCreate';
 import {RecordRelationshipPicker} from './RecordRelatedActions';
 import {RecordUnlinkAction} from './RecordUnlinkAction';
@@ -351,13 +352,85 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
           <RecordProperty label="Created">{displayDate(deal.createdAt)}</RecordProperty>
         </div>}
       </RecordCard>
+    <RecordTabbedGroup372 title="Deal resources" items={[
+ {id:'files',label:'Files',content:<>
+<RecordFilesPanel target={{kind:'deal',id:deal.id,title:deal.name}}/>
+ </>},
+ {id:'notebook',label:'Notebook',content:<>
+<RecordCard title="Notebook">
+        <ProjectNotebookLinks project={deal} />
+      </RecordCard>
+ </>},
+ {id:'email',label:'Email',content:<>
+<RecordEmailThreadsPanel kind="deal" id={deal.id}/>
+ </>},
+ ...(timelineBetaEnabled?[{id:'timeline',label:'Timeline',content:<>
+{timelineBetaEnabled&&<RecordCard title="Project timeline · Beta">
+        <p className="connections-record-helper">Track deposit, shop drawings, import batches, installations by building, invoices and retainage.</p>
+        <button type="button" onClick={()=>setTimelineOpen(true)}>Open milestone timeline</button>
+      </RecordCard>}
+ </>}]:[]),
+]}/>
     </>}
     center={<>
       {unlinking&&<p role="status" className="connections-record-helper ss-record-unlink-guidance">
         Unlink removes a direct association immediately after confirmation. It does not delete
         the related record or its history. Cancel Edit Page does not restore an unlinked association.
       </p>}
-      <RecordRecentsPanel quoteCount={related.linkedQuotes.length+outsideQuotes.length}
+      <RecordTabbedGroup372 title="Connections" items={[
+ {id:'people',label:'People',count:new Set([...related.dealPeople.map(person=>person.id),...directIds]).size,
+  content:<>
+<RecordCard title="People" extra={<span>{new Set([
+        ...related.dealPeople.map(person=>person.id),...directIds]).size} linked</span>}>
+        <p className="connections-record-helper">Linked People from Quotes and Activities appear below. Assign direct Deal contacts separately.</p>
+        <div className="connections-record-entity-list">
+          {related.dealPeople.map(person=><div key={person.id} className="ss-deal-person-entry">
+            <button type="button" onClick={()=>openPerson(person.id)}>
+              <strong>{person.name||person.email||'Unnamed person'}</strong>
+              <small>{person.title||'Linked contact'} · Open person →</small>
+            </button>
+            {canEditCrm&&<button type="button" onClick={()=>logDealActivity(person.id)}>Log</button>}
+          </div>)}
+          {!related.dealPeople.length&&<p className="connections-record-empty">No contacts linked through Quotes or Activities. Add a direct Deal Person below.</p>}
+        </div>
+        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={editing||unlinking}/>
+        {related.companyPeople.some(person=>!directIds.has(person.id))&&<details className="ss-deal-company-people">
+          <summary>Other people at this company ({related.companyPeople.filter(person=>!directIds.has(person.id)).length})</summary>
+          <div className="connections-record-entity-list">
+            {related.companyPeople.filter(person=>!directIds.has(person.id)).map(person=><div key={person.id} className="ss-deal-person-entry">
+              <button type="button" onClick={()=>openPerson(person.id)}>
+               <strong>{person.name||person.email||'Unnamed person'}</strong>
+               <small>{person.title||'Company contact'}</small>
+              </button>
+              {canEditCrm&&<button type="button" onClick={()=>logDealActivity(person.id)}>Log</button>}
+            </div>)}
+          </div>
+        </details>}
+      </RecordCard>
+<PrivateDealContactRoles dealId={deal.id} contacts={contacts} quotes={related.linkedQuotes} />
+ </>},
+ {id:'tasks',label:'Tasks',content:<>
+<RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing||unlinking}
+        quickActions={<DealBidReminder deal={deal}/>}/>
+ </>},
+ {id:'company',label:'Company',content:<>
+<RecordCard title="Company">
+        {related.company ? <div className="connections-record-entity-list">
+          <div className="ss-record-associated-row">
+            <button type="button" onClick={() => openCompany(related.company!.id)}>
+              <strong>{related.company.name}</strong><small>Open company →</small>
+            </button>
+            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
+              target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
+          </div>
+        </div> : <p className="connections-record-empty">No associated company. Edit the deal to select one.</p>}
+        <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
+      </RecordCard>
+ </>},
+]}/>
+    </>}
+    right={<>
+<RecordRecentsPanel quoteCount={related.linkedQuotes.length+outsideQuotes.length}
         activityCount={related.directHistory.length} quotes={<>
         {canEditCrm&&<button type="button" className="connections-record-add"
           onClick={()=>{
@@ -393,61 +466,8 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
             <strong>{activity.summary}</strong><small>{displayDate(activity.occurredAt)}</small>
           </button>)}
         {!related.directHistory.length&&<p className="connections-record-empty">No Activities recorded yet.</p>}
-      </div>}/>
-      <RecordFilesPanel target={{kind:'deal',id:deal.id,title:deal.name}}/>
-      <RecordEmailThreadsPanel kind="deal" id={deal.id}/>
-      <RecordTasksPanel kind="deal" id={deal.id} name={deal.name} editing={editing||unlinking}
-        quickActions={<DealBidReminder deal={deal}/>}/>
-      {timelineBetaEnabled&&<RecordCard title="Project timeline · Beta">
-        <p className="connections-record-helper">Track deposit, shop drawings, import batches, installations by building, invoices and retainage.</p>
-        <button type="button" onClick={()=>setTimelineOpen(true)}>Open milestone timeline</button>
-      </RecordCard>}
-      <RecordCard title="Notebook">
-        <ProjectNotebookLinks project={deal} />
-      </RecordCard>
-    </>}
-    right={<>
-      <RecordCard title="Company">
-        {related.company ? <div className="connections-record-entity-list">
-          <div className="ss-record-associated-row">
-            <button type="button" onClick={() => openCompany(related.company!.id)}>
-              <strong>{related.company.name}</strong><small>Open company →</small>
-            </button>
-            {(editing||unlinking)&&<RecordUnlinkAction source={{kind:'deal',id:deal.id,name:deal.name}}
-              target={{kind:'company',id:related.company.id,name:related.company.name}}/>}
-          </div>
-        </div> : <p className="connections-record-empty">No associated company. Edit the deal to select one.</p>}
-        <RecordRelationshipPicker source={{kind:'deal',id:deal.id,name:deal.name}} target="company"/>
-      </RecordCard>
-      <RecordCard title="People" extra={<span>{new Set([
-        ...related.dealPeople.map(person=>person.id),...directIds]).size} linked</span>}>
-        <p className="connections-record-helper">People associated through Quotes and logged Activities appear below. Direct Deal contacts can be assigned independently with an optional role.</p>
-        <div className="connections-record-entity-list">
-          {related.dealPeople.map(person=><div key={person.id} className="ss-deal-person-entry">
-            <button type="button" onClick={()=>openPerson(person.id)}>
-              <strong>{person.name||person.email||'Unnamed person'}</strong>
-              <small>{person.title||'Linked contact'} · Open person →</small>
-            </button>
-            {canEditCrm&&<button type="button" onClick={()=>logDealActivity(person.id)}>Log</button>}
-          </div>)}
-          {!related.dealPeople.length&&<p className="connections-record-empty">No contacts linked through Quotes or Activities. Add a direct Deal Person below.</p>}
-        </div>
-        <DealPeopleRelationships dealId={deal.id} people={contacts} onOpenPerson={openPerson} editing={editing||unlinking}/>
-        {related.companyPeople.some(person=>!directIds.has(person.id))&&<details className="ss-deal-company-people">
-          <summary>Other people at this company ({related.companyPeople.filter(person=>!directIds.has(person.id)).length})</summary>
-          <div className="connections-record-entity-list">
-            {related.companyPeople.filter(person=>!directIds.has(person.id)).map(person=><div key={person.id} className="ss-deal-person-entry">
-              <button type="button" onClick={()=>openPerson(person.id)}>
-               <strong>{person.name||person.email||'Unnamed person'}</strong>
-               <small>{person.title||'Company contact'}</small>
-              </button>
-              {canEditCrm&&<button type="button" onClick={()=>logDealActivity(person.id)}>Log</button>}
-            </div>)}
-          </div>
-        </details>}
-      </RecordCard>
-      <PrivateDealContactRoles dealId={deal.id} contacts={contacts} quotes={related.linkedQuotes} />
-      <section className="connections-record-panel connections-record-history">
+      </div>} history={<>
+<section className="connections-record-panel connections-record-history">
         <button type="button" className="connections-history-toggle" aria-expanded={historyOpen}
           onClick={() => setHistoryOpen(value => !value)}>
           <span>Activity history</span><small>{historyOpen ? 'Hide' : 'View'} <span aria-hidden="true">{historyOpen ? '▴' : '▾'}</span></small>
@@ -466,6 +486,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
           {!related.directHistory.length && <p className="connections-record-empty">No directly linked history available.</p>}
         </div>}
       </section>
+ </>} historyCount={related.directHistory.length}/>
     </>}
   />
   {externalQuoteDialogOpen&&<ExternalQuoteBackfillDialog initialDealId={deal.id}

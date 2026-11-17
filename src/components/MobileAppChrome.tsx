@@ -68,6 +68,9 @@ export function MobileAppChrome() {
   const quoteUndoDepth = useQuoteStore((state) => state.activeQuoteId ? state.undoStacks[state.activeQuoteId]?.length ?? 0 : 0);
   const quoteRedoDepth = useQuoteStore((state) => state.activeQuoteId ? state.redoStacks[state.activeQuoteId]?.length ?? 0 : 0);
   const user = useAuthStore((state) => state.user);
+  const workingQuote=activeQuote&&!activeQuote.archivedAt&&
+   (activeQuote.status==='Draft'||activeQuote.status==='Ready')&&
+   (mode!=='cloud'||activeQuote.ownerUserId===user?.id)?activeQuote:null;
   const preview = resolveOwnerPerspective(previewId, teamRole, mode);
   const effectiveRole = preview?.role ?? teamRole;
   const effectiveDepartment = preview?.department ?? department;
@@ -271,6 +274,19 @@ export function MobileAppChrome() {
                <span className="mobile-app-drawer-nav-label">{item.label}</span>
                <span className="mobile-app-drawer-nav-chevron" aria-hidden="true">›</span>
              </button>)}
+             {workingQuote&&!preview&&!quoteReadOnly&&<button type="button"
+              className={view==='quotes'?'active ss-mobile-working-quote':'ss-mobile-working-quote'}
+              aria-current={view==='quotes'?'page':undefined}
+              onClick={()=>{
+               setOpen(false);
+               useNavigationStore.getState().openQuote(workingQuote.id);
+              }}>
+              <span className="mobile-app-drawer-nav-icon"><MobileDestinationIcon view="quotes"/></span>
+              <span className="mobile-app-drawer-nav-label">
+               <strong>Working quote</strong><small>{workingQuote.title||'Untitled draft'}</small>
+              </span>
+              <span className="mobile-app-drawer-nav-chevron" aria-hidden="true">›</span>
+             </button>}
            </nav>
 
           

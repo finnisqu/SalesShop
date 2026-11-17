@@ -1190,3 +1190,12 @@
  min-width:34px;min-height:34px;padding:6px;margin-right:8px;border-radius:8px;
 }
 .sales-calendar-sidecar-list.is-outstanding .home-outstanding-today-action svg{display:block;width:18px;height:18px}
+
+
+/* #372: popover calendar squares have visible individual borders. */
+:root[data-sales-theme] .sales-calendar-popover:not(.is-inline) .sales-calendar-day{
+ border:1px solid var(--ss-theme-border,#d4c9b5)!important;
+}
+:root[data-sales-theme] .sales-calendar-popover:not(.is-inline) .sales-calendar-day.is-selected{
+ border-color:var(--ss-theme-accent,#917246)!important;
+}

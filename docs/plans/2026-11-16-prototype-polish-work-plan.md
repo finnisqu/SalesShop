@@ -23,6 +23,12 @@
 
 **Next after #371:** Pursue guided **plug-and-play CRM Setup**, reusing existing sample-field blueprints, starter packs and local configuration while preserving cloud-field security hold until disposable RLS tests pass. Later return to automations or analytics once Files and onboarding work are validated.
 
+## November 17 — coordinated UI cleanup #372
+
+**User-prioritized design polish:** Screenshot-backed fix to Deal quick-preview buttons wrapping within viewport; remove redundant external-quote capture shortcut from quick preview (full Deal retains first-class external quote form). Introduce contextual working Quote draft tab on desktop plus mobile navigation shortcut; Draft status popover uses existing guarded delete confirmation, never deletes issued/revised Quotes. Reorganize Company/Deal/Person 3-column Record pages into tabbed resource and CRM Connections panels and move Quotes/Activities/History into right-column Recents. Restore Deal People row legibility, Tools selected tab feedback, default new Task due date Today (preserve explicit/recovered dates), and bordered global calendar popover squares. **Source staged for build #372; Cloudflare and device acceptance separately verified.**
+
+**Safety boundaries:** CAD-Lite remains paused. Do not change Quote integrity/persistence, priced lines, customer delivery, CRM RLS/Auth, file links, or existing Task associations. Use current Draft deletion eligibility and confirmation. No new server schema or external provider integration.
+
 ## November 16 polish batches
 
 | ID | Feature / acceptance target | Starting point | Status | Blockers / evidence |

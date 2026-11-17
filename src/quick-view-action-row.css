@@ -21,3 +21,30 @@
  :root[data-sales-theme] :is(.tasks-preview-card,.record-preview-panel)
  :is(.ss-preview-actions,.record-preview-actions) button{min-height:44px}
 }
+
+
+/* #372: quick previews fit their width, never force side-scroll. */
+:root[data-sales-theme] .sales-app .record-preview-panel:not(.record-preview-capture-panel)
+ .record-preview-actions{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ align-items:stretch!important;justify-content:stretch!important;
+ gap:7px!important;overflow-x:visible!important;overflow-y:visible!important;
+ max-width:100%!important;padding-inline:10px!important;
+}
+:root[data-sales-theme] .sales-app .record-preview-panel:not(.record-preview-capture-panel)
+ .record-preview-actions>button{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;flex:1 1 auto!important;width:100%!important;
+ min-width:0!important;max-width:100%!important;
+ height:auto!important;min-height:40px!important;padding:8px 5px!important;
+ white-space:normal!important;overflow-wrap:break-word!important;
+ text-align:center!important;font-size:11px!important;line-height:1.25!important;
+}
+@media(max-width:700px){
+ :root[data-sales-theme] .sales-app .record-preview-panel:not(.record-preview-capture-panel)
+ .record-preview-actions>button[data-mobile-label]{
+  font-size:11px!important;line-height:1.25!important;
+ }
+ :root[data-sales-theme] .sales-app .record-preview-panel:not(.record-preview-capture-panel)
+ .record-preview-actions>button[data-mobile-label]::after{display:none!important}
+}

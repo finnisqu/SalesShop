@@ -141,3 +141,18 @@
     to { opacity: 1; transform: translateX(0); }
   }
 }
+
+
+/* #372: a resumable Quote draft in the mobile nav, distinct from Records. */
+.mobile-app-drawer-nav .ss-mobile-working-quote{
+ margin-top:7px;border-top:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-tint);
+}
+.mobile-app-drawer-nav .ss-mobile-working-quote
+ .mobile-app-drawer-nav-label{display:grid;gap:2px;min-width:0}
+.mobile-app-drawer-nav .ss-mobile-working-quote
+ .mobile-app-drawer-nav-label small{
+ font-size:11px;font-weight:500;overflow:hidden;
+ text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+ color:var(--ss-theme-muted)
+}
