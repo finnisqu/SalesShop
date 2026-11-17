@@ -143,3 +143,31 @@
   pointer-events:auto;
  }
 }
+
+
+/* #372: contextual draft tab to resume long-running Quote work. */
+:root[data-sales-theme] .sales-app .app-tabs .ss-working-quote-tab{
+ display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:225px;
+ margin-left:10px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;background:var(--ss-theme-card);
+ color:var(--ss-theme-ink);padding:6px 9px;
+}
+:root[data-sales-theme] .sales-app .app-tabs .ss-working-quote-tab.active{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint);
+ box-shadow:inset 0 -2px var(--ss-theme-accent);
+}
+.ss-working-quote-tab-title{
+ display:block;min-width:0;max-width:135px;overflow:hidden;
+ white-space:nowrap;text-overflow:ellipsis;
+}
+.ss-working-quote-tab-status{
+ font-size:9px;text-transform:uppercase;letter-spacing:.045em;
+ color:var(--ss-theme-muted);font-weight:800;
+}
+@media(max-width:1080px){
+ :root[data-sales-theme] .sales-app .app-tabs .ss-working-quote-tab{
+  max-width:155px;margin-left:4px
+ }
+ .ss-working-quote-tab-title{max-width:90px}
+ .ss-working-quote-tab-status{display:none}
+}

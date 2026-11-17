@@ -406,10 +406,6 @@ export function RecordPreviewDrawer({record,onClose,onSelect,onGoToQuotePage,onE
        {!perspective&&<button type="button" data-mobile-label="+ Task" onClick={()=>{
         onClose();requestTaskModal({mode:'create',associations:contextualLinks});
        }}>New task</button>}
-       {deal&&canLog&&
-         <button type="button" data-mobile-label="Bid sent" onClick={()=>setExternalQuoteOpen(value=>!value)}>
-           {externalQuoteOpen?'Cancel external quote':'Record external quote'}
-         </button>}
        {canLog&&<button type="button" data-mobile-label="Activity" onClick={()=>{
         onClose();openActivityComposer({associations:contextualLinks});
        }}>Log activity</button>}

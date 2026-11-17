@@ -127,25 +127,34 @@ assert(contains(inline,[
   "aria-label={'Save '+label}"
 ]),'Inline property editor changed');
 
+// #372 consolidates the three-column Records layout: persistent details and
+// resources at left, main CRM Connections at center, and Recents at right.
 const recents=source('src/components/RecordRecentsPanel.tsx');
 assert(contains(recents,[
   'role="tablist"','role="tab"',
-  "useState<'quotes'|'activities'>('quotes')",
-  "tab==='quotes'?quotes:activities"
+  "useState<'quotes'|'activities'|'history'>('quotes')",
+  "selected==='quotes'?quotes:selected==='activities'?activities:history"
 ]),'Recents tabs changed');
-
+const tabbed=source('src/components/RecordTabbedGroup372.tsx');
+assert(contains(tabbed,[
+ 'role="tablist"','role="tabpanel"','aria-selected={selected.id===item.id}'
+]),'Shared Records grouped panel navigation changed');
 for(const page of ['CompanyRecordPage','DealRecordPage','PersonRecordPage']){
   const content=source('src/components/'+page+'.tsx');
   const center=content.slice(content.indexOf('center={<>'),content.indexOf('right={<>'));
   const right=content.slice(content.indexOf('right={<>'));
-  assert(center.includes('<RecordRecentsPanel'),page+' missing center Recents');
-  assert(center.indexOf('<RecordTasksPanel')>center.indexOf('<RecordRecentsPanel'),page+' Tasks not in center after Recents');
+  assert(center.includes('<RecordTabbedGroup372 title="Connections"'),
+    page+' missing center Connections tabs');
+  assert(center.includes('<RecordTasksPanel'),page+' missing center Tasks action');
+  assert(right.includes('<RecordRecentsPanel'),page+' missing right-column Recents');
+  assert(right.includes('historyCount={'),page+' missing relationship history in Recents');
   assert(!right.includes('<RecordTasksPanel'),page+' Tasks duplicated in right column');
-  assert(contains(content,['<RecordActionsMenu unlinking={unlinking}','<RecordInlineProperty','onUnlink={()=>']),page+' missing edit/unlink assets');
+  assert(contains(content,['<RecordActionsMenu unlinking={unlinking}','<RecordInlineProperty','onUnlink={()=>']),
+    page+' missing edit/unlink assets');
 }
 for(const page of ['DealRecordPage','PersonRecordPage'])
-  assert(source('src/components/'+page+'.tsx').split('right={<>')[1].includes('<RecordCard title="Company"'),
-    page+' missing right-column Company');
+  assert(source('src/components/'+page+'.tsx').split('center={<>')[1].includes('<RecordCard title="Company"'),
+    page+' missing center Company relationship');
 
 // #332e moved visual Unlink controls into a single confirmation/busy/error
 // component. Keep the gate focused on the actual safety boundary and callers,

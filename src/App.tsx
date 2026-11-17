@@ -143,6 +143,11 @@ function App() {
   const projects = useCrmStore((state) => state.projects);
   const activities=useCrmStore((state)=>state.activities);
   const allQuotes=useQuoteStore((state)=>state.quotes);
+  const activeQuoteId=useQuoteStore((state)=>state.activeQuoteId);
+  const signedInUserId=useAuthStore((state)=>state.user?.id);
+  const workingQuote=allQuotes.find(q=>q.id===activeQuoteId&&!q.archivedAt&&
+    (q.status==='Draft'||q.status==='Ready')&&
+    (mode!=='cloud'||q.ownerUserId===signedInUserId))??null;
   const personalTasks=usePersonalTaskStore((state)=>state.tasks);
   const crmHydrated = useCrmStore((state) => state.hydrated);
   const loadedTaskScope=usePersonalTaskStore((state)=>state.scope);
@@ -327,6 +332,15 @@ function App() {
           <button className={`app-tab ${view === 'catalog' ? 'active' : ''}`} onClick={() => setView('catalog')} title="Shift+3">Catalog</button>
           <button className={`app-tab ${view === 'notebook' ? 'active' : ''}`} onClick={() => setView('notebook')} title="Shift+4">Notebook</button>
           <button className={`app-tab ${view === 'tools' ? 'active' : ''}`} onClick={() => setView('tools')} title="Shift+5">Tools</button>
+          {!inRolePreview&&workingQuote&&<button type="button"
+            className={'app-tab ss-working-quote-tab'+(view==='quotes'&&routeQuoteId===workingQuote.id?' active':'')}
+            title={'Return to draft: '+(workingQuote.title||'Untitled quote')}
+            aria-label={'Return to working Quote draft '+(workingQuote.title||'Untitled quote')}
+            onClick={()=>useNavigationStore.getState().openQuote(workingQuote.id)}>
+            <span aria-hidden="true">▧</span>
+            <span className="ss-working-quote-tab-title">{workingQuote.title||'Untitled draft'}</span>
+            <span className="ss-working-quote-tab-status">Draft</span>
+          </button>}
         </nav>
         <div className="app-primary-actions" role="group" aria-label="Calendar, search, create and notebook tools">
           <WorkspaceHelp page={view==='dashboard'?'connections':view}/>

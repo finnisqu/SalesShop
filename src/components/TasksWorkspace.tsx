@@ -99,7 +99,7 @@ export function TaskEditor({initial,onCancel,onSave}:{
   const [status,setStatus]=useState<TaskStatus>(recovered?.status??draft.status??'open');
   const [dueDate,setDueDate]=useState(initialTaskId
    ?recovered?.dueDate??draft.dueDate??''
-   :draft.dueDate??recovered?.dueDate??'');
+   :draft.dueDate??recovered?.dueDate??localDay());
   const [dueDateResponsibility,setDueDateResponsibility]=useState<'internal'|'external'|'neutral'>(
     recovered?.dueDateResponsibility??draft.dueDateResponsibility??'neutral');
   const [dueDateChangeReason,setDueDateChangeReason]=useState(recovered?.dueDateChangeReason??draft.dueDateChangeReason??'');

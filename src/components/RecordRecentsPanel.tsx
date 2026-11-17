@@ -1,24 +1,30 @@
 import {useState,type ReactNode} from 'react';
 import {RecordCard} from './RecordPageLayout';
 
-/** Shared center-column Quotes/Activities recents with familiar header tabs. */
-export function RecordRecentsPanel({quotes,activities,quoteCount,activityCount}:{
+/** One right-column Recents panel for quotes, activities and relationship history.
+ * Existing record navigation and permission checks remain in their original content.
+ */
+export function RecordRecentsPanel({quotes,activities,quoteCount,activityCount,history,historyCount}:{
  quotes:ReactNode;activities:ReactNode;quoteCount:number;activityCount:number;
+ history?:ReactNode;historyCount?:number;
 }){
- const [tab,setTab]=useState<'quotes'|'activities'>('quotes');
+ const [tab,setTab]=useState<'quotes'|'activities'|'history'>('quotes');
+ const tabs=[
+  {id:'quotes' as const,label:'Quotes',count:quoteCount},
+  {id:'activities' as const,label:'Activities',count:activityCount},
+  ...(history!==undefined?[{id:'history' as const,label:'History',count:historyCount}]:[])
+ ];
+ const selected=tabs.some(item=>item.id===tab)?tab:'quotes';
  return <RecordCard title="Recents" extra={<div className="ss-record-recents-tabs"
   role="tablist" aria-label="Recent record activity">
-  <button type="button" role="tab" aria-selected={tab==='quotes'}
-    className={tab==='quotes'?'is-active':''} onClick={()=>setTab('quotes')}>
-    Quotes <span>{quoteCount}</span>
-  </button>
-  <button type="button" role="tab" aria-selected={tab==='activities'}
-    className={tab==='activities'?'is-active':''} onClick={()=>setTab('activities')}>
-    Activities <span>{activityCount}</span>
-  </button>
+  {tabs.map(item=><button key={item.id} type="button" role="tab"
+   aria-selected={selected===item.id}
+   className={selected===item.id?'is-active':''} onClick={()=>setTab(item.id)}>
+   {item.label} {item.count!==undefined&&<span>{item.count}</span>}
+  </button>)}
  </div>}>
-  <div role="tabpanel" aria-label={'Recent '+tab} className="ss-record-recents-body">
-   {tab==='quotes'?quotes:activities}
+  <div role="tabpanel" aria-label={'Recent '+selected} className="ss-record-recents-body">
+   {selected==='quotes'?quotes:selected==='activities'?activities:history}
   </div>
  </RecordCard>;
 }

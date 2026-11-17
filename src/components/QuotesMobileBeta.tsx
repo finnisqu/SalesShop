@@ -24,6 +24,7 @@ import {
   type Quote, type QuoteSection, type QuoteLine, type QuoteLineKind, type QuoteTakeoffPiece,
 } from '../types/quote';
 import { QuoteBetaDetails } from './QuoteBetaDetails';
+import {QuoteDraftStatusMenu372} from './QuoteDraftStatusMenu372';
 import '../quote-details-single-column.css';
 import {quoteBetaPrimaryAction,quoteBetaStatusLabel} from '../services/quoteBetaLifecycleLanguage';
 import { QuoteCustomerQuickEdit } from './QuoteCustomerQuickEdit';
@@ -1441,7 +1442,11 @@ export function QuotesMobileBeta() {
                 {quote.documentType==='pricing-schedule'?`${quote.pricingSchedule?.customerItems.length??0} price rows`:money.format(quoteTotal(quote))}
               </strong>
               <div className="qmb-quote-price-meta" aria-label="Quote status, revision and cloud save">
-                <span className="qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>
+                {canManageLibrary&&canPermanentlyDeleteQuote(quote,quotes)
+                  ?<QuoteDraftStatusMenu372 label={quoteBetaStatusLabel(quote)}
+                    onDelete={requestDocumentDelete}
+                    onCopy={copyCurrentDocument} onDocuments={showLibrary}/>
+                  :<span className="qmb-editor-status">{quoteBetaStatusLabel(quote)}</span>}
                 <span className="qmb-quote-revision" aria-label={`Revision ${quote.revision}`}
                   title={`Revision ${quote.revision}`}>
                   <span className="qmb-revision-full">Revision </span>
