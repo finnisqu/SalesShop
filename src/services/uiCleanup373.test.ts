@@ -59,8 +59,8 @@ describe('Build #373 — viewport Email and Records UI',()=>{
    expect(actions).toContain('<RecordActionsMenu');
    expect(actions).not.toContain('Edit Page');
    expect(actions).not.toContain('onUnlink');
-   expect(page).toContain('Edit details');
-   expect(page).toContain('tools:canEdit');
+   expect(page).not.toContain("{id:'about',label:'About',tools:");
+   expect(page).toContain('<RecordInlineProperty');
   }
   const css=source('connections-record-pages.css');
   expect(css).toContain('main.connections-workspace:has(>.connections-record-page)');

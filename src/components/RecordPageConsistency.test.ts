@@ -8,7 +8,8 @@ describe('CRM record page action and relationship parity',()=>{
   for(const page of ['CompanyRecordPage','PersonRecordPage','DealRecordPage']){
    const content=source('src/components/'+page+'.tsx');
    expect(content).not.toContain('Edit Page');
-    expect(content).toContain('Edit details');
+    expect(content).not.toContain("{id:'about',label:'About',tools:");
+    expect(content).toContain('<RecordInlineProperty');
    expect(content).toContain('Log Activity');
    expect(content).toContain('<QuickCreate context={{kind:');
    expect(content).toContain('launcherLabel="+ New"');

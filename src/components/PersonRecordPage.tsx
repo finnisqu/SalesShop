@@ -159,10 +159,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
     </>}
     left={<>
  <RecordTabbedGroup372 title={displayName} initialTab="about" items={[
- {id:'about',label:'About',tools:canEditRecord?<button type="button" aria-label={editing?'Cancel editing':'Edit details'} onClick={()=>{setNotice(null);setEditError('');
-    if(editing)setNewCompanyName('');setEditing(v=>!v);
-   }}>{editing?'Cancel':'Edit'}</button>:undefined,
-  content:<>
+ {id:'about',label:'About',content:<>
   <RecordCard title="About this person">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={save}>

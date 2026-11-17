@@ -83,6 +83,7 @@ import { QuickCreate } from './components/QuickCreate';
 import {WorkspaceHeader,WorkspaceMoreMenu} from './components/WorkspaceHeader';
 import {WorkspaceHelp} from './components/WorkspaceHelp';
 import { AccountMenu } from './components/AccountMenu';
+import {RecentVisitsMenu} from './components/RecentVisitsMenu';
 import { BuildBadge } from './components/BuildBadge';
 import { GlobalPostItLauncher, GlobalPostItLayer } from './components/GlobalPostIt';
 import { QuotesMobileBeta } from './components/QuotesMobileBeta';
@@ -325,7 +326,7 @@ function App() {
       {isDeveloperPlaygroundRoute() && <DeveloperPlaygroundToolbar />}
       <RolePerspectiveBanner />
       <header className="app-header">
-        <div className="brand-lockup"><span className="brand-mark">S</span><strong>SalesShop</strong></div>
+        <RecentVisitsMenu disabled={inRolePreview}/>
         <nav className="app-tabs" aria-label="SalesShop sections">
           <button className={`app-tab ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')} title="Shift+1">Home</button>
           <button className={`app-tab ${view === 'dashboard'||view==='tasks'||view==='quotes' ? 'active' : ''}`} onClick={() => setView('dashboard')} title="Shift+2">Records</button>

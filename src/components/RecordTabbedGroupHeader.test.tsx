@@ -4,23 +4,21 @@ import {readFileSync} from 'node:fs';
 import {RecordTabbedGroup372} from './RecordTabbedGroup372';
 
 describe('record panel header actions',()=>{
- it('places Edit beside the About tab, without a duplicate visible record name',()=>{
+ it('renders a compact About tab with no redundant bulk Edit button',()=>{
   const html=renderToStaticMarkup(<RecordTabbedGroup372 title="Sample Deal"
    initialTab="about" items={[
-    {id:'about',label:'About',tools:<button type="button">Edit</button>,
-     content:<p>Deal information</p>},
+    {id:'about',label:'About',content:<p>Editable property rows</p>},
     {id:'files',label:'Files',content:<p>Attachments</p>},
     {id:'notebook',label:'Notebook',content:<p>Pages</p>},
    ]}/>);
   const header=html.slice(html.indexOf('<header'),html.indexOf('</header>')+9);
   expect(header).toContain('role="tablist"');
   expect(header).toContain('aria-label="Sample Deal sections"');
-  expect(header).toContain('Edit</button>');
   expect(header).toContain('>About</button>');
+  expect(header).not.toContain('ss-record-tab-tools');
   expect(header).not.toContain('<h2>');
-  expect(html.slice(html.indexOf('</header>'))).not.toContain('Edit details');
   expect(html).toContain('role="tabpanel"');
-  expect(html).toContain('Deal information');
+  expect(html).toContain('Editable property rows');
  });
  it('places the selected center-tab Manage action in the same header row',()=>{
   const html=renderToStaticMarkup(<RecordTabbedGroup372 title="Connections" showTitle
@@ -35,14 +33,13 @@ describe('record panel header actions',()=>{
   expect(header).toContain('<h2 class="ss-record-panel-title">Connections</h2>');
   expect(html.slice(html.indexOf('</header>'))).not.toContain('Manage links');
  });
- it('keeps contextual About edit actions in all record types',()=>{
+ it('all record About panels use inline editors without the Edit button',()=>{
   for(const page of ['Company','Deal','Person']){
    const text=readFileSync(new URL('./'+page+'RecordPage.tsx',import.meta.url),'utf8');
    const about=text.slice(text.indexOf("{id:'about',label:'About'"),text.indexOf('<RecordCard title="About this'));
-   expect(about).toContain('tools:canEdit');
-   expect(about).toContain('Edit details');
-   expect(about).toContain("editing?'Cancel':'Edit'");
-   expect(about).not.toContain('ss-record-local-actions');
+   expect(about).toContain("{id:'about',label:'About',content:<>");
+   expect(about).not.toContain('tools:');
+   expect(text).toContain('<RecordInlineProperty');
   }
  });
 });

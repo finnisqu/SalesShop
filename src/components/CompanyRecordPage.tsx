@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RecordPageLayout, RecordCard, RecordProperty } from './RecordPageLayout';
 import {RecordInlineProperty} from './RecordInlineProperty';
+import {RecordContactIcon374} from './RecordContactIcon374';
 import {RecordActionsMenu} from './RecordActionsMenu';
 import {RecordRecentsPanel} from './RecordRecentsPanel';
 import {RecordTabbedGroup372} from './RecordTabbedGroup372';
@@ -185,9 +186,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
     </>}
     left={<>
       <RecordTabbedGroup372 title={company.name} initialTab="about" items={[
- {id:'about',label:'About',tools:canEditRecord?<button type="button" aria-label={editing?'Cancel editing':'Edit details'} onClick={()=>{setNotice(null);setEditError('');setEditing(v=>!v);}}>
-    {editing?'Cancel':'Edit'}</button>:undefined,
-  content:<>
+ {id:'about',label:'About',content:<>
   <RecordCard title="About this company">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate onChange={()=>setEditError('')} onSubmit={saveCompany}>
@@ -289,18 +288,36 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
   content:<>
 <RecordCard title={isOurCompany(company)?'People · Our Organization':'People'} extra={<span>{listedPeople.length}</span>}>
         <div className="connections-record-entity-list">
-          {listedPeople.map((person) => <article key={person.id}>
-            <button type="button" className="connections-person-entity-open" onClick={() => openPerson(person.id)}>
-              <strong>{person.name || person.email || 'Unnamed contact'}</strong>
-              <small>{isOurCompany(company)&&rosterGroupForContact(person,companies)?
-                rosterGroupForContact(person,companies)==='employees'?'Employee · ':'Subcontractor · ':''}
-                Open person →</small>
-            </button>
-            {person.title && <small>{person.title}</small>}
-            {person.email && <a href={'mailto:' + person.email}>{person.email}</a>}
-            {person.phone && <a href={'tel:' + person.phone}>{person.phone}</a>}
-            {unlinking&&<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
-              target={{kind:'person',id:person.id,name:person.name||person.email||'Unnamed person'}}/>}
+          {listedPeople.map(person=><article key={person.id} className="ss-company-person-card">
+            <div className="ss-company-person-card-heading">
+              <div className="ss-company-person-card-identity">
+                <strong>{person.name||person.email||'Unnamed contact'}</strong>
+                <small>{[isOurCompany(company)&&rosterGroupForContact(person,companies)
+                   ?rosterGroupForContact(person,companies)==='employees'?'Employee':'Subcontractor'
+                   :'',
+                  person.title].filter(Boolean).join(' · ')||'Person'}</small>
+              </div>
+              <div className="ss-company-person-card-navigation">
+                {unlinking?<RecordUnlinkAction source={{kind:'company',id:company.id,name:company.name}}
+                  target={{kind:'person',id:person.id,name:person.name||person.email||'Unnamed person'}}/>:
+                <button type="button" onClick={()=>openPerson(person.id)}
+                  aria-label={'Open Person record for '+(person.name||person.email||'Unnamed person')}>
+                  Open person →
+                </button>}
+              </div>
+            </div>
+            {(person.email||person.phone)&&<div className="ss-company-person-card-contact-actions"
+              aria-label={'Contact '+(person.name||person.email||'this person')}>
+              {person.email&&<a href={'mailto:'+person.email.trim()}
+                aria-label={'Email '+(person.name||person.email)} title="Email Person">
+                <RecordContactIcon374 kind="email"/></a>}
+              {person.phone&&<a href={'tel:'+person.phone.replace(/[^0-9+*#]/g,'')}
+                aria-label={'Call '+(person.name||person.phone)} title="Call Person">
+                <RecordContactIcon374 kind="call"/></a>}
+              {person.phone&&<a href={'sms:'+person.phone.replace(/[^0-9+*#]/g,'')}
+                aria-label={'Text '+(person.name||person.phone)} title="Text Person">
+                <RecordContactIcon374 kind="text"/></a>}
+            </div>}
           </article>)}
           {!listedPeople.length && <p className="connections-record-empty">No people linked yet.</p>}
         </div>

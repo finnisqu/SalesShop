@@ -10,13 +10,13 @@ describe('Build #375 — minimal Deal People, local editing and History alignmen
   expect(deal).toContain('onChange={event=>updateDeal(deal.id,{stage:event.target.value as ProjectStage})}');
   expect(deal).toContain('PROJECT_STAGES.map(stage');
  });
- it('puts Edit details inside About, not in the record header',()=>{
+ it('keeps About inline-only without a redundant bulk Edit button',()=>{
   for(const name of ['Deal','Company','Person']){
    const code=source('components/'+name+'RecordPage.tsx');
    const head=code.slice(code.indexOf('actions={<>'),code.indexOf('left={<>'));
    expect(head).not.toContain('Edit Page');
    expect(head).not.toContain('onUnlink');
-   expect(code).toContain('Edit details');
+   expect(code).not.toContain("{id:'about',label:'About',tools:");
    expect(code).toContain('<RecordInlineProperty');
   }
  });
@@ -59,10 +59,11 @@ describe('Build #375 — minimal Deal People, local editing and History alignmen
   const company=source('components/CompanyRecordPage.tsx');
   const editor=source('components/CompanyForecastEditor375.tsx');
   expect(company).toContain('<CompanyForecastEditor375 company={company} canEdit={canEditRecord}/>');
-  expect(editor).toContain('Edit forecast');
+  expect(editor).toContain('<RecordInlineProperty');
   expect(editor).toContain("integer:true");
   expect(editor).toContain("max:100");
-  expect(editor).toContain("await updateCompany(company.id,values)");
-  expect(editor).toContain('if(!canEdit||saving)return');
+  expect(editor).toContain('disabled={!canEdit}');
+  expect(editor).toContain('updateCompany(company.id,{');
+  expect(editor).not.toContain('Edit forecast');
  });
 });

@@ -80,8 +80,8 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
   // The About editor moved from the body into the selected tab's header.
   // The edit action must still be permission-gated.
   expect(deal).toContain("{id:'about',label:'About',tools:canEditCrm?<button");
-  expect(deal).toContain("aria-label={editing?'Cancel editing':'Edit details'}");
-  expect(deal).toContain("editing?'Cancel':'Edit'");
+  expect(deal).not.toContain("{id:'about',label:'About',tools:");
+  expect(deal).toContain('disabled={!canEditCrm}');
   expect(source('components/RecordTabbedGroup372.tsx')).toContain(
    '{selected.tools&&<div className="ss-record-tab-tools">{selected.tools}</div>}');
   expect(preview).toContain("{canLog&&onEditBoard&&((record.kind==='deal')||(record.kind==='company'))&&");
@@ -100,8 +100,8 @@ describe('Batch 341 — coordinated Record edits and inspector permission parity
    expect(code).toContain('if(!'+grant+'){'+state+
     "('You no longer have permission to edit this "+entity+".');return;}");
    expect(code).toContain('<RecordActionsMenu');
-    expect(code).toContain('Edit details');
-    expect(code).toContain('tools:canEdit');
+    expect(code).not.toContain("{id:'about',label:'About',tools:");
+    expect(code).toContain('<RecordInlineProperty');
   }
   const css=source('record-page-refinement.css');
   expect(css).toContain('.ss-record-pencil:disabled');

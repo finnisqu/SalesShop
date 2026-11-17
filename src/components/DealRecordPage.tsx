@@ -223,11 +223,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
     </>}
     left={<>
       <RecordTabbedGroup372 title={deal.name} initialTab="about" items={[
- {id:'about',label:'About',tools:canEditCrm?<button type="button" aria-label={editing?'Cancel editing':'Edit details'} onClick={()=>{
-   setNotice(null);setSaveError('');if(editing)setNewCompanyName('');
-   setEditing(v=>!v);
-  }}>{editing?'Cancel':'Edit'}</button>:undefined,
-  content:<>
+ {id:'about',label:'About',content:<>
  <RecordCard title="About this deal">
         <RecordFormFeedback notice={notice}/>
         {editing ? <form className="connections-record-edit-form" noValidate
