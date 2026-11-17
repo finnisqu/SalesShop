@@ -14,7 +14,7 @@ beforeEach(()=>{storage.clear();vi.stubGlobal('localStorage',{
 });});
 afterEach(()=>vi.unstubAllGlobals());
 const time=Date.parse('2026-11-17T12:00:00Z');
-const thread=(email:string,date='2026-11-14T12:00:00Z'):GmailThreadSummary=>({
+const thread=(email:string,date='2026-11-14T12:00:00.000Z'):GmailThreadSummary=>({
  id:'thread123',subject:'Sensitive subject',from:email,participants:[
  'owner@shop.com','client@builder.com'
  ],date,messageCount:2,snippet:'Sensitive snippet'});
