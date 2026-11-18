@@ -50,3 +50,30 @@ A reported `popup_closed` from Google Identity Services means no token reached S
 ## Popup stays open after account selection (#388b)
 
 If the Google account chooser remains open when SalesShop reports `popup_closed`, the error may reflect an **intermediate** popup event rather than an abandoned OAuth attempt. #388b now holds the attempt while Google has focus, and only schedules the failure after SalesShop regains focus and no valid token callback arrives within a 4-second grace period. The on-demand **Connection checks** report now includes a safe, in-memory **Last OAuth flow events** trace with relative timestamps and SalesShop focus state. Use that report after retrying: `popup_closed` without `oauth_response` suggests an interrupted or inaccessible token callback; `oauth_response` followed by `oauth_denied` indicates OAuth denied consent; `token_accepted` followed by a UI error indicates a later Gmail API or profile failure. Nothing in the trace contains Gmail tokens, messages or mailbox addresses. See [#388b](../platform/90-gmail-focus-aware-oauth-388b.md).
+
+## November 18, 2026 — full-page redirect fallback (#389)
+
+The live diagnostic trace was requested (0ms), popup_closed (3143ms, SalesShop unfocused), failed (9983ms, focused), without any oauth_response. Origin, Google Identity Services, deployed COOP policy, and a Chrome Incognito attempt were checked. The new default uses full-page OAuth authorization code + PKCE instead of a popup callback.
+
+### One-time Google configuration
+
+1. In Google Auth Platform → Clients, open the same **Web application** client already configured in the Vite build as VITE_GOOGLE_GMAIL_CLIENT_ID.
+2. Keep Authorized JavaScript origin **https://app.salesshop.work**.
+3. **Add Authorized redirect URI: https://app.salesshop.work/gmail/callback** (no trailing slash). Unlike the old popup flow, this redirect URI is required.
+4. Confirm the consent-screen test user and enabled Gmail API.
+
+### One-time Cloudflare Worker runtime configuration
+
+SalesShop uses **Cloudflare Workers with static assets** (wrangler.jsonc), not Pages Functions. In Workers & Pages → salesshop → Settings → Variables & Secrets configure:
+
+- GOOGLE_GMAIL_CLIENT_ID — plain-text runtime variable equal to VITE_GOOGLE_GMAIL_CLIENT_ID used during the Vite build.
+- GOOGLE_GMAIL_CLIENT_SECRET — **encrypted runtime secret** for the same Google Web client. Never commit or paste the secret; never use a VITE_ prefix.
+- GMAIL_OAUTH_ORIGIN — optional plain-text runtime variable, defaulting to https://app.salesshop.work. Preview domains require separately registered OAuth redirect URIs.
+
+Deploy the Worker with these runtime values set. Connect Gmail checks GET /api/gmail/oauth/status before redirecting; when secrets are not configured, the user sees an actionable error rather than a popup failure.
+
+### Flow and security
+
+The browser creates cryptographically random state and PKCE verifier (10-minute, single-use pending session). Google redirects to /gmail/callback, where SalesShop restores the signed-in workspace, verifies state, and **immediately removes the Google code from the URL**. It sends the code/verifier to a same-origin Worker endpoint. The Worker uses the secret to exchange code with Google, verifies Gmail read-only scope, and returns a short-lived access token with no-store headers. SalesShop continues to keep tokens and message bodies **in browser memory only**. Reload requires reconnection. No refresh tokens, Gmail changes, automatic CRM writes, or Supabase schema changes.
+
+The legacy popup is retained under Try popup instead. The Worker only handles /api/gmail/oauth/*, and static asset routes remain unchanged. Verify a production Workers deploy and complete Google consent end-to-end before treating the connection as working. A green build alone does not verify Google authorization.
