@@ -44,6 +44,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const loading=useGmailSessionStore(s=>s.loading),error=useGmailSessionStore(s=>s.error);
  const threads=useGmailSessionStore(s=>s.threads),nextPage=useGmailSessionStore(s=>s.nextPageToken);
  const connect=useGmailSessionStore(s=>s.connect),disconnect=useGmailSessionStore(s=>s.disconnect);
+ const connectWithRedirect=useGmailSessionStore(s=>s.connectWithRedirect);
  const searchGmail=useGmailSessionStore(s=>s.search);
  const linkScope=useEmailThreadLinkStore(s=>s.scope);
  const storedLinks=useEmailThreadLinkStore(s=>s.links);
@@ -185,10 +186,14 @@ export function EmailWorkspace({contacts,deals,companies}:{
  },[mailbox,expectedScope]);
  const connectInbox=async()=>{
   setNotice('');
+  await connectWithRedirect();
+ };
+ const connectPopup=async()=>{
+  setNotice('');
   try{
    await connect();
    await useGmailSessionStore.getState().search(query);
-  }catch{/* The session store explains the OAuth denial or setup problem. */}
+  }catch{/* The session store explains the popup failure. */}
  };
  const runSearch=(searchQuery:string)=>{
   if(!connected||loading)return;
@@ -346,8 +351,13 @@ export function EmailWorkspace({contacts,deals,companies}:{
    <div className="ss-email-connection">
     <span>{connected?'Connected: '+mailbox:status==='connecting'?'Waiting for Google authorization…':'No Gmail connected'}</span>
     {connected?<button type="button" onClick={()=>{disconnect();setNotice('Gmail disconnected for this session.');}}>
-     Disconnect</button>:<button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
-     onClick={()=>{void connectInbox();}}>Connect Gmail</button>}
+     Disconnect</button>:<>
+     <button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
+      onClick={()=>{void connectInbox();}}>Connect Gmail</button>
+     <button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
+      title="Older popup connection method" onClick={()=>{void connectPopup();}}>
+      Try popup instead</button>
+    </>}
    </div>
    {connected&&<>
     <form onSubmit={findThreads} className="ss-email-search">
@@ -399,9 +409,9 @@ export function EmailWorkspace({contacts,deals,companies}:{
    <strong>Gmail connection not completed</strong>
    <p>{error}</p>
    <small>SalesShop did not receive verified Gmail authorization.
-    A closed popup can be caused by browser restrictions, an incorrect OAuth
-    client configuration, or an interrupted Google callback. The connection
-    checks below can help distinguish them. No messages were imported.</small>
+    Redirect connections require a configured Cloudflare Worker OAuth secret and
+    the exact Google callback URI. Popup connections also offer browser event checks.
+    No messages were imported.</small>
   </div>}
   {error&&<GmailConnectionChecks388/>}
   {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
