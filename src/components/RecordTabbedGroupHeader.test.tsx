@@ -62,8 +62,9 @@ describe('record panel header actions',()=>{
   expect(relationships).toContain('<RecordTabToolbar label="People"');
   expect(relationships).not.toContain('>Role</button>');
   expect(relationships).toContain('link.role||person.title');
-  expect(html).toContain('href="/favicon.svg"');
-  expect(html).toContain('href="/favicon.ico"');
+  // The favicon is SVG-only; allow versioned URLs so cache busting does not break this test.
+  expect(html).toMatch(/rel="icon"[^>]*href="\/favicon\.svg(?:\?[^"]*)?"/);
+  expect(html).not.toContain('favicon.ico');
  });
  it('all record About panels use inline editors without the Edit button',()=>{
   for(const page of ['Company','Deal','Person']){
