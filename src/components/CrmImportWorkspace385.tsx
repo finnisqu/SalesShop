@@ -7,6 +7,7 @@ import {CRM_IMPORT_FIELDS,MAX_CRM_IMPORT_BYTES,detectCrmImportMapping,
 import {commitReviewedCrmImport,crmImportCanCreate,crmImportIdentity}
  from '../services/crmImportCommit385';
 import './crm-import-workspace385.css';
+import {CrmRelationshipImport386} from './CrmRelationshipImport386';
 
 const TARGETS=[
  {id:'company',label:'Companies',hint:'Import Companies before People or Deals that reference them.'},
@@ -15,6 +16,7 @@ const TARGETS=[
 ] as const;
 
 export function CrmImportWorkspace385(){
+ const [importMode,setImportMode]=useState<'records'|'links'>('records');
  const [kind,setKind]=useState<CrmImportKind>('company');
  const [file,setFile]=useState<File|null>(null);
  const [table,setTable]=useState<CrmImportTable|null>(null);
@@ -98,6 +100,8 @@ export function CrmImportWorkspace385(){
   const anchor=document.createElement('a');anchor.href=url;anchor.download='salesshop-'+kind+'-import-sample.csv';
   document.body.append(anchor);anchor.click();anchor.remove();URL.revokeObjectURL(url);
  };
+ if(importMode==='links')return <CrmRelationshipImport386
+  onBack={()=>setImportMode('records')}/>;
  return <section className="ss-crm-import" aria-label="CRM data import">
   <header className="ss-crm-import-heading">
    <div><small>DATA MANAGEMENT · REVIEW-FIRST</small><h2>Import CRM records</h2>
@@ -105,6 +109,12 @@ export function CrmImportWorkspace385(){
    </div>
    <span>CSV · XLSX · XLS</span>
   </header>
+  <nav className="ss-crm-import-mode-nav" aria-label="Import type">
+   <button type="button" aria-current="page">Import records</button>
+   <button type="button" disabled={saving} onClick={()=>setImportMode('links')}>
+    Link People to Deals
+   </button>
+  </nav>
   <div className="ss-crm-import-layout">
    <article className="ss-crm-import-card">
     <div className="ss-crm-import-step-title"><span>1</span><div><strong>Choose records</strong>

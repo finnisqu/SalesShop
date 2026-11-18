@@ -38,3 +38,7 @@
 ## Follow-up
 
 #385b can add explicit, **reviewed** Person↔Deal relationship mapping from stable external IDs after the initial creation flow is authenticated and verified. A separately approved import job with an import ledger and a server transaction would be required before supporting unattended jobs, large files, background scheduling, or transactionally atomic batch commits. Do not touch CAD-Lite, Google Sheets export, or shared custom-field migrations here.
+
+## #385b relationship import follow-up
+
+The first release deliberately excluded Person↔Deal relationships. #385b adds a separate **review-first link mode** under Tools → Import. It matches **existing** Deals and People using exact SalesShop IDs or unique email and disambiguated Deal name, previews and explicitly approves each proposed link, and uses the preexisting `deal_people` write path with no auto-overwrite. See [#385b guide](87-crm-relationship-import-386.md). This does not create or store external CRM ID mappings.

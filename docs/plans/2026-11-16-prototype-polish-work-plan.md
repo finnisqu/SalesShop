@@ -13,6 +13,10 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## #385b — Reviewed Deal–Person relationship import · November 18, 2026
+
+**Status: Source prepared / Cloudflare and authenticated browser validation pending.** Extend Tools → Import with a relationship mode for existing Deal and Person records. Import CSV/Excel, map native SalesShop IDs or unique email/Deal-name-plus-Company matches, review row status and select specific Ready relationships, optionally assign a role, and create through `useDealPeopleStore.add` with scope/permissions checked before and during each sequential save. Existing links remain unchanged; failures are shown as partial, never atomic. See [#385b acceptance guide](../platform/87-crm-relationship-import-386.md). No new schema, external-ID mapping, bulk record creation, or automated merges.
+
 ## #385 — CRM Data Import v0.1 · November 18, 2026
 
 **Status: Source prepared / Cloudflare and authenticated device QC pending.** Tools → Import supports CSV/Excel Company, Person and Deal migration with source-field mapping, previews, duplicate/ambiguous flags, exact Company links, explicit confirmation, and additive core CRM creation using existing permissions and cloud sync. See [#385 acceptance guide](../platform/86-crm-data-import-385.md). No shared custom fields, SQL migrations, Quote writes, or auto-overwrites. Import Companies first; People and Deals link to existing Companies. Cloud partial-confirmation errors are disclosed, not silently retried.
