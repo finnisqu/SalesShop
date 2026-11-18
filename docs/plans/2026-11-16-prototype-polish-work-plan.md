@@ -13,6 +13,10 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## #388a — Gmail popup connection diagnosis and recovery · November 18, 2026
+
+**Status: Source prepared / Cloudflare and real-Google acceptance pending.** Fix a user-reported failed Google popup flow (OAuth `popup_closed`) by allowing a bounded late callback and adding an on-demand live header/origin/library/client-ID diagnostic in Tools → Email. Stop treating every popup close as proof of origin mismatch; show actionable Cloudflare/Google configuration checks. Preserve read-only scope, ephemeral tokens, no Gmail writes or background jobs. See [#388a recovery notes](../platform/89-gmail-oauth-recovery-388a.md).
+
 ## #387 — Proposed Records and Smart CRM Suggestions · November 18, 2026
 
 **Status: Source prepared / Cloudflare and authenticated browser acceptance pending.** Tools → Suggestions contains an opt-in decision inbox. Deterministic hints from **current user's** manual Activity summaries and notes (including Notebook-origin touchpoints) propose explicit new People, unique-email Activity→Person links and explicit YYYY-MM-DD follow-up Tasks. Review/Edit/Accept/Dismiss, account-scoped dismissal, stale-evidence rejection, CRM permission checks, private Task sync barrier and cloud-confirmed Activity/Person mutations. Read-only until Accept; no full Notebook scanning, inferred relative dates, Gmail automation, AI service, server scheduler, or cloud schema changes. See [#387 acceptance notes](../platform/88-proposed-crm-suggestions-387.md).

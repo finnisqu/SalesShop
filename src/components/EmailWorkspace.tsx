@@ -28,6 +28,7 @@ import {DEFAULT_GMAIL_REVIEW_RULES,GMAIL_REVIEW_MIN_DAYS,GMAIL_REVIEW_MAX_DAYS,
  from '../services/gmailTriagePrefs370';
 import {EmailPersonCreate362} from './EmailPersonCreate362';
 import {EmailActivityLogger363} from './EmailActivityLogger363';
+import {GmailConnectionChecks388} from './GmailConnectionChecks388';
 import './email-workspace.css';
 
 export function EmailWorkspace({contacts,deals,companies}:{
@@ -397,11 +398,12 @@ export function EmailWorkspace({contacts,deals,companies}:{
   {error&&<div className="ss-email-error" role="alert">
    <strong>Gmail connection not completed</strong>
    <p>{error}</p>
-   <small>In Google Cloud → APIs &amp; Services → Credentials, your OAuth Web client
-    must list <code>{typeof window==='undefined'?'this SalesShop origin':window.location.origin}</code>
-    under Authorized JavaScript origins. Verify that Gmail API and consent-screen access
-    are enabled, then use Connect Gmail to retry. No messages were imported.</small>
+   <small>SalesShop did not receive verified Gmail authorization.
+    A closed popup can be caused by browser restrictions, an incorrect OAuth
+    client configuration, or an interrupted Google callback. The connection
+    checks below can help distinguish them. No messages were imported.</small>
   </div>}
+  {error&&<GmailConnectionChecks388/>}
   {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
   {connected&&<div className="ss-email-content">
    <div className="ss-email-threads" role="region" aria-label="Gmail search results">

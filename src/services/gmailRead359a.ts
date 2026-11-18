@@ -39,16 +39,21 @@ export function authorizeGmail(clientId=gmailClientId):Promise<GmailAccess>{
   // closed, or isolated by the host's cross-origin security policy.
   // Never leave SalesShop in a permanent "Connecting" state.
   let timeout:ReturnType<typeof setTimeout>|undefined;
+  let popupCloseGrace:ReturnType<typeof setTimeout>|undefined;
+  const clearTimers=()=>{
+   clearTimeout(timeout);
+   clearTimeout(popupCloseGrace);
+  };
   const fail=(message:string)=>{
    if(settled)return;
-   settled=true;clearTimeout(timeout);reject(new Error(message));
+   settled=true;clearTimers();reject(new Error(message));
   };
-  timeout=setTimeout(()=>fail('Google did not return an authorization result. '+
-   'Check popup permissions and add '+gmailOAuthOrigin()+
-   ' to this OAuth client\'s Authorized JavaScript origins in Google Cloud, then retry.'),90_000);
+  timeout=setTimeout(()=>fail('Google did not return an authorization result within 90 seconds. '+
+   'Check browser popup permissions, the Google Cloud OAuth client origin, '+
+   'and SalesShop Connection checks for a blocked popup callback.'),90_000);
   const success=(token:string,expiresIn?:number)=>{
    if(settled){revokeGmailToken(token);return;}
-   settled=true;clearTimeout(timeout);
+   settled=true;clearTimers();
    resolve({token,expiresAt:Date.now()+Math.max(60,Number(expiresIn)||3600)*1000-60_000});
   };
   try{
@@ -72,9 +77,15 @@ export function authorizeGmail(clientId=gmailClientId):Promise<GmailAccess>{
     error_callback(response){
      const kind=response.type??'';
      if(kind==='popup_closed'||kind==='popup_closed_by_user'){
-      fail('The Google authorization popup closed without completing the connection. '+
-       'If you approved access, verify that '+gmailOAuthOrigin()+
-       ' is an Authorized JavaScript origin for your Google OAuth Web client.');return;
+      // Google occasionally reports popup closure just before delivering a
+      // successful token callback. Give that callback a brief opportunity
+      // before showing an error; never treat closure as a valid token.
+      if(!settled&&!popupCloseGrace)popupCloseGrace=setTimeout(()=>fail(
+       'Google reported the authorization window closed before SalesShop received a token. '+
+       'If you did not close it, run Connection checks below. Possible causes '+
+       'include popup restrictions, an OAuth origin mismatch, or a blocked popup callback.'
+      ),800);
+      return;
      }
      if(kind==='popup_failed_to_open'){
       fail('Your browser blocked the Google popup. Allow popups for SalesShop and retry.');return;

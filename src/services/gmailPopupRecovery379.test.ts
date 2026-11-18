@@ -43,14 +43,25 @@ describe('Gmail popup completion and recovery',()=>{
  });
  it('returns an actionable error if Google closes the popup',async()=>{
   const pending=authorizeGmail(clientId);
-  const rejected=expect(pending).rejects.toThrow('https://app.salesshop.work');
+  const rejected=expect(pending).rejects.toThrow('closed before SalesShop received a token');
   failPopup({type:'popup_closed'});
+  await vi.advanceTimersByTimeAsync(800);
   await rejected;
   expect(vi.getTimerCount()).toBe(0);
  });
+ it('accepts a token callback racing with popup-close detection',async()=>{
+  const pending=authorizeGmail(clientId);
+  failPopup({type:'popup_closed'});
+  await vi.advanceTimersByTimeAsync(200);
+  complete({access_token:'late-valid-token',expires_in:3600,scope:GMAIL_READONLY_SCOPE});
+  expect((await pending).token).toBe('late-valid-token');
+  await vi.advanceTimersByTimeAsync(800);
+  expect(vi.getTimerCount()).toBe(0);
+  expect(revoke).not.toHaveBeenCalled();
+ });
  it('never hangs indefinitely if Google does not send either callback',async()=>{
   const pending=authorizeGmail(clientId);
-  const rejected=expect(pending).rejects.toThrow('Authorized JavaScript origins');
+  const rejected=expect(pending).rejects.toThrow('within 90 seconds');
   await vi.advanceTimersByTimeAsync(90_000);
   await rejected;
   expect(vi.getTimerCount()).toBe(0);
