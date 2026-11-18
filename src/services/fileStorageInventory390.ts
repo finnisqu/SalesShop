@@ -68,7 +68,10 @@ export function inventoryFromLinks(links:readonly FileLinkRecord[]):FileInventor
 }
 export function normalizeManagedFiles(rows:readonly FileStorageObject[]):FileInventoryItem[]{
  return rows.map(row=>{
-  if(!isValidSize(row.sizeBytes))throw new Error('Stored file size must be an exact nonnegative byte count.');
+  if(row.kind==='file'&&!isValidSize(row.sizeBytes))
+   throw new Error('Stored file size must be an exact nonnegative byte count.');
+  if(row.kind==='folder'&&row.sizeBytes!==null)
+   throw new Error('Folder bytes are not a measured storage object size.');
   if(row.provider==='web-link'||row.provider==='google-drive'||row.provider==='dropbox'||
    row.provider==='onedrive'||row.provider==='box')
     throw new Error('Linked provider objects require an authenticated metadata adapter.');
