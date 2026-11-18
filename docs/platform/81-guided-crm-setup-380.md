@@ -40,3 +40,7 @@ Shared custom-field activation (#352c4/#352d2) and organization-wide pipeline pu
 ## Next after #380
 
 After device acceptance, prioritize **personal application of saved view defaults** using the existing Records view system and allow opt-in per-user presentation changes without claiming organization-wide publishing. Team-shared custom fields/stages remain blocked on isolated database tests. Gmail v0.1 should be verified with the exact Google OAuth origin; CAD-Lite stays paused.
+
+## #381 personal Records defaults (subsequent safe activation)
+
+The #380 guide originally stored view preferences as design-only. In #381, **only** saved Companies/Deals Table/Board preferences become personal defaults in Records; users can override them manually and reset from Records → More → View. This does **not** activate any shared stage, terminology, custom value, workflow or record-panel plan. See [#381 documentation](82-personal-record-layout-defaults-381.md).

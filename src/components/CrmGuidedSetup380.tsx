@@ -72,7 +72,8 @@ export function CrmGuidedSetup380({
    onApply(plan);
    setError('');
    setNotice('Saved this setup draft to your browser for this SalesShop workspace. '+
-    'Optional field definitions and module plans were merged without overwriting existing definitions.');
+    'Optional field definitions and module plans were merged without overwriting existing definitions. '+
+    'Your Table/Board preferences will be used as personal Records defaults unless you manually chose a layout.');
   }catch(caught){
    setError(caught instanceof Error?caught.message:'Could not save setup.');
    setNotice('');
@@ -89,7 +90,8 @@ export function CrmGuidedSetup380({
   </header>
   <p className="crm-guided-scope-note">
    <strong>Design mode only.</strong> Drafts belong to this browser, organization and
-   signed-in user. They do not change live record names, Deal stages, permissions,
+   signed-in user. Saved Table/Board choices can become personal Records defaults.
+   Other design choices do not change live record names, Deal stages, permissions,
    shared views, customer data or team settings.
   </p>
   {!editable&&<p className="crm-guided-readonly" role="status">
@@ -130,7 +132,8 @@ export function CrmGuidedSetup380({
   {step==='customize'&&<div className="crm-guided-step" aria-label="Customize CRM workflow and layout">
    <div className="crm-guided-heading">
     <strong>Shape the working experience</strong>
-    <small>These choices update the live preview, not your existing CRM.</small>
+    <small>Saved Table/Board defaults can affect your personal Records view.
+     Other choices remain previews.</small>
    </div>
    <div className="crm-guided-form-grid">
     <section aria-label="Record terminology" className="crm-guided-edit-group">
@@ -253,9 +256,11 @@ export function CrmGuidedSetup380({
    </p>}
    <CrmSetupLivePreview draft={draft} target={recordTarget}/>
    <p className="crm-guided-review-safety">
-    Saving records this plan in the current browser, adds only missing optional starter fields,
-    and merges selected module planning flags. It does not remove fields, alter customer records,
-    overwrite previously planned modules, publish permissions, or change live Deal stages.
+    Saving stores this setup in the current browser, adds only missing optional starter fields,
+    and merges selected module planning flags. Your Table/Board preferences become personal
+    Records defaults only when you have not chosen a manual layout. It does not remove fields,
+    alter customer records, overwrite previously planned modules, publish permissions,
+    or change live Deal stages.
    </p>
    {(errors.length>0||previewError)&&<p role="alert" className="crm-guided-error">
     {errors[0]??previewError}
@@ -273,6 +278,7 @@ export function CrmGuidedSetup380({
   <footer className="crm-guided-footnote">
    Live team-wide stages, terminology, record layouts and shared custom field values
    remain unavailable until their database permissions and deployment are reviewed.
+   Table/Board defaults are personal and can be overridden from Records.
    You can continue fine-tuning field definitions in the sections below.
    <span className="crm-guided-scoped-key" aria-hidden="true">
     {scope?'Browser draft · account-scoped':''}

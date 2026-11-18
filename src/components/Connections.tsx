@@ -5,6 +5,11 @@ import { CompanyRecordPage } from './CompanyRecordPage';
 import {Board,createDealFromQuickCreate} from './Board';
 import {BoardQuickCreate} from './BoardQuickCreate';
 import {scopedStorageKey} from '../lib/developerPlayground';
+import {useWorktableDirectoryState} from './useWorktableDirectoryState';
+import {personalRecordLayoutStorageKey,readPersonalCrmLayoutDefaults,
+ parseRecordLayoutOverrides,resolvePersonalRecordLayouts,
+ withManualRecordLayout,withoutManualRecordLayout,type RecordLayoutOverrides,
+ type RecordLayoutKind} from '../services/crmPersonalViewDefaults381';
 import './connections-board-toggle.css';
 import {CalendarActivityPreview} from './CalendarActivityPreview';
 import {OurOrganizationDirectory} from './OurOrganizationDirectory';
@@ -56,7 +61,6 @@ import {matchesActivityFilters,DEFAULT_ACTIVITY_LOG_FILTERS,
 type ConnectionsTab = 'tasks' | 'companies' | 'people' | 'deals' | 'activity' | 'organization' | 'suppliers' | 'quotes' | 'pages';
 type CompanyFilter = CompanyRelationship | 'self' | 'all';
 type DirectoryLayout='board'|'table';
-type DirectoryLayouts={companies:DirectoryLayout;deals:DirectoryLayout};
 
 export const CONNECTIONS_TABS=RECORDS_MAIN_TABS;
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -66,7 +70,10 @@ const ACTIVITY_COLUMNS:ConnectionColumn[]=[
  {key:'related',label:'Related records'},{key:'notes',label:'Notes'},{key:'type',label:'Record type'},
  {key:'occurred',label:'Date'},
 ];
-const LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
+// The historical global layout key is read only for legacy *local* mode.
+ // Cloud accounts use identity-specific overrides and cannot import an
+ // unknown previous user's browser-wide preference.
+const LEGACY_LOCAL_LAYOUT_KEY=scopedStorageKey('salesshop-connections-layout-v1');
 const SEARCH_KEY=scopedStorageKey('salesshop-connections-tab-search-v1');
 const COMPANY_FILTER_KEY=scopedStorageKey('salesshop-connections-company-filter-v1');
 const PIPELINE_FILTER_KEY='salesshop-board-pipeline-v1';
@@ -105,13 +112,6 @@ function initialCompanyFilter():CompanyFilter{
   }catch{return 'all';}
 }
 
-function initialLayouts():DirectoryLayouts{
-  try{
-    const raw=JSON.parse(localStorage.getItem(LAYOUT_KEY)??'{}') as Partial<DirectoryLayouts>;
-    return {companies:raw.companies==='board'?'board':'table',
-      deals:raw.deals==='table'?'table':'board'};
-  }catch{return {companies:'table',deals:'board'};}
-}
 const companyColumns:ConnectionColumn[]=[
  {key:'name',label:'Company name'},{key:'type',label:'Relationship'},
  {key:'people',label:'People'},{key:'deals',label:'Deals'},{key:'quotes',label:'Quotes'},
@@ -182,14 +182,38 @@ function ContactOnFileIcon({kind}:{kind:'phone'|'email'}){
 }
 export function Connections() {
   const [tab, setTab] = useState<ConnectionsTab>(initialTab);
-  const [layouts,setLayouts]=useState<DirectoryLayouts>(initialLayouts);
-  const activeLayoutKind:'companies'|'deals'=tab==='companies'?'companies':'deals';
-  const chooseLayout=(kind:'companies'|'deals',value:DirectoryLayout)=>{
-    setLayouts(previous=>{
-      const next={...previous,[kind]:value};
-      try{localStorage.setItem(LAYOUT_KEY,JSON.stringify(next));}catch{}
-      return next;
+  // #381: a saved CRM Setup is a *default* until this user chooses a layout.
+  // Keep explicit choices in a separate account/organization-scoped key; do
+  // not freeze setup defaults into overrides or borrow another user's choices.
+  const authMode=useAuthStore(state=>state.mode);
+  const organizationId=useAuthStore(state=>state.organizationId);
+  const userId=useAuthStore(state=>state.user?.id);
+  const layoutIdentity={mode:authMode,organizationId,userId};
+  const layoutScope=personalRecordLayoutStorageKey(layoutIdentity);
+  const [layoutOverrides,setLayoutOverrides]=useWorktableDirectoryState<RecordLayoutOverrides>(
+    layoutScope,key=>{
+      try{
+       const saved=localStorage.getItem(key);
+       // Existing local-only users keep their previous manual Table/Board choices.
+       const raw=saved??(authMode==='local'?
+        localStorage.getItem(LEGACY_LOCAL_LAYOUT_KEY):null);
+       return parseRecordLayoutOverrides(raw);
+      }catch{return {};}
+    },
+    (key,value)=>{try{
+      // Persist an empty object too: it marks a deliberate reset and prevents
+      // the old local-only key from reapplying after "Use setup default".
+      localStorage.setItem(key,JSON.stringify(value));
+    }catch{/* Presentation preference is best-effort browser storage. */}
     });
+  const guidedSetup=readPersonalCrmLayoutDefaults(key=>localStorage.getItem(key),layoutIdentity);
+  const layouts=resolvePersonalRecordLayouts(layoutOverrides,guidedSetup);
+  const activeLayoutKind:RecordLayoutKind=tab==='companies'?'companies':'deals';
+  const chooseLayout=(kind:RecordLayoutKind,value:DirectoryLayout)=>{
+    setLayoutOverrides(previous=>withManualRecordLayout(previous,kind,value));
+  };
+  const restoreSetupLayout=(kind:RecordLayoutKind)=>{
+    setLayoutOverrides(previous=>withoutManualRecordLayout(previous,kind));
   };
   const [dealsView,setDealsView]=useState<'list'|'timeline'>(()=>{
     try{return window.sessionStorage.getItem('salesshop-connections-deals-timeline-beta-v1')==='timeline'?'timeline':'list';}
@@ -645,10 +669,17 @@ export function Connections() {
         mobileTabs={RECORDS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
         mobileTabValue={tab} onMobileTabChange={value=>chooseTab(value as ConnectionsTab)}
         tabs={<RecordsSectionNav selected={tab as RecordsSection} onSelect={chooseTab}
-          extraMore={tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled?[
-            {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
-            {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
-          ]:[]}/>}
+          extraMore={[
+            ...((tab==='companies'||tab==='deals')&&guidedSetup&&
+             layoutOverrides[activeLayoutKind]!==undefined?[{
+              section:'View',label:'Use my CRM Setup default',
+              onClick:()=>restoreSetupLayout(activeLayoutKind),
+             }]:[]),
+            ...(tab==='deals'&&layouts.deals==='table'&&timelineBetaEnabled?[
+              {section:'View',label:'Deals · list',active:dealsView==='list',onClick:()=>chooseDealsView('list')},
+              {label:'Deals · timeline',active:dealsView==='timeline',onClick:()=>chooseDealsView('timeline')},
+            ]:[]),
+          ]}/>}
         search={<input id="connections-directory-search" type="search" aria-label={`Search ${tab}`}
           value={query} onChange={event=>setQuery(event.target.value)}
           placeholder={tab==='companies'?'Search companies…':tab==='people'?'Search people…':
