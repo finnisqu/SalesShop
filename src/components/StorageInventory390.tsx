@@ -63,7 +63,9 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
    <div className="ss-storage390-controls">
     <label>Sort by
      <select value={sort} onChange={e=>setSort(e.target.value as FileInventorySort)}>
-      {SORT_OPTIONS.map(option=><option key={option.id} value={option.id}>{option.label}</option>)}
+      {SORT_OPTIONS.map(option=><option key={option.id} value={option.id}
+       disabled={option.id.startsWith('size-')&&!sized}>
+       {option.label}{option.id.startsWith('size-')&&!sized?' · sizes unavailable':''}</option>)}
      </select>
     </label>
     <label>Provider
