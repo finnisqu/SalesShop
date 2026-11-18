@@ -13,6 +13,10 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## #385 — CRM Data Import v0.1 · November 18, 2026
+
+**Status: Source prepared / Cloudflare and authenticated device QC pending.** Tools → Import supports CSV/Excel Company, Person and Deal migration with source-field mapping, previews, duplicate/ambiguous flags, exact Company links, explicit confirmation, and additive core CRM creation using existing permissions and cloud sync. See [#385 acceptance guide](../platform/86-crm-data-import-385.md). No shared custom fields, SQL migrations, Quote writes, or auto-overwrites. Import Companies first; People and Deals link to existing Companies. Cloud partial-confirmation errors are disclosed, not silently retried.
+
 ## #384 — Reusable custom workflows · November 18, 2026
 
 **Status: Source prepared / Cloudflare and device acceptance pending.** Extend the existing Automations v0.2 with an opt-in **My workflows** editor for up to eight independent stage-to-Task rules. Templates: Blank, Bid Follow-up, Negotiation, Won Deal Kickoff, Discovery. Rules start disabled and support edit, duplicate, delete with confirmation, private Task preview, per-rule idempotency, scope and role guards. Keep all four existing built-ins; no Gmail or server writes. See [#384 acceptance notes](../platform/85-custom-workflows-templates-384.md).

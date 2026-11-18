@@ -4,17 +4,19 @@ import {parseSalesShopRoute,salesShopRoutePath} from './appRoutes';
 import type {NavigationLocation} from '../store/navigationStore';
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 describe('Tools primary workspace #360a',()=>{
- it('hosts the existing four tools in predictable order without duplicate implementations',()=>{
+ it('hosts the existing tools and the guarded CRM Import feature in predictable order',()=>{
   const s=read('components/ToolsWorkspace.tsx');
-  for(const section of ['analytics','files','automations','email']){
+  for(const section of ['analytics','files','automations','email','import']){
    expect(s).toContain("id:'"+section+"'");
   }
   expect(s.indexOf("id:'analytics'")).toBeLessThan(s.indexOf("id:'files'"));
   expect(s.indexOf("id:'files'")).toBeLessThan(s.indexOf("id:'automations'"));
   expect(s.indexOf("id:'automations'")).toBeLessThan(s.indexOf("id:'email'"));
+  expect(s.indexOf("id:'email'")).toBeLessThan(s.indexOf("id:'import'"));
   for(const [id,component] of [
    ['analytics','SalesAnalyticsWorkspace'],['files','FilesWorkspace'],
    ['automations','AutomationsWorkspace'],['email','EmailWorkspace'],
+   ['import','CrmImportWorkspace385'],
   ]){
    expect(s).toContain("section==='"+id+"'&&<"+component);
   }
