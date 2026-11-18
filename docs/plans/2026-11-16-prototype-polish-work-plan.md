@@ -13,6 +13,10 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## #387 — Proposed Records and Smart CRM Suggestions · November 18, 2026
+
+**Status: Source prepared / Cloudflare and authenticated browser acceptance pending.** Tools → Suggestions contains an opt-in decision inbox. Deterministic hints from **current user's** manual Activity summaries and notes (including Notebook-origin touchpoints) propose explicit new People, unique-email Activity→Person links and explicit YYYY-MM-DD follow-up Tasks. Review/Edit/Accept/Dismiss, account-scoped dismissal, stale-evidence rejection, CRM permission checks, private Task sync barrier and cloud-confirmed Activity/Person mutations. Read-only until Accept; no full Notebook scanning, inferred relative dates, Gmail automation, AI service, server scheduler, or cloud schema changes. See [#387 acceptance notes](../platform/88-proposed-crm-suggestions-387.md).
+
 ## #385b — Reviewed Deal–Person relationship import · November 18, 2026
 
 **Status: Source prepared / Cloudflare and authenticated browser validation pending.** Extend Tools → Import with a relationship mode for existing Deal and Person records. Import CSV/Excel, map native SalesShop IDs or unique email/Deal-name-plus-Company matches, review row status and select specific Ready relationships, optionally assign a role, and create through `useDealPeopleStore.add` with scope/permissions checked before and during each sequential save. Existing links remain unchanged; failures are shown as partial, never atomic. See [#385b acceptance guide](../platform/87-crm-relationship-import-386.md). No new schema, external-ID mapping, bulk record creation, or automated merges.

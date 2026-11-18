@@ -15,6 +15,7 @@ import {FilesWorkspace} from './FilesWorkspace';
 import {AutomationsWorkspace} from './AutomationsWorkspace';
 import {EmailWorkspace} from './EmailWorkspace';
 import {CrmImportWorkspace385} from './CrmImportWorkspace385';
+import {CrmSuggestionsWorkspace387} from './CrmSuggestionsWorkspace387';
 import './tools-workspace.css';
 
 export const TOOLS_SECTIONS=[
@@ -23,6 +24,7 @@ export const TOOLS_SECTIONS=[
  {id:'automations',label:'Automations',description:'Rule-based private Tasks'},
  {id:'email',label:'Email',description:'Connected Gmail conversations'},
  {id:'import',label:'Import',description:'Review CSV and Excel CRM records'},
+ {id:'suggestions',label:'Suggestions',description:'Review proposed CRM records, links, and Tasks'},
 ] as const;
 export type ToolsSection=typeof TOOLS_SECTIONS[number]['id'];
 export const TOOLS_TAB_KEY=scopedStorageKey('salesshop-tools-section-v1');
@@ -90,6 +92,7 @@ export function ToolsWorkspace(){
     {section==='automations'&&<AutomationsWorkspace/>}
     {section==='email'&&<EmailWorkspace contacts={contacts} deals={deals} companies={companies}/>}
     {section==='import'&&<CrmImportWorkspace385 key={[mode,organizationId,userId].join(':')}/>}
+    {section==='suggestions'&&<CrmSuggestionsWorkspace387 key={[mode,organizationId,userId].join(':')}/>}
    </div>}
  </main>;
 }
