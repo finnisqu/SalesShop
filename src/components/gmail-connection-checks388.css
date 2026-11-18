@@ -58,3 +58,22 @@
  .ss-gmail-connection-checks dl{grid-template-columns:1fr;}
  .ss-gmail-connection-checks button{min-height:44px;}
 }
+
+/* Browser-only OAuth event trace; no private account data in this panel. */
+.ss-gmail-connection-oauth-events{
+ display:grid;gap:7px;min-width:0;padding:10px 11px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);
+}
+.ss-gmail-connection-oauth-events>strong{font-size:11px;}
+.ss-gmail-connection-oauth-events>p{
+ margin:0;color:var(--ss-theme-muted);font-size:10px;
+}
+.ss-gmail-connection-oauth-events>ol{
+ display:grid;gap:6px;margin:0 0 0 18px;padding:0;
+ font-variant-numeric:tabular-nums;
+}
+.ss-gmail-connection-oauth-events li{padding-left:2px;overflow-wrap:anywhere;}
+.ss-gmail-connection-oauth-events li span{
+ margin-left:9px;color:var(--ss-theme-muted);font-size:10px;
+}

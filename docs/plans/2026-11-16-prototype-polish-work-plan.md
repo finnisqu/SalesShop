@@ -13,6 +13,10 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## #388b — Focus-aware Gmail OAuth popup completion · November 18, 2026
+
+**Status: Source prepared / Cloudflare and real-Google acceptance pending.** User confirmed popup remained active after account selection while SalesShop showed error. Replace premature 800-ms popup-close rejection with a focus-aware, 4-second grace once SalesShop regains focus, leaving 90-second total timeout, explicit denials and Gmail read-only scope unchanged. Add safe memory-only OAuth event sequence to Tools → Email diagnostics. See [#388b acceptance](../platform/90-gmail-focus-aware-oauth-388b.md).
+
 ## #388a — Gmail popup connection diagnosis and recovery · November 18, 2026
 
 **Status: Source prepared / Cloudflare and real-Google acceptance pending.** Fix a user-reported failed Google popup flow (OAuth `popup_closed`) by allowing a bounded late callback and adding an on-demand live header/origin/library/client-ID diagnostic in Tools → Email. Stop treating every popup close as proof of origin mismatch; show actionable Cloudflare/Google configuration checks. Preserve read-only scope, ephemeral tokens, no Gmail writes or background jobs. See [#388a recovery notes](../platform/89-gmail-oauth-recovery-388a.md).

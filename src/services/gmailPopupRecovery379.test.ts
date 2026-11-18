@@ -1,5 +1,5 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
-import {authorizeGmail,GMAIL_READONLY_SCOPE,gmailOAuthOrigin} from './gmailRead359a';
+import {authorizeGmail,GMAIL_READONLY_SCOPE,gmailOAuthOrigin,gmailOAuthTrace} from './gmailRead359a';
 
 type Response={access_token?:string;expires_in?:number;scope?:string;error?:string;error_description?:string};
 type PopupError={type?:string;message?:string};
@@ -8,12 +8,22 @@ let complete:(response:Response)=>void=()=>{};
 let failPopup:(response:PopupError)=>void=()=>{};
 let prompt:string|undefined;
 let revoke:ReturnType<typeof vi.fn>;
+let parentFocused:boolean;
+let focusCallbacks:Array<()=>void>;
 
 beforeEach(()=>{
  vi.useFakeTimers();
  revoke=vi.fn();
+ parentFocused=true;focusCallbacks=[];
+ vi.stubGlobal('document',{hasFocus:()=>parentFocused});
  vi.stubGlobal('window',{
   location:{origin:'https://app.salesshop.work'},
+  addEventListener:(event:string,callback:()=>void)=>{
+   if(event==='focus')focusCallbacks.push(callback);
+  },
+  removeEventListener:(event:string,callback:()=>void)=>{
+   if(event==='focus')focusCallbacks=focusCallbacks.filter(item=>item!==callback);
+  },
   google:{accounts:{oauth2:{
    initTokenClient:(options:{callback:(response:Response)=>void;
       error_callback?:(response:PopupError)=>void})=>{
@@ -43,21 +53,59 @@ describe('Gmail popup completion and recovery',()=>{
  });
  it('returns an actionable error if Google closes the popup',async()=>{
   const pending=authorizeGmail(clientId);
-  const rejected=expect(pending).rejects.toThrow('closed before SalesShop received a token');
+  const rejected=expect(pending).rejects.toThrow('popup closed without returning a token');
   failPopup({type:'popup_closed'});
-  await vi.advanceTimersByTimeAsync(800);
+  await vi.advanceTimersByTimeAsync(4_000);
   await rejected;
   expect(vi.getTimerCount()).toBe(0);
  });
  it('accepts a token callback racing with popup-close detection',async()=>{
   const pending=authorizeGmail(clientId);
   failPopup({type:'popup_closed'});
-  await vi.advanceTimersByTimeAsync(200);
+  await vi.advanceTimersByTimeAsync(1_700);
   complete({access_token:'late-valid-token',expires_in:3600,scope:GMAIL_READONLY_SCOPE});
   expect((await pending).token).toBe('late-valid-token');
-  await vi.advanceTimersByTimeAsync(800);
+  await vi.advanceTimersByTimeAsync(4_000);
   expect(vi.getTimerCount()).toBe(0);
   expect(revoke).not.toHaveBeenCalled();
+ });
+ it('does not call the popup closed failure while the Google window still has focus',async()=>{
+  parentFocused=false;
+  const pending=authorizeGmail(clientId);
+  let outcome='pending';
+  void pending.then(()=>{outcome='connected';},()=>{outcome='rejected';});
+  failPopup({type:'popup_closed'});
+  // 800 ms was previously enough to show an erroneous red error during
+  // Google's account selection; even 12 seconds must remain pending now.
+  await vi.advanceTimersByTimeAsync(12_000);
+  expect(outcome).toBe('pending');
+  expect(gmailOAuthTrace().map(event=>event.phase))
+   .toEqual(['requested','popup_closed']);
+  // Return to SalesShop after the popup has finished.
+  parentFocused=true;
+  focusCallbacks.forEach(callback=>callback());
+  await vi.advanceTimersByTimeAsync(2_000);
+  expect(outcome).toBe('pending');
+  complete({access_token:'verified-token',expires_in:3600,scope:GMAIL_READONLY_SCOPE});
+  expect((await pending).token).toBe('verified-token');
+  expect(outcome).toBe('connected');
+  expect(vi.getTimerCount()).toBe(0);
+  expect(gmailOAuthTrace().map(event=>event.phase))
+   .toEqual(['requested','popup_closed','oauth_response','token_accepted']);
+  expect(JSON.stringify(gmailOAuthTrace())).not.toContain('verified-token');
+ });
+ it('reports a genuine popup closure once SalesShop regains focus without a token',async()=>{
+  parentFocused=false;
+  const pending=authorizeGmail(clientId);
+  const rejected=expect(pending).rejects.toThrow('popup closed without returning a token');
+  failPopup({type:'popup_closed'});
+  await vi.advanceTimersByTimeAsync(10_000);
+  parentFocused=true;
+  focusCallbacks.forEach(callback=>callback());
+  await vi.advanceTimersByTimeAsync(4_000);
+  await rejected;
+  expect(vi.getTimerCount()).toBe(0);
+  expect(gmailOAuthTrace().at(-1)?.phase).toBe('failed');
  });
  it('never hangs indefinitely if Google does not send either callback',async()=>{
   const pending=authorizeGmail(clientId);

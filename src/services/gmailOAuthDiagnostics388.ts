@@ -1,6 +1,7 @@
 /** #388a — Browser-only Gmail OAuth diagnostics.
  * No OAuth token, Gmail address, messages, or private CRM data is inspected. */
-import {gmailClientId,gmailOAuthOrigin} from './gmailRead359a';
+import {gmailClientId,gmailOAuthOrigin,gmailOAuthTrace,
+ type GmailOAuthTraceEntry} from './gmailRead359a';
 
 export interface GmailOAuthDiagnostics {
  origin:string;
@@ -9,6 +10,7 @@ export interface GmailOAuthDiagnostics {
  embedded:boolean|null;
  coopHeader:string;
  coopStatus:'compatible'|'incompatible'|'missing'|'unavailable';
+ oauthEvents:GmailOAuthTraceEntry[];
 }
 /** Google's popup flow requires a COOP policy that keeps the opener channel.
  * We check the *deployed HTML response* instead of assuming a source _headers
@@ -25,6 +27,7 @@ export async function inspectGmailOAuthEnvironment():Promise<GmailOAuthDiagnosti
  if(typeof window==='undefined')return {
   origin,publicClientId:gmailClientId,googleLibraryReady:false,
   embedded:null,coopHeader:'Unavailable outside a browser',coopStatus:'unavailable',
+  oauthEvents:gmailOAuthTrace(),
  };
  const google=(window as Window&{google?:{
   accounts?:{oauth2?:{initTokenClient?:unknown}}
@@ -46,7 +49,7 @@ export async function inspectGmailOAuthEnvironment():Promise<GmailOAuthDiagnosti
  return {
   origin,publicClientId:gmailClientId,
   googleLibraryReady:typeof google?.accounts?.oauth2?.initTokenClient==='function',
-  embedded,coopHeader,coopStatus,
+  embedded,coopHeader,coopStatus,oauthEvents:gmailOAuthTrace(),
  };
 }
 export function gmailOAuthDiagnosticReport(info:GmailOAuthDiagnostics):string{
@@ -58,6 +61,11 @@ export function gmailOAuthDiagnosticReport(info:GmailOAuthDiagnostics):string{
   'Embedded page: '+(info.embedded===null?'Unknown':info.embedded?'Yes':'No'),
   'Deployed Cross-Origin-Opener-Policy: '+info.coopHeader,
   'COOP popup compatibility: '+info.coopStatus,
+  'Last OAuth flow events (browser memory only; no token data):',
+  ...(info.oauthEvents.length?info.oauthEvents.map(event=>
+   '  '+event.elapsedMs+'ms · '+event.phase+' · SalesShop focused: '+
+    (event.parentFocused===null?'unknown':event.parentFocused?'yes':'no')):
+   ['  None recorded in this browser session']),
   'Check that this exact origin is authorized on this exact Google Cloud OAuth Web client.',
  ].join('\n');
 }

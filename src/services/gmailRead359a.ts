@@ -23,6 +23,31 @@ function googleIdentity():GoogleIdentity|null{
  return (window as Window&{google?:GoogleIdentity}).google??null;
 }
 export interface GmailAccess {token:string;expiresAt:number}
+export type GmailOAuthPhase='requested'|'popup_closed'|'popup_blocked'|
+ 'oauth_response'|'oauth_denied'|'token_accepted'|'failed';
+export interface GmailOAuthTraceEntry{
+ phase:GmailOAuthPhase;elapsedMs:number;parentFocused:boolean|null;
+}
+/** Only fixed event names, duration and focus state are retained in memory.
+ * Never include tokens, Google responses, mailbox data or account names. */
+let recentGmailOAuthTrace:GmailOAuthTraceEntry[]=[];
+export function gmailOAuthTrace():GmailOAuthTraceEntry[]{
+ return recentGmailOAuthTrace.map(entry=>({...entry}));
+}
+function isSalesShopFocused():boolean{
+ try{
+  return typeof document==='undefined'||typeof document.hasFocus!=='function'
+   ?true:document.hasFocus();
+ }catch{return true;}
+}
+function traceGmailOAuth(phase:GmailOAuthPhase,startedAt:number){
+ recentGmailOAuthTrace.push({
+  phase,elapsedMs:Math.max(0,Date.now()-startedAt),
+  parentFocused:typeof document==='undefined'?null:isSalesShopFocused(),
+ });
+ recentGmailOAuthTrace=recentGmailOAuthTrace.slice(-12);
+}
+
 /** The exact origin must be whitelisted on the OAuth Web client in Google Cloud.
  * It is intentionally shown in errors; client IDs and tokens never are. */
 export function gmailOAuthOrigin():string{
@@ -35,32 +60,58 @@ export function authorizeGmail(clientId=gmailClientId):Promise<GmailAccess>{
  if(!google)return Promise.reject(new Error('Google sign-in is still loading. Please try Connect again.'));
  return new Promise((resolve,reject)=>{
   let settled=false;
-  // GIS may neither call callback nor error_callback after a popup is blocked,
-  // closed, or isolated by the host's cross-origin security policy.
-  // Never leave SalesShop in a permanent "Connecting" state.
   let timeout:ReturnType<typeof setTimeout>|undefined;
   let popupCloseGrace:ReturnType<typeof setTimeout>|undefined;
+  let cleanupFocus:(()=>void)|undefined;
+  let popupCloseReported=false;
+  const startedAt=Date.now();
+  recentGmailOAuthTrace=[];
+  traceGmailOAuth('requested',startedAt);
   const clearTimers=()=>{
-   clearTimeout(timeout);
-   clearTimeout(popupCloseGrace);
+   clearTimeout(timeout);clearTimeout(popupCloseGrace);
+   cleanupFocus?.();cleanupFocus=undefined;
   };
   const fail=(message:string)=>{
    if(settled)return;
-   settled=true;clearTimers();reject(new Error(message));
+   settled=true;traceGmailOAuth('failed',startedAt);
+   clearTimers();reject(new Error(message));
   };
-  timeout=setTimeout(()=>fail('Google did not return an authorization result within 90 seconds. '+
-   'Check browser popup permissions, the Google Cloud OAuth client origin, '+
-   'and SalesShop Connection checks for a blocked popup callback.'),90_000);
   const success=(token:string,expiresIn?:number)=>{
    if(settled){revokeGmailToken(token);return;}
-   settled=true;clearTimers();
+   settled=true;traceGmailOAuth('token_accepted',startedAt);
+   clearTimers();
    resolve({token,expiresAt:Date.now()+Math.max(60,Number(expiresIn)||3600)*1000-60_000});
   };
+  // Google can report popup_closed while another Google consent screen
+  // is still the foreground window. Do not fail while SalesShop lacks focus:
+  // wait until the parent regains focus and provide time for a late callback.
+  const verifyPopupClosed=()=>{
+   if(settled||!popupCloseReported||!isSalesShopFocused())return;
+   if(popupCloseGrace)clearTimeout(popupCloseGrace);
+   popupCloseGrace=setTimeout(()=>{
+    popupCloseGrace=undefined;
+    if(settled)return;
+    if(!isSalesShopFocused())return; // Google UI is still in foreground.
+    fail('Google reported that the authorization popup closed without returning a token. '+
+     'SalesShop waited for the popup to finish. Open Connection checks for the '+
+     'OAuth event sequence, then verify the Google Cloud client and consent settings.');
+   },4_000);
+  };
+  if(typeof window!=='undefined'&&typeof window.addEventListener==='function'){
+   const onFocus=()=>verifyPopupClosed();
+   window.addEventListener('focus',onFocus);
+   cleanupFocus=()=>window.removeEventListener('focus',onFocus);
+  }
+  timeout=setTimeout(()=>fail('Google did not return an authorization result within 90 seconds. '+
+   'Use Connection checks to inspect the OAuth event sequence. Also verify '+
+   'browser popup permissions and the Google Cloud Web OAuth client.'),90_000);
   try{
    const client=google.accounts.oauth2.initTokenClient({
     client_id:clientId,scope:GMAIL_READONLY_SCOPE,
     callback(response){
+     traceGmailOAuth('oauth_response',startedAt);
      if(response.error||!response.access_token){
+      traceGmailOAuth('oauth_denied',startedAt);
       fail(response.error_description||response.error||'Gmail connection was canceled.');return;
      }
      try{
@@ -77,24 +128,21 @@ export function authorizeGmail(clientId=gmailClientId):Promise<GmailAccess>{
     error_callback(response){
      const kind=response.type??'';
      if(kind==='popup_closed'||kind==='popup_closed_by_user'){
-      // Google occasionally reports popup closure just before delivering a
-      // successful token callback. Give that callback a brief opportunity
-      // before showing an error; never treat closure as a valid token.
-      if(!settled&&!popupCloseGrace)popupCloseGrace=setTimeout(()=>fail(
-       'Google reported the authorization window closed before SalesShop received a token. '+
-       'If you did not close it, run Connection checks below. Possible causes '+
-       'include popup restrictions, an OAuth origin mismatch, or a blocked popup callback.'
-      ),800);
+      traceGmailOAuth('popup_closed',startedAt);
+      popupCloseReported=true;
+      verifyPopupClosed(); // No timer while Google's popup retains focus.
       return;
      }
      if(kind==='popup_failed_to_open'){
-      fail('Your browser blocked the Google popup. Allow popups for SalesShop and retry.');return;
+      traceGmailOAuth('popup_blocked',startedAt);
+      fail('Your browser blocked the Google popup. Allow popups for SalesShop and retry.');
+      return;
      }
      fail(response.message||kind||'Google did not complete authorization. '+
-      'Verify your OAuth client\'s Authorized JavaScript origins.');
+      'Verify your OAuth client configuration and retry.');
     },
    });
-   // Must run synchronously in the user's click handler to preserve popup activation.
+   // A direct user click is required for Google to open its authorization popup.
    client.requestAccessToken({prompt:'consent'});
   }catch(error){
    fail(error instanceof Error?error.message:'Google could not start authorization.');

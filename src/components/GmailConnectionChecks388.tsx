@@ -44,6 +44,17 @@ export function GmailConnectionChecks388(){
        :checks.coopStatus==='missing'?'No COOP header returned'
        :'Could not verify automatically'}</dd></div>
     </dl>
+    <div className="ss-gmail-connection-oauth-events">
+     <strong>Last authorization events</strong>
+     <p>These are fixed event names and timing only. No Gmail messages, account identity or tokens are recorded.</p>
+     {checks.oauthEvents.length? <ol>
+      {checks.oauthEvents.map((event,index)=><li key={index}>
+       <code>{event.elapsedMs} ms · {event.phase}</code>
+       <span>{event.parentFocused===null?'Unknown focus':
+        event.parentFocused?'SalesShop focused':'SalesShop not focused'}</span>
+      </li>)}
+     </ol>:<small>No authorization attempt recorded since this page loaded.</small>}
+    </div>
     {checks.coopStatus==='incompatible'&&<p role="alert">
      The deployed page appears to enforce a popup-isolating COOP policy.
      SalesShop should serve <code>same-origin-allow-popups</code> for its HTML document.</p>}
