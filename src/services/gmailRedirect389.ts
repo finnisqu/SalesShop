@@ -7,6 +7,13 @@ import {GMAIL_READONLY_SCOPE,gmailClientId,type GmailAccess} from './gmailRead35
 const PENDING_KEY='salesshop-gmail-redirect-389';
 const CALLBACK_PATH='/gmail/callback';
 const MAX_AGE_MS=10*60*1000;
+let stagedCallbackUrl:URL|null=null;
+/** Stage at app boot, before login hydration or Google scripts see the URL. */
+export function stageGmailRedirectCallback():void{
+ if(typeof window==='undefined'||window.location.pathname!==CALLBACK_PATH||stagedCallbackUrl)return;
+ stagedCallbackUrl=new URL(window.location.href);
+ window.history.replaceState(window.history.state,'','/tools');
+}
 type Pending={state:string;verifier:string;scope:string;startedAt:number;redirectUri:string};
 export type GmailRedirectResult=
  |{kind:'code';code:string;verifier:string;redirectUri:string}
@@ -26,7 +33,7 @@ function callbackUri():string{
  return new URL(CALLBACK_PATH,window.location.origin).toString();
 }
 export function isGmailRedirectCallback():boolean{
- return typeof window!=='undefined'&&window.location.pathname===CALLBACK_PATH;
+ return !!stagedCallbackUrl||(typeof window!=='undefined'&&window.location.pathname===CALLBACK_PATH);
 }
 /** Do not navigate until server readiness has been confirmed. */
 export async function beginGmailRedirect(scope:string):Promise<string>{
@@ -51,9 +58,11 @@ export async function beginGmailRedirect(scope:string):Promise<string>{
 /** Called after SalesShop authentication and scope hydration, once per callback. */
 export function consumeGmailRedirect(scope:string):GmailRedirectResult|null{
  if(!isGmailRedirectCallback())return null;
- const url=new URL(window.location.href);
- // Remove the code/error and state from address bar and browser history immediately.
- window.history.replaceState(window.history.state,'','/tools');
+ const url=stagedCallbackUrl??new URL(window.location.href);
+ stagedCallbackUrl=null;
+ // In direct imports/tests the early main.tsx boot hook may not run.
+ if(window.location.pathname===CALLBACK_PATH)
+  window.history.replaceState(window.history.state,'','/tools');
  const raw=sessionStorage.getItem(PENDING_KEY);
  sessionStorage.removeItem(PENDING_KEY);
  if(!raw)return {kind:'error',message:'Gmail redirect session was missing or already used. Start a new connection.'};
