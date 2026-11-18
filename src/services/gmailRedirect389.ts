@@ -72,7 +72,7 @@ export function consumeGmailRedirect(scope:string):GmailRedirectResult|null{
  if(denied)return {kind:'error',message:denied==='access_denied'
   ?'Google Gmail permission was declined.':'Google returned an authorization error. Please retry.'};
  const code=url.searchParams.get('code');
- if(!code||!/^[A-Za-z0-9_./~-]{10,2048}$/.test(code))
+ if(!code||code.length<10||code.length>2048||/\s/.test(code))
   return {kind:'error',message:'Google did not provide a usable authorization code.'};
  return {kind:'code',code,verifier:pending.verifier,redirectUri:pending.redirectUri};
 }
