@@ -31,9 +31,9 @@ describe('Build #374 — Records layout and record-linked inline Notebook',()=>{
   const person=code('components/PersonRecordPage.tsx');
   const company=code('components/CompanyRecordPage.tsx');
   const deal=code('components/DealRecordPage.tsx');
-  expect(person).toContain('title={displayName} initialTab="about"');
-  expect(company).toContain('title={company.name} initialTab="about"');
-  expect(deal).toContain('title={deal.name} initialTab="about"');
+  expect(person).toContain('title={displayName} personalTarget="person" initialTab="about"');
+  expect(company).toContain('title={company.name} personalTarget="company" initialTab="about"');
+  expect(deal).toContain('title={deal.name} personalTarget="deal" initialTab="about"');
   expect(company).not.toContain("label:'Files & folders'");
   expect(company).not.toContain("label:'Notebook pages'");
   for(const [source,kind] of [[person,'person'],[company,'company'],[deal,'deal']] as const){

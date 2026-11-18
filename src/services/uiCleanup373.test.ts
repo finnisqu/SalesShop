@@ -30,7 +30,7 @@ describe('Build #373 — viewport Email and Records UI',()=>{
  it('makes Person About, Email and Notebook tabs under a persistent name',()=>{
   const person=source('components/PersonRecordPage.tsx');
   const layout=source('components/RecordPageLayout.tsx');
-  expect(person).toContain('title={displayName} initialTab="about"');
+  expect(person).toContain('title={displayName} personalTarget="person" initialTab="about"');
   expect(person).toContain("label:'About'");
   expect(person).toContain("label:'Email'");
   expect(person).toContain("label:'Notebook'");

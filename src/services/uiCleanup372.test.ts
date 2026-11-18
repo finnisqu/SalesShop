@@ -43,12 +43,12 @@ describe('UI cleanup batch #372',()=>{
    expect(source).toContain('<RecordRecentsPanel');
   }
   const company=code('components/CompanyRecordPage.tsx');
-  expect(company).toContain('title={company.name} initialTab="about"');
+  expect(company).toContain('title={company.name} personalTarget="company" initialTab="about"');
   expect(company).toContain("label:'Forecast'");
   expect(company).toContain("label:'Files'");
   expect(company).toContain("label:'Notebook'");
   const deal=code('components/DealRecordPage.tsx');
-  expect(deal).toContain('title={deal.name} initialTab="about"');
+  expect(deal).toContain('title={deal.name} personalTarget="deal" initialTab="about"');
   expect(deal).toContain("label:'People'");
   expect(deal).toContain("label:'Tasks'");
   expect(code('components/RecordRecentsPanel.tsx')).toContain('History <span>');
