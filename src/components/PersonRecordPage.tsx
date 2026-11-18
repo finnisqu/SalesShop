@@ -158,7 +158,7 @@ export function PersonRecordPage({ contactId, onBack, backLabel }: { contactId: 
     <QuickCreate context={{kind:'person',id:person.id,name:displayName}} launcherLabel="+ New"/>
     </>}
     left={<>
- <RecordTabbedGroup372 title={displayName} initialTab="about" items={[
+ <RecordTabbedGroup372 title={displayName} personalTarget="person" initialTab="about" items={[
  {id:'about',label:'About',toolbar:{label:'Details'},content:<>
   <RecordCard title="About this person">
         <RecordFormFeedback notice={notice}/>

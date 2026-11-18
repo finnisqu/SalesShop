@@ -90,9 +90,10 @@ export function CrmGuidedSetup380({
   </header>
   <p className="crm-guided-scope-note">
    <strong>Design mode only.</strong> Drafts belong to this browser, organization and
-   signed-in user. Saved Table/Board choices can become personal Records defaults.
-   Other design choices do not change live record names, Deal stages, permissions,
-   shared views, customer data or team settings.
+   signed-in user. Table/Board defaults and optional About, Files and Notebook
+   tab ordering can affect only your personal Records presentation. Other design
+   choices do not change live record names, Deal stages, permissions, shared views,
+   customer data or team settings.
   </p>
   {!editable&&<p className="crm-guided-readonly" role="status">
    Only owners or admins can save a setup draft. You can inspect its preview here.
@@ -132,8 +133,8 @@ export function CrmGuidedSetup380({
   {step==='customize'&&<div className="crm-guided-step" aria-label="Customize CRM workflow and layout">
    <div className="crm-guided-heading">
     <strong>Shape the working experience</strong>
-    <small>Saved Table/Board defaults can affect your personal Records view.
-     Other choices remain previews.</small>
+    <small>Saved Table/Board preferences and record-tab arrangements affect
+     your personal Records views. Pipeline and team-wide changes remain previews.</small>
    </div>
    <div className="crm-guided-form-grid">
     <section aria-label="Record terminology" className="crm-guided-edit-group">
@@ -190,7 +191,7 @@ export function CrmGuidedSetup380({
     </section>
     <section className="crm-guided-edit-group" aria-label="Record page panels">
      <h3>Record page arrangement</h3>
-     <p>Reorder sections and hide optional sections. Details and Connections stay available.</p>
+     <p>About, Files and Notebook tab order and visibility apply personally on record pages. Other panel settings are preview-only.</p>
      <div className="crm-guided-target-picker" role="group" aria-label="Record layout target">
       {CRM_FIELD_TARGETS.map(item=><button type="button" key={item.id}
        aria-pressed={recordTarget===item.id} onClick={()=>setRecordTarget(item.id)}>
@@ -258,9 +259,11 @@ export function CrmGuidedSetup380({
    <p className="crm-guided-review-safety">
     Saving stores this setup in the current browser, adds only missing optional starter fields,
     and merges selected module planning flags. Your Table/Board preferences become personal
-    Records defaults only when you have not chosen a manual layout. It does not remove fields,
-    alter customer records, overwrite previously planned modules, publish permissions,
-    or change live Deal stages.
+    Records defaults only when you have not chosen a manual layout. About, Files
+    and Notebook presentation is personalized on record pages; optional tabs
+    remain available through More sections. It does not remove fields, alter customer
+    records, overwrite previously planned modules, publish permissions or
+    change live Deal stages.
    </p>
    {(errors.length>0||previewError)&&<p role="alert" className="crm-guided-error">
     {errors[0]??previewError}
@@ -278,7 +281,8 @@ export function CrmGuidedSetup380({
   <footer className="crm-guided-footnote">
    Live team-wide stages, terminology, record layouts and shared custom field values
    remain unavailable until their database permissions and deployment are reviewed.
-   Table/Board defaults are personal and can be overridden from Records.
+   Table/Board defaults and the left record-tab presentation are personal;
+   hidden Files and Notebook sections remain accessible from More sections.
    You can continue fine-tuning field definitions in the sections below.
    <span className="crm-guided-scoped-key" aria-hidden="true">
     {scope?'Browser draft · account-scoped':''}
@@ -306,6 +310,6 @@ function CrmSetupLivePreview({draft,target}:{
       panel.id==='connections'?'Linked records':'Optional record section'}</small>
     </div>)}
   </div>
-  <small className="crm-guided-preview-caption">Illustration only · No live CRM layout changes</small>
+  <small className="crm-guided-preview-caption">Illustration of the full layout · Left record-tab preferences can apply personally</small>
  </div>;
 }

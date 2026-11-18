@@ -185,7 +185,7 @@ export function CompanyRecordPage({ companyId, onBack, backLabel }: { companyId:
       <QuickCreate context={{kind:'company',id:company.id,name:company.name}} launcherLabel="+ New"/>
     </>}
     left={<>
-      <RecordTabbedGroup372 title={company.name} initialTab="about" items={[
+      <RecordTabbedGroup372 title={company.name} personalTarget="company" initialTab="about" items={[
  {id:'about',label:'About',toolbar:{label:'Details'},content:<>
   <RecordCard title="About this company">
         <RecordFormFeedback notice={notice}/>

@@ -32,3 +32,7 @@ A new layout-overrides key is scoped by backend mode, authenticated user and org
 ## Next
 
 After authenticated UI review, consider optional **personal** display aliases or a limited per-user panel layout, but only after designing how they coexist with current record sections. Organization-shared configuration and real custom-field data still require an approved disposable staging environment and negative RLS tests (#352c4). Do not run cloud migrations from this batch.
+
+## #382 follow-up — personal record tab sections
+
+Saved record-panel preferences now also control the left About / Files / Notebook tab order and optional visibility on Company, Person and Deal pages. Hidden tabs remain available in More sections. Connections, Recents and full cross-column arrangement are not altered. See [#382 implementation notes](83-personal-record-sections-382.md).

@@ -222,7 +222,7 @@ export function DealRecordPage({ dealId, onBack, backLabel }: { dealId: string; 
       <QuickCreate context={{kind:'deal',id:deal.id,name:deal.name}} launcherLabel="+ New"/>
     </>}
     left={<>
-      <RecordTabbedGroup372 title={deal.name} initialTab="about" items={[
+      <RecordTabbedGroup372 title={deal.name} personalTarget="deal" initialTab="about" items={[
  {id:'about',label:'About',toolbar:{label:'Details'},content:<>
  <RecordCard title="About this deal">
         <RecordFormFeedback notice={notice}/>
