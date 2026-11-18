@@ -29,7 +29,7 @@ const manageRecords=(kind:RecordKind,testMode=false)=>{
 };
 const TABS: Array<{ id: SettingsTab; title: string; subtitle: string }> = [
   { id: 'company', title: 'Company & Branding', subtitle: 'Customer-facing identity' },
-  { id: 'crm', title: 'CRM Setup', subtitle: 'Custom field blueprints' },
+  { id: 'crm', title: 'CRM Setup', subtitle: 'Guided setup, templates and custom fields' },
   { id: 'account', title: 'My Account', subtitle: 'Salesperson profile' },
   { id: 'team', title: 'Team', subtitle: 'People in your shop' },
   { id: 'appearance', title: 'Appearance & Accessibility', subtitle: 'Personal preferences' },

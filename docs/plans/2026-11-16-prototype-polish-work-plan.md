@@ -13,6 +13,10 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## #380 — Guided plug-and-play CRM Setup · November 2026
+
+**Status: Source prepared / Cloudflare and device QA pending.** Add a three-step Setup flow to Settings → CRM Setup: choose optional starter, customize draft terminology/workflow/stages/record-panel presentation/module intentions, review idempotent field changes, and save the profile locally per user/organization. Includes optional Real Estate starter field pack and rollback on browser storage failure. Does not publish custom fields or change live pipelines. Use [implementation acceptance guide](../platform/81-guided-crm-setup-380.md). Exact GitHub SHA and latest Cloudflare status should be recorded after the build. CAD-Lite remains on hold; production RLS/staging untouched.
+
 ## November 17 — final Gmail refinement and next work area
 
 **Build #370 (email wrap-up):** Configurable private reply-review age windows (1–7 day minimum; 7/14/30 day maximum), option to suggest replies only for existing CRM People, four one-click Gmail query presets, and explicit batch Mark reviewed / Snooze 3 days actions with confirmation. Preferences and review choices remain scoped to a single SalesShop user/Gmail mailbox and stored only in that browser. They are not email writes, automatic Activities, Tasks, notifications, or background Gmail monitoring. Build/check status and real-account acceptance are tracked separately.

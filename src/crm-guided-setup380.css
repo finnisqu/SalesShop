@@ -1,0 +1,208 @@
+/* #380: approachable, browser-only CRM Setup guide.
+ * Reuses Settings tokens; no hidden changes to real CRM record screens. */
+.sales-app.view-settings .crm-guided-setup{
+ grid-column:1/-1;display:grid;gap:14px;min-width:0;
+}
+.crm-guided-setup>header{
+ display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.crm-guided-save-state{
+ padding:5px 9px;border:1px solid var(--ss-theme-border);border-radius:99px;
+ background:var(--ss-theme-base);font-size:11px;font-weight:750;white-space:nowrap;
+}
+.crm-guided-scope-note{
+ margin:0;padding:10px 12px;border-radius:8px;
+ border:1px solid var(--ss-theme-border);background:var(--ss-theme-tint);
+ color:var(--ss-theme-muted);font-size:11px;line-height:1.55;
+}
+.crm-guided-scope-note strong{color:var(--ss-theme-ink);}
+.crm-guided-readonly,.crm-guided-error,.crm-guided-success{
+ margin:0;font-size:12px;line-height:1.55;color:var(--ss-theme-ink);
+}
+.crm-guided-error{font-weight:750;}
+.crm-guided-success{padding:10px 12px;border:1px solid var(--ss-theme-border);border-radius:8px}
+.crm-guided-steps{
+ display:flex;flex-wrap:wrap;align-items:center;gap:5px;
+ border-bottom:1px solid var(--ss-theme-border);padding-bottom:10px;
+}
+.crm-guided-steps button,.crm-guided-step-footer button,.crm-guided-restore,
+.crm-guided-secondary,.crm-guided-target-picker button{
+ box-sizing:border-box;min-height:36px;padding:7px 11px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:750 11px/1.4 var(--ss-font-body,system-ui,sans-serif);
+ cursor:pointer;
+}
+.crm-guided-steps button[aria-current="step"],
+.crm-guided-target-picker button[aria-pressed="true"]{
+ border-color:var(--ss-theme-accent);background:var(--ss-theme-tint);
+ box-shadow:inset 0 -2px var(--ss-theme-accent);
+}
+.crm-guided-step{display:grid;gap:13px;min-width:0;}
+.crm-guided-heading{display:grid;gap:3px;min-width:0;}
+.crm-guided-heading strong{font-size:14px;line-height:1.35;}
+.crm-guided-heading small{font-size:11px;line-height:1.5;color:var(--ss-theme-muted);}
+.crm-guided-templates{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+ gap:9px;min-width:0;
+}
+.crm-guided-template{
+ display:grid;align-content:start;gap:9px;min-width:0;min-height:126px;
+ padding:13px;border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ text-align:left;cursor:pointer;
+}
+.crm-guided-template[aria-pressed="true"]{
+ background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
+ box-shadow:inset 0 0 0 1px var(--ss-theme-accent);
+}
+.crm-guided-template strong{font-size:13px;}
+.crm-guided-template span{font-size:11px;line-height:1.45;color:var(--ss-theme-muted);}
+.crm-guided-template small{font-size:10px;line-height:1.3;}
+.crm-guided-restore{justify-self:start;}
+.crm-guided-step-footer{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:10px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--ss-theme-border);
+ font-size:12px;
+}
+.crm-guided-step-footer .crm-guided-primary{
+ background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
+}
+.crm-guided-step-footer :disabled,.crm-guided-edit-group :disabled{opacity:.5;cursor:default;}
+.crm-guided-form-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;min-width:0;
+}
+.crm-guided-edit-group{
+ display:grid;align-content:start;gap:10px;min-width:0;padding:12px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-card);
+}
+.crm-guided-edit-group h3{margin:0;font-size:13px;}
+.crm-guided-edit-group p{margin:0;font-size:11px;line-height:1.45;color:var(--ss-theme-muted);}
+.crm-guided-wide{grid-column:1/-1;}
+.crm-guided-three-fields,.crm-guided-two-fields{display:grid;gap:9px;}
+.crm-guided-three-fields{grid-template-columns:repeat(3,minmax(0,1fr));}
+.crm-guided-two-fields{grid-template-columns:repeat(2,minmax(0,1fr));}
+.crm-guided-edit-group label{display:grid;min-width:0;gap:5px;}
+.crm-guided-edit-group label>span{font-size:11px;font-weight:700;}
+.crm-guided-edit-group :is(input:not([type="checkbox"]),select){
+ display:block;box-sizing:border-box;width:100%;min-width:0;min-height:36px;
+ padding:6px 9px;border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);font:inherit;font-size:12px;
+}
+.crm-guided-stage-list,.crm-guided-panel-list{display:grid;gap:5px;}
+.crm-guided-stage-row{
+ display:grid;grid-template-columns:22px minmax(0,1fr) 30px 30px 30px;
+ gap:5px;align-items:center;
+}
+.crm-guided-stage-number{text-align:center;font-size:11px;color:var(--ss-theme-muted);}
+.crm-guided-stage-row button,.crm-guided-panel-row button{
+ min-height:30px;min-width:30px;padding:3px;
+ border:1px solid var(--ss-theme-border);border-radius:6px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font-size:13px;cursor:pointer;
+}
+.crm-guided-secondary{justify-self:start;}
+.crm-guided-target-picker{display:flex;gap:5px;flex-wrap:wrap;}
+.crm-guided-panel-row{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ padding:6px 8px;min-width:0;
+}
+.crm-guided-panel-row label{
+ display:flex;flex-direction:row;align-items:center;gap:7px;min-width:0;
+}
+.crm-guided-panel-row input[type="checkbox"],
+.crm-guided-module-list input[type="checkbox"]{
+ width:16px;height:16px;accent-color:var(--ss-theme-accent);margin:0;flex:0 0 auto;
+}
+.crm-guided-panel-row>div{display:flex;gap:5px;}
+.crm-guided-module-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.crm-guided-module-list label{
+ display:flex;flex-direction:row;align-items:flex-start;gap:10px;
+ padding:10px;border:1px solid var(--ss-theme-border);border-radius:8px;
+ cursor:pointer;
+}
+.crm-guided-module-list label>span{display:grid;gap:3px;min-width:0;}
+.crm-guided-module-list strong{font-size:12px;}
+.crm-guided-module-list small{font-size:10px;line-height:1.4;color:var(--ss-theme-muted);}
+.crm-guided-live-preview{
+ display:grid;gap:10px;border:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-base);padding:12px;border-radius:9px;min-width:0;
+}
+.crm-guided-live-preview-heading{
+ display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:8px;
+}
+.crm-guided-live-preview-heading strong{font-size:13px;}
+.crm-guided-live-preview-heading small{font-size:10px;color:var(--ss-theme-muted);}
+.crm-guided-stage-preview{display:flex;flex-wrap:wrap;gap:5px;}
+.crm-guided-stage-preview span{
+ display:inline-block;max-width:100%;padding:5px 8px;
+ border:1px solid var(--ss-theme-border);border-radius:99px;
+ background:var(--ss-theme-card);font-size:10px;overflow-wrap:anywhere;
+}
+.crm-guided-record-columns{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:7px;
+}
+.crm-guided-record-panel{
+ display:grid;align-content:start;gap:6px;min-height:72px;
+ padding:9px;border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-card);
+}
+.crm-guided-record-panel strong{font-size:11px;}
+.crm-guided-record-panel small{font-size:10px;line-height:1.4;color:var(--ss-theme-muted);}
+.crm-guided-preview-caption{font-size:10px;color:var(--ss-theme-muted);}
+.crm-guided-review-metrics{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;
+}
+.crm-guided-review-metrics>div{
+ display:grid;gap:4px;justify-items:start;align-content:start;
+ padding:10px;border-radius:8px;background:var(--ss-theme-base);
+ border:1px solid var(--ss-theme-border);
+}
+.crm-guided-review-metrics strong{font-size:19px;}
+.crm-guided-review-metrics span{font-size:10px;line-height:1.4;color:var(--ss-theme-muted);}
+.crm-guided-field-review{display:grid;gap:8px;min-width:0;}
+.crm-guided-field-review>strong{font-size:12px;}
+.crm-guided-field-review ul{list-style:none;margin:0;padding:0;display:grid;gap:5px;}
+.crm-guided-field-review li{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ border-bottom:1px solid var(--ss-theme-border);padding:7px 3px;
+ font-size:11px;min-width:0;
+}
+.crm-guided-field-review li span{min-width:0;overflow-wrap:anywhere;}
+.crm-guided-field-review li small{flex:0 0 auto;font-size:10px;color:var(--ss-theme-muted);}
+.crm-guided-blank-note,.crm-guided-review-safety{
+ margin:0;font-size:11px;line-height:1.6;color:var(--ss-theme-muted);
+}
+.crm-guided-footnote{
+ padding-top:10px;border-top:1px solid var(--ss-theme-border);
+ font-size:10px;line-height:1.6;color:var(--ss-theme-muted);
+}
+.crm-guided-scoped-key{display:block;font-weight:700;margin-top:4px;}
+.crm-guided-setup :is(button,input,select):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+@media(max-width:1060px){
+ .crm-guided-form-grid{grid-template-columns:1fr;}
+ .crm-guided-wide{grid-column:1;}
+ .crm-guided-three-fields{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media(max-width:760px){
+ .crm-guided-templates{grid-template-columns:1fr 1fr;}
+ .crm-guided-module-list{grid-template-columns:1fr;}
+ .crm-guided-three-fields{grid-template-columns:1fr;}
+ .crm-guided-review-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}
+ .crm-guided-template{min-height:132px;}
+ .crm-guided-setup :is(button,input,select){min-height:44px;}
+ .crm-guided-stage-row{grid-template-columns:20px minmax(0,1fr) 40px 40px 40px;}
+ .crm-guided-stage-row button,.crm-guided-panel-row button{min-height:40px;min-width:40px;}
+ .crm-guided-stage-preview{max-height:100px;overflow:auto;}
+ .crm-guided-record-columns{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:425px){
+ .crm-guided-templates{grid-template-columns:1fr;}
+ .crm-guided-step-footer>*{flex:1 1 100%;}
+ .crm-guided-stage-row{grid-template-columns:18px minmax(0,1fr) 34px 34px 34px;gap:3px;}
+}

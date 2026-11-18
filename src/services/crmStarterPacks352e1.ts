@@ -6,7 +6,7 @@ import {
  type CrmFieldBlueprint,type NewCrmCustomField,
 } from './crmFieldBlueprint352b';
 
-export type CrmStarterPackId='general_sales'|'construction_trades'|'professional_services';
+export type CrmStarterPackId='general_sales'|'construction_trades'|'real_estate'|'professional_services';
 export interface CrmStarterPack {
  id:CrmStarterPackId;
  title:string;
@@ -38,6 +38,18 @@ export const CRM_STARTER_FIELD_PACKS:readonly CrmStarterPack[]=[
    {target:'deal',label:'Project Category',type:'choice',
     options:['Residential','Commercial','Multifamily','Other']},
    {target:'deal',label:'Site Visit Required',type:'boolean'},
+  ],
+ },
+ {
+  id:'real_estate',title:'Real Estate',
+  description:'Optional property, client and closing details for real estate teams.',
+  fields:[
+   {target:'company',label:'Market Area',type:'text'},
+   {target:'person',label:'Client Role',type:'choice',
+    options:['Buyer','Seller','Investor','Agent']},
+   {target:'deal',label:'Property Type',type:'choice',
+    options:['Single family','Condo','Multifamily','Commercial']},
+   {target:'deal',label:'Target Closing',type:'date'},
   ],
  },
  {

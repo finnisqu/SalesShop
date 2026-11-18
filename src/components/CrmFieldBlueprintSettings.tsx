@@ -1,6 +1,9 @@
 import {useState,type FormEvent} from 'react';
 import {useWorktableDirectoryState} from './useWorktableDirectoryState';
 import {CrmCustomFieldEditor} from './CrmCustomFieldEditor';
+import {CrmGuidedSetup380} from './CrmGuidedSetup380';
+import {crmGuidedSetupStorageKey,readCrmGuidedSetup,saveCrmGuidedSetup,
+ type CrmGuidedSetupDraft,type CrmGuidedSetupPlan} from '../services/crmGuidedSetup380';
 import {CRM_STARTER_FIELD_PACKS,previewCrmStarterPack,applyCrmStarterPack,
  type CrmStarterPackId} from '../services/crmStarterPacks352e1';
 import type {CrmCustomFieldValues} from '../services/crmFieldEditor352d1';
@@ -56,6 +59,26 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
   },
   (key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));}
    catch{/* browser storage optional */}});
+ // Only a reviewed guide saves a profile. The key is derived from the existing
+ // per-account and per-organization blueprint scope (never a shared setting).
+ const [savedSetup,setSavedSetup]=useWorktableDirectoryState<CrmGuidedSetupDraft|null>(
+  crmGuidedSetupStorageKey(scope),key=>{
+   try{return readCrmGuidedSetup(localStorage.getItem(key));}
+   catch{return null;}
+  },
+  (key,value)=>{try{
+   if(value)localStorage.setItem(key,JSON.stringify(value));
+   else localStorage.removeItem(key);
+  }catch{/* Browser storage can be unavailable. The wizard reports save failures. */}});
+ const applyGuidedSetup=(plan:CrmGuidedSetupPlan)=>{
+  if(!editable)throw new Error('You do not have permission to change CRM setup.');
+  // Save all three local keys before updating React; on failure retain the
+  // existing UI definitions and attempt to restore the old browser values.
+  saveCrmGuidedSetup(localStorage,scope,plan);
+  setBlueprint(plan.nextBlueprint);
+  setModulePlans(plan.nextModules);
+  setSavedSetup(plan.savedProfile);
+ };
  // Pending pasted JSON and feedback must not cross accounts/organizations,
  // and are never persisted (unlike the saved field/module definitions).
  const [importText,setImportText]=useWorktableDirectoryState<string>(
@@ -92,6 +115,9 @@ export function CrmFieldBlueprintSettings({editable,mode,organizationId,userId}:
   }
  };
  return <section className="settings-panel-grid" aria-label="CRM customization blueprint">
+  <CrmGuidedSetup380 key={scope} editable={editable} scope={scope}
+   saved={savedSetup} blueprint={blueprint} modules={modulePlans}
+   onApply={applyGuidedSetup}/>
   <article className="company-settings-card crm-blueprint-panel">
    <header><div>
      <strong>CRM Setup · Custom field blueprint</strong>

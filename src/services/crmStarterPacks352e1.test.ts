@@ -16,7 +16,7 @@ describe('Batch 352e1 — optional, non-destructive CRM starter field packs',()=
  it('keeps a new CRM blueprint empty; starter fields are opt-in',()=>{
   expect(blank()).toEqual({version:1,fields:[]});
   expect(CRM_STARTER_FIELD_PACKS.map(pack=>pack.id))
-   .toEqual(['general_sales','construction_trades','professional_services']);
+   .toEqual(['general_sales','construction_trades','real_estate','professional_services']);
  });
  it('has valid industry-neutral and optional business templates for all three record types',()=>{
   for(const pack of CRM_STARTER_FIELD_PACKS){
