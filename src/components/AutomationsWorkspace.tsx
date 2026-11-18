@@ -7,7 +7,9 @@ import {useQuoteStore} from '../store/quoteStore';
 import {taskScope,usePersonalTaskStore} from '../store/personalTaskStore';
 import {useAutomationStore} from '../store/automationStore';
 import {buildSalesQuoteRegistry,mySalesQuoteRegistry} from '../services/salesQuoteRegistry';
-import {AUTOMATION_IDS,automationCandidates,type AutomationRuleId} from '../services/automationRules358b';
+import {AUTOMATION_IDS,AUTOMATION_STAGE_CHOICES,DEFAULT_STAGE_TASK_LABEL,
+ automationCandidates,type AutomationRuleId,type AutomationRuleOptions}
+ from '../services/automationRules358b';
 import {executeAutomationCandidates} from '../services/automationExecutor358b';
 import {requestTaskModal} from '../services/taskModalEvents';
 import './automations-workspace.css';
@@ -27,6 +29,11 @@ const descriptions:Record<AutomationRuleId,{title:string;explanation:string;timi
   title:'Deal Won → Handoff',
   explanation:'Prepare an internal checklist after a recorded Closed Won stage change. No invoices or external alerts are sent.',
   timing:'Days after Won',
+ },
+ 'deal-stage-task':{
+  title:'Deal reaches stage → Task',
+  explanation:'Choose a Deal stage and the Task to create when a real stage change is recorded. The assigned salesperson receives a private Task.',
+  timing:'Days after the stage change',
  },
 };
 export function AutomationsWorkspace(){
@@ -57,7 +64,7 @@ export function AutomationsWorkspace(){
    (result.errors.length?' '+result.errors.join(' '):''));
  };
  return <section className="ss-automation-workspace" aria-label="Workflow automations">
-  <header><div><small>WORKFLOWS · PROTOTYPE V0.1</small><h2>Automations</h2>
+  <header><div><small>WORKFLOWS · PROTOTYPE V0.2</small><h2>Automations</h2>
    <p>Turn repeated sales activities into private, trackable Tasks.</p></div>
    <span>Local rules · no background server</span>
   </header>
@@ -85,6 +92,9 @@ export function AutomationsWorkspace(){
        {[1,2,3,5,7,14,21,30,45,60].map(days=><option key={days} value={days}>{days} {days===1?'day':'days'}</option>)}
       </select>
      </label>
+     {id==='deal-stage-task'&&<StageTaskEditor383 key={scope??'signed-out'}
+       rule={config} disabled={!ready}
+       onConfigure={changes=>{configure(id,changes);setNotice('');}}/>}
      <small>{candidates.filter(row=>row.rule===id).length} new match(es) available now</small>
     </article>;
    })}
@@ -125,4 +135,38 @@ export function AutomationsWorkspace(){
    Automatic execution has a 20-Task cap per open session; manual runs let you review
    additional matches before creating them.</footer>
  </section>;
+}
+
+/** Only the selected Deal's current, recorded stage transition can trigger this
+ * Task; the label is saved separately from the unsaved text field. */
+function StageTaskEditor383({rule,disabled,onConfigure}:{
+ rule:AutomationRuleOptions;disabled:boolean;
+ onConfigure:(changes:Partial<AutomationRuleOptions>)=>void;
+}){
+ const [draft,setDraft]=useState<string|null>(null);
+ const current=rule.taskLabel??DEFAULT_STAGE_TASK_LABEL;
+ const text=draft??current;
+ const valid=text.trim().length>=2&&text.trim().length<=70&&
+  !Array.from(text).some(char=>char.charCodeAt(0)<32||char==='<'||char==='>');
+ return <div className="ss-automation-stage-editor" aria-label="Custom stage task rule">
+  <label>When a Deal enters
+   <select value={rule.stage??'Bid Sent'} disabled={disabled}
+    onChange={e=>onConfigure({stage:e.target.value as NonNullable<AutomationRuleOptions['stage']>})}>
+    {AUTOMATION_STAGE_CHOICES.map(stage=><option key={stage} value={stage}>{stage}</option>)}
+   </select>
+  </label>
+  <label>Task name
+   <input type="text" value={text} disabled={disabled} maxLength={70}
+    aria-invalid={!valid} onChange={e=>setDraft(e.target.value)}
+    placeholder="For example: Review next steps"/>
+  </label>
+  <button type="button" className="ss-automation-stage-save"
+   disabled={disabled||!valid||draft===null||text.trim()===current}
+   onClick={()=>{onConfigure({taskLabel:text.trim()});setDraft(null);}}>
+   Save task name
+  </button>
+  {!valid&&<small role="alert">Use 2–70 characters, without angle brackets.</small>}
+  <small>Requires a confirmed stage change in the last 14 days. No older Deals
+   are automatically backfilled. Changing the stage does not modify any Deal.</small>
+ </div>;
 }

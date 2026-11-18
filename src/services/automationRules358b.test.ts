@@ -11,6 +11,7 @@ const enabled:AutomationRules={
  'quote-delivered':{enabled:true,days:3},
  'deal-inactive':{enabled:true,days:14},
  'deal-won':{enabled:true,days:1},
+ 'deal-stage-task':{enabled:false,days:1,stage:'Bid Sent',taskLabel:'Review next steps'},
 };
 const deal=(more:Partial<Project>={}):Project=>({
  id:'d',name:'Cedar Apartments',stage:'Bid Sent',amount:50000,

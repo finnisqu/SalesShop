@@ -13,6 +13,10 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## #383 — Configurable stage-triggered Task automation · November 18, 2026
+
+**Status: Source prepared / Cloudflare and device QA pending.** Add a fourth opt-in rule to Tools → Automations: choose an existing live Deal stage, Task name and offset; preview event-backed matches; create a private Task through the existing safe executor. Keep current ownership and role scope, idempotency, browser-only config, 20-task automatic cap and no external messaging. **No changes to production Supabase, Quotes, stage definitions, or background workers.** See [implementation and testing notes](../platform/84-stage-task-automation-383.md).
+
 ## #380 — Guided plug-and-play CRM Setup · November 2026
 
 **Status: Source prepared / Cloudflare and device QA pending.** Add a three-step Setup flow to Settings → CRM Setup: choose optional starter, customize draft terminology/workflow/stages/record-panel presentation/module intentions, review idempotent field changes, and save the profile locally per user/organization. Includes optional Real Estate starter field pack and rollback on browser storage failure. Does not publish custom fields or change live pipelines. Use [implementation acceptance guide](../platform/81-guided-crm-setup-380.md). Exact GitHub SHA and latest Cloudflare status should be recorded after the build. CAD-Lite remains on hold; production RLS/staging untouched.

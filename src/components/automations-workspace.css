@@ -53,3 +53,35 @@
 @media(max-width:650px){.ss-automation-workspace{padding:9px 9px 70px}
 .ss-automation-rule,.ss-automation-execution{padding:12px}
 .ss-automation-workspace select,.ss-automation-workspace button{min-height:44px}}
+
+/* #383 — custom stage-to-Task rule. Shared sizes, deliberate compact breakpoints. */
+@media(min-width:901px){
+ .ss-automation-rules{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+.ss-automation-stage-editor{
+ display:grid;align-content:start;gap:9px;min-width:0;
+ padding:10px;border:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-base);border-radius:9px;
+}
+.ss-automation-stage-editor>label{display:grid;gap:5px;min-width:0;
+ font-size:11px;font-weight:700}
+.ss-automation-stage-editor :is(input,select){
+ box-sizing:border-box;display:block;width:100%;max-width:100%;min-width:0;
+ min-height:38px;padding:8px 9px;border-radius:7px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ border:1px solid var(--ss-theme-border);font:inherit;font-size:12px;
+}
+.ss-automation-stage-editor .ss-automation-stage-save{
+ justify-self:start;min-height:36px;padding:7px 11px;
+ color:var(--ss-theme-ink);background:var(--ss-theme-card);
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ font-size:11px;font-weight:750;cursor:pointer;
+}
+.ss-automation-stage-editor .ss-automation-stage-save:disabled{
+ opacity:.5;cursor:not-allowed
+}
+.ss-automation-stage-editor small{color:var(--ss-theme-muted);font-size:10px;line-height:1.5}
+.ss-automation-stage-editor small[role=alert]{color:var(--ss-theme-ink);font-weight:700}
+@media(max-width:650px){
+ .ss-automation-stage-editor :is(input,select,.ss-automation-stage-save){min-height:44px}
+}

@@ -1,11 +1,19 @@
 import {scopedStorageKey} from '../lib/developerPlayground';
-import type {Activity,Project} from '../types/crm';
+import {PROJECT_STAGES,type ProjectStage,type Activity,type Project} from '../types/crm';
 import type {SalesQuoteRecord} from './salesQuoteRegistry';
 import type {PersonalTask,TaskAssociation,TaskChanges} from '../store/personalTaskStore';
 
-export type AutomationRuleId='quote-delivered'|'deal-inactive'|'deal-won';
-export const AUTOMATION_IDS=['quote-delivered','deal-inactive','deal-won'] as const;
-export interface AutomationRuleOptions{enabled:boolean;days:number}
+export type AutomationRuleId='quote-delivered'|'deal-inactive'|'deal-won'|'deal-stage-task';
+export const AUTOMATION_IDS=['quote-delivered','deal-inactive','deal-won','deal-stage-task'] as const;
+export const AUTOMATION_STAGE_CHOICES:readonly ProjectStage[]=PROJECT_STAGES;
+export const DEFAULT_STAGE_TASK_LABEL='Review next steps';
+export const normalizeStageTaskLabel=(label:unknown):string=>
+ typeof label==='string'&&label.trim().length>=2&&label.trim().length<=70&&
+ !/[\u0000-\u001f<>]/.test(label)
+ ?label.trim():DEFAULT_STAGE_TASK_LABEL;
+export const normalizeAutomationStage=(stage:unknown):ProjectStage=>
+ AUTOMATION_STAGE_CHOICES.find(s=>s===stage)??'Bid Sent';
+export interface AutomationRuleOptions{enabled:boolean;days:number;stage?:ProjectStage;taskLabel?:string}
 export type AutomationRules=Record<AutomationRuleId,AutomationRuleOptions>;
 export interface AutomationHistoryItem{
  id:string;rule:AutomationRuleId;sourceObjectId:string;taskId:string;
@@ -23,6 +31,7 @@ export const DEFAULT_AUTOMATION_SETTINGS:AutomationSettings={
   'quote-delivered':{enabled:false,days:3},
   'deal-inactive':{enabled:false,days:14},
   'deal-won':{enabled:false,days:1},
+  'deal-stage-task':{enabled:false,days:1,stage:'Bid Sent',taskLabel:DEFAULT_STAGE_TASK_LABEL},
  },
  autoRunWhileOpen:false,history:[],
 };
@@ -32,9 +41,13 @@ export function sanitizeAutomationSettings(source:unknown):AutomationSettings{
  const saved=raw.rules&&typeof raw.rules==='object'?raw.rules as Record<string,unknown>:{};
  const rules=Object.fromEntries(AUTOMATION_IDS.map(id=>{
   const item=saved[id]&&typeof saved[id]==='object'?saved[id] as Record<string,unknown>:{};
-  return [id,{enabled:item.enabled===true,
+  const base={enabled:item.enabled===true,
    days:typeof item.days==='number'&&Number.isInteger(item.days)
-      ?Math.max(1,Math.min(60,item.days)):DEFAULT_AUTOMATION_SETTINGS.rules[id].days}];
+      ?Math.max(1,Math.min(60,item.days)):DEFAULT_AUTOMATION_SETTINGS.rules[id].days};
+  return [id,id==='deal-stage-task'?{
+   ...base,stage:normalizeAutomationStage(item.stage),
+   taskLabel:normalizeStageTaskLabel(item.taskLabel),
+  }:base];
  })) as AutomationRules;
  const history=Array.isArray(raw.history)?raw.history.filter((row:unknown)=>{
   if(!row||typeof row!=='object')return false;
@@ -141,6 +154,36 @@ export function automationCandidates(input:{
     sourceObjectId:key,associations:[dealAssociation(deal)],
     notes:'SalesShop detected no logged customer contact since '+lastDay+
      '. Check this Deal before contacting anyone. No message has been sent.'}});
+ }
+ // A configurable, evidence-based stage event creates a private Task.
+ // Unlike a generic stage snapshot, this needs an actual recorded transition,
+ // so importing an old Deal never creates an unsolicited Task.
+ const stageRule=rules['deal-stage-task'];
+ if(stageRule.enabled){
+  const selectedStage=normalizeAutomationStage(stageRule.stage);
+  const label=normalizeStageTaskLabel(stageRule.taskLabel);
+  for(const deal of deals){
+   if(!ownDeal(deal)||deal.stage!==selectedStage)continue;
+   const events=activities.filter(a=>a.projectId===deal.id&&
+    a.type==='project-stage-changed'&&a.metadata?.toStage===selectedStage)
+    .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));
+   const event=events[0];
+   if(!event)continue;
+   const age=ageDays(event.occurredAt,now);
+   if(!Number.isFinite(age)||age<0||age>14)continue;
+   const stageDay=parseDay(event.occurredAt);
+   if(!stageDay)continue;
+   const dueDate=addCalendarDays(localDay(stageDay),stageRule.days);
+   if(!dueDate)continue;
+   const key='automation:deal-stage-task:'+deal.id+':'+event.id+':'+selectedStage;
+   include({rule:'deal-stage-task',sourceObjectId:key,
+    title:label+' · '+deal.name,
+    context:'Confirmed stage change → '+selectedStage+' · '+localDay(stageDay),
+    changes:{type:'todo',priority:'normal',dueDate,sourceObjectId:key,
+     associations:[dealAssociation(deal)],
+     notes:'Personal Task prompted by a recorded move to '+selectedStage+
+      ' on '+localDay(stageDay)+'. No customer messages or other changes were made.'}});
+  }
  }
  if(rules['deal-won'].enabled)for(const deal of deals){
   if(!ownDeal(deal)||deal.stage!=='Closed Won')continue;

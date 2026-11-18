@@ -1,6 +1,7 @@
 import {create} from 'zustand';
 import {DEFAULT_AUTOMATION_SETTINGS,readAutomationSettings,
- saveAutomationSettings,type AutomationRuleId,type AutomationSettings,type AutomationHistoryItem}
+ saveAutomationSettings,normalizeAutomationStage,normalizeStageTaskLabel,
+ type AutomationRuleId,type AutomationSettings,type AutomationHistoryItem}
  from '../services/automationRules358b';
 
 type Config=Pick<AutomationSettings,'rules'|'autoRunWhileOpen'|'history'>;
@@ -16,6 +17,7 @@ const fresh=():Config=>({
   'quote-delivered':{...DEFAULT_AUTOMATION_SETTINGS.rules['quote-delivered']},
   'deal-inactive':{...DEFAULT_AUTOMATION_SETTINGS.rules['deal-inactive']},
   'deal-won':{...DEFAULT_AUTOMATION_SETTINGS.rules['deal-won']},
+  'deal-stage-task':{...DEFAULT_AUTOMATION_SETTINGS.rules['deal-stage-task']},
  },
  autoRunWhileOpen:false,
  history:[],
@@ -31,7 +33,12 @@ export const useAutomationStore=create<AutomationState>((set,get)=>({
   const state=get();if(!state.scope)return;
   const original=state.rules[rule];
   const days=changes.days===undefined?original.days:Math.max(1,Math.min(60,Math.round(changes.days)));
-  const rules={...state.rules,[rule]:{enabled:changes.enabled??original.enabled,days}};
+  const options=rule==='deal-stage-task'?{
+   enabled:changes.enabled??original.enabled,days,
+   stage:normalizeAutomationStage(changes.stage??original.stage),
+   taskLabel:normalizeStageTaskLabel(changes.taskLabel??original.taskLabel),
+  }:{enabled:changes.enabled??original.enabled,days};
+  const rules={...state.rules,[rule]:options};
   saveAutomationSettings(state.scope,{rules,autoRunWhileOpen:state.autoRunWhileOpen,history:state.history});
   set({rules});
  },
