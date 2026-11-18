@@ -311,7 +311,7 @@ export function Connections() {
   const activities = useCrmStore((state) => state.activities);
   const lastContactByPerson=useMemo(()=>personLastContactIndex(activities),[activities]);
   const quotes = useQuoteStore((state) => state.quotes);
-  const authMode=useAuthStore(state=>state.mode);
+  // authMode is already selected above for the personal layout scope.
   const authUser=useAuthStore(state=>state.user?.id);
   const authOrgId=useAuthStore(state=>state.organizationId);
   const authRole=useAuthStore(state=>state.teamRole);
