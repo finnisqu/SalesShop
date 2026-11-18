@@ -81,7 +81,7 @@ export async function exchangeGmailRedirect(code:string,verifier:string,
  const response=await fetch('/api/gmail/oauth/exchange',{
   method:'POST',credentials:'same-origin',cache:'no-store',
   headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({code,code_verifier:verifier,redirect_uri:redirectUri}),
+  body:JSON.stringify({code,code_verifier:verifier,redirect_uri:redirectUri,client_id:gmailClientId}),
  });
  const payload=await response.json() as {
   access_token?:string;expires_in?:number;scope?:string;error?:string;
