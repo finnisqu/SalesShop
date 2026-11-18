@@ -1,12 +1,16 @@
 import {create} from 'zustand';
 import {authorizeGmail,gmailProfile,gmailThreadPage,revokeGmailToken,
  type GmailThreadSummary,type GmailPage} from '../services/gmailRead359a';
+import {beginGmailRedirect,consumeGmailRedirect,isGmailRedirectCallback,
+ exchangeGmailRedirect} from '../services/gmailRedirect389';
 interface GmailState {
  scope:string|null;mailbox:string|null;token:string|null;expiresAt:number;
  status:'disconnected'|'connecting'|'connected';loading:boolean;error:string|null;
  query:string;threads:GmailThreadSummary[];nextPageToken?:string;
  bindScope:(scope:string|null)=>void;
  connect:()=>Promise<void>;
+ connectWithRedirect:()=>Promise<void>;
+ finishRedirect:()=>Promise<void>;
  disconnect:()=>void;
  search:(query:string,pageToken?:string)=>Promise<void>;
 }
@@ -38,6 +42,42 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
    if(access?.token)revokeGmailToken(access.token);
    if(get().scope===scope)set({...reset(),error:error instanceof Error?error.message:'Could not connect Gmail.'});
    throw error;
+  }
+ },
+ async connectWithRedirect(){
+  const scope=get().scope;
+  if(!scope){set({error:'Sign in to a SalesShop workspace before connecting Gmail.'});return;}
+  set({status:'connecting',error:null});
+  try{
+   const url=await beginGmailRedirect(scope);
+   window.location.assign(url);
+  }catch(error){
+   if(get().scope===scope)set({...reset(),
+    error:error instanceof Error?error.message:'Could not start Gmail redirect.'});
+  }
+ },
+ async finishRedirect(){
+  const scope=get().scope;
+  if(!scope||!isGmailRedirectCallback())return;
+  const result=consumeGmailRedirect(scope);
+  if(!result)return;
+  if(result.kind==='error'){
+   set({...reset(),error:result.message});return;
+  }
+  set({status:'connecting',error:null});
+  let access;
+  try{
+   access=await exchangeGmailRedirect(result.code,result.verifier,result.redirectUri);
+   const mailbox=await gmailProfile(access.token);
+   if(get().scope!==scope){
+    revokeGmailToken(access.token);return;
+   }
+   set({...reset(),status:'connected',token:access.token,expiresAt:access.expiresAt,mailbox});
+   await get().search('newer_than:90d');
+  }catch(error){
+   if(access?.token)revokeGmailToken(access.token);
+   if(get().scope===scope)set({...reset(),
+    error:error instanceof Error?error.message:'Could not complete Gmail redirect.'});
   }
  },
  disconnect(){
