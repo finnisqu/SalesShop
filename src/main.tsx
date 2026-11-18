@@ -7,6 +7,7 @@ import { isDeveloperPlaygroundRoute } from './lib/developerPlayground';
 import { PublicQuotePage } from './components/PublicQuotePage';
 import { appRelativePath } from './lib/appUrl';
 import {recordSalesShopBoot} from './services/appLifecycleDiagnostics';
+import {stageGmailRedirectCallback} from './services/gmailRedirect389';
 import './design-system/tokens.css';
 import './design-system/primitives.css';
 import './index.css';
@@ -186,6 +187,8 @@ import './notebook-responsive-polish.css';
 // Explicit wide/compact/tablet/phone layout contract, loaded after legacy overrides.
 import './workspace-viewport-tiers379.css';
 
+// Remove Google OAuth code/state from the URL before asynchronous auth hydration.
+stageGmailRedirectCallback();
 recordSalesShopBoot();
 
 const isPublicQuote = appRelativePath().startsWith('/q/');
