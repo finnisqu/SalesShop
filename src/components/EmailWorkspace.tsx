@@ -401,7 +401,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
     must list <code>{typeof window==='undefined'?'this SalesShop origin':window.location.origin}</code>
     under Authorized JavaScript origins. Verify that Gmail API and consent-screen access
     are enabled, then use Connect Gmail to retry. No messages were imported.</small>
-  </div>
+  </div>}
   {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
   {connected&&<div className="ss-email-content">
    <div className="ss-email-threads" role="region" aria-label="Gmail search results">
