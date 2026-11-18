@@ -13,6 +13,10 @@
 - Never run disposable SQL on the production Supabase project, or make destructive cloud workspace resets. Shared custom fields stay disabled until isolated real RLS negative tests and explicit migration approval.
 - **No work can continue unattended.** When the user returns in a new conversation, read this file, GitHub head/commits and their latest Cloudflare result, then continue from the next open row.
 
+## #384 — Reusable custom workflows · November 18, 2026
+
+**Status: Source prepared / Cloudflare and device acceptance pending.** Extend the existing Automations v0.2 with an opt-in **My workflows** editor for up to eight independent stage-to-Task rules. Templates: Blank, Bid Follow-up, Negotiation, Won Deal Kickoff, Discovery. Rules start disabled and support edit, duplicate, delete with confirmation, private Task preview, per-rule idempotency, scope and role guards. Keep all four existing built-ins; no Gmail or server writes. See [#384 acceptance notes](../platform/85-custom-workflows-templates-384.md).
+
 ## #383 — Configurable stage-triggered Task automation · November 18, 2026
 
 **Status: Source prepared / Cloudflare and device QA pending.** Add a fourth opt-in rule to Tools → Automations: choose an existing live Deal stage, Task name and offset; preview event-backed matches; create a private Task through the existing safe executor. Keep current ownership and role scope, idempotency, browser-only config, 20-task automatic cap and no external messaging. **No changes to production Supabase, Quotes, stage definitions, or background workers.** See [implementation and testing notes](../platform/84-stage-task-automation-383.md).

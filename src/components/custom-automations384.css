@@ -1,0 +1,107 @@
+/* #384 — reusable personal workflow rules, styled like existing SalesShop worktables. */
+.ss-automation-section-heading{margin:0;font-size:12px;font-weight:800;letter-spacing:.01em}
+.ss-custom-workflows{
+ display:grid;gap:12px;min-width:0;padding:14px;
+ border:1px solid var(--ss-theme-border);border-radius:12px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+}
+.ss-custom-workflows>header{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.ss-custom-workflows h3{margin:0;font-size:15px}
+.ss-custom-workflows h3 small{
+ display:inline-block;margin-left:5px;font-size:10px;color:var(--ss-theme-muted);
+ border:1px solid var(--ss-theme-border);border-radius:99px;padding:3px 6px;vertical-align:middle;
+}
+.ss-custom-workflows>header p,
+.ss-custom-workflow-footnote,.ss-custom-workflow-empty{
+ margin:6px 0 0;color:var(--ss-theme-muted);font-size:11px;line-height:1.55;
+}
+.ss-custom-workflow-create{display:flex;align-items:end;flex-wrap:wrap;gap:8px}
+.ss-custom-workflow-create label{
+ display:grid;gap:5px;flex:1 1 190px;max-width:340px;font-size:11px;font-weight:750;
+}
+.ss-custom-workflow-create select,
+.ss-custom-workflow-editor :is(input,select){
+ box-sizing:border-box;display:block;width:100%;min-width:0;
+ min-height:37px;padding:7px 9px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:inherit;font-size:12px;
+}
+.ss-custom-workflow-create button,
+.ss-custom-workflow-card button{
+ box-sizing:border-box;min-height:36px;padding:7px 10px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font-size:11px;font-weight:750;cursor:pointer;white-space:nowrap;
+}
+.ss-custom-workflow-create button{
+ min-height:37px;border-color:var(--ss-theme-accent);background:var(--ss-theme-tint);
+}
+.ss-custom-workflows button:disabled{opacity:.45;cursor:not-allowed}
+.ss-custom-workflow-template-description{
+ color:var(--ss-theme-muted);font-size:10px;margin-top:-6px;
+}
+.ss-custom-workflow-list{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:10px;min-width:0;
+}
+.ss-custom-workflow-card{
+ display:grid;align-content:start;gap:9px;min-width:0;
+ padding:12px;border:1px solid var(--ss-theme-border);
+ border-radius:10px;background:var(--ss-theme-base);
+}
+.ss-custom-workflow-card-top{display:flex;align-items:start;justify-content:space-between;gap:10px;min-width:0}
+.ss-custom-workflow-card-top>div:first-child{min-width:0;display:grid;gap:5px}
+.ss-custom-workflow-card-top strong{font-size:12px;overflow-wrap:anywhere}
+.ss-custom-workflow-card-top small{
+ color:var(--ss-theme-muted);font-size:10px;line-height:1.45;overflow-wrap:anywhere;
+}
+.ss-custom-workflow-card-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.ss-custom-workflow-enable{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:750}
+.ss-custom-workflow-enable input{accent-color:var(--ss-theme-accent)}
+.ss-custom-workflow-card-meta{display:flex;flex-wrap:wrap;gap:6px}
+.ss-custom-workflow-card-meta span{
+ border:1px solid var(--ss-theme-border);border-radius:99px;
+ padding:4px 7px;font-size:10px;color:var(--ss-theme-muted);
+}
+.ss-custom-workflow-editor{
+ display:grid;gap:9px;padding-top:10px;
+ border-top:1px solid var(--ss-theme-border);
+}
+.ss-custom-workflow-fields{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+}
+.ss-custom-workflow-fields label{display:grid;gap:5px;min-width:0;font-size:10px;font-weight:750}
+.ss-custom-workflow-editor-actions{display:flex;flex-wrap:wrap;gap:6px}
+.ss-custom-workflow-editor-actions button:first-child{
+ background:var(--ss-theme-tint);border-color:var(--ss-theme-accent);
+}
+.ss-custom-workflow-editor [aria-invalid="true"]{border-color:var(--ss-theme-accent)}
+.ss-custom-workflow-editor [role="alert"]{font-size:10px;line-height:1.45}
+.ss-custom-workflow-remove-confirm{
+ display:flex;justify-content:space-between;align-items:center;
+ gap:9px;flex-wrap:wrap;padding:8px 10px;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ font-size:11px;line-height:1.45;
+}
+.ss-custom-workflow-remove-confirm button{font-weight:800}
+.ss-custom-workflow-message{
+ margin:0;padding:8px 10px;border-radius:8px;
+ border:1px solid var(--ss-theme-border);font-size:11px;line-height:1.45;
+}
+.ss-custom-workflow-footnote{padding-top:10px;border-top:1px solid var(--ss-theme-border)}
+.ss-custom-workflows :is(button,input,select):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px;
+}
+@media(max-width:1080px){
+ .ss-custom-workflow-list{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+ .ss-custom-workflows{padding:11px}
+ .ss-custom-workflow-card{padding:10px}
+ .ss-custom-workflow-fields{grid-template-columns:1fr}
+ .ss-custom-workflow-create{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch}
+ .ss-custom-workflow-create label{max-width:none}
+ .ss-custom-workflows :is(button,input,select){min-height:44px}
+ .ss-custom-workflow-card-actions{gap:6px}
+ .ss-custom-workflow-card-actions button{min-width:48px}
+}

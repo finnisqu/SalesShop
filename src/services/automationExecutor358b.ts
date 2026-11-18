@@ -18,14 +18,21 @@ export function executeAutomationCandidates(scope:string,candidates:readonly Aut
   if(scope.startsWith('org:')&&tasks.syncStatus!=='saved'){
    errors.push('Private Tasks are not fully synced yet. Retry after sync finishes.');break;
   }
-  if(!settings.rules[item.rule].enabled)continue;
+  // Recheck individual rule consent at execution time, not just during preview.
+  if(item.customRuleId){
+   const custom=settings.customRules.find(rule=>rule.id===item.customRuleId);
+   if(item.rule!=='deal-stage-task'||!custom?.enabled||
+    !item.sourceObjectId.startsWith('automation:custom-stage-task:'+custom.id+':')||
+    !item.sourceObjectId.endsWith(':'+custom.stage))continue;
+  }else if(!settings.rules[item.rule].enabled)continue;
   if(tasks.tasks.some(task=>task.sourceObjectId===item.sourceObjectId))continue;
   try{
    const taskId=tasks.createTask(item.title,item.changes);
    if(!taskId){errors.push('Could not create '+item.title);continue;}
    created++;
    try{useAutomationStore.getState().log({
-    id:item.sourceObjectId,rule:item.rule,sourceObjectId:item.sourceObjectId,
+    id:item.sourceObjectId,rule:item.rule,customRuleId:item.customRuleId,
+    sourceObjectId:item.sourceObjectId,
     taskId,title:item.title,at:new Date().toISOString(),
    });}catch{errors.push('Task created, but local audit history could not be saved for '+item.title);}
   }catch(e){errors.push(e instanceof Error?e.message:'Task creation failed.');}

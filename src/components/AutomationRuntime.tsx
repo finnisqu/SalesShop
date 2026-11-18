@@ -23,6 +23,7 @@ export function AutomationRuntime(){
  taskSync=usePersonalTaskStore(s=>s.syncStatus);
  const scope=taskScope(mode,org,user);
  const automationScope=useAutomationStore(s=>s.scope),rules=useAutomationStore(s=>s.rules),
+ customRules=useAutomationStore(s=>s.customRules),
  autoRun=useAutomationStore(s=>s.autoRunWhileOpen);
  const allowed=!perspective&&(mode==='local'||canEditTeamArea(role,department,'crm'));
  // Avoid a runaway catch-up after receiving consecutive cloud sync snapshots.
@@ -40,7 +41,7 @@ export function AutomationRuntime(){
   if(budget.current.scope!==scope)budget.current={scope,count:0};
   if(budget.current.count>=20)return;
   const candidates=automationCandidates({deals:projects,quotes:personalQuotes,
-   activities,tasks,rules,now:new Date(),mode,userId:user});
+   activities,tasks,rules,customRules,now:new Date(),mode,userId:user});
   if(candidates.length){
    const room=20-budget.current.count;
    // Reserve the quota before creating Tasks. Reentrant store updates should
@@ -49,6 +50,6 @@ export function AutomationRuntime(){
    executeAutomationCandidates(scope,candidates.slice(0,room));
   }
  },[allowed,scope,storedTaskScope,automationScope,crmReady,quotesReady,
-  autoRun,projects,personalQuotes,activities,tasks,rules,mode,user,taskSync]);
+  autoRun,projects,personalQuotes,activities,tasks,rules,customRules,mode,user,taskSync]);
  return null;
 }

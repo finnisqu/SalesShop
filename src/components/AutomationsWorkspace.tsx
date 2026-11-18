@@ -12,6 +12,7 @@ import {AUTOMATION_IDS,AUTOMATION_STAGE_CHOICES,DEFAULT_STAGE_TASK_LABEL,
  from '../services/automationRules358b';
 import {executeAutomationCandidates} from '../services/automationExecutor358b';
 import {requestTaskModal} from '../services/taskModalEvents';
+import {CustomAutomationRules384} from './CustomAutomationRules384';
 import './automations-workspace.css';
 
 const descriptions:Record<AutomationRuleId,{title:string;explanation:string;timing:string}>={
@@ -43,7 +44,8 @@ export function AutomationsWorkspace(){
  const previewRole=useRolePerspectiveStore(s=>s.activePerspective);
  const scope=taskScope(mode,org,user),automationScope=useAutomationStore(s=>s.scope);
  const storedTaskScope=usePersonalTaskStore(s=>s.scope),taskSync=usePersonalTaskStore(s=>s.syncStatus);
- const rules=useAutomationStore(s=>s.rules),history=useAutomationStore(s=>s.history),
+ const rules=useAutomationStore(s=>s.rules),customRules=useAutomationStore(s=>s.customRules),
+ history=useAutomationStore(s=>s.history),
  live=useAutomationStore(s=>s.autoRunWhileOpen);
  const configure=useAutomationStore(s=>s.configure),toggleLive=useAutomationStore(s=>s.toggleLive);
  const deals=useCrmStore(s=>s.projects),activities=useCrmStore(s=>s.activities);
@@ -53,8 +55,8 @@ export function AutomationsWorkspace(){
   mySalesQuoteRegistry(buildSalesQuoteRegistry(quotes,activities,deals),mode,user,deals),
   [quotes,activities,deals,mode,user]);
  const candidates=useMemo(()=>automationCandidates({
-  deals,quotes:linkedQuotes,activities,tasks,rules,now:new Date(),mode,userId:user,
- }),[deals,linkedQuotes,activities,tasks,rules,mode,user]);
+  deals,quotes:linkedQuotes,activities,tasks,rules,customRules,now:new Date(),mode,userId:user,
+ }),[deals,linkedQuotes,activities,tasks,rules,customRules,mode,user]);
  const ready=!!scope&&scope===automationScope&&scope===storedTaskScope&&!previewRole&&
   (mode==='local'||(canEditTeamArea(role,department,'crm')&&taskSync==='saved'));
  const run=()=>{
@@ -64,7 +66,7 @@ export function AutomationsWorkspace(){
    (result.errors.length?' '+result.errors.join(' '):''));
  };
  return <section className="ss-automation-workspace" aria-label="Workflow automations">
-  <header><div><small>WORKFLOWS · PROTOTYPE V0.2</small><h2>Automations</h2>
+  <header><div><small>WORKFLOWS · PROTOTYPE V0.3</small><h2>Automations</h2>
    <p>Turn repeated sales activities into private, trackable Tasks.</p></div>
    <span>Local rules · no background server</span>
   </header>
@@ -74,6 +76,7 @@ export function AutomationsWorkspace(){
    You can also opt into automatic checks while SalesShop is open. Offline or closed-browser
    execution is not supported yet, and these rules never send customer messages.
   </div>
+  <h3 className="ss-automation-section-heading">Built-in rules</h3>
   <div className="ss-automation-rules">
    {AUTOMATION_IDS.map(id=>{
     const config=rules[id],label=descriptions[id];
@@ -95,10 +98,12 @@ export function AutomationsWorkspace(){
      {id==='deal-stage-task'&&<StageTaskEditor383 key={scope??'signed-out'}
        rule={config} disabled={!ready}
        onConfigure={changes=>{configure(id,changes);setNotice('');}}/>}
-     <small>{candidates.filter(row=>row.rule===id).length} new match(es) available now</small>
+     <small>{candidates.filter(row=>row.rule===id&&!row.customRuleId).length} new match(es) available now</small>
     </article>;
    })}
   </div>
+  <CustomAutomationRules384 key={scope??'signed-out'} scope={scope}
+   ready={ready} candidates={candidates}/>
   <div className="ss-automation-execution">
    <label><input type="checkbox" checked={live} disabled={!ready}
      onChange={e=>toggleLive(e.target.checked)}/>
@@ -121,7 +126,9 @@ export function AutomationsWorkspace(){
    {history.length?<div className="ss-automation-history-list">
     {history.slice(0,30).map(item=><div key={item.id}>
      <div><strong>{item.title}</strong>
-      <span>{descriptions[item.rule].title} · {new Date(item.at).toLocaleString()}</span>
+      <span>{item.customRuleId?
+       (customRules.find(rule=>rule.id===item.customRuleId)?.name??'Removed custom workflow'):
+       descriptions[item.rule].title} · {new Date(item.at).toLocaleString()}</span>
      </div>
      <button type="button" onClick={()=>requestTaskModal({mode:'preview',id:item.taskId})}>
        Open Task

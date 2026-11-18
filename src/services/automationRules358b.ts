@@ -2,6 +2,8 @@ import {scopedStorageKey} from '../lib/developerPlayground';
 import {PROJECT_STAGES,type ProjectStage,type Activity,type Project} from '../types/crm';
 import type {SalesQuoteRecord} from './salesQuoteRegistry';
 import type {PersonalTask,TaskAssociation,TaskChanges} from '../store/personalTaskStore';
+import {sanitizeCustomWorkflows,isCustomWorkflowId,
+ type CustomStageWorkflow} from './automationCustomWorkflows384';
 
 export type AutomationRuleId='quote-delivered'|'deal-inactive'|'deal-won'|'deal-stage-task';
 export const AUTOMATION_IDS=['quote-delivered','deal-inactive','deal-won','deal-stage-task'] as const;
@@ -17,13 +19,14 @@ export interface AutomationRuleOptions{enabled:boolean;days:number;stage?:Projec
 export type AutomationRules=Record<AutomationRuleId,AutomationRuleOptions>;
 export interface AutomationHistoryItem{
  id:string;rule:AutomationRuleId;sourceObjectId:string;taskId:string;
- title:string;at:string;
+ title:string;at:string;customRuleId?:string;
 }
 export interface AutomationSettings {
- rules:AutomationRules;autoRunWhileOpen:boolean;history:AutomationHistoryItem[];
+ rules:AutomationRules;customRules:CustomStageWorkflow[];
+ autoRunWhileOpen:boolean;history:AutomationHistoryItem[];
 }
 export interface AutomationCandidate{
- rule:AutomationRuleId;sourceObjectId:string;title:string;
+ rule:AutomationRuleId;sourceObjectId:string;title:string;customRuleId?:string;
  context:string;changes:TaskChanges;
 }
 export const DEFAULT_AUTOMATION_SETTINGS:AutomationSettings={
@@ -33,7 +36,7 @@ export const DEFAULT_AUTOMATION_SETTINGS:AutomationSettings={
   'deal-won':{enabled:false,days:1},
   'deal-stage-task':{enabled:false,days:1,stage:'Bid Sent',taskLabel:DEFAULT_STAGE_TASK_LABEL},
  },
- autoRunWhileOpen:false,history:[],
+ customRules:[],autoRunWhileOpen:false,history:[],
 };
 export const automationKey=(scope:string)=>scopedStorageKey('salesshop-automation-rules-v1:'+scope);
 export function sanitizeAutomationSettings(source:unknown):AutomationSettings{
@@ -55,8 +58,13 @@ export function sanitizeAutomationSettings(source:unknown):AutomationSettings{
   return typeof value.id==='string'&&typeof value.taskId==='string'&&
    typeof value.sourceObjectId==='string'&&typeof value.title==='string'&&
    typeof value.at==='string'&&AUTOMATION_IDS.some(id=>id===value.rule);
- }).slice(0,150) as AutomationHistoryItem[]:[];
- return {rules,autoRunWhileOpen:raw.autoRunWhileOpen===true,history};
+ }).slice(0,150).map((row:AutomationHistoryItem)=>({
+  id:row.id,rule:row.rule,sourceObjectId:row.sourceObjectId,
+  taskId:row.taskId,title:row.title,at:row.at,
+  ...(isCustomWorkflowId(row.customRuleId)?{customRuleId:row.customRuleId}:{}),
+ })):[] as AutomationHistoryItem[];
+ return {rules,customRules:sanitizeCustomWorkflows(raw.customRules),
+  autoRunWhileOpen:raw.autoRunWhileOpen===true,history};
 }
 export function readAutomationSettings(scope:string):AutomationSettings{
  try{return sanitizeAutomationSettings(JSON.parse(localStorage.getItem(automationKey(scope))??'{}'));}
@@ -101,9 +109,10 @@ const dealAssociation=(deal:Project):TaskAssociation=>({
 export function automationCandidates(input:{
  deals:readonly Project[];quotes:readonly SalesQuoteRecord[];
  activities:readonly Activity[];tasks:readonly PersonalTask[];
- rules:AutomationRules;now:Date;userId?:string;mode:'local'|'cloud';
+ rules:AutomationRules;customRules?:readonly CustomStageWorkflow[];
+ now:Date;userId?:string;mode:'local'|'cloud';
 }):AutomationCandidate[]{
- const {deals,quotes,activities,tasks,rules,now,userId,mode}=input;
+ const {deals,quotes,activities,tasks,rules,now,userId,mode,customRules}=input;
  const today=localDay(now);
  const taskKeys=new Set(tasks.map(task=>task.sourceObjectId).filter(Boolean));
  const candidates:AutomationCandidate[]=[];
@@ -183,6 +192,34 @@ export function automationCandidates(input:{
      associations:[dealAssociation(deal)],
      notes:'Personal Task prompted by a recorded move to '+selectedStage+
       ' on '+localDay(stageDay)+'. No customer messages or other changes were made.'}});
+  }
+ }
+ // Every custom workflow has its own durable identity. Multiple templates
+ // may match one stage event, but each can generate at most one Task.
+ for(const workflow of sanitizeCustomWorkflows(customRules)){
+  if(!workflow.enabled)continue;
+  for(const deal of deals){
+   if(!ownDeal(deal)||deal.stage!==workflow.stage)continue;
+   const latest=activities.filter(event=>event.projectId===deal.id&&
+    event.type==='project-stage-changed')
+    .sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt))[0];
+   // Only the actual latest stage transition can trigger a workflow.
+   if(!latest||latest.metadata?.toStage!==workflow.stage)continue;
+   const age=ageDays(latest.occurredAt,now);
+   if(!Number.isFinite(age)||age<0||age>14)continue;
+   const when=parseDay(latest.occurredAt);
+   if(!when)continue;
+   const stageDay=localDay(when);
+   const dueDate=addCalendarDays(stageDay,workflow.days);
+   if(!dueDate)continue;
+   const key='automation:custom-stage-task:'+workflow.id+':'+deal.id+':'+latest.id+':'+workflow.stage;
+   include({rule:'deal-stage-task',customRuleId:workflow.id,sourceObjectId:key,
+    title:workflow.taskLabel+' · '+deal.name,
+    context:workflow.name+' · '+workflow.stage+' on '+stageDay,
+    changes:{type:'todo',priority:workflow.priority,dueDate,sourceObjectId:key,
+     associations:[dealAssociation(deal)],
+     notes:'Personal Task from '+workflow.name+' after confirmed stage change to '+
+      workflow.stage+' on '+stageDay+'. No customer messages or Deal updates were made.'}});
   }
  }
  if(rules['deal-won'].enabled)for(const deal of deals){
