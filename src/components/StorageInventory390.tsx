@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {useAuthStore} from '../store/authStore';
 import {useFileLinkStore} from '../store/fileLinkStore';
-import {fileLinksScope,fileTargetKey,FILE_LINK_CATEGORIES,
+import {fileLinksScope,fileTargetKey,fileLinkCategoryLabel,FILE_LINK_CATEGORIES,
  type FileLinkCategory,type FileTarget} from '../services/fileLinks357a';
 import {fileSizeLabel,inventoryFromLinks,providerLabel,sortFileInventory,summarizeFileInventory,
  fileFolderOption391,filterFileInventory391,
@@ -155,7 +155,7 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
         managedRows.find(m=>'managed:'+m.id===row.id):undefined;
        return <tr key={row.id}>
         <td>{stored?<span className="ss-managed391-name"><strong>▤ {row.name}</strong>
-          {row.folderPath&&<small>{row.folderPath}</small>}</span>:
+          <small>{fileLinkCategoryLabel(row.category)}{row.folderPath?' · '+row.folderPath:''}</small></span>:
          <a href={row.openUrl} target="_blank" rel="noopener noreferrer">
           {row.kind==='folder'?'▣ ':'▤ '}{row.name}</a>}</td>
         <td>{providerLabel(row.provider)}</td>
