@@ -264,6 +264,16 @@ create policy "crm_files_storage_insert_391"
    where f.object_path=name and f.status='pending'
     and f.uploaded_by=(select auth.uid())
     and private.can_edit_org_area(f.organization_id,'crm')
+    and (
+      (f.target_kind='company' and exists (
+        select 1 from public.companies c
+        where c.organization_id=f.organization_id and c.id=f.target_id
+      )) or
+      (f.target_kind='deal' and exists (
+        select 1 from public.projects p
+        where p.organization_id=f.organization_id and p.id=f.target_id
+      ))
+    )
   )
 );
 create policy "crm_files_storage_select_391"
@@ -272,6 +282,20 @@ create policy "crm_files_storage_select_391"
    select 1 from public.crm_file_objects f
    where f.object_path=name
     and private.is_org_member(f.organization_id)
+    -- The object's read policy must not be broader than the linked CRM
+    -- record's own RLS. In particular, a known object key must not be
+    -- sufficient to download a file from a hidden/deleted record.
+    and (
+      (f.target_kind='company' and exists (
+        select 1 from public.companies c
+        where c.organization_id=f.organization_id and c.id=f.target_id
+      )) or
+      (f.target_kind='deal' and exists (
+        select 1 from public.projects p
+        where p.organization_id=f.organization_id and p.id=f.target_id
+      )) or
+      private.can_edit_org_area(f.organization_id,'crm')
+    )
     and (
      f.status='ready' or
      (f.status='pending' and (
