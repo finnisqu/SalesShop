@@ -26,6 +26,10 @@
  color:var(--ss-theme-ink);background:var(--ss-theme-base);font:650 11px var(--ss-font-body)}
 .ss-storage390-controls>button{margin-left:auto;background:var(--ss-theme-accent);
  border-color:var(--ss-theme-accent);color:var(--ss-theme-contrast)}
+.ss-storage390-controls>.ss-storage390-refresh{
+ margin-left:0;background:var(--ss-theme-card);
+ border-color:var(--ss-theme-border);color:var(--ss-theme-ink);
+}
 .ss-storage390-table-viewport{width:100%;min-width:0;overflow:auto;
  border:1px solid var(--ss-theme-border);border-radius:11px;background:var(--ss-theme-card)}
 .ss-storage390-table{border-collapse:collapse;width:100%;min-width:680px;font-size:11px;text-align:left}
