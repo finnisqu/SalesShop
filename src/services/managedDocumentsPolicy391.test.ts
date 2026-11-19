@@ -6,6 +6,7 @@ const noAuto=new URL('../../supabase/migrations/20261119000000_crm_private_docum
 const matrix=new URL('../../scripts/security/staging-documents-391.mjs',import.meta.url);
 const sql=readFileSync(stage,'utf8');
 const script=readFileSync(matrix,'utf8');
+const library=readFileSync(new URL('../components/StorageInventory390.tsx',import.meta.url),'utf8');
 
 describe('#391 — staged private Storage release gate (static contract)',()=>{
  it('cannot be swept into routine production migration pushes',()=>{
@@ -57,6 +58,12 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain("o.name=old.object_path");
   expect(sql).toContain("Delete document bytes from private Storage before removing metadata");
   expect(sql).toContain("before insert or update or delete on public.crm_file_objects");
+ });
+ it('keeps orphaned ready attachments visible to authorized editors for cleanup',()=>{
+  expect(library).toContain("row.status==='ready').map(managedToInventory391)");
+  expect(library).toContain("Deleted or unavailable record");
+  expect(sql).toContain("private.can_edit_org_area(organization_id,'crm')");
+  expect(sql).toContain("f.status='trashed' or f.status='pending'");
  });
  it('serializes 500 MiB quota reservations including pending and trash',()=>{
   expect(sql).toContain("pg_catalog.pg_advisory_xact_lock");
