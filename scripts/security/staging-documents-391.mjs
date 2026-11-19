@@ -134,6 +134,24 @@ try{
   const result=await reserve(clients.owner,orgA,'quote','nonexistent-quote','quote-denied.txt');
   assert(result.error||!result.data);
  });
+ await verify('Server generates file IDs and uploader IDs; browser cannot spoof them',async()=>{
+  const attempts=[
+   {id:randomUUID()},
+   {uploaded_by:randomUUID()},
+   {size_bytes:0},
+   {status:'ready'},
+  ];
+  for(const forced of attempts){
+   const {data,error}=await clients.owner.from('crm_file_objects').insert({
+    organization_id:orgA,target_kind:'company',target_id:companyA,
+    title:'spoof-'+randomUUID()+'.txt',category:'other',
+    folder_path:'Security testing',mime_type:'text/plain',
+    ...forced,
+   }).select('id').maybeSingle();
+   if(data?.id)newIds.push(data.id);
+   assert(error||!data,'Client supplied a protected server-owned document column.');
+  }
+ });
  await verify('Server rejects unsafe document names and mismatched MIME metadata',async()=>{
   const inputs=[
    {title:'dangerous.html',mime_type:'text/plain',folder_path:'Security testing'},
