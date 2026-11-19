@@ -117,7 +117,7 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
       {folders.map(path=><option key={path} value={path}>{path}</option>)}
      </select>
     </label>
-    {managedStatus==='ready'&&<button type="button" aria-label="Refresh stored files"
+    {managedStatus==='ready'&&<button className="ss-storage390-refresh" type="button" aria-label="Refresh stored files"
      title="Refresh stored files" disabled={busyManaged}
      onClick={()=>{void refreshManaged();}}>↻ Refresh</button>}
     <button type="button" onClick={()=>setPage('links')}>+ Link document</button>
