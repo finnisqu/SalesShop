@@ -1,6 +1,6 @@
 /* #390 — storage inventory; reuse the existing WARM/LIGHT/DARK theme tokens. */
 .ss-storage390{display:grid;gap:13px;min-width:0;color:var(--ss-theme-ink)}
-.ss-storage390-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ss-storage390-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .ss-storage390-summary>div{display:grid;gap:5px;align-content:start;min-width:0;
  padding:13px 14px;border:1px solid var(--ss-theme-border);border-radius:11px;
  background:var(--ss-theme-card)}
@@ -54,9 +54,9 @@
  font-size:11px;line-height:1.5}
 .ss-storage390 :is(button,select,a,summary):focus-visible{
  outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+@media(max-width:1020px){.ss-storage390-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){
  .ss-storage390-summary{grid-template-columns:1fr 1fr}
- .ss-storage390-summary>div:last-child{grid-column:1/-1}
  .ss-storage390-controls{align-items:stretch}
  .ss-storage390-controls>label{flex:1;min-width:140px;max-width:none}
  .ss-storage390-controls select{min-height:44px;font-size:16px}
