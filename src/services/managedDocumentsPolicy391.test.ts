@@ -78,11 +78,23 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain("Delete document bytes from private Storage before removing metadata");
   expect(sql).toContain("before insert or update or delete on public.crm_file_objects");
  });
- it('keeps orphaned ready attachments visible to authorized editors for cleanup',()=>{
+ it('enforces linked record RLS for BOTH metadata and Storage reads',()=>{
+  const metadataRead=sql.split('create policy "crm_files_read_member_391"')[1]
+   ?.split('create policy "crm_files_insert_editor_391"')[0]??'';
+  const storageRead=sql.split('create policy "crm_files_storage_select_391"')[1]
+   ?.split('create policy "crm_files_storage_delete_391"')[0]??'';
+  const storageInsert=sql.split('create policy "crm_files_storage_insert_391"')[1]
+   ?.split('create policy "crm_files_storage_select_391"')[0]??'';
+  for(const policy of [metadataRead,storageRead,storageInsert]){
+   expect(policy).toContain('public.companies');
+   expect(policy).toContain('public.projects');
+   expect(policy).toContain('target_kind');
+  }
+  expect(metadataRead).not.toContain("or private.can_edit_org_area(organization_id,'crm')");
+  expect(storageRead).not.toContain("or private.can_edit_org_area(f.organization_id,'crm')");
+  // No additional exposure from client-only target lists; the server's RLS
+  // decides which rows enter the inventory.
   expect(library).toContain("row.status==='ready').map(managedToInventory391)");
-  expect(library).toContain("Deleted or unavailable record");
-  expect(sql).toContain("private.can_edit_org_area(organization_id,'crm')");
-  expect(sql).toContain("f.status='trashed' or f.status='pending'");
  });
  it('serializes 500 MiB quota reservations including pending and trash',()=>{
   expect(sql).toContain("pg_catalog.pg_advisory_xact_lock");
