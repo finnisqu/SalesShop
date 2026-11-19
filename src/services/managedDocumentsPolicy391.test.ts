@@ -64,6 +64,14 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
    expect(sql).toContain("when '"+ext+"' then ");
   expect(script).toContain("Server rejects unsafe document names and mismatched MIME metadata");
  });
+ it('lets clients insert only safe metadata and update only lifecycle status',()=>{
+  expect(sql).toContain("revoke all on public.crm_file_objects from PUBLIC,anon,authenticated");
+  expect(sql).toContain("grant insert(organization_id,target_kind,target_id,title,category,folder_path,mime_type)");
+  expect(sql).toContain("grant update(status) on public.crm_file_objects to authenticated");
+  expect(sql).not.toContain("grant select,insert,update,delete on public.crm_file_objects to authenticated");
+  expect(sql).not.toContain("grant update(title");
+  expect(sql).not.toContain("grant insert(id");
+ });
  it('does not allow client-controlled ready rows or unverified byte counts',()=>{
   expect(sql).toContain("status<>'pending' or new.size_bytes is not null");
   expect(sql).toContain("o.metadata->>'size'");
