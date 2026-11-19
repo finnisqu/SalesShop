@@ -59,17 +59,22 @@ function checkScope(org:string,expectedUser?:string):void{
   (expectedUser!==undefined&&state.user.id!==expectedUser))
   throw new Error('Your SalesShop workspace or user changed. Sign in and retry.');
 }
+function scopeGuard391(org:string):()=>void{
+ const user=useAuthStore.getState().user?.id;
+ checkScope(org,user);
+ return ()=>checkScope(org,user);
+}
 function reason(error:{message?:string;code?:string}|null,action:string):string{
  const message=error?.message??'Unknown error';
  return action+': '+message;
 }
 /** Organization records are filtered by table RLS (no service-role fallback). */
 export async function listManagedDocuments391(org:string):Promise<ManagedListing391>{
- checkScope(org);
+ const recheck=scopeGuard391(org);
  const {data,error}=await supabase!.from('crm_file_objects')
   .select('id,organization_id,uploaded_by,target_kind,target_id,title,category,folder_path,mime_type,size_bytes,status,object_path,created_at,updated_at')
   .eq('organization_id',org).order('updated_at',{ascending:false}).limit(1000);
- checkScope(org);
+ recheck();
  if(error){
   if(error.code==='42P01'||error.code==='PGRST205'||error.code==='PGRST116'||
    /could not find the table.*crm_file_objects|relation.*crm_file_objects.*does not exist/i.test(error.message))
@@ -92,7 +97,7 @@ export function managedToInventory391(row:ManagedRow391):FileInventoryItem{
 }
 export async function uploadManagedDocument391(org:string,target:FileTarget,file:File,
  category:FileLinkCategory,folderInput=''):Promise<void>{
- checkScope(org);
+ const recheck=scopeGuard391(org);
  if(!validManagedTarget391(target))throw new Error('Only Company and Deal uploads are enabled.');
  const {name,mime}=managedFileValidation391(file);
  const folder=managedFolder391(folderInput);
@@ -100,12 +105,12 @@ export async function uploadManagedDocument391(org:string,target:FileTarget,file
   .insert({organization_id:org,target_kind:target.kind,target_id:target.id,
    title:name,category,folder_path:folder,mime_type:mime})
   .select('id,object_path').single();
- checkScope(org);
+ recheck();
  if(insertError||!pending)throw new Error(reason(insertError,'Could not reserve document upload'));
  const id=String(pending.id),path=String(pending.object_path);
  const {error:uploadError}=await supabase!.storage.from(MANAGED_BUCKET_391)
   .upload(path,file,{upsert:false,contentType:mime,cacheControl:'0'});
- checkScope(org);
+ recheck();
  if(uploadError){
   // A failed upload normally leaves no object. Metadata removal is best-effort.
   await supabase!.from('crm_file_objects').delete().eq('id',id).eq('organization_id',org)
@@ -116,55 +121,55 @@ export async function uploadManagedDocument391(org:string,target:FileTarget,file
  await finishManagedUpload391(org,id);
 }
 export async function finishManagedUpload391(org:string,id:string):Promise<void>{
- checkScope(org);
+ const recheck=scopeGuard391(org);
  const {data,error}=await supabase!.from('crm_file_objects')
   .update({status:'ready'}).eq('id',id).eq('organization_id',org)
   .eq('status','pending').select('id,size_bytes,status').single();
- checkScope(org);
+ recheck();
  if(error||!data||data.size_bytes===null)
   throw new Error('File upload may have reached storage but verification did not finish. Refresh and use Complete upload to retry. '+(error?.message??''));
 }
 export async function trashManagedDocument391(org:string,row:ManagedRow391):Promise<void>{
- checkScope(org);
+ const recheck=scopeGuard391(org);
  if(row.organization_id!==org||row.status!=='ready')throw new Error('This document is no longer ready.');
  const {error}=await supabase!.from('crm_file_objects')
   .update({status:'trashed'}).eq('id',row.id).eq('organization_id',org)
   .eq('status','ready');
- checkScope(org);
+ recheck();
  if(error)throw new Error(reason(error,'Could not move document to trash'));
 }
 export async function restoreManagedDocument391(org:string,row:ManagedRow391):Promise<void>{
- checkScope(org);
+ const recheck=scopeGuard391(org);
  if(row.organization_id!==org||row.status!=='trashed')throw new Error('This document is not in the trash.');
  const {error}=await supabase!.from('crm_file_objects')
   .update({status:'ready'}).eq('id',row.id).eq('organization_id',org)
   .eq('status','trashed');
- checkScope(org);
+ recheck();
  if(error)throw new Error(reason(error,'Could not restore document'));
 }
 export async function deleteManagedDocumentPermanently391(org:string,row:ManagedRow391):Promise<void>{
- checkScope(org);
+ const recheck=scopeGuard391(org);
  if(row.organization_id!==org||!['trashed','pending'].includes(row.status))
   throw new Error('Move the document to trash first.');
  // A pending row can still have bytes if finalization was interrupted. Remove
  // the object first so that deleting metadata cannot leave private orphan bytes.
  const {error:storageError}=await supabase!.storage.from(MANAGED_BUCKET_391)
   .remove([row.object_path]);
- checkScope(org);
+ recheck();
  if(storageError&&!(row.status==='pending'&&
     /not found|does not exist|404/i.test(storageError.message)))
   throw new Error(reason(storageError,'Could not delete storage object'));
  const {error}=await supabase!.from('crm_file_objects')
   .delete().eq('id',row.id).eq('organization_id',org);
- checkScope(org);
+ recheck();
  if(error)throw new Error(reason(error,'Storage object deleted but index cleanup failed'));
 }
 export async function downloadManagedDocument391(org:string,row:ManagedRow391):Promise<void>{
- checkScope(org);
+ const recheck=scopeGuard391(org);
  if(row.organization_id!==org||row.status!=='ready')throw new Error('Document is unavailable.');
  const {data,error}=await supabase!.storage.from(MANAGED_BUCKET_391)
   .download(row.object_path);
- checkScope(org);
+ recheck();
  if(error||!data)throw new Error(reason(error,'Could not download private document'));
  // Download as a blob; do not store a signed bearer URL in history or localStorage.
  const url=URL.createObjectURL(data),a=document.createElement('a');
