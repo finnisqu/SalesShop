@@ -4,7 +4,7 @@ vi.mock('../store/authStore',()=>({useAuthStore:{getState:()=>({
  mode:'local',organizationId:null,user:null,
 })}}));
 import {MANAGED_MAX_BYTES_391,MANAGED_ACCEPT_391,managedFileValidation391,
- managedFolder391,validManagedTarget391,managedToInventory391,
+ managedFolder391,validateManagedOrganization391,validManagedTarget391,managedToInventory391,
  type ManagedRow391} from './managedDocuments391';
 
 describe('#391 — secure managed documents',()=>{
@@ -31,6 +31,17 @@ describe('#391 — secure managed documents',()=>{
   expect(validManagedTarget391({kind:'company',id:'company-123'})).toBe(true);
   expect(validManagedTarget391({kind:'quote',id:'quote-123'})).toBe(false);
   expect(validManagedTarget391({kind:'externalQuote',id:'external'})).toBe(false);
+ });
+ it('validates folder and category edits before any provider request',()=>{
+  expect(validateManagedOrganization391('drawing',' Contracts    /  2026 ')).toEqual({
+   category:'drawing',folder_path:'Contracts / 2026',
+  });
+  expect(validateManagedOrganization391('other','')).toEqual({
+   category:'other',folder_path:'',
+  });
+  expect(()=>validateManagedOrganization391('invalid' as 'other','')).toThrow();
+  expect(()=>validateManagedOrganization391('contract','../other')).toThrow();
+  expect(()=>validateManagedOrganization391('spec','a\\\\b')).toThrow();
  });
  it('only maps ready objects with verified bytes into the shared library',()=>{
   const ready:ManagedRow391={
