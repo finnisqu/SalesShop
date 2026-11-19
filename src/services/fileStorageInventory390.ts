@@ -11,7 +11,8 @@ export type FileInventorySort='newest'|'oldest'|'name'|'size-desc'|'size-asc'|'p
 export interface FileStorageObject{
  id:string;provider:FileStorageProvider;name:string;kind:'file'|'folder';
  category:FileLinkCategory;targetKind:FileTargetKind;targetId:string;
- sizeBytes:number|null;contentType?:string;createdAt:string;updatedAt:string;
+ sizeBytes:number|null;contentType?:string;folderPath?:string;
+ createdAt:string;updatedAt:string;
  /** Secure object references, not signed download links. */
  objectKey?:string;bucket?:string;
  /** Optional opaque provider reference for external connectors, never a credential. */
