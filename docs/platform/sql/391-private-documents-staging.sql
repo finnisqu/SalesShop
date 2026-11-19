@@ -20,7 +20,7 @@ on conflict (id) do nothing;
 
 -- Fail closed if someone pre-created the same bucket with broader access
 -- or different upload constraints. Do not silently reuse a public bucket.
-do $
+do $$
 begin
  if exists (
   select 1 from storage.buckets b
@@ -40,7 +40,7 @@ begin
   raise exception 'SalesShop document bucket exists with unsafe or unexpected settings. Refusing migration.';
  end if;
 end;
-$;
+$$;
 
 create table if not exists public.crm_file_objects (
  id uuid primary key default gen_random_uuid(),
