@@ -23,7 +23,7 @@
 
 ## Pre-production checklist (release gate)
 
-- [ ] First verify PR #132 / #390 has passed its own TypeScript, Vitest, Cloudflare and WARM/LIGHT/DARK UI checks. This branch is based on that feature branch.
+- [ ] PR #132 / #390 was merged to main at commit 6b5b106 on November 19, 2026. Cloudflare deployment and authenticated browser checks still need confirmation. PR #133 is now an unmerged draft targeting main.
 - [ ] Verify migration SQL at `docs/platform/sql/391-private-documents-staging.sql`. **The SQL remains outside automatic migrations; use the CLI to generate the release migration only after staged authorization tests and explicit production approval.
 - [ ] Review live policies and bucket settings, verify the SQL can run on a disposable **local** or approved isolated Supabase instance, and run advisors again after schema creation. No production migration was executed here.
 - [ ] In a synthetic two-organization test, verify: owner/admin/CRM-editor can insert; estimator/purchasing/viewer cannot insert; any org B user cannot list/download/trash org A files; user cannot reassign file ownership/record/organization or fake `size_bytes`. Test revoked membership, role preview and user switching mid-upload.
@@ -54,3 +54,11 @@ The SQL candidate has been **moved out of `supabase/migrations` and into `docs/p
 Run `npm run test:files-docs` for unit/regression checks. For true authorization validation, use **only** a synthetic nonproduction Supabase project seeded with two organizations, two Company records and one Deal, and run `npm run test:files-docs:staging`. The test script rejects the production Supabase hostname and requires `STAGING_RELEASE_ACK=disposable-documents-fixtures`. Required environment variables are `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`, `STAGING_FILES_ORG_A`, `STAGING_FILES_ORG_B`, `STAGING_FILES_COMPANY_A`, `STAGING_FILES_DEAL_A`, `STAGING_FILES_COMPANY_B`, and `STAGING_FILES_{OWNER,EDITOR,VIEWER,OUTSIDER}_{EMAIL,PASSWORD}`. Never paste passwords or tokens in an issue or chat.
 
 **Still pending:** Execute that staging matrix against a private bucket with the candidate SQL applied, run Supabase security advisors, and verify an authenticated UI run. Staging was not provisioned in this session because the project's current decision requires explicit approval before creating billable Supabase resources. No production migration was applied.
+
+## November 19 follow-up — generated-column and orphan fixes
+
+- **Confirmed PostgreSQL 17 issue:** a stored generated column on `NEW` cannot be accessed from a BEFORE trigger. The staged finalize trigger now constructs the Storage path from immutable `organization_id` and `id` rather than accessing `NEW.object_path`. The regression test specifically rejects this mistake. See https://www.postgresql.org/docs/17/trigger-definition.html.
+- **Orphan recovery:** an authenticated CRM editor can now see a ready document even after its Company/Deal target has been deleted, and can trash/purge it from the central Files & Docs library. The target column says "Deleted or unavailable record"; viewers do not gain new access.
+- **Strengthened staging matrix:** a working positive control from org B ensures the cross-tenant test actually uses two authorized organizations. Added anonymous-download denials, duplicate path overwrite denial, immutable target/organization/uploader tests, and SQL deletion ordering checks.
+- **Read-only live schema preflight:** verified both existing private CRM permission functions, the three bucket constraint columns, three Storage object metadata columns and four team membership columns. No live schema or Storage object was modified.
+- **Release remains gated:** neither the staged SQL nor actual uploads have been deployed; true staging Auth/RLS and TypeScript/Cloudflare/browser checks remain outstanding.
