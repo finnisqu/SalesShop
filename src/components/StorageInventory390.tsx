@@ -35,6 +35,7 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
  const [page,setPage]=useState<'library'|'links'>('library');
  const [sort,setSort]=useState<FileInventorySort>('newest');
  const [provider,setProvider]=useState<FileStorageProvider|'all'>('all');
+ const [folder,setFolder]=useState('all');
  useEffect(()=>hydrate(scope),[hydrate,scope]);
  const index=useMemo(()=>new Map(targets.map(t=>[fileTargetKey(t),t])),[targets]);
  const rows=useMemo(()=>{
@@ -46,13 +47,15 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
   return [...stored,...linked];
  },[records,scope,storedScope,index,managedRows,managedStatus]);
  const usage=useMemo(()=>summarizeFileInventory(rows),[rows]);
+ const folders=useMemo(()=>[...new Set(rows.map(r=>r.folderPath).filter((v):v is string=>!!v))].sort(),[rows]);
  const visible=useMemo(()=>sortFileInventory(rows.filter(row=>
   (provider==='all'||row.provider===provider)&&
+  (folder==='all'||(folder==='root'?!row.folderPath:row.folderPath===folder))&&
   (!search.trim()||[
-    row.name,providerLabel(row.provider),row.category,
+    row.name,row.folderPath??'',providerLabel(row.provider),row.category,
     index.get(fileTargetKey({kind:row.targetKind,id:row.targetId}))?.title??'',
   ].join(' ').toLowerCase().includes(search.toLowerCase().trim()))),sort),
-  [rows,provider,search,index,sort]);
+  [rows,provider,folder,search,index,sort]);
  const sized=usage.knownFiles>0;
  const pending=managedRows.filter(r=>r.status==='pending');
  const trashed=managedRows.filter(r=>r.status==='trashed');
@@ -93,6 +96,13 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
        {providerLabel(p.provider)} ({p.items})</option>)}
      </select>
     </label>
+    <label>Folder
+     <select value={folder} onChange={e=>setFolder(e.target.value)}>
+      <option value="all">All folders</option>
+      <option value="root">Unfiled</option>
+      {folders.map(path=><option key={path} value={path}>{path}</option>)}
+     </select>
+    </label>
     <button type="button" onClick={()=>setPage('links')}>+ Link document</button>
    </div>
    <div className="ss-storage390-table-viewport">
@@ -105,7 +115,8 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
        const stored=row.source==='managed'?
         managedRows.find(m=>'managed:'+m.id===row.id):undefined;
        return <tr key={row.id}>
-        <td>{stored?<strong>▤ {row.name}</strong>:
+        <td>{stored?<span className="ss-managed391-name"><strong>▤ {row.name}</strong>
+          {row.folderPath&&<small>{row.folderPath}</small>}</span>:
          <a href={row.openUrl} target="_blank" rel="noopener noreferrer">
           {row.kind==='folder'?'▣ ':'▤ '}{row.name}</a>}</td>
         <td>{providerLabel(row.provider)}</td>
