@@ -53,6 +53,15 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain("new.organization_id is distinct from old.organization_id");
   expect(sql).toContain("new.id is distinct from old.id");
  });
+ it('validates declared file types and harmless metadata at database boundary',()=>{
+  expect(sql).toContain("Unsafe document title");
+  expect(sql).toContain("Unsafe document folder");
+  expect(sql).toContain("Document extension and declared MIME type do not match");
+  expect(sql).toContain("expected_mime is distinct from new.mime_type");
+  for(const ext of ['pdf','png','jpeg','webp','txt','csv','docx','xlsx','pptx'])
+   expect(sql).toContain("when '"+ext+"' then ");
+  expect(script).toContain("Server rejects unsafe document names and mismatched MIME metadata");
+ });
  it('does not allow client-controlled ready rows or unverified byte counts',()=>{
   expect(sql).toContain("status<>'pending' or new.size_bytes is not null");
   expect(sql).toContain("o.metadata->>'size'");
