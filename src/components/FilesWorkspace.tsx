@@ -3,6 +3,7 @@ import type {Company,Project} from '../types/crm';
 import type {SalesQuoteRecord} from '../services/salesQuoteRegistry';
 import type {FileTarget} from '../services/fileLinks357a';
 import {StorageInventory390} from './StorageInventory390';
+import {useManagedFileStore391} from '../store/managedFileStore391';
 import {QuoteShareReferences371} from './QuoteShareReferences371';
 import {useNavigationStore} from '../store/navigationStore';
 
@@ -17,6 +18,7 @@ export function FilesWorkspace({companies,deals,quotes,query}:{
    id:row.sourceId,title:row.name+(row.source==='external'?' · external':' · SalesShop'),
    companyId:row.companyId,projectId:row.projectId})),
  ],[companies,deals,quotes]);
+ const managedReady=useManagedFileStore391(s=>s.readiness==='ready');
  const openCompany=useNavigationStore(s=>s.openCompany);
  const openDeal=useNavigationStore(s=>s.openProject);
  const openQuote=useNavigationStore(s=>s.openQuote);
@@ -32,7 +34,7 @@ export function FilesWorkspace({companies,deals,quotes,query}:{
  return <section className="ss-files-workspace" aria-label="Files and documents">
   <header><div><small>FILES · STORAGE & DOCUMENTS</small><h2>Files & Docs</h2>
    <p>Find drawings, contracts and linked documents. Review storage sources, sizes and related records.</p></div>
-   <span>Storage inventory · links only</span></header>
+   <span>{managedReady?'Storage inventory · private files + links':'Storage inventory · links only'}</span></header>
   <StorageInventory390 targets={targets} search={query} onOpenTarget={openTarget}/>
   <details className="ss-files-quote-lookup">
    <summary>Customer Quote links · check existing share status</summary>
