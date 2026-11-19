@@ -81,6 +81,18 @@ declare
  stored_mime text;
  reserved_bytes bigint;
 begin
+ if TG_OP='DELETE' then
+  -- Never leave billable, unreachable bytes behind by deleting an index row
+  -- before its Storage object. This also protects against direct API writes.
+  if exists(
+   select 1 from storage.objects o
+   where o.bucket_id='sales-documents'
+     and o.name=old.object_path
+  ) then
+   raise exception 'Delete document bytes from private Storage before removing metadata';
+  end if;
+  return old;
+ end if;
  if TG_OP='INSERT' then
   if new.status<>'pending' or new.size_bytes is not null then
    raise exception 'New document must be pending and have no size yet';
@@ -147,7 +159,7 @@ $$;
 revoke all on function private.crm_file_guard_391() from public;
 drop trigger if exists crm_file_guard_391 on public.crm_file_objects;
 create trigger crm_file_guard_391
- before insert or update on public.crm_file_objects
+ before insert or update or delete on public.crm_file_objects
  for each row execute function private.crm_file_guard_391();
 
 alter table public.crm_file_objects enable row level security;
