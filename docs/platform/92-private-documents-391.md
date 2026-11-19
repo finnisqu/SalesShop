@@ -62,3 +62,16 @@ Run `npm run test:files-docs` for unit/regression checks. For true authorization
 - **Strengthened staging matrix:** a working positive control from org B ensures the cross-tenant test actually uses two authorized organizations. Added anonymous-download denials, duplicate path overwrite denial, immutable target/organization/uploader tests, and SQL deletion ordering checks.
 - **Read-only live schema preflight:** verified both existing private CRM permission functions, the three bucket constraint columns, three Storage object metadata columns and four team membership columns. No live schema or Storage object was modified.
 - **Release remains gated:** neither the staged SQL nor actual uploads have been deployed; true staging Auth/RLS and TypeScript/Cloudflare/browser checks remain outstanding.
+
+## November 19 continued review — code-only fixes without environment access
+
+- Corrected the SQL DO-block dollar delimiters and recorded an assertion so a single-dollar delimiter cannot recur.
+- Database guard now derives the Storage path from immutable UUID columns rather than accessing a stored generated column inside a BEFORE trigger.
+- Staged database guard validates safe document titles/folder labels and matches filename extension to a declared, allowlisted MIME type. This is **not** antivirus scanning or content sniffing; uploaded bytes may still be malicious even when declared MIME matches.
+- Corrected PostgreSQL schema-qualified regex `substring(text, pattern)` syntax. `pg_catalog.substring(text from pattern)` does not parse, despite unqualified `substring(text from pattern)` being supported.
+- Expanded isolated staging negatives to reject HTML/executables, unsafe folders, mismatched MIME, anonymous reads, wrong target and attempts to overwrite/relocate objects.
+- Added explicit refresh actions to the Files & Docs library and Company/Deal attachment panel.
+- Static readback verified 11 specific source contracts and parsed the staging harness as JavaScript. **No true TypeScript, Vitest, Cloudflare, or signed-in staging execution occurred.**
+- Keep PR #133 a **draft**. It does not apply the staged SQL or enable production uploads. The staging SQL remains in `docs/platform/sql`, intentionally outside automatic migrations.
+
+Before any production rollout, verify browser upload, DB trigger behavior, RLS across two real synthetic tenants, an automated cleaning path for old pending reservations, and an actual file-content scanning policy. BYO storage adapters remain future work.
