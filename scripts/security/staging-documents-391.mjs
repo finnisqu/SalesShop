@@ -131,6 +131,28 @@ try{
    .delete().eq('id',main.id).select('id').maybeSingle();
   assert(error||!data,'A pending upload orphaned its stored bytes.');
  });
+ await verify('Second upload cannot overwrite the same object path',async()=>{
+  const {error}=await clients.owner.storage.from(bucket).upload(
+   main.object_path,blob(),{contentType:'text/plain',upsert:false});
+  assert(error,'A duplicate object path unexpectedly overwrote stored bytes.');
+ });
+ await verify('Anonymous Storage and metadata requests do not reveal this file',async()=>{
+  const anonymous=createClient(url,key,{
+   auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
+  });
+  const {data,error}=await anonymous.from('crm_file_objects')
+   .select('id').eq('id',main.id);
+  assert(error||!data?.some(row=>row.id===main.id),'Anonymous metadata read succeeded.');
+  const result=await anonymous.storage.from(bucket).download(main.object_path);
+  assert(result.error,'Anonymous Storage download unexpectedly succeeded.');
+ });
+ await verify('Authenticated editor cannot reassign document target or organization',async()=>{
+  for(const patch of [{target_id:dealA},{organization_id:orgB},{uploaded_by:randomUUID()}]){
+   const {data,error}=await clients.owner.from('crm_file_objects')
+    .update(patch).eq('id',main.id).select('id').maybeSingle();
+   assert(error||!data,'A protected document identity field was modified.');
+  }
+ });
  await verify('Client cannot spoof provider-derived size',async()=>{
   const {data,error}=await clients.owner.from('crm_file_objects')
    .update({size_bytes:1}).eq('id',main.id).select('id').maybeSingle();
