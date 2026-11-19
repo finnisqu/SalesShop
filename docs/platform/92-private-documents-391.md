@@ -9,7 +9,7 @@
 - **Company/Deal → Files & Docs** includes the same stored documents and upload control alongside existing local external links. No stored Quote or external-Quote files in #391.
 - **Download** is by authenticated Storage API as a browser Blob, not a persisted/public signed URL.
 - **Trash / Restore / Permanently delete** are guarded mutation actions; trash hides the file from the active library but still counts towards bytes, and permanent deletion removes object bytes before deleting metadata. A partially completed upload stays **pending** so it can be retried or intentionally deleted.
-- The library displays **managed storage allowance** (500 MiB per org) distinct from indexed usable bytes and separately labeled from provider billing. New pending uploads reserve 15 MiB until finished; trash retains its actual bytes. Quotas are fixed safety ceilings for this first slice, not customer-configurable yet.
+- The library displays **visible managed bytes and pending reservations**, distinct from the database-enforced 500 MiB per-organization allowance; RLS-hidden documents are not included in client-visible totals, which are not provider billing. New pending uploads reserve 15 MiB until finished; trash retains its actual bytes. Quotas are fixed safety ceilings for this first slice, not customer-configurable yet.
 - The existing #390 BYO provider model remains. This batch does not add BYO Supabase, S3/R2 or OAuth connectors; those remain separate integrations.
 
 ## Trust and storage model
@@ -84,8 +84,16 @@ A read-only inspection of the *live* schema found that Companies and Deals curre
 
 ## November 19 — Least-privilege file writes and orphan inventory
 
-- The staged `crm_file_objects` table now grants `INSERT` only for record-link metadata, leaving UUID, uploader, size, initial status and audit fields **server-generated**. Authenticated clients can `UPDATE` only the lifecycle `status` column, with transitions still guarded by the database trigger and RLS.
+- The staged `crm_file_objects` table now grants `INSERT` only for record-link metadata, leaving UUID, uploader, size, initial status and audit fields **server-generated**. Authenticated clients can `UPDATE` only lifecycle `status` or virtual `category`/`folder_path`; the database trigger permits folder/category changes only on ready files with unchanged status and immutable object identity. All changes still require CRM editor permissions.
 - Metadata and private object reads both require the same underlying CRM record visibility, not merely organization membership or editor role.
 - The Files & Docs UI reports **visible managed bytes/reservations**, not a misleading exact organization-wide remaining allowance from RLS-filtered rows. The 500 MiB upload cap remains enforced in the database trigger across all organization files, including pending and trashed entries.
 - `docs/platform/sql/391-orphan-audit-staging.sql` contains a **read-only, database-operator-only** report of missing linked CRM targets, pending-upload reservations, deleted-object discrepancies and soft-deleted bytes. It exposes no customer-facing RPC, requires visibility across all records to classify actual missing targets, and cannot delete or reclaim bytes.
 - Revocation or removal of the underlying record may make its files invisible through normal RLS. A separately authorized maintenance process and retention policy are **release blockers** before full multi-tenant production enablement; hiding orphan files is deliberate, not a completed cleanup solution.
+
+## November 19 — Virtual folder organizer and compact filters
+
+- Added an inline **Organize** control to ready documents in Files & Docs and their Company/Deal panels. CRM editors may change a document's category and virtual folder; the original filename, immutable object key, linked record, uploader and verified byte size cannot be edited. No Storage byte move is needed.
+- The staging SQL now grants authenticated `UPDATE(status,category,folder_path)` rather than broad `UPDATE`. The trigger permits category/folder-only edits when **both old and new statuses are `ready`**; a single update cannot combine reorganization with trash/restore or finalize an unfinished upload. Unsafe folder paths remain blocked.
+- Consolidated **Provider / Folder / Category** into one accessible, non-overflowing **Filters** panel. Sort remains visible in the worktable toolbar. Filter options use collision-safe prefixed folder keys, so virtual folders literally named `all` or `root` cannot be confused with "All folders" or "Unfiled".
+- Added pure filter unit tests (provider, folder, category, record-title search, size sorting), organizer normalization tests, staging positive/negative authorization tests, and the new tests to `npm run test:files-docs` / `npm run build`.
+- **Verification:** 16 targeted source contracts were checked and the staging script passed a JS syntax parse. The container cannot resolve GitHub DNS to clone/install the project, so TypeScript/Vitest/Cloudflare builds and staging RLS execution remain **unverified**. The SQL remains staged outside production migrations.
