@@ -16,10 +16,12 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain('Do not run on production');
  });
  it('uses complete PostgreSQL dollar-quoted blocks, not malformed single-dollar delimiters',()=>{
-  expect(sql).toMatch(/do \\$\\$\\s*begin[\\s\\S]*?end;\\s*\\$\\$;/i);
-  expect(sql).toMatch(/as \\$\\$\\s*declare[\\s\\S]*?end;\\s*\\$\\$;/i);
-  expect(sql).not.toMatch(/^do \\$/m);
-  expect(sql).not.toMatch(/^\\$;$/m);
+  expect(sql).toContain('do $$'+String.fromCharCode(10)+'begin');
+  expect(sql).toContain('end;'+String.fromCharCode(10)+'$$;');
+  expect(sql).toContain('as $$'+String.fromCharCode(10)+'declare');
+  expect(sql.split('$$').length-1).toBe(4);
+  expect(sql).not.toContain('do $'+String.fromCharCode(10));
+  expect(sql).not.toContain('end;'+String.fromCharCode(10)+'$;');
  });
  it('creates only a private bucket, fails closed on existing unsafe bucket settings',()=>{
   expect(sql).toContain("'sales-documents','sales-documents',false,15728640");
@@ -32,7 +34,7 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain("id uuid primary key default gen_random_uuid()");
   expect(sql).toContain("(organization_id::text || '/' || id::text) stored");
   expect(sql).toContain("new.organization_id is distinct from old.organization_id");
-  expect(sql).toContain("new.object_path is distinct from old.object_path");
+  expect(sql).not.toContain("new.object_path is distinct from old.object_path");
   expect(sql).toContain("new.size_bytes is distinct from old.size_bytes");
   expect(sql).toContain("new.created_at := now()");
  });
