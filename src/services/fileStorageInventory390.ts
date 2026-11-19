@@ -2,7 +2,7 @@
  * Provider secrets, tokens and URLs never belong in this metadata model.
  * A saved URL without authenticated provider metadata has UNKNOWN size.
  */
-import {fileLinkProvider,type FileLinkRecord,type FileLinkCategory,
+import {fileLinkProvider,fileLinkCategoryLabel,type FileLinkRecord,type FileLinkCategory,
  type FileTargetKind} from './fileLinks357a';
 
 export type FileStorageProvider='supabase-managed'|'supabase-byo'|'s3-byo'|
@@ -124,8 +124,8 @@ export function filterFileInventory391(
       row.folderPath!==filters.folder.slice('folder:'.length))return false;
   }
   return !needle||[
-   row.name,row.folderPath??'',row.category,providerLabel(row.provider),
-   targetTitle(row),
+   row.name,row.folderPath??'',row.category,fileLinkCategoryLabel(row.category),
+   providerLabel(row.provider),targetTitle(row),
   ].join(' ').toLowerCase().includes(needle);
  });
 }
