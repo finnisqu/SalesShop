@@ -126,6 +126,11 @@ try{
    main.object_path,blob(),{contentType:'text/plain',upsert:false});
   assert(!error,'Authorized private upload failed.');
  });
+ await verify('Pending index cannot be deleted while Storage bytes exist',async()=>{
+  const {data,error}=await clients.owner.from('crm_file_objects')
+   .delete().eq('id',main.id).select('id').maybeSingle();
+  assert(error||!data,'A pending upload orphaned its stored bytes.');
+ });
  await verify('Client cannot spoof provider-derived size',async()=>{
   const {data,error}=await clients.owner.from('crm_file_objects')
    .update({size_bytes:1}).eq('id',main.id).select('id').maybeSingle();
