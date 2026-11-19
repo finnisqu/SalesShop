@@ -1,0 +1,65 @@
+/* #390 — storage inventory; reuse the existing WARM/LIGHT/DARK theme tokens. */
+.ss-storage390{display:grid;gap:13px;min-width:0;color:var(--ss-theme-ink)}
+.ss-storage390-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ss-storage390-summary>div{display:grid;gap:5px;align-content:start;min-width:0;
+ padding:13px 14px;border:1px solid var(--ss-theme-border);border-radius:11px;
+ background:var(--ss-theme-card)}
+.ss-storage390-summary small{font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+ font-weight:750;color:var(--ss-theme-muted)}
+.ss-storage390-summary strong{font-size:21px;line-height:1.25;overflow-wrap:anywhere}
+.ss-storage390-summary span,.ss-storage390-note{color:var(--ss-theme-muted);font-size:11px;line-height:1.5}
+.ss-storage390-note{margin:0;max-width:1000px}
+.ss-storage390-switch{display:flex;gap:5px;align-items:center;width:max-content;max-width:100%;
+ padding:4px;border:1px solid var(--ss-theme-border);border-radius:10px;
+ background:var(--ss-theme-tint)}
+.ss-storage390 button{cursor:pointer;border:1px solid var(--ss-theme-border);
+ border-radius:8px;background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:650 11px/1.4 var(--ss-font-body);padding:8px 12px;min-height:36px}
+.ss-storage390-switch button{border-color:transparent;background:transparent}
+.ss-storage390-switch button[aria-pressed=true]{
+ background:var(--ss-theme-card);border-color:var(--ss-theme-border);font-weight:800}
+.ss-storage390-controls{display:flex;gap:9px;flex-wrap:wrap;align-items:end}
+.ss-storage390-controls>label{display:grid;gap:4px;min-width:175px;max-width:320px;
+ color:var(--ss-theme-muted);font-size:10px;font-weight:750}
+.ss-storage390-controls select{box-sizing:border-box;width:100%;min-height:36px;
+ padding:7px 10px;border:1px solid var(--ss-theme-border);border-radius:8px;
+ color:var(--ss-theme-ink);background:var(--ss-theme-base);font:650 11px var(--ss-font-body)}
+.ss-storage390-controls>button{margin-left:auto;background:var(--ss-theme-accent);
+ border-color:var(--ss-theme-accent);color:var(--ss-theme-contrast)}
+.ss-storage390-table-viewport{width:100%;min-width:0;overflow:auto;
+ border:1px solid var(--ss-theme-border);border-radius:11px;background:var(--ss-theme-card)}
+.ss-storage390-table{border-collapse:collapse;width:100%;min-width:680px;font-size:11px;text-align:left}
+.ss-storage390-table th{padding:11px 12px;border-bottom:1px solid var(--ss-theme-border);
+ background:var(--ss-theme-tint);color:var(--ss-theme-muted);
+ font-size:10px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.ss-storage390-table td{padding:10px 12px;border-bottom:1px solid var(--ss-theme-border);
+ vertical-align:middle;color:var(--ss-theme-ink)}
+.ss-storage390-table tr:last-child td{border-bottom:0}
+.ss-storage390-table th:last-child,.ss-storage390-table td:last-child{white-space:nowrap}
+.ss-storage390-table td:first-child{font-weight:750;min-width:170px;overflow-wrap:anywhere}
+.ss-storage390-table td:first-child a{color:var(--ss-theme-accent)}
+.ss-storage390-table td:nth-child(4){font-variant-numeric:tabular-nums;white-space:nowrap}
+.ss-storage390-table button{font-weight:700;max-width:230px;text-align:left;overflow-wrap:anywhere}
+.ss-storage390-table .ss-storage390-empty{padding:28px 18px;text-align:center;
+ color:var(--ss-theme-muted);font-weight:500}
+.ss-storage390-providers,.ss-storage390-coming{
+ border:1px solid var(--ss-theme-border);border-radius:10px;background:var(--ss-theme-card)}
+.ss-storage390-providers>summary,.ss-storage390-coming>summary{
+ padding:12px 14px;cursor:pointer;font-size:11px;font-weight:800}
+.ss-storage390-providers>div{padding:0 14px 12px;display:grid;gap:6px}
+.ss-storage390-providers>div>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+ gap:14px;font-size:11px;color:var(--ss-theme-muted)}
+.ss-storage390-coming[open]{padding-bottom:12px}
+.ss-storage390-coming p{padding:0 14px;margin:8px 0;color:var(--ss-theme-muted);
+ font-size:11px;line-height:1.5}
+.ss-storage390 :is(button,select,a,summary):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+@media(max-width:680px){
+ .ss-storage390-summary{grid-template-columns:1fr 1fr}
+ .ss-storage390-summary>div:last-child{grid-column:1/-1}
+ .ss-storage390-controls{align-items:stretch}
+ .ss-storage390-controls>label{flex:1;min-width:140px;max-width:none}
+ .ss-storage390-controls select{min-height:44px;font-size:16px}
+ .ss-storage390-controls>button{width:100%;margin:0;min-height:44px}
+ .ss-storage390 button{min-height:44px}
+}

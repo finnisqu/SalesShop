@@ -20,7 +20,7 @@ import './tools-workspace.css';
 
 export const TOOLS_SECTIONS=[
  {id:'analytics',label:'Analytics',description:'Pipeline and activity insights'},
- {id:'files',label:'Files',description:'Linked documents and folders'},
+ {id:'files',label:'Files & Docs',description:'Storage inventory and linked documents'},
  {id:'automations',label:'Automations',description:'Rule-based private Tasks'},
  {id:'email',label:'Email',description:'Connected Gmail conversations'},
  {id:'import',label:'Import',description:'Review CSV and Excel CRM records'},
@@ -77,7 +77,7 @@ export function ToolsWorkspace(){
    </div>}
    mobileTabs={TOOLS_SECTIONS.map(item=>({value:item.id,label:item.label}))}
    mobileTabValue={section} onMobileTabChange={value=>select(value as ToolsSection)}
-   search={section==='files'?<input type="search" aria-label="Search linked files"
+   search={section==='files'?<input type="search" aria-label="Search files and documents"
     placeholder="Search files and folders…" value={query}
     onChange={event=>setQuery(event.target.value)}/>:undefined}
   />

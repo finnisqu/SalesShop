@@ -2,7 +2,7 @@ import {useMemo} from 'react';
 import type {Company,Project} from '../types/crm';
 import type {SalesQuoteRecord} from '../services/salesQuoteRegistry';
 import type {FileTarget} from '../services/fileLinks357a';
-import {FileLinksManager} from './FileLinksManager';
+import {StorageInventory390} from './StorageInventory390';
 import {QuoteShareReferences371} from './QuoteShareReferences371';
 import {useNavigationStore} from '../store/navigationStore';
 
@@ -29,11 +29,11 @@ export function FilesWorkspace({companies,deals,quotes,query}:{
    if(quote?.projectId&&deals.some(deal=>deal.id===quote.projectId))openDeal(quote.projectId);
   }
  };
- return <section className="ss-files-workspace" aria-label="Files and folders">
-  <header><div><small>FILES · CONNECTED RECORDS</small><h2>Files</h2>
-   <p>Find drawings, bid documents, contracts, and folders across related records.</p></div>
-   <span>Document links · no uploads yet</span></header>
-  <FileLinksManager targets={targets} search={query} onOpenTarget={openTarget} directory/>
+ return <section className="ss-files-workspace" aria-label="Files and documents">
+  <header><div><small>FILES · STORAGE & DOCUMENTS</small><h2>Files & Docs</h2>
+   <p>Find drawings, contracts and linked documents. Review storage sources, sizes and related records.</p></div>
+   <span>Storage inventory · links only</span></header>
+  <StorageInventory390 targets={targets} search={query} onOpenTarget={openTarget}/>
   <details className="ss-files-quote-lookup">
    <summary>Customer Quote links · check existing share status</summary>
    <QuoteShareReferences371 quotes={quotes} search={query}
