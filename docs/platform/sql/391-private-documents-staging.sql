@@ -98,6 +98,8 @@ begin
   if reserved_bytes + 15728640 > 524288000 then
    raise exception 'The initial 500 MB organization file allowance is full. Permanently delete unneeded files or contact an administrator.';
   end if;
+  -- Client-supplied timestamps are not authoritative audit metadata.
+  new.created_at := now();
   new.updated_at := now();
   return new;
  end if;
