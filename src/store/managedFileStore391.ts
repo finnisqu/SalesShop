@@ -1,5 +1,6 @@
 import {create} from 'zustand';
 import {useAuthStore} from './authStore';
+import {useRolePerspectiveStore} from './rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {
  listManagedDocuments391,uploadManagedDocument391,finishManagedUpload391,
@@ -32,7 +33,8 @@ function identity(){
 function sameIdentity(key:string|null):boolean{return identity().key===key;}
 function editable(){
  const s=useAuthStore.getState();
- return canEditTeamArea(s.teamRole,s.teamDepartment,'crm');
+ return !useRolePerspectiveStore.getState().activePerspective&&
+  canEditTeamArea(s.teamRole,s.teamDepartment,'crm');
 }
 export const useManagedFileStore391=create<ManagedFileState391>((set,get)=>{
  const run=async(operation:(org:string)=>Promise<void>,notice:string,needsEdit=true)=>{
