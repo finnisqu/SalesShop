@@ -45,6 +45,12 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain("new.status='ready'");
   expect(sql).toContain("old.status='pending' and new.status='ready'");
  });
+ it('blocks orphan bytes by guarding every metadata deletion',()=>{
+  expect(sql).toContain("if TG_OP='DELETE' then");
+  expect(sql).toContain("o.name=old.object_path");
+  expect(sql).toContain("Delete document bytes from private Storage before removing metadata");
+  expect(sql).toContain("before insert or update or delete on public.crm_file_objects");
+ });
  it('serializes 500 MiB quota reservations including pending and trash',()=>{
   expect(sql).toContain("pg_catalog.pg_advisory_xact_lock");
   expect(sql).toContain("f.status='pending' then 15728640::bigint");
