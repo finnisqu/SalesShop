@@ -134,6 +134,22 @@ try{
   const result=await reserve(clients.owner,orgA,'quote','nonexistent-quote','quote-denied.txt');
   assert(result.error||!result.data);
  });
+ await verify('Server rejects unsafe document names and mismatched MIME metadata',async()=>{
+  const inputs=[
+   {title:'dangerous.html',mime_type:'text/plain',folder_path:'Security testing'},
+   {title:'fake.pdf',mime_type:'text/plain',folder_path:'Security testing'},
+   {title:'nested\\document.txt',mime_type:'text/plain',folder_path:'Security testing'},
+   {title:'plans.txt',mime_type:'text/plain',folder_path:'../private'},
+  ];
+  for(const input of inputs){
+   const {data,error}=await clients.owner.from('crm_file_objects').insert({
+    organization_id:orgA,target_kind:'company',target_id:companyA,
+    category:'other',...input,
+   }).select('id').maybeSingle();
+   if(data?.id)newIds.push(data.id);
+   assert(error||!data,'Untrusted filename, folder or MIME metadata was accepted.');
+  }
+ });
  await verify('Wrong object path cannot be uploaded',async()=>{
   const {error}=await clients.owner.storage.from(bucket).upload(
    orgA+'/'+randomUUID(),blob(),{contentType:'text/plain',upsert:false});
