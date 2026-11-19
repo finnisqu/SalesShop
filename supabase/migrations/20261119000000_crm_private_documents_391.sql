@@ -135,11 +135,11 @@ create policy "crm_files_read_member_391"
   and (
    (target_kind='company' and exists(
     select 1 from public.companies c
-    where c.id=target_id and c.organization_id=organization_id
+    where c.id=target_id and c.organization_id=crm_file_objects.organization_id
    )) or
    (target_kind='deal' and exists(
     select 1 from public.projects p
-    where p.id=target_id and p.organization_id=organization_id
+    where p.id=target_id and p.organization_id=crm_file_objects.organization_id
    ))
   )
   and (
@@ -154,11 +154,11 @@ create policy "crm_files_insert_editor_391"
   and (
    (target_kind='company' and exists(
     select 1 from public.companies c
-    where c.id=target_id and c.organization_id=organization_id
+    where c.id=target_id and c.organization_id=crm_file_objects.organization_id
    )) or
    (target_kind='deal' and exists(
     select 1 from public.projects p
-    where p.id=target_id and p.organization_id=organization_id
+    where p.id=target_id and p.organization_id=crm_file_objects.organization_id
    ))
   )
 );
