@@ -37,6 +37,13 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain("where p.id=target_id and p.organization_id=crm_file_objects.organization_id");
   expect(sql).not.toContain("target_kind in ('company','deal','quote')");
  });
+ it('never reads NEW stored-generated object_path inside BEFORE triggers',()=>{
+  expect(sql).toContain("o.name=(new.organization_id::text || '/' || new.id::text)");
+  expect(sql).not.toContain("o.name=new.object_path");
+  expect(sql).not.toContain("new.object_path is distinct from old.object_path");
+  expect(sql).toContain("new.organization_id is distinct from old.organization_id");
+  expect(sql).toContain("new.id is distinct from old.id");
+ });
  it('does not allow client-controlled ready rows or unverified byte counts',()=>{
   expect(sql).toContain("status<>'pending' or new.size_bytes is not null");
   expect(sql).toContain("o.metadata->>'size'");
