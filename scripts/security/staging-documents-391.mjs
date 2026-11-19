@@ -54,6 +54,7 @@ for(const role of ['owner','editor','viewer','outsider']){
 }
 
 const newIds=[];
+const foreignIds=[];
 let passed=0;
 const bucket='sales-documents';
 const content='SalesShop #391 isolated security fixture — '+randomUUID();
@@ -89,6 +90,23 @@ const cleanup=async(id)=>{
 };
 
 try{
+ // Positive control: the "outsider" must really be a CRM editor in org B.
+ // Otherwise cross-tenant denials could pass for an entirely unauthorized
+ // identity and the role matrix would prove less than it claims.
+ const {data:ownB,error:ownBError}=await reserve(
+  clients.outsider,orgB,'company',companyB,'org-b-'+randomUUID()+'.txt');
+ assert(!ownBError&&ownB,'Org B fixture user must be a real CRM editor in org B.');
+ foreignIds.push(ownB.id);
+ await verify('Org B actor has working access in own organization',async()=>{
+  assert.equal(ownB.object_path,orgB+'/'+ownB.id);
+  const {data,error}=await clients.outsider.from('crm_file_objects')
+   .select('id').eq('id',ownB.id).single();
+  assert(!error&&data?.id===ownB.id);
+  const {data:fromA,error:errA}=await clients.owner.from('crm_file_objects')
+   .select('id').eq('id',ownB.id).maybeSingle();
+  assert(!errA&&!fromA,'Org A actor can see org B document.');
+ });
+
  const {data:main,error:reserveError}=await reserve(clients.owner,orgA,'company',companyA,'fixture-'+randomUUID()+'.txt');
  assert(!reserveError&&main,'Owner cannot reserve a Company attachment.');
  newIds.push(main.id);
@@ -228,7 +246,22 @@ try{
 }finally{
  for(const id of newIds){
   try{await cleanup(id);}
-  catch{process.stderr.write('Check for leftover SYNTHETIC staging document after interrupted matrix.\n');}
+  catch{process.stderr.write('Check for leftover SYNTHETIC org A document after interrupted matrix.\n');}
+ }
+ for(const id of foreignIds){
+  try{
+   const {data:row,error}=await clients.outsider.from('crm_file_objects')
+    .select('id,object_path,status').eq('id',id).eq('organization_id',orgB).maybeSingle();
+   if(error)throw error;
+   if(row){
+    if(row.status==='ready')await clients.outsider.from('crm_file_objects')
+     .update({status:'trashed'}).eq('id',id);
+    await clients.outsider.storage.from(bucket).remove([row.object_path]);
+    const removal=await clients.outsider.from('crm_file_objects')
+     .delete().eq('id',id).eq('organization_id',orgB);
+    if(removal.error)throw removal.error;
+   }
+  }catch{process.stderr.write('Check for leftover SYNTHETIC org B document after interrupted matrix.\n');}
  }
  for(const client of Object.values(clients))await client.auth.signOut();
 }
