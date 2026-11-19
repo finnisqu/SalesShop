@@ -71,16 +71,17 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
     <span>{usage.unknownSize} {usage.unknownSize===1?'file has':'files have'} unknown size</span></div>
    <div><small>Storage sources</small><strong>{usage.providerCount}</strong>
     <span>Providers represented in this library</span></div>
-   <div><small>Managed storage allowance</small>
+   {mayEdit&&<div><small>Managed storage allowance</small>
     <strong>{managedStatus==='ready'?fileSizeLabel(reservedBytes):'Not active'}</strong>
     <span>{managedStatus==='ready'?
      fileSizeLabel(allowanceRemaining)+' remaining of '+fileSizeLabel(MANAGED_ORG_ALLOWANCE_391):
-     'Private Storage activation required'}</span></div>
+     'Private Storage activation required'}</span></div>}
   </div>
   <p className="ss-storage390-note">
    Indexed bytes reflect only verified stored documents. External links do not
-   expose file sizes without provider authorization. This is not billing, quota,
-   storage overhead, or network usage.
+   expose file sizes without provider authorization. The managed allowance,
+   when shown to CRM editors, includes pending reservations and trash; it is
+   not provider billing, storage overhead, or network usage.
   </p>
   <ManagedStorageNotice391/>
   <div className="ss-storage390-switch" role="group" aria-label="Files workspace modes">
