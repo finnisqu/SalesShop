@@ -4,7 +4,8 @@ import {useFileLinkStore} from '../store/fileLinkStore';
 import {fileLinksScope,fileTargetKey,type FileTarget} from '../services/fileLinks357a';
 import {fileSizeLabel,inventoryFromLinks,providerLabel,sortFileInventory,summarizeFileInventory,
  type FileInventorySort,type FileStorageProvider} from '../services/fileStorageInventory390';
-import {managedToInventory391} from '../services/managedDocuments391';
+import {managedToInventory391,MANAGED_MAX_BYTES_391,
+ MANAGED_ORG_ALLOWANCE_391} from '../services/managedDocuments391';
 import {useManagedFileStore391} from '../store/managedFileStore391';
 import {ManagedUploadPanel391,ManagedDocumentActions391,ManagedStorageNotice391,
  useManagedStorageBinding391,useManagedDocumentPermission391} from './ManagedDocuments391';
@@ -59,6 +60,9 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
  const sized=usage.knownFiles>0;
  const pending=managedRows.filter(r=>r.status==='pending');
  const trashed=managedRows.filter(r=>r.status==='trashed');
+ const reservedBytes=managedRows.reduce((total,row)=>total+
+  (row.status==='pending'?MANAGED_MAX_BYTES_391:row.size_bytes??0),0);
+ const allowanceRemaining=Math.max(0,MANAGED_ORG_ALLOWANCE_391-reservedBytes);
  return <div className="ss-storage390" aria-label="Files and storage management">
   <div className="ss-storage390-summary" aria-label="Storage inventory summary">
    <div><small>Indexed items</small><strong>{usage.items}</strong>
@@ -67,6 +71,11 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
     <span>{usage.unknownSize} {usage.unknownSize===1?'file has':'files have'} unknown size</span></div>
    <div><small>Storage sources</small><strong>{usage.providerCount}</strong>
     <span>Providers represented in this library</span></div>
+   <div><small>Managed storage allowance</small>
+    <strong>{managedStatus==='ready'?fileSizeLabel(reservedBytes):'Not active'}</strong>
+    <span>{managedStatus==='ready'?
+     fileSizeLabel(allowanceRemaining)+' remaining of '+fileSizeLabel(MANAGED_ORG_ALLOWANCE_391):
+     'Private Storage activation required'}</span></div>
   </div>
   <p className="ss-storage390-note">
    Indexed bytes reflect only verified stored documents. External links do not
