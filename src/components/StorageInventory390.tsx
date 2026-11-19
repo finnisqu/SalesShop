@@ -42,9 +42,11 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
  const rows=useMemo(()=>{
   const linked=storedScope===scope&&scope?
    inventoryFromLinks(records).filter(row=>index.has(fileTargetKey({kind:row.targetKind,id:row.targetId}))):[];
+  // RLS already scopes managed objects. Do not drop a ready file merely
+  // because its Company/Deal was deleted: editors must be able to trash and
+  // purge these orphaned bytes to free their organization's allowance.
   const stored=managedStatus==='ready'?managedRows.filter(row=>
-   row.status==='ready'&&index.has(fileTargetKey({kind:row.target_kind,id:row.target_id})))
-   .map(managedToInventory391):[];
+   row.status==='ready').map(managedToInventory391):[];
   return [...stored,...linked];
  },[records,scope,storedScope,index,managedRows,managedStatus]);
  const usage=useMemo(()=>summarizeFileInventory(rows),[rows]);
