@@ -117,7 +117,7 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
      onClick={()=>{void refreshManaged();}}>↻ Refresh</button>}
     <button type="button" onClick={()=>setPage('links')}>+ Link document</button>
    </div>
-   {filtersOpen&&<div id="ss-storage390-filter-panel" className="ss-storage390-filter-panel">
+   <div id="ss-storage390-filter-panel" className="ss-storage390-filter-panel" hidden={!filtersOpen}>
     <label>Provider
      <select value={provider} onChange={e=>setProvider(e.target.value as FileStorageProvider|'all')}>
       <option value="all">All providers</option>
@@ -143,7 +143,7 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
     <button type="button" disabled={!activeFilters} onClick={()=>{
      setProvider('all');setFolder('all');setCategoryFilter('all');
     }}>Clear filters</button>
-   </div>}
+   </div>
    <div className="ss-storage390-table-viewport">
     <table className="ss-storage390-table">
      <thead><tr><th>Name</th><th>Provider</th><th>Linked record</th>
