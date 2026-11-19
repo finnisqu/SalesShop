@@ -26,6 +26,8 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
  useManagedStorageBinding391();
  const managedRows=useManagedFileStore391(s=>s.rows);
  const managedStatus=useManagedFileStore391(s=>s.readiness);
+ const refreshManaged=useManagedFileStore391(s=>s.refresh);
+ const busyManaged=useManagedFileStore391(s=>s.busy);
  const mayEdit=useManagedDocumentPermission391();
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   user=useAuthStore(s=>s.user?.id);
@@ -115,6 +117,9 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
       {folders.map(path=><option key={path} value={path}>{path}</option>)}
      </select>
     </label>
+    {managedStatus==='ready'&&<button type="button" aria-label="Refresh stored files"
+     title="Refresh stored files" disabled={busyManaged}
+     onClick={()=>{void refreshManaged();}}>↻ Refresh</button>}
     <button type="button" onClick={()=>setPage('links')}>+ Link document</button>
    </div>
    <div className="ss-storage390-table-viewport">
