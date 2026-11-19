@@ -133,12 +133,19 @@ export function RecordManagedDocuments391({target}:{target:FileTarget}){
  const rows=useManagedFileStore391(s=>s.rows).filter(row=>
   row.target_kind===target.kind&&row.target_id===target.id);
  const status=useManagedFileStore391(s=>s.readiness);
+ const refresh=useManagedFileStore391(s=>s.refresh);
+ const busy=useManagedFileStore391(s=>s.busy);
  const canEdit=useManagedDocumentPermission391();
  const visible=rows.filter(row=>row.status!=='trashed');
  return <section className="ss-managed391-record" aria-label="Stored documents">
   <div className="ss-managed391-record-head">
    <strong>Private storage</strong>
-   <small>{status==='ready'?visible.length+' documents':'Checking availability'}</small>
+   <span className="ss-managed391-record-meta">
+    <small>{status==='ready'?visible.length+' documents':'Checking availability'}</small>
+    {status==='ready'&&<button type="button" aria-label="Refresh record documents"
+     title="Refresh record documents" disabled={busy}
+     onClick={()=>{void refresh();}}>↻</button>}
+   </span>
   </div>
   <ManagedStorageNotice391/>
   {status==='ready'&&<ManagedUploadPanel391 targets={[target]} compact/>}
