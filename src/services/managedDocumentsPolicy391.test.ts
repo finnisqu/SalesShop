@@ -15,6 +15,12 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain('STAGING/DISPOSABLE ONLY; NOT AN AUTOMATIC PRODUCTION MIGRATION');
   expect(sql).toContain('Do not run on production');
  });
+ it('uses complete PostgreSQL dollar-quoted blocks, not malformed single-dollar delimiters',()=>{
+  expect(sql).toMatch(/do \\$\\$\\s*begin[\\s\\S]*?end;\\s*\\$\\$;/i);
+  expect(sql).toMatch(/as \\$\\$\\s*declare[\\s\\S]*?end;\\s*\\$\\$;/i);
+  expect(sql).not.toMatch(/^do \\$/m);
+  expect(sql).not.toMatch(/^\\$;$/m);
+ });
  it('creates only a private bucket, fails closed on existing unsafe bucket settings',()=>{
   expect(sql).toContain("'sales-documents','sales-documents',false,15728640");
   expect(sql).toContain("b.public is distinct from false");
