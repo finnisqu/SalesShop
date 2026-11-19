@@ -53,10 +53,11 @@ export function validManagedTarget391(target:Pick<FileTarget,'kind'|'id'>):boole
  return (target.kind==='company'||target.kind==='deal')&&Boolean(target.id.trim())&&
   target.id.length<=200;
 }
-function checkScope(org:string):void{
+function checkScope(org:string,expectedUser?:string):void{
  const state=useAuthStore.getState();
- if(!supabase||state.mode!=='cloud'||state.organizationId!==org||!state.user?.id)
-  throw new Error('Your SalesShop workspace changed. Sign in and retry.');
+ if(!supabase||state.mode!=='cloud'||state.organizationId!==org||!state.user?.id||
+  (expectedUser!==undefined&&state.user.id!==expectedUser))
+  throw new Error('Your SalesShop workspace or user changed. Sign in and retry.');
 }
 function reason(error:{message?:string;code?:string}|null,action:string):string{
  const message=error?.message??'Unknown error';
@@ -145,13 +146,14 @@ export async function deleteManagedDocumentPermanently391(org:string,row:Managed
  checkScope(org);
  if(row.organization_id!==org||!['trashed','pending'].includes(row.status))
   throw new Error('Move the document to trash first.');
- // Pending rows may have no object; Storage errors for not-found are harmless.
- if(row.status==='trashed'){
-  const {error:storageError}=await supabase!.storage.from(MANAGED_BUCKET_391)
-   .remove([row.object_path]);
-  checkScope(org);
-  if(storageError)throw new Error(reason(storageError,'Could not delete storage object'));
- }
+ // A pending row can still have bytes if finalization was interrupted. Remove
+ // the object first so that deleting metadata cannot leave private orphan bytes.
+ const {error:storageError}=await supabase!.storage.from(MANAGED_BUCKET_391)
+  .remove([row.object_path]);
+ checkScope(org);
+ if(storageError&&!(row.status==='pending'&&
+    /not found|does not exist|404/i.test(storageError.message)))
+  throw new Error(reason(storageError,'Could not delete storage object'));
  const {error}=await supabase!.from('crm_file_objects')
   .delete().eq('id',row.id).eq('organization_id',org);
  checkScope(org);
