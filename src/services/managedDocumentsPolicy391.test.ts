@@ -7,6 +7,7 @@ const matrix=new URL('../../scripts/security/staging-documents-391.mjs',import.m
 const sql=readFileSync(stage,'utf8');
 const script=readFileSync(matrix,'utf8');
 const library=readFileSync(new URL('../components/StorageInventory390.tsx',import.meta.url),'utf8');
+const orphanAudit=readFileSync(new URL('../../docs/platform/sql/391-orphan-audit-staging.sql',import.meta.url),'utf8');
 
 describe('#391 — staged private Storage release gate (static contract)',()=>{
  it('cannot be swept into routine production migration pushes',()=>{
@@ -103,6 +104,18 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   // No additional exposure from client-only target lists; the server's RLS
   // decides which rows enter the inventory.
   expect(library).toContain("row.status==='ready').map(managedToInventory391)");
+ });
+ it('keeps orphan/bytes reconciliation read-only and out of customer APIs',()=>{
+  expect(orphanAudit).toContain('DATABASE OPERATOR ONLY; READ-ONLY');
+  expect(orphanAudit).toContain('public.crm_file_objects');
+  expect(orphanAudit).toContain('storage.objects');
+  expect(orphanAudit).toContain('missing_target_documents');
+  expect(orphanAudit).toContain('interrupted_upload_candidates');
+  expect(orphanAudit).toContain('missing_ready_objects');
+  // Comments are excluded because the operator guide explicitly warns against
+  // turning this report into a mutating cleanup script.
+  const code=orphanAudit.split('\\n').filter(line=>!line.trimStart().startsWith('--')).join('\\n');
+  expect(code).not.toMatch(/\\b(?:insert|update|delete|truncate|drop|alter|grant|revoke|execute)\\b/i);
  });
  it('serializes 500 MiB quota reservations including pending and trash',()=>{
   expect(sql).toContain("pg_catalog.pg_advisory_xact_lock");
