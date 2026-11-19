@@ -114,8 +114,8 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(orphanAudit).toContain('missing_ready_objects');
   // Comments are excluded because the operator guide explicitly warns against
   // turning this report into a mutating cleanup script.
-  const code=orphanAudit.split('\\n').filter(line=>!line.trimStart().startsWith('--')).join('\\n');
-  expect(code).not.toMatch(/\\b(?:insert|update|delete|truncate|drop|alter|grant|revoke|execute)\\b/i);
+  const code=orphanAudit.split('\n').filter(line=>!line.trimStart().startsWith('--')).join('\n');
+  expect(code).not.toMatch(/\b(?:insert|update|delete|truncate|drop|alter|grant|revoke|execute)\b/i);
  });
  it('serializes 500 MiB quota reservations including pending and trash',()=>{
   expect(sql).toContain("pg_catalog.pg_advisory_xact_lock");
