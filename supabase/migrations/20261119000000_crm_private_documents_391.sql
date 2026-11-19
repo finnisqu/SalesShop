@@ -140,10 +140,16 @@ create policy "crm_files_read_member_391"
    (target_kind='deal' and exists(
     select 1 from public.projects p
     where p.id=target_id and p.organization_id=crm_file_objects.organization_id
-   ))
+   )) or
+   -- A CRM editor can recover / purge orphaned rows if a target is deleted.
+   private.can_edit_org_area(organization_id,'crm')
   )
   and (
-   status='ready' or uploaded_by=(select auth.uid()) or
+   status='ready' or
+   (status='pending' and (
+     uploaded_by=(select auth.uid()) or
+     private.can_edit_org_area(organization_id,'crm')
+   )) or
    (status='trashed' and private.can_edit_org_area(organization_id,'crm'))
   )
 );
@@ -193,7 +199,10 @@ create policy "crm_files_storage_select_391"
     and private.is_org_member(f.organization_id)
     and (
      f.status='ready' or
-     (f.status='pending' and f.uploaded_by=(select auth.uid())) or
+     (f.status='pending' and (
+       f.uploaded_by=(select auth.uid()) or
+       private.can_edit_org_area(f.organization_id,'crm')
+     )) or
      (f.status='trashed' and private.can_edit_org_area(f.organization_id,'crm'))
     )
   )
@@ -204,8 +213,7 @@ create policy "crm_files_storage_delete_391"
    select 1 from public.crm_file_objects f
    where f.object_path=name
     and private.can_edit_org_area(f.organization_id,'crm')
-    and (f.status='trashed' or
-      (f.status='pending' and f.uploaded_by=(select auth.uid())))
+    and (f.status='trashed' or f.status='pending')
   )
 );
 
