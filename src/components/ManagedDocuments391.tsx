@@ -103,18 +103,52 @@ export function ManagedDocumentActions391({row}:{row:ManagedRow391}){
  const editable=useManagedDocumentPermission391();
  const busy=useManagedFileStore391(s=>s.busy);
  const downloading=useManagedFileStore391(s=>s.download);
+ const organize=useManagedFileStore391(s=>s.organize);
  const trash=useManagedFileStore391(s=>s.trash);
  const restore=useManagedFileStore391(s=>s.restore);
  const purge=useManagedFileStore391(s=>s.purge);
  const complete=useManagedFileStore391(s=>s.complete);
+ const [category,setCategory]=useState<FileLinkCategory>(row.category);
+ const [folder,setFolder]=useState(row.folder_path);
  const [localError,setLocalError]=useState('');
+ const organizePanel=useRef<HTMLDetailsElement>(null);
+ useEffect(()=>{
+  setCategory(row.category);setFolder(row.folder_path);
+ },[row.category,row.folder_path]);
  const act=async(action:()=>Promise<void>)=>{
   setLocalError('');
   try{await action();}catch(e){setLocalError(e instanceof Error?e.message:'File action failed.');}
  };
- return <span className="ss-managed391-actions">
+ const saveOrganization=async()=>{
+  setLocalError('');
+  try{
+   await organize(row,category,folder);
+   if(organizePanel.current)organizePanel.current.open=false;
+  }catch(e){setLocalError(e instanceof Error?e.message:'Could not update document details.');}
+ };
+ return <div className="ss-managed391-actions">
   {row.status==='ready'&&<button type="button" disabled={busy}
    onClick={()=>{void act(()=>downloading(row));}}>Download</button>}
+  {row.status==='ready'&&editable&&
+   <details ref={organizePanel} className="ss-managed391-organize">
+    <summary>Organize</summary>
+    <form onSubmit={e=>{e.preventDefault();void saveOrganization();}}>
+     <label>Category
+      <select value={category} disabled={busy}
+       onChange={e=>setCategory(e.target.value as FileLinkCategory)}>
+       {FILE_LINK_CATEGORIES.map(item=>
+        <option key={item.id} value={item.id}>{item.label}</option>)}
+      </select>
+     </label>
+     <label>Folder
+      <input type="text" maxLength={160} disabled={busy}
+       placeholder="Unfiled" value={folder}
+       onChange={e=>setFolder(e.target.value)}/>
+     </label>
+     <button type="submit" disabled={busy||
+      (category===row.category&&folder===row.folder_path)}>Save</button>
+    </form>
+   </details>}
   {row.status==='ready'&&editable&&<button type="button" disabled={busy}
    onClick={()=>{if(ask('Move '+row.title+' to trash? It will disappear from the active library.'))
     void act(()=>trash(row));}}>Trash</button>}
@@ -126,7 +160,7 @@ export function ManagedDocumentActions391({row}:{row:ManagedRow391}){
    onClick={()=>{if(ask('Permanently delete '+row.title+'? This cannot be undone.'))
     void act(()=>purge(row));}}>Delete</button>}
   {localError&&<small role="alert">{localError}</small>}
- </span>;
+ </div>;
 }
 export function RecordManagedDocuments391({target}:{target:FileTarget}){
  useManagedStorageBinding391();
