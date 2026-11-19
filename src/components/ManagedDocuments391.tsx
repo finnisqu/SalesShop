@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent} from 'react';
 import {useAuthStore} from '../store/authStore';
+import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {useManagedFileStore391} from '../store/managedFileStore391';
 import {MANAGED_ACCEPT_391,MANAGED_MAX_BYTES_391,
@@ -19,7 +20,8 @@ export function useManagedDocumentPermission391(){
  const mode=useAuthStore(s=>s.mode),org=useAuthStore(s=>s.organizationId),
   user=useAuthStore(s=>s.user?.id),role=useAuthStore(s=>s.teamRole),
   dept=useAuthStore(s=>s.teamDepartment);
- return mode==='cloud'&&!!org&&!!user&&canEditTeamArea(role,dept,'crm');
+ const preview=useRolePerspectiveStore(s=>s.activePerspective);
+ return !preview&&mode==='cloud'&&!!org&&!!user&&canEditTeamArea(role,dept,'crm');
 }
 export function ManagedStorageNotice391(){
  const readiness=useManagedFileStore391(s=>s.readiness);
