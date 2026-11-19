@@ -201,8 +201,10 @@ alter table public.crm_file_objects enable row level security;
 revoke all on public.crm_file_objects from anon;
 grant select,insert,update,delete on public.crm_file_objects to authenticated;
 
--- The current CRM's Companies/Deals are organization-visible, subject to
--- private.is_org_member, and writeable subject to private.can_edit_org_area.
+-- File metadata and Storage SELECT must respect the existing underlying
+-- Company/Deal SELECT RLS in addition to membership. No editor bypass for
+-- hidden/deleted records: cleanup of true orphans requires a separate
+-- tightly scoped privileged maintenance workflow, never a broad read policy.
 -- A later Quote integration MUST use quote-level access checks instead.
 create policy "crm_files_read_member_391"
  on public.crm_file_objects for select to authenticated using (
@@ -215,9 +217,7 @@ create policy "crm_files_read_member_391"
    (target_kind='deal' and exists(
     select 1 from public.projects p
     where p.id=target_id and p.organization_id=crm_file_objects.organization_id
-   )) or
-   -- A CRM editor can recover / purge orphaned rows if a target is deleted.
-   private.can_edit_org_area(organization_id,'crm')
+   ))
   )
   and (
    status='ready' or
@@ -293,8 +293,7 @@ create policy "crm_files_storage_select_391"
       (f.target_kind='deal' and exists (
         select 1 from public.projects p
         where p.organization_id=f.organization_id and p.id=f.target_id
-      )) or
-      private.can_edit_org_area(f.organization_id,'crm')
+      ))
     )
     and (
      f.status='ready' or
