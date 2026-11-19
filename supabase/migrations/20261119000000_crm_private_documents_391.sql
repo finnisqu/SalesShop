@@ -188,8 +188,10 @@ create policy "crm_files_storage_delete_391"
  on storage.objects for delete to authenticated using (
   bucket_id='sales-documents' and exists (
    select 1 from public.crm_file_objects f
-   where f.object_path=name and f.status='trashed'
+   where f.object_path=name
     and private.can_edit_org_area(f.organization_id,'crm')
+    and (f.status='trashed' or
+      (f.status='pending' and f.uploaded_by=(select auth.uid())))
   )
 );
 
