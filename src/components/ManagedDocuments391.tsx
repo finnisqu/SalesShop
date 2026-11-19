@@ -114,7 +114,7 @@ export function ManagedDocumentActions391({row}:{row:ManagedRow391}){
   {row.status==='ready'&&<button type="button" disabled={busy}
    onClick={()=>{void act(()=>downloading(row));}}>Download</button>}
   {row.status==='ready'&&editable&&<button type="button" disabled={busy}
-   onClick={()=>{if(ask('Move '+row.title+' to trash? Other team members will lose access.'))
+   onClick={()=>{if(ask('Move '+row.title+' to trash? It will disappear from the active library.'))
     void act(()=>trash(row));}}>Trash</button>}
   {row.status==='trashed'&&editable&&<button type="button" disabled={busy}
    onClick={()=>{void act(()=>restore(row));}}>Restore</button>}
