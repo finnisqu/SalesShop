@@ -4,7 +4,7 @@ import {useRolePerspectiveStore} from './rolePerspectiveStore';
 import {canEditTeamArea} from '../services/teamDepartments';
 import {
  listManagedDocuments391,uploadManagedDocument391,finishManagedUpload391,
- downloadManagedDocument391,trashManagedDocument391,restoreManagedDocument391,
+ downloadManagedDocument391,organizeManagedDocument391,trashManagedDocument391,restoreManagedDocument391,
  deleteManagedDocumentPermanently391,type ManagedRow391,
 } from '../services/managedDocuments391';
 import type {FileTarget,FileLinkCategory} from '../services/fileLinks357a';
@@ -18,6 +18,7 @@ interface ManagedFileState391{
  upload:(target:FileTarget,file:File,category:FileLinkCategory,folder:string)=>Promise<void>;
  complete:(id:string)=>Promise<void>;
  download:(row:ManagedRow391)=>Promise<void>;
+ organize:(row:ManagedRow391,category:FileLinkCategory,folder:string)=>Promise<void>;
  trash:(row:ManagedRow391)=>Promise<void>;
  restore:(row:ManagedRow391)=>Promise<void>;
  purge:(row:ManagedRow391)=>Promise<void>;
@@ -85,6 +86,8 @@ export const useManagedFileStore391=create<ManagedFileState391>((set,get)=>{
    run(org=>finishManagedUpload391(org,id),'Upload completed.'),
   download:async(row)=>
    run(org=>downloadManagedDocument391(org,row),'Download started.',false),
+  organize:async(row,category,folder)=>
+   run(org=>organizeManagedDocument391(org,row,category,folder),'Document details updated.'),
   trash:async(row)=>
    run(org=>trashManagedDocument391(org,row),'Document moved to trash.'),
   restore:async(row)=>
