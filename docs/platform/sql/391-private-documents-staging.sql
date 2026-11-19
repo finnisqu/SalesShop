@@ -153,8 +153,6 @@ begin
   or new.target_kind is distinct from old.target_kind
   or new.target_id is distinct from old.target_id
   or new.title is distinct from old.title
-  or new.category is distinct from old.category
-  or new.folder_path is distinct from old.folder_path
   or new.mime_type is distinct from old.mime_type
   or new.size_bytes is distinct from old.size_bytes
   -- NEW.object_path is a stored generated column and is not readable in
@@ -162,6 +160,23 @@ begin
   or new.created_at is distinct from old.created_at
  then
   raise exception 'Document identity, location and size are immutable';
+ end if;
+ -- Organizing a READY file changes only its virtual categorization.
+ -- It never changes object identity, original filename, record association,
+ -- verified size or lifecycle state; direct clients still face RLS.
+ if new.category is distinct from old.category or
+    new.folder_path is distinct from old.folder_path then
+  if old.status<>'ready' or new.status<>'ready' then
+   raise exception 'Only ready documents can be reorganized without changing lifecycle state';
+  end if;
+  if new.folder_path ~ '[[:cntrl:]]'
+    or pg_catalog.strpos(new.folder_path,pg_catalog.chr(92))>0
+    or pg_catalog.strpos(new.folder_path,'../')>0
+    or new.folder_path='..' then
+   raise exception 'Unsafe document folder';
+  end if;
+  new.updated_at := now();
+  return new;
  end if;
  if not (
   (old.status='pending' and new.status='ready') or
@@ -205,7 +220,7 @@ revoke all on public.crm_file_objects from PUBLIC,anon,authenticated;
 grant select,delete on public.crm_file_objects to authenticated;
 grant insert(organization_id,target_kind,target_id,title,category,folder_path,mime_type)
  on public.crm_file_objects to authenticated;
-grant update(status) on public.crm_file_objects to authenticated;
+grant update(status,category,folder_path) on public.crm_file_objects to authenticated;
 
 -- File metadata and Storage SELECT must respect the existing underlying
 -- Company/Deal SELECT RLS in addition to membership. No editor bypass for
