@@ -210,6 +210,12 @@ try{
    .update({size_bytes:1}).eq('id',main.id).select('id').maybeSingle();
   assert(error||!data,'File size overwrite unexpectedly passed.');
  });
+ await verify('Pending uploads cannot be reorganized before verification',async()=>{
+  const {data,error}=await clients.owner.from('crm_file_objects')
+   .update({category:'drawing',folder_path:'Preflight / Plans'})
+   .eq('id',main.id).select('id').maybeSingle();
+  assert(error||!data,'Pending document was edited before storage verification.');
+ });
  await verify('Finalization reads exact Storage bytes',async()=>{
   const {data,error}=await clients.owner.from('crm_file_objects')
    .update({status:'ready'}).eq('id',main.id)
@@ -217,6 +223,30 @@ try{
   assert(!error&&data);
   assert.equal(data.status,'ready');
   assert.equal(data.size_bytes,new TextEncoder().encode(content).byteLength);
+ });
+ await verify('CRM editor can organize an active file without changing private bytes',async()=>{
+  const {data,error}=await clients.editor.from('crm_file_objects')
+   .update({category:'drawing',folder_path:'Contracts / 2026'})
+   .eq('id',main.id).select('id,title,category,folder_path,size_bytes,object_path,status').single();
+  assert(!error&&data,'Editor could not organize a ready document.');
+  assert.equal(data.id,main.id);
+  assert.equal(data.object_path,main.object_path);
+  assert.equal(data.category,'drawing');
+  assert.equal(data.folder_path,'Contracts / 2026');
+  assert.equal(data.status,'ready');
+  assert.equal(data.size_bytes,new TextEncoder().encode(content).byteLength);
+ });
+ await verify('Viewer cannot reorganize an active file',async()=>{
+  const {data,error}=await clients.viewer.from('crm_file_objects')
+   .update({category:'contract'}).eq('id',main.id)
+   .select('id').maybeSingle();
+  assert(error||!data,'Read-only viewer unexpectedly changed file details.');
+ });
+ await verify('Organizer cannot mutate status and folder in one update',async()=>{
+  const {data,error}=await clients.owner.from('crm_file_objects')
+   .update({status:'trashed',folder_path:'Hidden'})
+   .eq('id',main.id).select('id').maybeSingle();
+  assert(error||!data,'Metadata and lifecycle transition were combined unexpectedly.');
  });
  await verify('Foreign organization cannot read metadata or download bytes',async()=>{
   assert.equal(await visible(clients.outsider,main.id),null);
