@@ -1,7 +1,8 @@
 import {useEffect,useMemo,useState} from 'react';
 import {useAuthStore} from '../store/authStore';
 import {useFileLinkStore} from '../store/fileLinkStore';
-import {fileLinksScope,fileTargetKey,type FileTarget} from '../services/fileLinks357a';
+import {fileLinksScope,fileTargetKey,FILE_LINK_CATEGORIES,
+ type FileLinkCategory,type FileTarget} from '../services/fileLinks357a';
 import {fileSizeLabel,inventoryFromLinks,providerLabel,sortFileInventory,summarizeFileInventory,
  type FileInventorySort,type FileStorageProvider} from '../services/fileStorageInventory390';
 import {managedToInventory391,MANAGED_MAX_BYTES_391,
@@ -39,6 +40,8 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
  const [sort,setSort]=useState<FileInventorySort>('newest');
  const [provider,setProvider]=useState<FileStorageProvider|'all'>('all');
  const [folder,setFolder]=useState('all');
+ const [categoryFilter,setCategoryFilter]=useState<FileLinkCategory|'all'>('all');
+ const [filtersOpen,setFiltersOpen]=useState(false);
  useEffect(()=>hydrate(scope),[hydrate,scope]);
  const index=useMemo(()=>new Map(targets.map(t=>[fileTargetKey(t),t])),[targets]);
  const rows=useMemo(()=>{
@@ -56,11 +59,14 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
  const visible=useMemo(()=>sortFileInventory(rows.filter(row=>
   (provider==='all'||row.provider===provider)&&
   (folder==='all'||(folder==='root'?!row.folderPath:row.folderPath===folder))&&
+  (categoryFilter==='all'||row.category===categoryFilter)&&
   (!search.trim()||[
     row.name,row.folderPath??'',providerLabel(row.provider),row.category,
     index.get(fileTargetKey({kind:row.targetKind,id:row.targetId}))?.title??'',
   ].join(' ').toLowerCase().includes(search.toLowerCase().trim()))),sort),
-  [rows,provider,folder,search,index,sort]);
+  [rows,provider,folder,categoryFilter,search,index,sort]);
+ const activeFilters=Number(provider!=='all')+Number(folder!=='all')+
+  Number(categoryFilter!=='all');
  const sized=usage.knownFiles>0;
  const pending=managedRows.filter(r=>r.status==='pending');
  const trashed=managedRows.filter(r=>r.status==='trashed');
@@ -105,6 +111,17 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
        {option.label}{option.id.startsWith('size-')&&!sized?' · sizes unavailable':''}</option>)}
      </select>
     </label>
+    <button type="button" className="ss-storage390-filter-toggle"
+     aria-expanded={filtersOpen} aria-controls="ss-storage390-filter-panel"
+     onClick={()=>setFiltersOpen(value=>!value)}>
+     Filters{activeFilters?' · '+activeFilters:''}
+    </button>
+    {managedStatus==='ready'&&<button className="ss-storage390-refresh" type="button" aria-label="Refresh stored files"
+     title="Refresh stored files" disabled={busyManaged}
+     onClick={()=>{void refreshManaged();}}>↻ Refresh</button>}
+    <button type="button" onClick={()=>setPage('links')}>+ Link document</button>
+   </div>
+   {filtersOpen&&<div id="ss-storage390-filter-panel" className="ss-storage390-filter-panel">
     <label>Provider
      <select value={provider} onChange={e=>setProvider(e.target.value as FileStorageProvider|'all')}>
       <option value="all">All providers</option>
@@ -119,11 +136,18 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
       {folders.map(path=><option key={path} value={path}>{path}</option>)}
      </select>
     </label>
-    {managedStatus==='ready'&&<button className="ss-storage390-refresh" type="button" aria-label="Refresh stored files"
-     title="Refresh stored files" disabled={busyManaged}
-     onClick={()=>{void refreshManaged();}}>↻ Refresh</button>}
-    <button type="button" onClick={()=>setPage('links')}>+ Link document</button>
-   </div>
+    <label>Category
+     <select value={categoryFilter}
+      onChange={e=>setCategoryFilter(e.target.value as FileLinkCategory|'all')}>
+      <option value="all">All categories</option>
+      {FILE_LINK_CATEGORIES.map(item=><option value={item.id} key={item.id}>
+       {item.label}</option>)}
+     </select>
+    </label>
+    <button type="button" disabled={!activeFilters} onClick={()=>{
+     setProvider('all');setFolder('all');setCategoryFilter('all');
+    }}>Clear filters</button>
+   </div>}
    <div className="ss-storage390-table-viewport">
     <table className="ss-storage390-table">
      <thead><tr><th>Name</th><th>Provider</th><th>Linked record</th>
