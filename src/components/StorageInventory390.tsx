@@ -4,6 +4,7 @@ import {useFileLinkStore} from '../store/fileLinkStore';
 import {fileLinksScope,fileTargetKey,FILE_LINK_CATEGORIES,
  type FileLinkCategory,type FileTarget} from '../services/fileLinks357a';
 import {fileSizeLabel,inventoryFromLinks,providerLabel,sortFileInventory,summarizeFileInventory,
+ fileFolderOption391,filterFileInventory391,
  type FileInventorySort,type FileStorageProvider} from '../services/fileStorageInventory390';
 import {managedToInventory391,MANAGED_MAX_BYTES_391,
  MANAGED_ORG_ALLOWANCE_391} from '../services/managedDocuments391';
@@ -56,14 +57,9 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
  },[records,scope,storedScope,index,managedRows,managedStatus]);
  const usage=useMemo(()=>summarizeFileInventory(rows),[rows]);
  const folders=useMemo(()=>[...new Set(rows.map(r=>r.folderPath).filter((v):v is string=>!!v))].sort(),[rows]);
- const visible=useMemo(()=>sortFileInventory(rows.filter(row=>
-  (provider==='all'||row.provider===provider)&&
-  (folder==='all'||(folder==='root'?!row.folderPath:row.folderPath===folder))&&
-  (categoryFilter==='all'||row.category===categoryFilter)&&
-  (!search.trim()||[
-    row.name,row.folderPath??'',providerLabel(row.provider),row.category,
-    index.get(fileTargetKey({kind:row.targetKind,id:row.targetId}))?.title??'',
-  ].join(' ').toLowerCase().includes(search.toLowerCase().trim()))),sort),
+ const visible=useMemo(()=>sortFileInventory(
+  filterFileInventory391(rows,{provider,folder,category:categoryFilter,search},
+   row=>index.get(fileTargetKey({kind:row.targetKind,id:row.targetId}))?.title??''),sort),
   [rows,provider,folder,categoryFilter,search,index,sort]);
  const activeFilters=Number(provider!=='all')+Number(folder!=='all')+
   Number(categoryFilter!=='all');
@@ -132,8 +128,8 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
     <label>Folder
      <select value={folder} onChange={e=>setFolder(e.target.value)}>
       <option value="all">All folders</option>
-      <option value="root">Unfiled</option>
-      {folders.map(path=><option key={path} value={path}>{path}</option>)}
+      <option value="unfiled">Unfiled</option>
+      {folders.map(path=><option key={path} value={fileFolderOption391(path)}>{path}</option>)}
      </select>
     </label>
     <label>Category
