@@ -98,6 +98,37 @@ export function sortFileInventory(rows:readonly FileInventoryItem[],sort:FileInv
   }
  });
 }
+/** #391 — source-neutral filters: no credentials or access decisions. The
+ * server's RLS, not these browser predicates, controls visible file rows.
+ * Prefix virtual folder options so real folders called "root"/"all" work.
+ */
+export function fileFolderOption391(path:string):string{return 'folder:'+path;}
+export type FileInventoryFilters391={
+ provider:FileStorageProvider|'all';
+ folder:string;
+ category:FileLinkCategory|'all';
+ search:string;
+};
+export function filterFileInventory391(
+ rows:readonly FileInventoryItem[],filters:FileInventoryFilters391,
+ targetTitle:(row:FileInventoryItem)=>string=()=>'', 
+):FileInventoryItem[]{
+ const needle=filters.search.trim().toLowerCase();
+ return rows.filter(row=>{
+  if(filters.provider!=='all'&&row.provider!==filters.provider)return false;
+  if(filters.category!=='all'&&row.category!==filters.category)return false;
+  if(filters.folder==='unfiled'){
+   if(row.folderPath)return false;
+  }else if(filters.folder!=='all'){
+   if(!filters.folder.startsWith('folder:')||
+      row.folderPath!==filters.folder.slice('folder:'.length))return false;
+  }
+  return !needle||[
+   row.name,row.folderPath??'',row.category,providerLabel(row.provider),
+   targetTitle(row),
+  ].join(' ').toLowerCase().includes(needle);
+ });
+}
 export interface FileUsageSummary{
  items:number;files:number;folders:number;knownFiles:number;unknownSize:number;
  knownBytes:number;providerCount:number;
