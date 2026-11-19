@@ -112,7 +112,7 @@ begin
    raise exception 'Unsafe document folder';
   end if;
   expected_mime := case pg_catalog.lower(
-    pg_catalog.substring(new.title from '\.([a-zA-Z0-9]+)$'))
+    pg_catalog.substring(new.title, '\.([a-zA-Z0-9]+)$'))
    when 'pdf' then 'application/pdf'
    when 'png' then 'image/png'
    when 'jpg' then 'image/jpeg'
