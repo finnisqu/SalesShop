@@ -125,7 +125,8 @@ begin
   or new.folder_path is distinct from old.folder_path
   or new.mime_type is distinct from old.mime_type
   or new.size_bytes is distinct from old.size_bytes
-  or new.object_path is distinct from old.object_path
+  -- NEW.object_path is a stored generated column and is not readable in
+  -- BEFORE UPDATE. Its base UUID fields above are already immutable.
   or new.created_at is distinct from old.created_at
  then
   raise exception 'Document identity, location and size are immutable';
@@ -145,7 +146,9 @@ begin
   into stored_bytes,stored_mime
   from storage.objects o
   where o.bucket_id='sales-documents'
-   and o.name=new.object_path;
+   -- Compute from immutable source columns. Generated columns are NOT
+   -- available on NEW in BEFORE triggers (PostgreSQL 17+ behavior).
+   and o.name=(new.organization_id::text || '/' || new.id::text);
   if stored_bytes is null or stored_bytes<0 or stored_bytes>15728640
     or stored_mime is null or stored_mime<>old.mime_type then
    raise exception 'Storage object is missing or its size/type cannot be verified';
