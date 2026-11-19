@@ -22,7 +22,7 @@
     "test:crm-workflows": "vitest run src/services/dealRecordView.test.ts src/services/ourOrganizationDirectory.test.ts src/services/activityRelations.test.ts src/services/companyRelationship.test.ts src/store/externalQuoteBackfill.test.ts src/components/ConnectionsBulkEditDialog.test.tsx src/services/activityLogFilters.test.ts src/components/SuppliersConnectionsLayout.test.ts src/store/personalTaskSubtasks.test.ts src/services/homeBadgeAgendaFocus.test.ts src/components/RecordRelatedActions.test.ts src/store/dealPeopleStore.test.ts src/components/TaskAndDealPeoplePolish.test.ts src/services/bidSubmissionTaskGuard.test.ts src/services/confirmedBidSubmissions.test.ts",
     "test:record-redesign": "vitest run e2e/record-page-redesign.test.ts",
     "test:record-gate": "node e2e/record-page-redesign-gate.mjs",
-    "test:files-docs": "vitest run src/services/fileLinks357a.test.ts src/services/fileStorageInventory390.test.ts src/services/managedDocuments391.test.ts",
+    "test:files-docs": "vitest run src/services/fileLinks357a.test.ts src/services/fileStorageInventory390.test.ts src/services/managedDocuments391.test.ts src/services/managedDocumentsPolicy391.test.ts",
     "test:files-docs:staging": "node scripts/security/staging-documents-391.mjs"
   },
   "dependencies": {
