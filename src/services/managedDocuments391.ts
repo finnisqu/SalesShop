@@ -4,7 +4,7 @@
  */
 import {supabase} from '../lib/supabase';
 import {useAuthStore} from '../store/authStore';
-import type {FileLinkCategory,FileTarget} from './fileLinks357a';
+import {FILE_LINK_CATEGORIES,type FileLinkCategory,type FileTarget} from './fileLinks357a';
 import type {FileInventoryItem} from './fileStorageInventory390';
 
 export const MANAGED_BUCKET_391='sales-documents';
@@ -49,6 +49,14 @@ export function managedFolder391(input:string):string{
  if(folder.length>160||/[\u0000-\u001f\\]/.test(folder)||folder==='..'||folder.includes('../'))
   throw new Error('Choose a folder name up to 160 characters, without path traversal.');
  return folder;
+}
+/** Change only virtual organization metadata, never physical Storage paths. */
+export function validateManagedOrganization391(category:FileLinkCategory,folderInput:string):{
+ category:FileLinkCategory;folder_path:string;
+}{
+ if(!FILE_LINK_CATEGORIES.some(item=>item.id===category))
+  throw new Error('Choose a supported document category.');
+ return {category,folder_path:managedFolder391(folderInput)};
 }
 export function validManagedTarget391(target:Pick<FileTarget,'kind'|'id'>):boolean{
  return (target.kind==='company'||target.kind==='deal')&&Boolean(target.id.trim())&&
@@ -136,6 +144,20 @@ export async function finishManagedUpload391(org:string,id:string):Promise<void>
  recheck();
  if(error||!data||data.size_bytes===null)
   throw new Error('File upload may have reached storage but verification did not finish. Refresh and use Complete upload to retry. '+(error?.message??''));
+}
+export async function organizeManagedDocument391(
+ org:string,row:ManagedRow391,category:FileLinkCategory,folderInput:string,
+):Promise<void>{
+ const recheck=scopeGuard391(org);
+ if(row.organization_id!==org||row.status!=='ready')
+  throw new Error('Only ready documents can be organized.');
+ const updates=validateManagedOrganization391(category,folderInput);
+ if(row.category===updates.category&&row.folder_path===updates.folder_path)return;
+ const {data,error}=await supabase!.from('crm_file_objects')
+  .update(updates).eq('id',row.id).eq('organization_id',org)
+  .eq('status','ready').select('id').single();
+ recheck();
+ if(error||!data)throw new Error(reason(error,'Could not organize document'));
 }
 export async function trashManagedDocument391(org:string,row:ManagedRow391):Promise<void>{
  const recheck=scopeGuard391(org);
