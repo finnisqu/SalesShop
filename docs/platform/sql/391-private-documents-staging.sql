@@ -198,8 +198,14 @@ create trigger crm_file_guard_391
  for each row execute function private.crm_file_guard_391();
 
 alter table public.crm_file_objects enable row level security;
-revoke all on public.crm_file_objects from anon;
-grant select,insert,update,delete on public.crm_file_objects to authenticated;
+-- Defence in depth: clients cannot supply their own object UUID, uploader,
+-- verified size, state or audit timestamps at INSERT. At UPDATE, only state
+-- transitions are writable; immutable metadata fields lack column grants.
+revoke all on public.crm_file_objects from PUBLIC,anon,authenticated;
+grant select,delete on public.crm_file_objects to authenticated;
+grant insert(organization_id,target_kind,target_id,title,category,folder_path,mime_type)
+ on public.crm_file_objects to authenticated;
+grant update(status) on public.crm_file_objects to authenticated;
 
 -- File metadata and Storage SELECT must respect the existing underlying
 -- Company/Deal SELECT RLS in addition to membership. No editor bypass for
