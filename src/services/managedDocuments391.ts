@@ -121,10 +121,9 @@ export async function uploadManagedDocument391(org:string,target:FileTarget,file
   .upload(path,file,{upsert:false,contentType:mime,cacheControl:'0'});
  recheck();
  if(uploadError){
-  // A failed upload normally leaves no object. Metadata removal is best-effort.
-  await supabase!.from('crm_file_objects').delete().eq('id',id).eq('organization_id',org)
-   .eq('status','pending');
-  throw new Error(reason(uploadError,'Private file upload failed'));
+  // A network error may happen after Storage accepted the bytes. Leave the
+  // pending index in place for retry or explicit deletion; never orphan bytes.
+  throw new Error(reason(uploadError,'Upload reported an error. The pending document remains for review'));
  }
  // The DB trigger reads the actual Storage object metadata and sets size_bytes.
  await finishManagedUpload391(org,id);
@@ -141,20 +140,20 @@ export async function finishManagedUpload391(org:string,id:string):Promise<void>
 export async function trashManagedDocument391(org:string,row:ManagedRow391):Promise<void>{
  const recheck=scopeGuard391(org);
  if(row.organization_id!==org||row.status!=='ready')throw new Error('This document is no longer ready.');
- const {error}=await supabase!.from('crm_file_objects')
+ const {data,error}=await supabase!.from('crm_file_objects')
   .update({status:'trashed'}).eq('id',row.id).eq('organization_id',org)
-  .eq('status','ready');
+  .eq('status','ready').select('id').single();
  recheck();
- if(error)throw new Error(reason(error,'Could not move document to trash'));
+ if(error||!data)throw new Error(reason(error,'Could not move document to trash'));
 }
 export async function restoreManagedDocument391(org:string,row:ManagedRow391):Promise<void>{
  const recheck=scopeGuard391(org);
  if(row.organization_id!==org||row.status!=='trashed')throw new Error('This document is not in the trash.');
- const {error}=await supabase!.from('crm_file_objects')
+ const {data,error}=await supabase!.from('crm_file_objects')
   .update({status:'ready'}).eq('id',row.id).eq('organization_id',org)
-  .eq('status','trashed');
+  .eq('status','trashed').select('id').single();
  recheck();
- if(error)throw new Error(reason(error,'Could not restore document'));
+ if(error||!data)throw new Error(reason(error,'Could not restore document'));
 }
 export async function deleteManagedDocumentPermanently391(org:string,row:ManagedRow391):Promise<void>{
  const recheck=scopeGuard391(org);
@@ -168,10 +167,10 @@ export async function deleteManagedDocumentPermanently391(org:string,row:Managed
  if(storageError&&!(row.status==='pending'&&
     /not found|does not exist|404/i.test(storageError.message)))
   throw new Error(reason(storageError,'Could not delete storage object'));
- const {error}=await supabase!.from('crm_file_objects')
-  .delete().eq('id',row.id).eq('organization_id',org);
+ const {data,error}=await supabase!.from('crm_file_objects')
+  .delete().eq('id',row.id).eq('organization_id',org).select('id').single();
  recheck();
- if(error)throw new Error(reason(error,'Storage object deleted but index cleanup failed'));
+ if(error||!data)throw new Error(reason(error,'Storage object deleted but index cleanup failed'));
 }
 export async function downloadManagedDocument391(org:string,row:ManagedRow391):Promise<void>{
  const recheck=scopeGuard391(org);
