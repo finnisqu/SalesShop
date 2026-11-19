@@ -16,6 +16,30 @@ values(
 )
 on conflict (id) do nothing;
 
+-- Fail closed if someone pre-created the same bucket with broader access
+-- or different upload constraints. Do not silently reuse a public bucket.
+do $
+begin
+ if exists (
+  select 1 from storage.buckets b
+  where b.id='sales-documents'
+   and (
+    b.public is distinct from false
+    or b.file_size_limit is distinct from 15728640
+    or b.allowed_mime_types is distinct from array[
+     'application/pdf','image/png','image/jpeg','image/webp',
+     'text/plain','text/csv',
+     'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+     'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+     'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    ]::text[]
+   )
+ ) then
+  raise exception 'SalesShop document bucket exists with unsafe or unexpected settings. Refusing migration.';
+ end if;
+end;
+$;
+
 create table if not exists public.crm_file_objects (
  id uuid primary key default gen_random_uuid(),
  organization_id uuid not null references public.organizations(id) on delete cascade,
