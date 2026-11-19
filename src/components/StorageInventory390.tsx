@@ -64,9 +64,10 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
  const sized=usage.knownFiles>0;
  const pending=managedRows.filter(r=>r.status==='pending');
  const trashed=managedRows.filter(r=>r.status==='trashed');
- const reservedBytes=managedRows.reduce((total,row)=>total+
+ // A viewer may not see every organization file (e.g. a removed target).
+ // This is a lower-bound INVENTORY count, not an authoritative org quota.
+ const visibleManagedBytes=managedRows.reduce((total,row)=>total+
   (row.status==='pending'?MANAGED_MAX_BYTES_391:row.size_bytes??0),0);
- const allowanceRemaining=Math.max(0,MANAGED_ORG_ALLOWANCE_391-reservedBytes);
  return <div className="ss-storage390" aria-label="Files and storage management">
   <div className="ss-storage390-summary" aria-label="Storage inventory summary">
    <div><small>Indexed items</small><strong>{usage.items}</strong>
@@ -75,17 +76,18 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
     <span>{usage.unknownSize} {usage.unknownSize===1?'file has':'files have'} unknown size</span></div>
    <div><small>Storage sources</small><strong>{usage.providerCount}</strong>
     <span>Providers represented in this library</span></div>
-   {mayEdit&&<div><small>Managed storage allowance</small>
-    <strong>{managedStatus==='ready'?fileSizeLabel(reservedBytes):'Not active'}</strong>
+   {mayEdit&&<div><small>Visible managed files</small>
+    <strong>{managedStatus==='ready'?fileSizeLabel(visibleManagedBytes):'Not active'}</strong>
     <span>{managedStatus==='ready'?
-     fileSizeLabel(allowanceRemaining)+' remaining of '+fileSizeLabel(MANAGED_ORG_ALLOWANCE_391):
+     'At least this much is reserved. Organization upload cap: '+fileSizeLabel(MANAGED_ORG_ALLOWANCE_391):
      'Private Storage activation required'}</span></div>}
   </div>
   <p className="ss-storage390-note">
    Indexed bytes reflect only verified stored documents. External links do not
-   expose file sizes without provider authorization. The managed allowance,
-   when shown to CRM editors, includes pending reservations and trash; it is
-   not provider billing, storage overhead, or network usage.
+   expose file sizes without provider authorization. Visible managed bytes
+   include pending reservations and trash; objects hidden by record permissions
+   are not included. The database enforces the organization upload cap.
+   Neither number is provider billing, storage overhead, or network usage.
   </p>
   <ManagedStorageNotice391/>
   <div className="ss-storage390-switch" role="group" aria-label="Files workspace modes">
