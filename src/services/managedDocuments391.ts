@@ -84,7 +84,7 @@ export function managedToInventory391(row:ManagedRow391):FileInventoryItem{
   id:'managed:'+row.id,source:'managed',provider:'supabase-managed',
   name:row.title,kind:'file',category:row.category,
   targetKind:row.target_kind,targetId:row.target_id,
-  sizeBytes:row.size_bytes,contentType:row.mime_type,
+  sizeBytes:row.size_bytes,contentType:row.mime_type,folderPath:row.folder_path,
   objectKey:row.object_path,bucket:MANAGED_BUCKET_391,
   createdAt:row.created_at,updatedAt:row.updated_at,
  };
