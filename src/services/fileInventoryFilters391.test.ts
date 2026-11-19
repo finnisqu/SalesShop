@@ -49,6 +49,12 @@ describe('#391 — storage inventory and virtual folder filters',()=>{
    ...filters,category:'drawing',provider:'google-drive',
   })).toEqual([]);
  });
+ it('searches friendly category labels used in the file directory',()=>{
+  expect(filterFileInventory391(rows,{...filters,search:'Specifications'})
+   .map(r=>r.id)).toEqual(['linked:3']);
+  expect(filterFileInventory391(rows,{...filters,search:'Drawings'})
+   .map(r=>r.id)).toEqual(['managed:1']);
+ });
  it('can search linked CRM record names without mixing identities',()=>{
   const found=filterFileInventory391(rows,{...filters,search:'jamestown'},
    row=>row.targetId==='deal-1'?'Jamestown Townhomes':'Other Company');
