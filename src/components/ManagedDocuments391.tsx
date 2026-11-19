@@ -6,7 +6,7 @@ import {useManagedFileStore391} from '../store/managedFileStore391';
 import {MANAGED_ACCEPT_391,MANAGED_MAX_BYTES_391,
  type ManagedRow391} from '../services/managedDocuments391';
 import {fileSizeLabel} from '../services/fileStorageInventory390';
-import {FILE_LINK_CATEGORIES,fileTargetKey,type FileTarget,
+import {FILE_LINK_CATEGORIES,fileTargetKey,fileLinkCategoryLabel,type FileTarget,
  type FileLinkCategory} from '../services/fileLinks357a';
 import './managed-documents391.css';
 
@@ -187,7 +187,7 @@ export function RecordManagedDocuments391({target}:{target:FileTarget}){
    {visible.map(row=><div key={row.id}>
     <span><strong>{row.title}</strong><small>
      {row.status==='ready'?fileSizeLabel(row.size_bytes):'Upload pending'}
-     {' · '}{row.category}{row.folder_path?' · '+row.folder_path:''}
+     {' · '}{fileLinkCategoryLabel(row.category)}{row.folder_path?' · '+row.folder_path:''}
     </small></span><ManagedDocumentActions391 row={row}/>
    </div>)}
    {!visible.length&&<p>No stored documents attached to this record yet.</p>}
