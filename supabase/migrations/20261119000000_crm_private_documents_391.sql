@@ -53,10 +53,24 @@ as $$
 declare
  stored_bytes bigint;
  stored_mime text;
+ reserved_bytes bigint;
 begin
  if TG_OP='INSERT' then
   if new.status<>'pending' or new.size_bytes is not null then
    raise exception 'New document must be pending and have no size yet';
+  end if;
+  -- Serialize concurrent upload reservations for this organization, preventing
+  -- multiple simultaneous uploads from bypassing its initial safety allowance.
+  perform pg_catalog.pg_advisory_xact_lock(391,pg_catalog.hashtext(new.organization_id::text));
+  select coalesce(sum(
+   case when f.status='pending' then 15728640::bigint
+    else coalesce(f.size_bytes,0) end
+  ),0) into reserved_bytes
+  from public.crm_file_objects f
+  where f.organization_id=new.organization_id;
+  -- Soft-deleted objects still occupy real provider bytes until purged.
+  if reserved_bytes + 15728640 > 524288000 then
+   raise exception 'The initial 500 MB organization file allowance is full. Permanently delete unneeded files or contact an administrator.';
   end if;
   new.updated_at := now();
   return new;
