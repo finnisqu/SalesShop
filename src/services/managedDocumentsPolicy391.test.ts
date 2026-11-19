@@ -58,6 +58,8 @@ describe('#391 — staged private Storage release gate (static contract)',()=>{
   expect(sql).toContain("Unsafe document folder");
   expect(sql).toContain("Document extension and declared MIME type do not match");
   expect(sql).toContain("expected_mime is distinct from new.mime_type");
+  expect(sql).toContain("pg_catalog.substring(new.title, ");
+  expect(sql).not.toContain("pg_catalog.substring(new.title from ");
   for(const ext of ['pdf','png','jpeg','webp','txt','csv','docx','xlsx','pptx'])
    expect(sql).toContain("when '"+ext+"' then ");
   expect(script).toContain("Server rejects unsafe document names and mismatched MIME metadata");
