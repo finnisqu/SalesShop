@@ -9,6 +9,7 @@ import type {FileInventoryItem} from './fileStorageInventory390';
 
 export const MANAGED_BUCKET_391='sales-documents';
 export const MANAGED_MAX_BYTES_391=15*1024*1024;
+export const MANAGED_ORG_ALLOWANCE_391=500*1024*1024;
 export const MANAGED_ACCEPT_391='.pdf,.png,.jpg,.jpeg,.webp,.txt,.csv,.doc,.docx,.xls,.xlsx,.pptx';
 export type ManagedStatus391='pending'|'ready'|'trashed';
 export type ManagedRow391={
@@ -71,17 +72,25 @@ function reason(error:{message?:string;code?:string}|null,action:string):string{
 /** Organization records are filtered by table RLS (no service-role fallback). */
 export async function listManagedDocuments391(org:string):Promise<ManagedListing391>{
  const recheck=scopeGuard391(org);
- const {data,error}=await supabase!.from('crm_file_objects')
-  .select('id,organization_id,uploaded_by,target_kind,target_id,title,category,folder_path,mime_type,size_bytes,status,object_path,created_at,updated_at')
-  .eq('organization_id',org).order('updated_at',{ascending:false}).limit(1000);
- recheck();
- if(error){
-  if(error.code==='42P01'||error.code==='PGRST205'||error.code==='PGRST116'||
-   /could not find the table.*crm_file_objects|relation.*crm_file_objects.*does not exist/i.test(error.message))
-   return {available:false,items:[],error:null};
-  return {available:false,items:[],error:reason(error,'Cannot load stored documents')};
+ const all:ManagedRow391[]=[];
+ const batchSize=500;
+ for(let start=0;start<20_000;start+=batchSize){
+  const {data,error}=await supabase!.from('crm_file_objects')
+   .select('id,organization_id,uploaded_by,target_kind,target_id,title,category,folder_path,mime_type,size_bytes,status,object_path,created_at,updated_at')
+   .eq('organization_id',org).order('updated_at',{ascending:false})
+   .order('id',{ascending:true}).range(start,start+batchSize-1);
+  recheck();
+  if(error){
+   if(error.code==='42P01'||error.code==='PGRST205'||
+    /could not find the table.*crm_file_objects|relation.*crm_file_objects.*does not exist/i.test(error.message))
+    return {available:false,items:[],error:null};
+   return {available:false,items:[],error:reason(error,'Cannot load stored documents')};
+  }
+  const rows=(data??[]) as ManagedRow391[];
+  all.push(...rows);
+  if(rows.length<batchSize)return {available:true,items:all,error:null};
  }
- return {available:true,items:(data??[]) as ManagedRow391[],error:null};
+ return {available:false,items:[],error:'File inventory exceeds the initial 20,000-item display limit; totals cannot be shown reliably.'};
 }
 export function managedToInventory391(row:ManagedRow391):FileInventoryItem{
  if(row.status!=='ready'||row.size_bytes===null||row.size_bytes<0)
