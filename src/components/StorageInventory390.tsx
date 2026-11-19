@@ -148,7 +148,9 @@ export function StorageInventory390({targets,search,onOpenTarget}:Props){
        </tr>;
       })}
       {!visible.length&&<tr><td colSpan={6} className="ss-storage390-empty">
-       {rows.length?'No files match these filters.':'No documents linked yet. Use + Link document to start.'}
+       {rows.length?'No files match these filters.':managedStatus==='ready'?
+        'No documents yet. Upload a private file or link an external document.':
+        'No documents linked yet. Use + Link document to start.'}
       </td></tr>}
      </tbody>
     </table>
