@@ -92,3 +92,5 @@
 @media(max-width:440px){
  .ss-storage390-filter-panel{grid-template-columns:1fr}
 }
+
+.ss-storage390-filter-panel[hidden]{display:none}
