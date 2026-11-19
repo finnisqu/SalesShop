@@ -1,0 +1,75 @@
+/* #391 — private document controls, scoped to Files and record panels. */
+.ss-managed391-status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ padding:11px 13px;border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-tint);color:var(--ss-theme-muted);
+ font:600 11px/1.5 var(--ss-font-body)}
+.ss-managed391-status strong,.ss-managed391-error{color:#b4433c;font-size:11px;line-height:1.4}
+.ss-managed391-status button,.ss-managed391-record button,
+.ss-managed391-upload button{min-height:34px;padding:7px 10px;cursor:pointer;
+ border:1px solid var(--ss-theme-border);border-radius:8px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:700 11px/1.35 var(--ss-font-body)}
+.ss-managed391-status button:disabled,.ss-managed391-record button:disabled,
+.ss-managed391-upload button:disabled{opacity:.55;cursor:not-allowed}
+.ss-managed391-upload{border:1px solid var(--ss-theme-border);
+ border-radius:10px;background:var(--ss-theme-card)}
+.ss-managed391-upload>summary{cursor:pointer;padding:12px 14px;
+ font-size:11px;font-weight:800;color:var(--ss-theme-ink)}
+.ss-managed391-upload[open]>summary{border-bottom:1px solid var(--ss-theme-border)}
+.ss-managed391-upload>form{display:flex;align-items:end;flex-wrap:wrap;gap:10px;padding:12px}
+.ss-managed391-upload label{display:grid;flex:1;min-width:155px;gap:5px;
+ color:var(--ss-theme-muted);font-size:11px;font-weight:750}
+.ss-managed391-upload :is(input,select){box-sizing:border-box;min-width:0;
+ width:100%;padding:8px 9px;min-height:37px;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-base);color:var(--ss-theme-ink);
+ font:600 11px/1.4 var(--ss-font-body)}
+.ss-managed391-upload button[type=submit]{background:var(--ss-theme-accent);
+ color:var(--ss-theme-contrast);border-color:var(--ss-theme-accent)}
+.ss-managed391-upload form>small{width:100%;color:var(--ss-theme-muted);font-size:10px}
+.ss-managed391-upload .ss-managed391-error{width:100%;margin:0}
+.ss-managed391-actions{display:flex;align-items:center;justify-content:flex-end;
+ gap:5px;flex-wrap:wrap;min-width:0}
+.ss-managed391-actions button{min-height:32px;padding:6px 9px;cursor:pointer;
+ border:1px solid var(--ss-theme-border);border-radius:7px;
+ background:var(--ss-theme-card);color:var(--ss-theme-ink);
+ font:700 10px/1.3 var(--ss-font-body)}
+.ss-managed391-actions small{font:600 10px/1.4 var(--ss-font-body);color:#b4433c}
+.ss-managed391-trash{border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-card);
+ font-size:11px;color:var(--ss-theme-ink)}
+.ss-managed391-trash summary{cursor:pointer;padding:11px 12px;font-weight:800}
+.ss-managed391-trash>div{display:flex;align-items:center;justify-content:space-between;
+ gap:12px;padding:9px 12px;border-top:1px solid var(--ss-theme-border)}
+.ss-managed391-record{display:grid;gap:11px;margin-bottom:16px;
+ padding-bottom:15px;border-bottom:1px solid var(--ss-theme-border)}
+.ss-managed391-record-head{display:flex;align-items:center;justify-content:space-between;
+ gap:8px;color:var(--ss-theme-ink)}
+.ss-managed391-record-head strong{font-size:12px}
+.ss-managed391-record-head small{font-size:10px;color:var(--ss-theme-muted)}
+.ss-managed391-record-list{display:grid;gap:7px}
+.ss-managed391-record-list>div{display:flex;align-items:center;justify-content:space-between;
+ gap:8px;flex-wrap:wrap;border:1px solid var(--ss-theme-border);
+ border-radius:8px;padding:9px;background:var(--ss-theme-card)}
+.ss-managed391-record-list>div>span:first-child{display:grid;gap:4px;min-width:0;flex:1}
+.ss-managed391-record-list>div strong{font-size:11px;overflow-wrap:anywhere}
+.ss-managed391-record-list>div small{font-size:10px;line-height:1.5;color:var(--ss-theme-muted)}
+.ss-managed391-record-list>p{margin:0;font-size:11px;color:var(--ss-theme-muted)}
+.ss-managed391-record .ss-managed391-upload>form{display:grid;gap:10px}
+.ss-managed391-record .ss-managed391-upload label{width:100%;min-width:0}
+.ss-managed391-record .ss-managed391-actions{justify-content:flex-start}
+.ss-managed391-record .ss-managed391-trash>div{flex-wrap:wrap}
+.ss-managed391-actions :is(button):focus-visible,.ss-managed391-upload :is(button,input,select,summary):focus-visible,
+.ss-managed391-trash summary:focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+@media(max-width:680px){
+ .ss-managed391-upload>form{display:grid;gap:10px}
+ .ss-managed391-upload label{width:100%;min-width:0}
+ .ss-managed391-upload :is(input,select){font-size:16px;min-height:44px}
+ .ss-managed391-upload button,.ss-managed391-actions button{min-height:44px}
+ .ss-managed391-record-list>div{align-items:flex-start}
+}
+
+.ss-managed391-name{display:grid;gap:4px;min-width:0}
+.ss-managed391-name strong{font-weight:750;overflow-wrap:anywhere}
+.ss-managed391-name small{font-size:10px;font-weight:500;color:var(--ss-theme-muted);overflow-wrap:anywhere}
