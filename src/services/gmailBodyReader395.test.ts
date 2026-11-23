@@ -31,6 +31,17 @@ describe('#395 — Gmail MIME reading and Reply-To extraction',()=>{
   expect(gmailAddressesInDetails395(result,'inbox@gmail.com').map(item=>item.address))
    .toContain('deep.contact@builder.example');
  });
+ it('does not scan the contents of attached text files',()=>{
+  const result=displayGmailThread(wrap({mimeType:'multipart/mixed',parts:[
+   {mimeType:'text/plain',body:{data:base64url('Please contact lead@builder.example')}},
+   {mimeType:'text/plain',filename:'participants.txt',
+    body:{data:base64url('secret@unrelated.example')}},
+  ]}));
+  const addresses=gmailAddressesInDetails395(result,'inbox@gmail.com')
+   .map(item=>item.address);
+  expect(addresses).toContain('lead@builder.example');
+  expect(addresses).not.toContain('secret@unrelated.example');
+ });
  it('finds addresses in HTML-only builders notifications without rendering HTML',()=>{
   const html='<div>Contact <a href="mailto:pm@builder.example">Project Manager</a></div>'+
    '<script>ignored@attacker.example</script><p>Send to bids@builder.example</p>';
