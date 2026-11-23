@@ -53,7 +53,8 @@ const fetchMock=vi.fn(async (resource:string,init?:RequestInit)=>{
    const prev=connections.get(key(org,user));
    const expectedNonce=url.searchParams.get('refresh_nonce')?.replace(/^eq\./,'');
    if(!prev||prev.refresh_nonce!==expectedNonce)return Response.json([]);
-   const next={...prev,...JSON.parse(String(init.body)) as Record<string,unknown>};
+   const patch=JSON.parse(String(init.body)) as Record<string,unknown>;
+   const next={...prev,...patch};
    connections.set(key(org,user),next);
    return Response.json([next]);
   }
@@ -188,7 +189,6 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
  it('rejects refresh completion after a parallel disconnect or replacement',async()=>{
   vi.stubGlobal('fetch',fetchMock);
   expect((await worker.fetch(request('connect'),env)).status).toBe(200);
-  const prev=connections.get(key(orgA,userA))!;
   let disconnectedDuringRefresh=false;
   const base=fetchMock.getMockImplementation()!;
   vi.stubGlobal('fetch',async (resource:string,init?:RequestInit)=>{
