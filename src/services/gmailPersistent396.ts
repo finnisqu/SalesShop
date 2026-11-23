@@ -76,8 +76,9 @@ export function requestPersistentCode396():Promise<string>{
  if(!gmailClientId) return Promise.reject(new Error('Google OAuth is not configured.'));
  type CodeClient={requestCode:()=>void};
  type OAuthCodeClient={initCodeClient:(config:{
-  client_id:string;scope:string;ux_mode:'popup';prompt:string;
-  callback:(data:{code?:string;error?:string})=>void;
+  client_id:string;scope:string;ux_mode:'popup';select_account:boolean;
+  include_granted_scopes:boolean;state:string;
+  callback:(data:{code?:string;scope?:string;state?:string;error?:string})=>void;
   error_callback:(data:{type?:string})=>void;
  })=>CodeClient};
  const oauth=(window as Window&{google?:{accounts?:{oauth2?:OAuthCodeClient}}})
@@ -85,23 +86,46 @@ export function requestPersistentCode396():Promise<string>{
  if(!oauth)return Promise.reject(new Error('Google sign-in is still loading.'));
  return new Promise((resolve,reject)=>{
   let complete=false;
+  let popupClosed=false;
+  let grace:ReturnType<typeof setTimeout>|undefined;
+  const nonce=new Uint8Array(24);
+  crypto.getRandomValues(nonce);
+  const expectedState=Array.from(nonce,b=>b.toString(16).padStart(2,'0')).join('');
+  const cleanup=()=>{
+   clearTimeout(timeout);clearTimeout(grace);
+   window.removeEventListener('focus',checkPopupClosed);
+  };
   const fail=(message:string)=>{
-   if(complete)return;complete=true;clearTimeout(timeout);reject(new Error(message));
+   if(complete)return;complete=true;cleanup();reject(new Error(message));
+  };
+  const checkPopupClosed=()=>{
+   if(complete||!popupClosed||!document.hasFocus()||grace)return;
+   grace=setTimeout(()=>{
+    grace=undefined;
+    if(!complete&&document.hasFocus())
+     fail('Google popup closed without finishing authorization. Try again.');
+   },4000);
   };
   const timeout=setTimeout(()=>fail('Google authorization took too long. Try again.'),90_000);
+  window.addEventListener('focus',checkPopupClosed);
   try{
    const client=oauth.initCodeClient({
     client_id:gmailClientId,scope:GMAIL_READONLY_SCOPE,ux_mode:'popup',
-    prompt:'consent',
+    select_account:true,include_granted_scopes:false,state:expectedState,
     callback(data){
      if(data.error||!data.code){fail('Google did not grant Gmail access.');return;}
+     if(data.state!==expectedState){fail('Google authorization state did not match. Retry.');return;}
+     if(!data.scope?.split(/\s+/).includes(GMAIL_READONLY_SCOPE)){
+      fail('Google did not grant Gmail read-only access.');return;
+     }
      if(complete)return;
-     complete=true;clearTimeout(timeout);resolve(data.code);
+     complete=true;cleanup();resolve(data.code);
     },
     error_callback(data){
      if(data.type==='popup_failed_to_open')fail('Allow Google popups for SalesShop.');
-     else if(data.type!=='popup_closed'&&data.type!=='popup_closed_by_user')
-      fail('Google authorization did not finish.');
+     else if(data.type==='popup_closed'||data.type==='popup_closed_by_user'){
+      popupClosed=true;checkPopupClosed();
+     }else fail('Google authorization did not finish.');
     },
    });
    client.requestCode();
