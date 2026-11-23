@@ -36,15 +36,15 @@ export function EmailPersonCreate362({thread,details,initialAddress,initialName,
   (!!initialAddress&&!addresses.includes(initialAddress)));
  const [manualMode,setManualMode]=useState(startManual);
  const [manualEmail,setManualEmail]=useState(startManual?initialAddress??'':'');
+ const starter=startManual?initialAddress??'':first;
  const [address,setAddress]=useState(first);
  const getSuggestedChoice=(email:string)=>{
   const suggested=suggestedCompaniesFromEmail(email,contacts,companies);
   return suggested.length===1&&suggested[0].rank===100?suggested[0].company.id:'';
  };
  const [name,setName]=useState(()=>initialName?.trim()||
-  (first?suggestedPersonName(thread,first):
-   initialAddress?suggestedPersonName(thread,initialAddress):''));
- const [companyChoice,setCompanyChoice]=useState(()=>getSuggestedChoice(first));
+  (starter?suggestedPersonName(thread,starter):''));
+ const [companyChoice,setCompanyChoice]=useState(()=>getSuggestedChoice(starter));
  const [companyName,setCompanyName]=useState('');
  const [error,setError]=useState('');
  const [saving,setSaving]=useState(false);
