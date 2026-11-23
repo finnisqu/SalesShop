@@ -61,6 +61,22 @@ For Supabase's modern `sb_secret_...` keys, the Worker sends the secret **only**
 
 Every route verifies current Auth JWT and organization membership. POSTs additionally require `Origin`, `X-Requested-With: XMLHttpRequest`, JSON, bounded body lengths and valid UUIDs. Errors do not return Google responses or ciphertext. Optional persistence reports `configured:false` until every required Worker secret exists; deployment is additionally blocked on SQL/table tests.
 
+## Staging installation verified — November 23, 2026
+
+A new, dedicated project named **Sales Shop Staging** (`lztviymnqplloarwywde`, region `us-east-2`) was confirmed active and initially empty. The following migrations were applied only to that project using the Supabase management connection:
+
+1. `gmail_396_isolated_staging_bootstrap` — minimal `organizations` and `organization_members` fixture tables, both RLS-enabled and denied to browser users
+2. `gmail_396_encrypted_credential_table_staging` — encrypted Gmail credential table with service-only permissions
+3. `gmail_396_staging_fk_indexes` — user-ID indexes on both tables, eliminating foreign-key indexing advisor notices
+
+**Actual staging database checks:** `gmail_oauth_connections396` exists, has RLS enabled, has zero browser policies and zero stored Gmail connections; `anon` and `authenticated` have no SELECT/INSERT/UPDATE/DELETE privilege; `service_role` has all four privileges. Both user-ID indexes are present. Supabase security advisor reports only intentional INFO for RLS-with-no-policy (zero-client-access tables); performance advisor reports only unused indexes expected for an empty database. Production project `pvchgibllozuwickhfqz` was not changed.
+
+**Critical limitation:** The scaffold tables are intentionally a **minimal test fixture, not the full SalesShop schema**. They are empty, and staging has no Auth users yet. A real SalesShop UI cannot be smoke-tested against this DB until a complete application schema is installed or an independently authenticated staging test client is provisioned. Do not deploy CRM production migrations on top of this fixture without planning a reset.
+
+To run `scripts/security/staging-gmail-396.mjs`, securely create **three synthetic staging Auth users** and configure memberships: org A owner and colleague; org B outsider (not an org A member). This must happen in this staging project only; no real customer emails/passwords. Supply the script's fixture settings securely in your own runtime, not in GitHub issues or chat. The test uses dummy encrypted text and never connects to Google.
+
+Google OAuth Audience is currently **Testing** as reported by the product owner. Google's documentation states that an External OAuth app in Testing generally issues Gmail refresh tokens with **seven-day expiry** (since Gmail read-only isn't within the basic profile/email-only exception). Automatic hourly renewal and browser-reload restoration can work during that window; a fresh Google consent will usually be needed around a week later. Publishing appropriately after applicable verification is needed for longer-lived grants, and no implementation can extend a Google token beyond its provider expiry.
+
 ## Isolated staging security audit (#396)
 
 After creating a **separate, disposable Supabase project**, applying the staged SQL there, and deploying a preview Worker at a **non-production** origin with its own Google/Supabase secrets, run:
@@ -89,7 +105,7 @@ Separate full integration testing is still required for the actual Google OAuth 
 ## Isolated staging release checklist — NOT YET COMPLETED
 
 - [ ] Run `npm run test:gmail-persistent` and existing `test:gmail-connection`, `test:gmail-body`, TypeScript and full Vite build.
-- [ ] Apply staging SQL in a disposable *non-production* Supabase project and validate RLS/column grants: anon/authenticated cannot read ciphertext; a service-key Worker can access only with verified user identity+membership.
+- [x] Apply staged credential SQL and minimal fixture schema to dedicated non-production Supabase project; verify RLS and direct table grants. (Worker's runtime identity+membership checks still require separate live integration testing.)
 - [ ] Exercise two synthetic organizations, two users, unauthorized and viewer roles, login/logout, expired JWT, concurrent OAuth attempts, cross-origin and CSRF requests. Test swapping a ciphertext row between users/orgs cannot decrypt.
 - [ ] Test actual `initCodeClient` Google popup on deployed preview origin with registered OAuth client, receipt of refresh tokens, authentication after reload, automatic refresh after expiry and expired/revoked grants.
 - [ ] Run `scripts/security/staging-gmail-396.mjs` with synthetic users and verify every RLS + Worker status check.
