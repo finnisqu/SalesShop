@@ -58,14 +58,42 @@ Cloudflare Worker scripts are served through `worker/index.ts`, and `/api/*` is 
 
 Every route verifies current Auth JWT and organization membership. POSTs additionally require `Origin`, `X-Requested-With: XMLHttpRequest`, JSON, bounded body lengths and valid UUIDs. Errors do not return Google responses or ciphertext. Optional persistence reports `configured:false` until every required Worker secret exists; deployment is additionally blocked on SQL/table tests.
 
+## Isolated staging security audit (#396)
+
+After creating a **separate, disposable Supabase project**, applying the staged SQL there, and deploying a preview Worker at a **non-production** origin with its own Google/Supabase secrets, run:
+
+```bash
+STAGING_RELEASE_ACK=isolated-gmail-credentials-fixtures \
+STAGING_SUPABASE_URL=https://YOUR-STAGING-PROJECT.supabase.co \
+STAGING_SUPABASE_PUBLISHABLE_KEY='...' \
+STAGING_SUPABASE_SERVICE_ROLE_KEY='...' \
+STAGING_GMAIL_APP_ORIGIN=https://YOUR-STAGING-WORKER.example \
+STAGING_GMAIL_ORG_A=... \
+STAGING_GMAIL_ORG_B=... \
+STAGING_GMAIL_OWNER_EMAIL='...' \
+STAGING_GMAIL_OWNER_PASSWORD='...' \
+STAGING_GMAIL_COLLEAGUE_EMAIL='...' \
+STAGING_GMAIL_COLLEAGUE_PASSWORD='...' \
+STAGING_GMAIL_OUTSIDER_EMAIL='...' \
+STAGING_GMAIL_OUTSIDER_PASSWORD='...' \
+node scripts/security/staging-gmail-396.mjs
+```
+
+Use **synthetic users only**: owner + colleague in org A, outsider in org B and not in A. The script refuses the production SalesShop Supabase project and both primary SalesShop production origins. It fails closed if the fixture owner already has saved credentials. It inserts exactly one **invalid dummy ciphertext** (not a real Google token), confirms that browser roles cannot see it, verifies the Worker exposes the mailbox only to its owning user (not their colleague or the other tenant), and removes the fixture in `finally`. The script does **not** access Google's OAuth/token endpoints, Gmail messages or actual users. Run it with secrets loaded from a secure terminal/secret store; never paste command output with secrets.
+
+Separate full integration testing is still required for the actual Google OAuth code popup, refresh-token issuance, token rotation and logout. Tests also cover a compare-and-swap nonce requirement on Worker refresh updates: a refresh racing a disconnect or replacement must fail instead of resurrecting the connection. Short-lived browser tokens remain usable until expiry even if a grant is revoked on another device; no promise of instantaneous cross-device token invalidation is made.
+
 ## Isolated staging release checklist — NOT YET COMPLETED
 
 - [ ] Run `npm run test:gmail-persistent` and existing `test:gmail-connection`, `test:gmail-body`, TypeScript and full Vite build.
 - [ ] Apply staging SQL in a disposable *non-production* Supabase project and validate RLS/column grants: anon/authenticated cannot read ciphertext; a service-key Worker can access only with verified user identity+membership.
 - [ ] Exercise two synthetic organizations, two users, unauthorized and viewer roles, login/logout, expired JWT, concurrent OAuth attempts, cross-origin and CSRF requests. Test swapping a ciphertext row between users/orgs cannot decrypt.
 - [ ] Test actual `initCodeClient` Google popup on deployed preview origin with registered OAuth client, receipt of refresh tokens, authentication after reload, automatic refresh after expiry and expired/revoked grants.
+- [ ] Run `scripts/security/staging-gmail-396.mjs` with synthetic users and verify every RLS + Worker status check.
 - [ ] Test frontend Gmail searching/reading after restoration, Person/Deal email links, and privacy (no tokens/bodies in storage, logs or network responses beyond the short-lived access token in the browser).
 - [ ] Test Google disconnect/revoke, deleted membership or user, deleted organization, error handling, mobile and multiple browser tabs.
+- [ ] Confirm a missing Google read-only scope is rejected, a popup state mismatch is rejected, and a transient Worker outage does not turn the valid session into a disconnected grant.
+- [ ] Confirm refresh-token replacement/disconnect races fail closed, including when two browser tabs renew at once.
 - [ ] Security-review secret deployment, key rotation/backup, Google restricted-scope compliance, rate limits, alerting and operational rollback.
 - [ ] After all gates, intentionally deploy the migration and runtime Worker bindings. Expect existing temporary connected users to need one new Gmail consent to create their first saved refresh credential.
 
