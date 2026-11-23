@@ -527,3 +527,62 @@
  .ss-email-action-content{padding:9px}
  .ss-email-workspace .ss-email-detail{overflow:visible;min-height:180px}
 }
+
+
+/* #395 — In-memory Gmail address discovery and searchable record linking. */
+.ss-email-body-scan{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+ padding:6px 0 9px;border-bottom:1px solid var(--ss-theme-border)}
+.ss-email-body-scan button{flex:none}
+.ss-email-body-scan small{font:500 10px/1.4 var(--ss-font-body);
+ color:var(--ss-theme-muted);flex:1;min-width:160px}
+.ss-email-found-addresses{display:grid;gap:8px;min-width:0;
+ padding:10px 11px;margin:9px 0;border:1px solid var(--ss-theme-border);
+ border-radius:9px;background:var(--ss-theme-card)}
+.ss-email-known-people{display:grid;gap:7px;min-width:0}
+.ss-email-known-people>strong{font-size:11px;color:var(--ss-theme-ink)}
+.ss-email-known-people>div{display:flex;gap:6px;flex-wrap:wrap}
+.ss-email-known-people button{display:grid;gap:3px;text-align:left;min-width:0;
+ max-width:100%;padding:6px 9px}
+.ss-email-known-people button small{font-size:10px;color:var(--ss-theme-muted);
+ overflow-wrap:anywhere;font-weight:500}
+.ss-email-found-addresses>details>summary{cursor:pointer;font-size:11px;
+ font-weight:750;color:var(--ss-theme-ink)}
+.ss-email-found-addresses>details>p{font-size:10px;line-height:1.5;
+ color:var(--ss-theme-muted);margin:7px 0}
+.ss-email-found-list{display:grid;gap:0;max-height:250px;overflow:auto;
+ border:1px solid var(--ss-theme-border);border-radius:8px}
+.ss-email-found-list>div{display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:6px;padding:7px 9px;
+ border-bottom:1px solid var(--ss-theme-border)}
+.ss-email-found-list>div:last-child{border-bottom:0}
+.ss-email-found-list>div>span{display:grid;gap:3px;min-width:0;flex:1}
+.ss-email-found-list>div strong{font-size:11px;overflow-wrap:anywhere}
+.ss-email-found-list>div small{font-size:10px;color:var(--ss-theme-muted)}
+.ss-email-found-list>p{padding:9px;font-size:11px;color:var(--ss-theme-muted)}
+.ss-email-link-picker{display:grid;gap:6px;min-width:0}
+.ss-email-link-picker>.ss-unified-record-picker{margin:0}
+.ss-email-link-picker>small{font-size:10px;line-height:1.45;color:var(--ss-theme-muted)}
+.ss-email-link-new-record{display:grid;gap:9px;min-width:0;padding:10px;
+ border:1px solid var(--ss-theme-border);border-radius:9px;
+ background:var(--ss-theme-base)}
+.ss-email-link-new-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ss-email-link-new-header strong{font-size:11px}
+.ss-email-link-kind{display:flex;gap:6px}
+.ss-email-link-kind button[aria-pressed=true]{border-color:var(--ss-theme-accent);
+ background:var(--ss-theme-tint)}
+.ss-email-link-deal-create{display:grid;gap:9px;min-width:0}
+.ss-email-link-deal-create label{display:grid;gap:5px;font-size:11px;font-weight:750}
+.ss-email-link-deal-create :is(input,select){min-width:0;width:100%;box-sizing:border-box;
+ min-height:37px;padding:7px 9px;border:1px solid var(--ss-theme-border);
+ border-radius:8px;background:var(--ss-theme-card);color:var(--ss-theme-ink)}
+.ss-email-link-new-record>p{color:var(--ss-danger,#b84444);font-size:11px;margin:0}
+.ss-email-link-controls{grid-template-columns:minmax(0,1fr) auto}
+.ss-email-link-controls>.ss-email-link-picker{min-width:0}
+.ss-email-found-addresses :is(button,summary):focus-visible,
+.ss-email-link-picker :is(button,input,select):focus-visible{
+ outline:2px solid var(--ss-theme-accent);outline-offset:2px}
+@media(max-width:600px){
+ .ss-email-link-controls{grid-template-columns:1fr}
+ .ss-email-link-deal-create :is(input,select){min-height:44px;font-size:16px}
+ .ss-email-found-list>div{align-items:flex-start}
+}
