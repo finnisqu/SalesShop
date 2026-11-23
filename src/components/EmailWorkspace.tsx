@@ -229,6 +229,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
  };
  const runSearch=(searchQuery:string)=>{
   if(!connected||loading)return;
+  ++bodyScanEpoch.current;
+  setBodyScan({working:false,done:0,total:0});
   setQuery(searchQuery);
   requestVersion.current+=1;
   setActiveId(null);setDetails(null);setDetailError('');setDetailsLoading(false);
@@ -325,7 +327,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const showThread=async(id:string)=>{
   const request=++requestVersion.current;
   setActiveId(id);setDetails(null);setDetailError('');setDetailsLoading(true);setEmailAction(null);
-  setSelectedTarget('');
+  setSelectedTarget('');setPersonSeed('');
   const session=validGmailToken(expectedScope);
   if(!session){
    setDetailsLoading(false);setDetailError('Reconnect Gmail to read this conversation.');return;
@@ -333,13 +335,72 @@ export function EmailWorkspace({contacts,deals,companies}:{
   try{
    const result=await gmailThreadDetails(session.token,id);
    if(request===requestVersion.current&&validGmailToken(expectedScope)?.token===session.token&&
-    useGmailSessionStore.getState().scope===expectedScope)setDetails(result);
+    useGmailSessionStore.getState().scope===expectedScope){
+    setDetails(result);
+    const thread=threads.find(t=>t.id===id);
+    if(thread&&gmailBodyKey395(thread)===gmailBodyKey395(result.summary)&&
+     discoveryIdentity){
+     const addresses=gmailAddressesInDetails395(result,session.mailbox)
+      .map(item=>item.address);
+     setBodyDiscovery(previous=>({
+      identity:discoveryIdentity,byId:{
+       ...(previous.identity===discoveryIdentity?previous.byId:{}),
+       [id]:{key:gmailBodyKey395(thread),addresses},
+      },
+     }));
+    }
+   }
   }catch(e){
    if(request===requestVersion.current)
     setDetailError(e instanceof Error?e.message:'Could not read this conversation.');
   }finally{
    if(request===requestVersion.current)setDetailsLoading(false);
   }
+ };
+ const scanLoadedBodies=async()=>{
+  const session=validGmailToken(expectedScope);
+  if(!session||!discoveryIdentity||bodyScan.working||!threads.length)return;
+  const pending=threads.filter(thread=>{
+   const cache=bodyDiscovery.identity===discoveryIdentity?
+    bodyDiscovery.byId[thread.id]:undefined;
+   return cache?.key!==gmailBodyKey395(thread);
+  });
+  if(!pending.length){setNotice('Loaded conversations have already been scanned.');return;}
+  const epoch=++bodyScanEpoch.current;
+  setBodyScan({working:true,done:0,total:pending.length});
+  let completed=0,failed=0;
+  for(let i=0;i<pending.length;i+=2){
+   const batch=await Promise.all(pending.slice(i,i+2).map(async thread=>{
+    try{return {thread,details:await gmailThreadDetails(session.token,thread.id)};}
+    catch{return {thread,details:null};}
+   }));
+   if(bodyScanEpoch.current!==epoch||
+    validGmailToken(expectedScope)?.token!==session.token||
+    useGmailSessionStore.getState().scope!==expectedScope)return;
+   const found:Record<string,{key:string;addresses:string[]}>={};
+   for(const item of batch){
+    if(!item.details||
+     gmailBodyKey395(item.details.summary)!==gmailBodyKey395(item.thread)){
+     failed++;continue;
+    }
+    found[item.thread.id]={
+     key:gmailBodyKey395(item.thread),
+     addresses:gmailAddressesInDetails395(item.details,session.mailbox)
+      .map(address=>address.address),
+    };
+   }
+   setBodyDiscovery(previous=>({
+    identity:discoveryIdentity,byId:{
+     ...(previous.identity===discoveryIdentity?previous.byId:{}),...found,
+    },
+   }));
+   completed+=batch.length;
+   setBodyScan({working:true,done:completed,total:pending.length});
+  }
+  setBodyScan({working:false,done:completed,total:pending.length});
+  setNotice('Checked '+(completed-failed)+' loaded conversation(s) for quoted addresses.'+
+   (failed?' '+failed+' could not be read.':'')+
+   ' Matches remain private to this browser session.');
  };
  const applyLink=()=>{
   if(!canWrite||!connected||!mailbox||!current)return;
