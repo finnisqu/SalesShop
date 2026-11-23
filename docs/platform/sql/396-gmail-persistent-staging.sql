@@ -29,4 +29,7 @@ revoke all on public.gmail_oauth_connections396 from PUBLIC,anon,authenticated;
 grant select,insert,update,delete on public.gmail_oauth_connections396 to service_role;
 create index if not exists gmail396_mailbox_idx
  on public.gmail_oauth_connections396(organization_id,mailbox);
+-- Supports auth.users deletion and user-centric credential administration.
+create index if not exists gmail396_user_idx
+ on public.gmail_oauth_connections396(user_id);
 commit;
