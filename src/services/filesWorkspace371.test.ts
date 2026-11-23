@@ -49,7 +49,15 @@ describe('Files + Quote Share workspace #371',()=>{
   expect(manager).toContain('fileLinkCategoryLabel(row.category)');
   expect(manager).toContain('not yet shared or synced across devices');
   const files=source('components/FilesWorkspace.tsx');
-  expect(files).toContain('directory/>');
+  // Files & Docs now delegates its inventory to StorageInventory390, which
+  // retains the original FileLinksManager in the "Manage links" directory.
+  // Verify both layers rather than depending on where the JSX is physically
+  // located as the workspace evolves.
+  expect(files).toContain('<StorageInventory390 targets={targets} search={query}');
+  const inventory=source('components/StorageInventory390.tsx');
+  expect(inventory).toContain("page==='links'");
+  expect(inventory).toContain('<FileLinksManager targets={targets} search={search}');
+  expect(inventory).toContain('onOpenTarget={onOpenTarget} directory/>');
   expect(files).toContain('<QuoteShareReferences371');
   expect(files).toContain('projectId:row.projectId');
   expect(files).toContain('companyId:row.companyId');
