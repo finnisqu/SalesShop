@@ -55,7 +55,9 @@ describe('Files prototype #357a',()=>{
   expect(loadFileLinks('a')).toEqual([row]);
  });
  it('exposes a real Files directory and local record cards',()=>{
-  expect(read('components/ToolsWorkspace.tsx')).toContain("id:'files',label:'Files'");
+  // The Files tool is now titled "Files & Docs"; the underlying record cards
+  // and private file-link contracts remain the same.
+  expect(read('components/ToolsWorkspace.tsx')).toContain("id:'files',label:'Files & Docs'");
   const workspace=read('components/ToolsWorkspace.tsx');
   expect(workspace).toContain("section==='files'&&<FilesWorkspace");
   expect(read('components/DealRecordPage.tsx')).toContain("<RecordFilesPanel target={{kind:'deal'");
