@@ -40,7 +40,21 @@ assert(uuid.test(orgA)&&uuid.test(orgB)&&orgA!==orgB,'Fixture orgs must be diffe
 const anon=required('STAGING_SUPABASE_PUBLISHABLE_KEY');
 const secret=required('STAGING_SUPABASE_SERVICE_ROLE_KEY');
 const base={auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}};
-const admin=createClient(projectUrl.origin,secret,base);
+/** Modern sb_secret_ keys authenticate in apikey only; do not put an opaque
+ * secret in Authorization: Bearer where Supabase would parse it as a JWT.
+ * All admin requests are confined to this separately verified staging URL.
+ */
+const adminRest=async (table,query='',method='GET',body)=>{
+ const response=await fetch(projectUrl.origin+'/rest/v1/'+table+query,{
+  method,headers:{apikey:secret,'Content-Type':'application/json',
+   Prefer:'return=representation'},
+  ...(body?{body:JSON.stringify(body)}:{}),
+  cache:'no-store',redirect:'error',
+ });
+ if(!response.ok)throw new Error('Staging service access failed: '+table);
+ const raw=await response.text();
+ return raw?JSON.parse(raw):[];
+};
 const clients={};
 const sessions={};
 for(const role of ['owner','colleague','outsider']){
@@ -55,9 +69,8 @@ for(const role of ['owner','colleague','outsider']){
 assert(new Set(Object.values(sessions).map(s=>s.id)).size===3,'Fixture users must differ.');
 
 const membership=async(org,user)=>{
- const {data,error}=await admin.from('organization_members')
-  .select('user_id').eq('organization_id',org).eq('user_id',user).limit(1);
- if(error)throw new Error('Could not inspect synthetic membership.');
+ const data=await adminRest('organization_members',
+  '?select=user_id&organization_id=eq.'+org+'&user_id=eq.'+user+'&limit=1');
  return Boolean(data?.length);
 };
 assert(await membership(orgA,sessions.owner.id),'Owner must be in org A.');
@@ -66,10 +79,9 @@ assert(await membership(orgB,sessions.outsider.id),'Outsider must be in org B.')
 assert(!(await membership(orgA,sessions.outsider.id)),'Outsider must not be in org A.');
 
 const table='gmail_oauth_connections396';
-const {data:preexisting,error:preError}=await admin.from(table)
- .select('organization_id,user_id').eq('organization_id',orgA)
- .eq('user_id',sessions.owner.id).limit(1);
-if(preError)throw new Error('Staging credential table missing or inaccessible.');
+const preexisting=await adminRest(table,
+ '?select=organization_id,user_id&organization_id=eq.'+orgA+
+ '&user_id=eq.'+sessions.owner.id+'&limit=1');
 assert.equal(preexisting.length,0,
  'Fixture owner already has a saved Gmail grant; refusing to overwrite it.');
 const fakeMailbox='staging-'+randomUUID()+'@example.invalid';
@@ -94,13 +106,12 @@ const status=async(role,org)=>{
  return {code:response.status,data};
 };
 try{
- const {error}=await admin.from(table).insert(fake);
- if(error)throw new Error('Could not insert isolated staging credential.');
+ await adminRest(table,'','POST',fake);
  inserted=true;
  await verify('Service role sees only the deliberately inserted fixture',async()=>{
-  const {data,error:readError}=await admin.from(table).select('mailbox')
-   .eq('organization_id',orgA).eq('user_id',sessions.owner.id).single();
-  assert(!readError&&data?.mailbox===fakeMailbox);
+  const data=await adminRest(table,'?select=mailbox&organization_id=eq.'+
+   orgA+'&user_id=eq.'+sessions.owner.id+'&limit=1');
+  assert(data?.length===1&&data[0]?.mailbox===fakeMailbox);
  });
  for(const role of ['owner','colleague','outsider']){
   await verify('Browser '+role+' cannot read encrypted credentials',async()=>{
@@ -137,10 +148,13 @@ try{
  });
 }finally{
  if(inserted){
-  const {error}=await admin.from(table).delete()
-   .eq('organization_id',orgA).eq('user_id',sessions.owner.id)
-   .eq('mailbox',fakeMailbox);
-  if(error)throw new Error('SECURITY TEST CLEANUP FAILED: manually remove synthetic fixture.');
+  try{
+   await adminRest(table,'?organization_id=eq.'+orgA+
+    '&user_id=eq.'+sessions.owner.id+
+    '&mailbox=eq.'+encodeURIComponent(fakeMailbox),'DELETE');
+  }catch{
+   throw new Error('SECURITY TEST CLEANUP FAILED: remove synthetic fixture manually.');
+  }
  }
 }
 process.stdout.write('Staging Gmail #396 audit passed '+passes+' checks. No Google tokens used.\n');
