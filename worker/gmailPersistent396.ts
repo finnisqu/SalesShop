@@ -106,6 +106,20 @@ async function removeConnection(env:GmailPersistentEnv396,org:string,user:string
  const response=await serviceFetch(env,rowPath(org,user),{method:'DELETE'});
  if(!response.ok)throw new Error('Could not disconnect Gmail');
 }
+/** Google may revoke an entire grant for a Gmail user+OAuth client. Only call
+ * its revocation endpoint if no other saved SalesShop connection references
+ * the same mailbox. On lookup errors, preserve other users' grants and still
+ * delete this personal SalesShop credential.
+ */
+async function noOtherMailboxConnections(env:GmailPersistentEnv396,mailbox:string):Promise<boolean>{
+ try{
+  const response=await serviceFetch(env,'gmail_oauth_connections396?select=organization_id'+
+   '&mailbox=eq.'+encodeURIComponent(mailbox)+'&limit=1');
+  if(!response.ok)return false;
+  const rows=await response.json() as {organization_id:string}[];
+  return rows.length===0;
+ }catch{return false;}
+}
 async function identifyUser(env:GmailPersistentEnv396,authHeader:string|null):Promise<string|null>{
  if(!authHeader||!/^Bearer [A-Za-z0-9._~+\/-]{30,8192}$/.test(authHeader))return null;
  const response=await fetch(apiBase(env)+'/auth/v1/user',{
@@ -198,8 +212,12 @@ export async function handleGmailPersistent396(request:Request,env:GmailPersiste
    needsReconnect:prior?.status==='reauthorize',mailbox:prior?.mailbox??null});
   if(action==='disconnect'){
    await removeConnection(env,org,user);
-   if(prior){try{const refresh=await unsealRefresh396(prior,env,org,user);
-    await revokeGoogle(refresh);}catch{/* Deleted locally, do not disclose token. */}}
+   if(prior&&await noOtherMailboxConnections(env,prior.mailbox)){
+    try{
+     const refresh=await unsealRefresh396(prior,env,org,user);
+     await revokeGoogle(refresh);
+    }catch{/* Deleted locally; leave other account authorizations untouched. */}
+   }
    return json({disconnected:true});
   }
   if(action==='connect'){
