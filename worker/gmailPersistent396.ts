@@ -8,7 +8,8 @@ export interface GmailPersistentEnv396 {
  GMAIL_TOKEN_ENCRYPTION_KEY?:string; // base64-encoded 32 random bytes (Cloudflare secret)
  SUPABASE_URL?:string;
  SUPABASE_PUBLISHABLE_KEY?:string;
- SUPABASE_SERVICE_ROLE_KEY?:string; // server secret, never VITE_ or browser
+ SUPABASE_SECRET_KEY?:string; // preferred: modern sb_secret_... runtime binding
+ SUPABASE_SERVICE_ROLE_KEY?:string; // legacy fallback; server-only
 }
 const OAUTH_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
 const ORG_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,10 +36,14 @@ function apiBase(env:GmailPersistentEnv396):string{
   url.search||url.hash)throw new Error('Invalid Supabase configuration');
  return url.origin;
 }
+function serverKey(env:GmailPersistentEnv396):string{
+ return env.SUPABASE_SECRET_KEY?.trim()||
+  env.SUPABASE_SERVICE_ROLE_KEY?.trim()||'';
+}
 function isConfigured(env:GmailPersistentEnv396):boolean{
  try{
   return !!(env.GOOGLE_GMAIL_CLIENT_ID?.endsWith('.apps.googleusercontent.com')&&
-   env.GOOGLE_GMAIL_CLIENT_SECRET&&env.SUPABASE_SERVICE_ROLE_KEY&&
+   env.GOOGLE_GMAIL_CLIENT_SECRET&&serverKey(env)&&
    env.SUPABASE_PUBLISHABLE_KEY&&base64ToBytes(env.GMAIL_TOKEN_ENCRYPTION_KEY??'').length===32&&
    apiBase(env));
  }catch{return false;}
@@ -72,7 +77,7 @@ export async function unsealRefresh396(row:StoredConnection,env:GmailPersistentE
 function serviceHeaders(env:GmailPersistentEnv396):Record<string,string>{
  // Modern sb_secret_ keys must be sent in apikey, never as Bearer tokens:
  // the gateway translates them to the service JWT for PostgREST.
- return {'apikey':env.SUPABASE_SERVICE_ROLE_KEY!,
+ return {'apikey':serverKey(env),
   'Content-Type':'application/json'};
 }
 async function serviceFetch(env:GmailPersistentEnv396,path:string,init:RequestInit={}):Promise<Response>{
