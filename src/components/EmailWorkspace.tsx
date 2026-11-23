@@ -650,7 +650,10 @@ export function EmailWorkspace({contacts,deals,companies}:{
      {([['task','New task'],['log','Log Activity'],['person','Create Person'],['link','Link record']] as const).map(([id,label])=>
       <button type="button" key={id} disabled={!canWrite||((id==='task'||id==='log')&&details?.summary.id!==current.id)}
        aria-expanded={emailAction===id} aria-pressed={emailAction===id}
-       onClick={()=>setEmailAction(emailAction===id?null:id)}>{label}</button>)}
+       onClick={()=>{
+        if(id==='person')setPersonSeed('');
+        setEmailAction(emailAction===id?null:id);
+       }}>{label}</button>)}
     </div>
     {emailAction&&<div className="ss-email-action-popover" role="dialog" aria-modal="false"
      aria-label={'Email '+emailAction+' actions'}
