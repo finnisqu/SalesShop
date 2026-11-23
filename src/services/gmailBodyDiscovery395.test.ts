@@ -3,6 +3,7 @@ import {gmailAddressesInDetails395,gmailAddressFindings395,gmailThreadWithAddres
  from './gmailBodyDiscovery395';
 import type {GmailThreadDetails} from './gmailRead359a';
 import type {Contact} from '../types/crm';
+import {emailTargetSuggestions} from './emailThreadMatching359a';
 
 const summary={
  id:'thread-test',subject:'Project notice',from:'updates@platform.example',
@@ -52,6 +53,14 @@ describe('#395 — address discovery in live opened Gmail messages',()=>{
   const known=gmailThreadWithAddresses395(summary,[{address:'jane.smith@builder.example'}]);
   expect(known.participants).toContain('jane.smith@builder.example');
   expect(summary.participants).not.toContain('jane.smith@builder.example');
+ });
+ it('finds a known Person even when a builder platform hid them from From/To',()=>{
+  expect(emailTargetSuggestions(summary,contacts,[],[])).toEqual([]);
+  const recognized=gmailThreadWithAddresses395(summary,[
+   {address:'jane.smith@builder.example'},
+  ]);
+  expect(emailTargetSuggestions(recognized,contacts,[],[])
+   .map(item=>item.kind+':'+item.id)).toContain('person:p1');
  });
  it('deduplicates case-insensitively and ignores invalid address lookalikes',()=>{
   const duplicate={...details,messages:[{...details.messages[0],
