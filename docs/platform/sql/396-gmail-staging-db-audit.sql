@@ -75,19 +75,34 @@ begin
  end if;
 end $$;
 
--- Execute a real SELECT as the browser role, not merely a privilege query.
-do $$
-declare denied boolean:=false;
+-- Prove each forbidden operation fails as actual Postgres API roles, not
+-- merely a metadata GRANT inspection. All synthetic inserts are rolled back.
+do $
+declare
+ client_role text;
+ command text;
+ denied boolean;
 begin
- execute 'set local role authenticated';
- begin
-  execute 'select count(*) from public.gmail_oauth_connections396';
- exception when insufficient_privilege then
-  denied:=true;
- end;
- execute 'reset role';
- if not denied then
-  raise exception 'Authenticated role could SELECT synthetic Gmail credentials';
- end if;
-end $$;
+ foreach client_role in array array['anon','authenticated'] loop
+  execute format('set local role %I',client_role);
+  foreach command in array array[
+   'select count(*) from public.gmail_oauth_connections396',
+   'insert into public.gmail_oauth_connections396 default values',
+   'update public.gmail_oauth_connections396 set mailbox=mailbox where false',
+   'delete from public.gmail_oauth_connections396 where false'
+  ] loop
+   denied:=false;
+   begin
+    execute command;
+   exception when insufficient_privilege then
+    denied:=true;
+   end;
+   if not denied then
+    raise exception 'Browser role % unexpectedly executed a credential operation: %',
+     client_role,command;
+   end if;
+  end loop;
+  execute 'reset role';
+ end loop;
+end $;
 rollback;
