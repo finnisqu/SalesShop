@@ -36,6 +36,15 @@ describe('#395 — Gmail body matches and safe contact/record flows',()=>{
   expect(workspace).toContain('<EmailLinkPicker395');
   expect(workspace).toContain('onClick={applyLink}');
  });
+ it('supports manual Person creation without overriding detected-address safety',()=>{
+  expect(linkPicker).toContain('allowManual');
+  expect(createPerson).toContain('const MANUAL_EMAIL');
+  expect(createPerson).toContain('allowManual&&manualMode');
+  expect(createPerson).toContain('personEmailAddress(manualEmail)');
+  expect(createPerson).toContain('recordNameKey(person.name)===recordNameKey(clean)');
+  expect(createPerson).toContain("...(currentAddress?{email:currentAddress}:{})");
+  expect(createPerson).toContain('Add an email later to enable Gmail address matching.');
+ });
  it('rechecks live Gmail and CRM permissions before creating a Person or Deal',()=>{
   expect(createPerson).toContain('session.scope!==scope');
   expect(createPerson).toContain('bodyIsCurrent&&details');
