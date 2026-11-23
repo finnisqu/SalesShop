@@ -33,10 +33,13 @@ Configure the deployment's **Worker runtime**, not Vite build variables, and do 
 | `GMAIL_TOKEN_ENCRYPTION_KEY` | Server-only base64 encoding of 32 cryptographically random bytes; generate securely and store in a secret manager |
 | `SUPABASE_URL` | Production/staging HTTPS Supabase project origin, no API key in the URL |
 | `SUPABASE_PUBLISHABLE_KEY` | Public Supabase publishable key for verifying the browser JWT with GoTrue |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** privileged key; never bundled or exposed to browsers; Worker uses only for membership checks and the locked-down encrypted-token table |
+| `SUPABASE_SECRET_KEY` | **Recommended:** modern `sb_secret_...` key; server-only privileged Worker binding, never bundled or exposed to browsers |
+| `SUPABASE_SERVICE_ROLE_KEY` | Optional legacy fallback for an older service-role key; use only if `SUPABASE_SECRET_KEY` is not set |
 | `GMAIL_OAUTH_ORIGIN` | Exact first-party app origin, e.g. `https://app.salesshop.work` |
 
 Cloudflare Worker scripts are served through `worker/index.ts`, and `/api/*` is configured in `wrangler.jsonc`. Google OAuth authorized JavaScript origins must include the exact deployed origin. Code popup uses the page **origin** as the token-exchange redirect URI, not `/gmail/callback`. The existing full-page redirect is a separate legacy path.
+
+For Supabase's modern `sb_secret_...` keys, the Worker sends the secret **only** in the `apikey` header, never `Authorization: Bearer`, which would cause an invalid-JWT error. The staging audit does the same. <https://supabase.com/docs/guides/getting-started/api-keys>
 
 **Never publish the Worker service-role key, Google client secret, or encryption key as a build variable with a `VITE_` prefix.** The encryption key must be backed up securely: losing it makes existing refresh ciphertext irrecoverable. Changing it requires an approved decrypt/re-encrypt migration or deliberate reauthorization; simply changing the Worker key breaks saved connections.
 
