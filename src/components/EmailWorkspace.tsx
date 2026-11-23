@@ -135,8 +135,13 @@ export function EmailWorkspace({contacts,deals,companies}:{
   gmailAddressFindings395(details,contacts,mailbox):[],
   [details,current,contacts,mailbox]);
  const knownFindings=findings.filter(item=>item.people.length>0);
- const triage=useMemo(()=>classifyGmailTriage(matchingThreads,contacts,mailbox,
-  Date.now(),reviewRules),[matchingThreads,contacts,mailbox,reviewRules]);
+ const triage=useMemo(()=>{
+  // Quoted historical addresses help identify People, but must NOT turn an
+  // automated builder-platform notification into an inferred reply obligation.
+  const headerOnly=classifyGmailTriage(threads,contacts,mailbox,Date.now(),reviewRules);
+  const matched=classifyGmailTriage(matchingThreads,contacts,mailbox,Date.now(),reviewRules);
+  return matched.map((item,index)=>({...item,reviewReply:headerOnly[index]?.reviewReply??false}));
+ },[threads,matchingThreads,contacts,mailbox,reviewRules]);
  const triageCounts=useMemo(()=>{
   const count=gmailTriageCounts(triage);
   const active=triage.filter(item=>item.reviewReply&&
