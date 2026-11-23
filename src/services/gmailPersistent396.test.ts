@@ -133,7 +133,7 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
   const second=await worker.fetch(request('status',orgA,'GET',{},{
    Authorization:jwtB}),env);
   expect(await second.json()).toEqual({configured:true,connected:false,
-   needsReconnect:undefined,mailbox:null});
+   mailbox:null});
   const noAccess=await worker.fetch(request('refresh',orgA,'POST',{},{
    Authorization:jwtB}),env);
   expect(noAccess.status).toBe(404);
