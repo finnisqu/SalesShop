@@ -70,7 +70,8 @@ export function EmailLinkPicker395({thread,details,mailbox,scope,contacts,compan
   if(!clean||clean.length>180){setError('Enter a Deal name up to 180 characters.');return;}
   const crm=useCrmStore.getState();
   if(!crm.hydrated){setError('CRM is still loading.');return;}
-  if(crm.projects.some(d=>recordNameKey(d.name)===recordNameKey(clean))){
+  if(crm.projects.some(d=>recordNameKey(d.name)===recordNameKey(clean)&&
+   (d.companyId??'')===dealCompany)){
    setError('That Deal name already exists. Search for and select it above.');return;
   }
   if(dealCompany&&!crm.companies.some(c=>c.id===dealCompany)){
