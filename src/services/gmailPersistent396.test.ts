@@ -113,6 +113,18 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
    'X-Requested-With':''}),env)).status).toBe(403);
   expect(fetchMock.mock.calls.every(call=>!String(call[0]).includes('oauth2.googleapis.com'))).toBe(true);
  });
+ it('uses apikey for modern Supabase service keys, never Bearer sb_secret',async()=>{
+  vi.stubGlobal('fetch',fetchMock);
+  expect((await worker.fetch(request('status'),env)).status).toBe(200);
+  const restCalls=fetchMock.mock.calls.filter(call=>
+   new URL(String(call[0])).pathname.startsWith('/rest/v1/'));
+  expect(restCalls.length).toBeGreaterThan(0);
+  for(const [,init] of restCalls){
+   const headers=new Headers((init as RequestInit)?.headers);
+   expect(headers.get('apikey')).toBe('test-service-role-secret');
+   expect(headers.has('Authorization')).toBe(false);
+  }
+ });
  it('exchanges code, encrypts refresh token, restores and revokes a single-user connection',async()=>{
   vi.stubGlobal('fetch',fetchMock);
   const connect=await worker.fetch(request('connect'),env);
