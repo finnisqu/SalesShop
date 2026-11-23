@@ -154,7 +154,8 @@ export function revokeGmailToken(token:string):void{
 }
 interface GmailApiHeader {name?:string;value?:string}
 interface GmailApiPayload {
- mimeType?:string;headers?:GmailApiHeader[];body?:{data?:string;size?:number};
+ mimeType?:string;filename?:string;headers?:GmailApiHeader[];
+ body?:{data?:string;size?:number;attachmentId?:string};
  parts?:GmailApiPayload[];
 }
 export interface GmailApiMessage{
@@ -255,7 +256,7 @@ function readableGmailBody(part?:GmailApiPayload):string{
  const plain:string[]=[],html:string[]=[];
  let visited=0;
  const collect=(item:GmailApiPayload,depth:number)=>{
-  if(++visited>160||depth>18)return;
+  if(++visited>160||depth>18||item.filename||item.body?.attachmentId)return;
   const mime=item.mimeType?.toLowerCase()??'';
   if(mime==='text/plain'&&item.body?.data)plain.push(decodedGmailPart(item.body.data));
   if(mime==='text/html'&&item.body?.data)html.push(gmailHtmlAsText(decodedGmailPart(item.body.data)));
