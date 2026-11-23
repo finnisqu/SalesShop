@@ -51,6 +51,12 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const loading=useGmailSessionStore(s=>s.loading),error=useGmailSessionStore(s=>s.error);
  const threads=useGmailSessionStore(s=>s.threads),nextPage=useGmailSessionStore(s=>s.nextPageToken);
  const connect=useGmailSessionStore(s=>s.connect),disconnect=useGmailSessionStore(s=>s.disconnect);
+ const connectPersistent=useGmailSessionStore(s=>s.connectPersistent);
+ const disconnectSaved=useGmailSessionStore(s=>s.disconnectSaved);
+ const persistent=useGmailSessionStore(s=>s.persistent);
+ const persistentConfigured=useGmailSessionStore(s=>s.persistentConfigured);
+ const restoring=useGmailSessionStore(s=>s.restoring);
+ const needsReconnect=useGmailSessionStore(s=>s.needsReconnect);
  const connectWithRedirect=useGmailSessionStore(s=>s.connectWithRedirect);
  const searchGmail=useGmailSessionStore(s=>s.search);
  const linkScope=useEmailThreadLinkStore(s=>s.scope);
@@ -236,9 +242,27 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const connectPopup=async()=>{
   setNotice('');
   try{
-   await connect();
-   await useGmailSessionStore.getState().search(query);
-  }catch{/* The session store explains the popup failure. */}
+   if(useGmailSessionStore.getState().persistentConfigured){
+    // Persistent GIS code popup is selected only after the Worker readiness
+    // check has completed. Never await a network probe before requestCode().
+    await connectPersistent();
+   }else{
+    // Preserve the proven temporary token popup as a safe fallback while
+    // #396 secrets and staged SQL are not enabled on the Worker.
+    await connect();
+    await useGmailSessionStore.getState().search(query);
+   }
+  }catch{/* The Gmail session store displays the authorization failure. */}
+ };
+ const disconnectAccount=async()=>{
+  try{
+   if(persistent){
+    await disconnectSaved();
+   }else disconnect();
+   setNotice('Gmail authorization disconnected.');
+  }catch(e){
+   setNotice(e instanceof Error?e.message:'Could not disconnect Gmail.');
+  }
  };
  const runSearch=(searchQuery:string)=>{
   if(!connected||loading)return;
@@ -455,13 +479,17 @@ export function EmailWorkspace({contacts,deals,companies}:{
   </div>}
   <div className="ss-email-toolbar">
    <div className="ss-email-connection">
-    <span>{connected?'Connected: '+mailbox:status==='connecting'?'Waiting for Google authorization…':'No Gmail connected'}</span>
-    {connected?<button type="button" onClick={()=>{disconnect();setNotice('Gmail disconnected for this session.');}}>
+    <span>{connected?'Connected: '+mailbox+(persistent?' · Auto-renewing':' · Session only'):
+     restoring?'Checking saved Gmail connection…':
+     status==='connecting'?'Waiting for Google authorization…':
+     needsReconnect?'Gmail needs reconnection':'No Gmail connected'}</span>
+    {connected?<button type="button" onClick={()=>{void disconnectAccount();}}>
      Disconnect</button>:<>
-     <button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
-      title="Connect Gmail with the Google account popup"
+     <button type="button" disabled={!ready||!gmailClientId||status==='connecting'||restoring}
+      title={persistentConfigured?'Connect Gmail with saved authorization':
+       'Connect Gmail with a temporary Google popup'}
       onClick={()=>{void connectPopup();}}>Connect Gmail</button>
-     <button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
+     <button type="button" disabled={!ready||!gmailClientId||status==='connecting'||restoring}
       title="Alternative full-page OAuth redirect (requires Cloudflare Worker configuration)"
       onClick={()=>{void connectRedirect();}}>Try redirect instead</button>
     </>}
@@ -515,9 +543,10 @@ export function EmailWorkspace({contacts,deals,companies}:{
   {error&&<div className="ss-email-error" role="alert">
    <strong>Gmail connection not completed</strong>
    <p>{error}</p>
-   <small>The popup connection uses Google sign-in directly. The optional redirect
-    connection additionally requires a configured Cloudflare Worker OAuth secret
-    and the exact Google callback URI. No messages were imported.</small>
+   <small>When persistent storage is enabled, the Google popup uses server-side
+    OAuth and encrypted, per-user refresh credentials. Otherwise it uses the
+    temporary browser popup. The legacy redirect requires a separate Worker
+    OAuth configuration. No messages were imported on this failed attempt.</small>
   </div>}
   {error&&<GmailConnectionChecks388/>}
   {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
