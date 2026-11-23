@@ -77,7 +77,7 @@ end $$;
 
 -- Prove each forbidden operation fails as actual Postgres API roles, not
 -- merely a metadata GRANT inspection. All synthetic inserts are rolled back.
-do $
+do $gmail396$
 declare
  client_role text;
  command text;
@@ -104,5 +104,5 @@ begin
   end loop;
   execute 'reset role';
  end loop;
-end $;
+end $gmail396$;
 rollback;
