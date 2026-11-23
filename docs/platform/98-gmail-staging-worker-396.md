@@ -22,7 +22,52 @@ secrets have been configured through this workflow.
 
 This staging DB is **only a synthetic OAuth fixture**, not a full CRM schema.
 
-## Step 1 — Deploy an isolated Cloudflare Worker
+## Easier setup: Cloudflare dashboard (no terminal required)
+
+**This is the recommended option for the operator.** The code is in an unmerged
+GitHub feature branch, not GitHub `main`; simply clicking the repository's
+Code button on `main` will not show the staging configuration. Use
+[the exact branch](https://github.com/finnisqu/SalesShop/tree/feat/gmail-persistent-oauth-396)
+or let Cloudflare select it during Git import.
+
+1. Open [Cloudflare Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages)
+   and choose **Create application** → **Import a repository** (under Workers,
+   not Pages). If the wording differs slightly, choose the option that deploys
+   a GitHub repository as a Cloudflare Worker.
+2. Connect/select the existing GitHub repository **`finnisqu/SalesShop`**.
+   You are creating a **new Worker**, not editing or reconnecting the existing
+   SalesShop production deployment.
+3. Set the Worker/project name to **`salesshop-gmail-396-staging`**.
+4. Choose the Git/production branch **`feat/gmail-persistent-oauth-396`**,
+   **not `main`**. This is the production branch of the *isolated staging
+   Worker*, not of SalesShop.
+5. Keep the **root directory** at the repository root (empty or `/`).
+   **Build command**: leave empty (this API-only Worker needs no Vite/static
+   app build). **Deploy command**: enter this exact command:
+   ```
+   npx wrangler deploy --config wrangler.gmail396.staging.jsonc
+   ```
+   This explicit `--config` is essential: the repository's default
+   `wrangler.jsonc` belongs to SalesShop production.
+6. Select **Save and Deploy**. The result should be a new Worker with a URL
+   of the form `https://salesshop-gmail-396-staging.<your-account>.workers.dev`.
+   Copy that complete HTTPS URL. Do **not** set up a custom domain or route.
+7. Visiting the bare Worker URL deliberately shows **Not found** (HTTP 404);
+   it hosts only the API, not a frontend. Before private bindings are added,
+   `/api/gmail/persistent/status?organization_id=68af5ab1-aa83-43c9-b442-93b0f3bb7ca7`
+   should show an unavailable response (HTTP 503). This is expected.
+
+**Stop here initially** and share only the new `workers.dev` URL. The next
+stage adds Worker-scoped secrets privately through **that Worker's Settings →
+Variables and Secrets**, with no secrets written to GitHub or ChatGPT.
+Cloudflare's Workers Git integration supports custom deploy commands and
+repository branches:
+<https://developers.cloudflare.com/workers/ci-cd/builds/configuration/>.
+If you cannot select the feature branch or edit the deploy command, stop
+rather than deploy with defaults; use the CLI fallback below or share the
+non-secret setup screen.
+
+## Alternative — deploy from your local checkout (CLI)
 
 Use the **feature branch** `feat/gmail-persistent-oauth-396` in a local
 repo checkout with dependencies installed. DO NOT deploy the default
