@@ -163,9 +163,17 @@ export function EmailWorkspace({contacts,deals,companies}:{
   return filterGmailTriage(triage,triageFilter);
  },[triage,triageFilter,reviewDecisions,threadWork]);
  const directLinks=dealPeopleStoreScope===dealPeopleScope(mode,org)?dealPeople:[];
- const suggestions=useMemo(()=>current?
-  emailTargetSuggestions(current,contacts,deals,directLinks):[],
-  [current,contacts,deals,directLinks]);
+ const suggestions=useMemo(()=>{
+  if(!current)return [];
+  const original=threads.find(item=>item.id===current.id);
+  const headerKeys=new Set(original?
+   emailTargetSuggestions(original,contacts,deals,directLinks)
+    .map(item=>item.kind+':'+item.id):[]);
+  return emailTargetSuggestions(current,contacts,deals,directLinks).map(item=>
+   headerKeys.has(item.kind+':'+item.id)?item:{
+    ...item,reason:'Possible match from quoted/forwarded content — confirm before linking',
+   });
+ },[current,threads,contacts,deals,directLinks]);
  const targets=useMemo<EmailTarget[]>(()=>[
   ...contacts.map(p=>({kind:'person' as const,id:p.id,title:p.name||p.email||'Unnamed Person'})),
   ...deals.map(d=>({kind:'deal' as const,id:d.id,title:d.name})),
