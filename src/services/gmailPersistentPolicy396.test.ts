@@ -47,6 +47,21 @@ describe('#396 — encryption and tenancy policies',()=>{
   expect(boundary).toContain('renewPersistent()');
   expect(state).toContain('if(token&&!persistent)revokeGmailToken(token)');
  });
+ it('uses the documented GIS code-popup configuration and confirms a unique state',()=>{
+  expect(service).toContain("ux_mode:'popup'");
+  expect(service).toContain("select_account:true,include_granted_scopes:false,state:expectedState");
+  expect(service).toContain("data.state!==expectedState");
+  expect(service).toContain("data.scope?.split(/\\s+/).includes(GMAIL_READONLY_SCOPE)");
+  expect(service).not.toContain("prompt:'consent'");
+  expect(service).toContain("popupClosed=true;checkPopupClosed()");
+ });
+ it('does not erase connected Gmail on a transient Worker error',()=>{
+  expect(state).toContain('gmailRenewal396');
+  expect(state).toContain('if(gmailRenewal396?.scope===scope&&gmailRenewal396.epoch===epoch)');
+  expect(state).toContain('temporary Cloudflare/Google outage');
+  expect(state).toContain("if(get().persistent||get().needsReconnect)");
+  expect(state).toContain("needsReconnect:true,error:message");
+ });
  it('revokes only with explicit saved disconnect and never during account switching',()=>{
   expect(worker).toContain("if(action==='disconnect')");
   expect(worker).toContain('await removeConnection(env,org,user)');
