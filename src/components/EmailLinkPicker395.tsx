@@ -32,10 +32,12 @@ export function EmailLinkPicker395({thread,details,mailbox,scope,contacts,compan
   ...deals.map(d=>({key:'deal:'+d.id,title:d.name})),
  ].find(row=>row.key===selectedTarget):undefined;
  const options=[
-  ...suggestions.map(s=>({id:s.kind+':'+s.id,name:s.title,
-   detail:(s.kind==='person'?'Person':'Deal')+
-    (s.kind==='person'&&contacts.find(p=>p.id===s.id)?.email?
-     ' · '+contacts.find(p=>p.id===s.id)!.email:'')+' · '+s.reason})),
+  ...suggestions.map(s=>{
+   const address=s.kind==='person'?contacts.find(p=>p.id===s.id)?.email:undefined;
+   return {id:s.kind+':'+s.id,name:s.title,
+    detail:(s.kind==='person'?'Person':'Deal')+
+     (address?' · '+address:'')+' · '+s.reason};
+  }),
   ...contacts.map(p=>({id:'person:'+p.id,name:p.name||p.email||'Unnamed Person',
    detail:'Person'+(p.email?' · '+p.email:'')})),
   ...deals.map(d=>({id:'deal:'+d.id,name:d.name,
@@ -60,7 +62,8 @@ export function EmailLinkPicker395({thread,details,mailbox,scope,contacts,compan
    emailWorkspaceScope(state.mode,state.organizationId,state.user?.id)!==scope||
    !canEditTeamArea(state.teamRole,state.teamDepartment,'crm')||
    useRolePerspectiveStore.getState().activePerspective||
-   !gmail.threads.some(row=>row.id===thread.id)){
+   !gmail.threads.some(row=>row.id===thread.id&&
+    row.latestMessageId===thread.latestMessageId)){
    setError('The SalesShop or Gmail account changed. Reopen the email before creating a Deal.');
    return;
   }
