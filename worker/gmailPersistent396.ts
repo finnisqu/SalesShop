@@ -69,7 +69,7 @@ export async function unsealRefresh396(row:StoredConnection,env:GmailPersistentE
  await keyFor(env),base64ToBytes(row.refresh_ciphertext));
  return new TextDecoder().decode(decrypted);
 }
-function serviceHeaders(env:GmailPersistentEnv396):HeadersInit{
+function serviceHeaders(env:GmailPersistentEnv396):Record<string,string>{
  return {'apikey':env.SUPABASE_SERVICE_ROLE_KEY!,
   'Authorization':'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY!,
   'Content-Type':'application/json'};
@@ -147,7 +147,11 @@ async function googleToken(env:GmailPersistentEnv396,form:URLSearchParams):
  };
  if(!response.ok||!payload.access_token||payload.token_type?.toLowerCase()!=='bearer')
   throw new Error(payload.error==='invalid_grant'?'invalid_grant':'Google authorization failed');
- if(payload.scope&&!payload.scope.split(/\s+/).includes(OAUTH_SCOPE))
+ if(form.get('grant_type')==='authorization_code'&&
+  !payload.scope?.split(/\s+/).includes(OAUTH_SCOPE))
+  throw new Error('Insufficient Google scope');
+ if(form.get('grant_type')==='refresh_token'&&payload.scope&&
+  !payload.scope.split(/\s+/).includes(OAUTH_SCOPE))
   throw new Error('Insufficient Google scope');
  if(!Number.isFinite(payload.expires_in)||Number(payload.expires_in)<60)
   throw new Error('Invalid Google token expiry');
