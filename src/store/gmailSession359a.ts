@@ -214,7 +214,16 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
    await get().renewPersistent();
   const {scope,token,expiresAt,mailbox}=get();
   if(!scope||!mailbox||!token||Date.now()>=expiresAt){
-   set({...reset(),error:'Gmail session expired. Reconnect to read conversations.'});
+   if(get().persistent||get().needsReconnect){
+    // Keep the saved-grant mode during an outage or explicit Google
+    // reauthorization. Otherwise a failed search would erase the renewal
+    // status needed for the next focus/retry.
+    set({loading:false,threads:[],nextPageToken:undefined,
+     error:get().needsReconnect?'Google authorization expired. Reconnect Gmail.':
+      'Could not renew Gmail right now. Try again when service recovers.'});
+   }else{
+    set({...reset(),error:'Gmail session expired. Reconnect to read conversations.'});
+   }
    return;
   }
   const q=query.trim().slice(0,180);
