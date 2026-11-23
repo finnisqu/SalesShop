@@ -1,7 +1,7 @@
 import {useState,type FormEvent} from 'react';
 import type {Company,Contact,Project} from '../types/crm';
 import type {GmailThreadSummary,GmailThreadDetails} from '../services/gmailRead359a';
-import type {EmailTarget,EmailTargetSuggestion} from '../services/emailThreadMatching359a';
+import type {EmailTargetSuggestion} from '../services/emailThreadMatching359a';
 import {personEmailAddress} from '../services/emailAutoMatch361';
 import {recordNameKey} from '../services/recordNameKey';
 import {emailWorkspaceScope} from '../services/emailThreadLinks359a';
