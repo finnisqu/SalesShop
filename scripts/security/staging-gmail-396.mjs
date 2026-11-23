@@ -175,6 +175,11 @@ try{
    await adminRest(table,'?organization_id=eq.'+orgA+
     '&user_id=eq.'+sessions.owner.id+
     '&mailbox=eq.'+encodeURIComponent(fakeMailbox),'DELETE');
+   // If the browser UPDATE unexpectedly succeeded, its email changed to the
+   // second synthetic mailbox. Remove only that exact fixture as well.
+   await adminRest(table,'?organization_id=eq.'+orgA+
+    '&user_id=eq.'+sessions.owner.id+
+    '&mailbox=eq.'+encodeURIComponent(negativeMailbox),'DELETE');
    // Remove this audit's extra negative-write fixture if any policy mistake
    // allowed it to be inserted. Never touch preexisting rows.
    await adminRest(table,'?organization_id=eq.'+orgA+
