@@ -19,6 +19,8 @@ describe('#394 — Gmail connection method priority',()=>{
  it('preserves account-scoped token handling and explicit disconnection',()=>{
   expect(session).toContain("scope:string|null;mailbox:string|null;token:string|null");
   expect(session).toContain("revokeGmailToken(token)");
-  expect(workspace).toContain("disconnect();setNotice('Gmail disconnected for this session.')");
+  expect(workspace).toContain("onClick={()=>{void disconnectAccount();}}");
+  expect(workspace).toContain('await disconnectSaved();');
+  expect(workspace).toContain('else disconnect();');
  });
 });
