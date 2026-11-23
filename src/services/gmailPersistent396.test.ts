@@ -23,6 +23,7 @@ const key=(org:string,user:string)=>org+'|'+user;
 let revoked:string[]=[];
 let refreshed=0;
 let grantInvalid=false;
+let grantScope:string|undefined='https://www.googleapis.com/auth/gmail.readonly';
 const fetchMock=vi.fn(async (resource:string,init?:RequestInit)=>{
  const url=new URL(resource);
  if(url.pathname==='/auth/v1/user')
@@ -63,8 +64,7 @@ const fetchMock=vi.fn(async (resource:string,init?:RequestInit)=>{
   const body=init?.body as URLSearchParams;
   if(body.get('grant_type')==='authorization_code')
    return Response.json({access_token:'temporary-access-token',refresh_token:'secret-refresh-token-123',
-    expires_in:3600,token_type:'Bearer',
-    scope:'https://www.googleapis.com/auth/gmail.readonly'});
+    expires_in:3600,token_type:'Bearer',...(grantScope?{scope:grantScope}:{})});
   refreshed++;
   if(grantInvalid)return Response.json({error:'invalid_grant'},{status:400});
   expect(body.get('refresh_token')).toBe('secret-refresh-token-123');
@@ -87,7 +87,9 @@ const request=(action:string,org=orgA,method?:string,extra:Record<string,unknown
  ...(action==='status'?{}:{body:JSON.stringify({organization_id:org,
   ...(action==='connect'?{code:'4/0ABCDEF123456789'}:{}),...extra})}),
 });
-afterEach(()=>{vi.unstubAllGlobals();connections.clear();revoked=[];refreshed=0;grantInvalid=false;fetchMock.mockClear();});
+afterEach(()=>{vi.unstubAllGlobals();connections.clear();revoked=[];refreshed=0;
+ grantInvalid=false;grantScope='https://www.googleapis.com/auth/gmail.readonly';
+ fetchMock.mockClear();});
 describe('#396 — persistent Gmail Worker authorization',()=>{
  it('requires complete server configuration, keeps temporary OAuth endpoints intact',async()=>{
   const unconfigured=await worker.fetch(request('status'),{...env,GMAIL_TOKEN_ENCRYPTION_KEY:undefined});
@@ -138,7 +140,7 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
   const second=await worker.fetch(request('status',orgA,'GET',{},{
    Authorization:jwtB}),env);
   expect(await second.json()).toEqual({configured:true,connected:false,
-   mailbox:null});
+   needsReconnect:false,mailbox:null});
   const noAccess=await worker.fetch(request('refresh',orgA,'POST',{},{
    Authorization:jwtB}),env);
   expect(noAccess.status).toBe(404);
@@ -159,6 +161,16 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
   expect((await worker.fetch(request('disconnect',orgA,'POST',{},{
    Authorization:jwtB}),env)).status).toBe(200);
   expect(revoked).toEqual(['secret-refresh-token-123']);
+ });
+ it('rejects authorization code responses missing or lacking gmail.readonly',async()=>{
+  vi.stubGlobal('fetch',fetchMock);
+  for(const scope of [undefined,'openid email']){
+   grantScope=scope;
+   const response=await worker.fetch(request('connect'),env);
+   expect(response.status).toBe(503);
+   expect(JSON.stringify(await response.json())).not.toContain('temporary-access-token');
+   expect(connections.size).toBe(0);
+  }
  });
  it('binds ciphertext to organization/user via AES-GCM authenticated data',async()=>{
   const cipher=await sealRefresh396('secret-refresh-token-123',env,orgA,userA);
