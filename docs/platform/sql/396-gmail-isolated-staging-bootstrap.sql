@@ -36,4 +36,7 @@ revoke all on public.organizations from PUBLIC,anon,authenticated;
 revoke all on public.organization_members from PUBLIC,anon,authenticated;
 grant select,insert,update,delete on public.organizations to service_role;
 grant select,insert,update,delete on public.organization_members to service_role;
+-- Staging-only auth.users cascade cleanup uses a user_id-leading index.
+create index if not exists gmail396_staging_member_user_idx
+ on public.organization_members(user_id);
 commit;
