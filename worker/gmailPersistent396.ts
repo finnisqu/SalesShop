@@ -96,11 +96,19 @@ async function writeConnection(env:GmailPersistentEnv396,row:StoredConnection):P
    last_verified_at:new Date().toISOString()})});
  if(!response.ok)throw new Error('Could not save Gmail authorization');
 }
+/** A compare-and-swap PATCH: require the nonce of the credential used to
+ * start this refresh, so an old request cannot overwrite a replacement or
+ * restore an already-disconnected grant. Returning one row confirms exactly
+ * one saved connection was updated; no ciphertext leaves the Worker.
+ */
 async function updateConnection(env:GmailPersistentEnv396,org:string,user:string,
- patch:Record<string,unknown>):Promise<void>{
- const response=await serviceFetch(env,rowPath(org,user),{method:'PATCH',
-  headers:{Prefer:'return=minimal'},body:JSON.stringify(patch)});
+ expectedNonce:string,patch:Record<string,unknown>):Promise<boolean>{
+ const path=rowPath(org,user)+'&refresh_nonce=eq.'+encodeURIComponent(expectedNonce);
+ const response=await serviceFetch(env,path,{method:'PATCH',
+  headers:{Prefer:'return=representation'},body:JSON.stringify(patch)});
  if(!response.ok)throw new Error('Could not update Gmail authorization');
+ const rows=await response.json() as StoredConnection[];
+ return rows.length===1;
 }
 async function removeConnection(env:GmailPersistentEnv396,org:string,user:string):Promise<void>{
  const response=await serviceFetch(env,rowPath(org,user),{method:'DELETE'});
@@ -251,17 +259,23 @@ export async function handleGmailPersistent396(request:Request,env:GmailPersiste
    tokens=await googleToken(env,form);
   }catch(e){
    if(e instanceof Error&&e.message==='invalid_grant'){
-    await updateConnection(env,org,user,{status:'reauthorize',updated_at:new Date().toISOString()});
+    if(!await updateConnection(env,org,user,prior.refresh_nonce,{
+     status:'reauthorize',updated_at:new Date().toISOString()}))
+     return error('Saved Gmail connection changed. Retry.',409);
     return error('Google authorization expired. Reconnect Gmail.',409);
    }
    throw e;
   }
   if(tokens.refresh_token){
    const updated=await sealRefresh396(tokens.refresh_token,env,org,user);
-   await updateConnection(env,org,user,{...updated,updated_at:new Date().toISOString(),
-    last_verified_at:new Date().toISOString()});
+   if(!await updateConnection(env,org,user,prior.refresh_nonce,{
+    ...updated,updated_at:new Date().toISOString(),
+    last_verified_at:new Date().toISOString()}))
+    return error('Saved Gmail connection changed. Retry.',409);
   }else{
-   await updateConnection(env,org,user,{last_verified_at:new Date().toISOString()});
+   if(!await updateConnection(env,org,user,prior.refresh_nonce,{
+    last_verified_at:new Date().toISOString()}))
+    return error('Saved Gmail connection changed. Retry.',409);
   }
   return json({connected:true,mailbox:prior.mailbox,access_token:tokens.access_token,
    expires_in:tokens.expires_in});
