@@ -6,8 +6,10 @@ const origin='https://app.salesshop.work';
 const orgA='00000000-0000-4000-a000-000000000001';
 const orgB='00000000-0000-4000-a000-000000000002';
 const userA='00000000-0000-4000-a000-000000000003';
+const userB='00000000-0000-4000-a000-000000000004';
 const id='test-client.apps.googleusercontent.com';
 const jwt='Bearer '+('a'.repeat(64));
+const jwtB='Bearer '+('b'.repeat(64));
 const env={
  ASSETS:{fetch:async()=>new Response('SPA')},
  GOOGLE_GMAIL_CLIENT_ID:id,GOOGLE_GMAIL_CLIENT_SECRET:'fake-test-secret',
@@ -24,10 +26,15 @@ let grantInvalid=false;
 const fetchMock=vi.fn(async (resource:string,init?:RequestInit)=>{
  const url=new URL(resource);
  if(url.pathname==='/auth/v1/user')
-  return Response.json({id:userA});
- if(url.pathname==='/rest/v1/organization_members')
-  return Response.json(url.searchParams.get('organization_id')==='eq.'+orgA?
-   [{user_id:userA}]:[]);
+  return Response.json({id:init?.headers instanceof Headers?
+   (init.headers.get('Authorization')===jwtB?userB:userA):
+   ((init?.headers as Record<string,string>)?.Authorization===jwtB?userB:userA)});
+ if(url.pathname==='/rest/v1/organization_members'){
+  const org=url.searchParams.get('organization_id');
+  const user=(url.searchParams.get('user_id')??'').replace(/^eq\./,'');
+  return Response.json(org==='eq.'+orgA&&[userA,userB].includes(user)?
+   [{user_id:user}]:[]);
+ }
  if(url.pathname==='/rest/v1/gmail_oauth_connections396'){
   const org=(url.searchParams.get('organization_id')??'').replace(/^eq\./,'');
   const user=(url.searchParams.get('user_id')??'').replace(/^eq\./,'');
@@ -118,6 +125,20 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
   expect(disconnected.status).toBe(200);
   expect(connections.size).toBe(0);
   expect(revoked).toEqual(['secret-refresh-token-123']);
+ });
+ it('never exposes another team member\'s connected Gmail identity or ciphertext',async()=>{
+  vi.stubGlobal('fetch',fetchMock);
+  const connected=await worker.fetch(request('connect'),env);
+  expect(connected.status).toBe(200);
+  const second=await worker.fetch(request('status',orgA,'GET',{},{
+   Authorization:jwtB}),env);
+  expect(await second.json()).toEqual({configured:true,connected:false,
+   needsReconnect:undefined,mailbox:null});
+  const noAccess=await worker.fetch(request('refresh',orgA,'POST',{},{
+   Authorization:jwtB}),env);
+  expect(noAccess.status).toBe(404);
+  expect(connections.has(key(orgA,userA))).toBe(true);
+  expect(connections.has(key(orgA,userB))).toBe(false);
  });
  it('binds ciphertext to organization/user via AES-GCM authenticated data',async()=>{
   const cipher=await sealRefresh396('secret-refresh-token-123',env,orgA,userA);
