@@ -107,6 +107,7 @@ export function EmailLinkPicker395({thread,details,mailbox,scope,contacts,compan
    </div>
    {draft.kind==='person'?<EmailPersonCreate362
     key={thread.id+'|'+draft.seed+'|person'} thread={thread} details={details}
+    allowManual
     initialAddress={personEmailAddress(draft.seed)??undefined}
     initialName={personEmailAddress(draft.seed)?undefined:draft.seed}
     mailbox={mailbox} scope={scope} contacts={contacts} companies={companies}
