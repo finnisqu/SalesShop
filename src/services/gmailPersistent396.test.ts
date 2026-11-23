@@ -113,6 +113,21 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
    'X-Requested-With':''}),env)).status).toBe(403);
   expect(fetchMock.mock.calls.every(call=>!String(call[0]).includes('oauth2.googleapis.com'))).toBe(true);
  });
+ it('supports the preferred sb_secret server binding without a legacy service JWT',async()=>{
+  vi.stubGlobal('fetch',fetchMock);
+  const modern={...env,SUPABASE_SERVICE_ROLE_KEY:undefined,
+   SUPABASE_SECRET_KEY:'sb_secret_local-test-only'};
+  const response=await worker.fetch(request('status'),modern);
+  expect(response.status).toBe(200);
+  const restCalls=fetchMock.mock.calls.filter(call=>
+   new URL(String(call[0])).pathname.startsWith('/rest/v1/'));
+  expect(restCalls.length).toBeGreaterThan(0);
+  for(const [,init] of restCalls){
+   const headers=new Headers((init as RequestInit)?.headers);
+   expect(headers.get('apikey')).toBe('sb_secret_local-test-only');
+   expect(headers.has('Authorization')).toBe(false);
+  }
+ });
  it('uses apikey for modern Supabase service keys, never Bearer sb_secret',async()=>{
   vi.stubGlobal('fetch',fetchMock);
   expect((await worker.fetch(request('status'),env)).status).toBe(200);
