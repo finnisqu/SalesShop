@@ -1,6 +1,7 @@
 import {useMemo,useRef,useState,type FormEvent} from 'react';
 import type {Company,Contact} from '../types/crm';
-import type {GmailThreadSummary} from '../services/gmailRead359a';
+import type {GmailThreadSummary,GmailThreadDetails} from '../services/gmailRead359a';
+import {gmailAddressesInDetails395} from '../services/gmailBodyDiscovery395';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useGmailSessionStore,validGmailToken} from '../store/gmailSession359a';
@@ -15,18 +16,27 @@ import {emailDomain,existingPeopleByEmail,gmailContactParticipants,
 
 const NEW_COMPANY='__create_company__';
 
-export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,canWrite,onCreated,onOpen}:{
- thread:GmailThreadSummary;mailbox:string;contacts:readonly Contact[];companies:readonly Company[];
+export function EmailPersonCreate362({thread,details,initialAddress,initialName,
+ mailbox,contacts,companies,scope,canWrite,onCreated,onOpen}:{
+ thread:GmailThreadSummary;details?:GmailThreadDetails|null;
+ initialAddress?:string;initialName?:string;
+ mailbox:string;contacts:readonly Contact[];companies:readonly Company[];
  scope:string|null;canWrite:boolean;onCreated:(id:string)=>void;onOpen:(id:string)=>void;
 }){
- const addresses=useMemo(()=>gmailContactParticipants(thread,mailbox),[thread,mailbox]);
- const [address,setAddress]=useState(addresses[0]??'');
+ const bodyIsCurrent=!!details&&details.summary.id===thread.id&&
+  details.summary.latestMessageId===thread.latestMessageId;
+ const addresses=useMemo(()=>bodyIsCurrent&&details?
+  gmailAddressesInDetails395(details,mailbox).map(item=>item.address):
+  gmailContactParticipants(thread,mailbox),[bodyIsCurrent,details,thread,mailbox]);
+ const first=initialAddress&&addresses.includes(initialAddress)?initialAddress:addresses[0]??'';
+ const [address,setAddress]=useState(first);
  const getSuggestedChoice=(email:string)=>{
   const suggested=suggestedCompaniesFromEmail(email,contacts,companies);
   return suggested.length===1&&suggested[0].rank===100?suggested[0].company.id:'';
  };
- const [name,setName]=useState(()=>addresses[0]?suggestedPersonName(thread,addresses[0]):'');
- const [companyChoice,setCompanyChoice]=useState(()=>getSuggestedChoice(addresses[0]??''));
+ const [name,setName]=useState(()=>initialName?.trim()||
+  (first?suggestedPersonName(thread,first):''));
+ const [companyChoice,setCompanyChoice]=useState(()=>getSuggestedChoice(first));
  const [companyName,setCompanyName]=useState('');
  const [error,setError]=useState('');
  const [saving,setSaving]=useState(false);
@@ -61,7 +71,10 @@ export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,ca
    !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')||
    useRolePerspectiveStore.getState().activePerspective||
    !session.threads.some(row=>row.id===thread.id&&
-    gmailContactParticipants(row,mailbox).includes(currentAddress))){
+    row.latestMessageId===thread.latestMessageId&&
+    (gmailContactParticipants(row,mailbox).includes(currentAddress)||
+     (bodyIsCurrent&&details&&
+      gmailAddressesInDetails395(details,mailbox).some(item=>item.address===currentAddress))))){
    setError('Your Gmail or SalesShop session changed. Reopen this conversation to create the Person.');
    return;
   }
@@ -123,10 +136,10 @@ export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,ca
  };
  if(!canWrite)return null;
  return <section className="ss-email-create-person" aria-label="Create Person from email">
-  <header><h4>Create Person from email</h4><small>Use an email participant to create a CRM Person.</small></header>
-  {!addresses.length?<p>No external email participants were found in this conversation.</p>:
+  <header><h4>Create Person from email</h4><small>Review a detected email address, then create a CRM Person.</small></header>
+  {!addresses.length?<p>No usable external email addresses were detected in this conversation.</p>:
    <form onSubmit={save}>
-    <label>Participant email
+    <label>Detected email address
      <select value={currentAddress} disabled={saving||!!createdPerson}
       onChange={event=>setParticipant(event.target.value)}>
       {addresses.map(email=><option key={email} value={email}>{email}</option>)}
@@ -176,7 +189,8 @@ export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,ca
        {saving?'Creating…':'Create Person'}</button>}
     </div></>}
     {error&&<p role="alert" className="ss-email-error">{error}</p>}
-    <p className="ss-email-create-helper">Email matching will work on the Person record
+    <p className="ss-email-create-helper">Forwarded chains can contain third-party or outdated addresses.
+     Verify this Person before saving. Email matching will work on the Person record
      while your Gmail is connected. No message body is copied into the CRM.</p>
    </form>}
  </section>;
