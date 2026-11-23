@@ -3,11 +3,18 @@ import {authorizeGmail,gmailProfile,gmailThreadPage,revokeGmailToken,
  type GmailThreadSummary,type GmailPage} from '../services/gmailRead359a';
 import {beginGmailRedirect,consumeGmailRedirect,isGmailRedirectCallback,
  exchangeGmailRedirect} from '../services/gmailRedirect389';
+import {persistentStatus396,requestPersistentCode396,exchangePersistent396,
+ refreshPersistent396,revokePersistent396} from '../services/gmailPersistent396';
 interface GmailState {
  scope:string|null;mailbox:string|null;token:string|null;expiresAt:number;
  status:'disconnected'|'connecting'|'connected';loading:boolean;error:string|null;
  query:string;threads:GmailThreadSummary[];nextPageToken?:string;
+ persistentConfigured:boolean;persistent:boolean;restoring:boolean;needsReconnect:boolean;
  bindScope:(scope:string|null)=>void;
+ restorePersistent:()=>Promise<void>;
+ connectPersistent:()=>Promise<void>;
+ renewPersistent:()=>Promise<void>;
+ disconnectSaved:()=>Promise<void>;
  connect:()=>Promise<void>;
  connectWithRedirect:()=>Promise<void>;
  finishRedirect:()=>Promise<void>;
@@ -16,14 +23,95 @@ interface GmailState {
 }
 const reset=()=>({mailbox:null,token:null,expiresAt:0,status:'disconnected' as const,
  loading:false,error:null,query:'',threads:[] as GmailThreadSummary[],
- nextPageToken:undefined as string|undefined});
+ nextPageToken:undefined as string|undefined,
+ persistentConfigured:false,persistent:false,restoring:false,needsReconnect:false});
 export const useGmailSessionStore=create<GmailState>((set,get)=>({
  scope:null,...reset(),
  bindScope(scope){
   if(get().scope===scope)return;
-  const token=get().token;
+  const {token,persistent}=get();
   set({scope,...reset()});
-  if(token)revokeGmailToken(token);
+  // A stored, server-owned Gmail grant MUST NOT be revoked simply because
+  // a SalesShop tab switched organization or the browser was reloaded.
+  if(token&&!persistent)revokeGmailToken(token);
+ },
+ async restorePersistent(){
+  const scope=get().scope;
+  if(!scope||get().restoring||get().status==='connecting'||get().token)return;
+  set({restoring:true});
+  try{
+   const status=await persistentStatus396(scope);
+   if(get().scope!==scope)return;
+   if(!status.configured){
+    set({persistentConfigured:false,restoring:false});return;
+   }
+   set({persistentConfigured:true,needsReconnect:!!status.needsReconnect});
+   if(!status.connected){
+    set({restoring:false});return;
+   }
+   const access=await refreshPersistent396(scope);
+   if(get().scope!==scope||get().status==='connecting'||get().token)return;
+   set({...reset(),persistentConfigured:true,persistent:true,status:'connected',
+    mailbox:access.mailbox,token:access.token,expiresAt:access.expiresAt});
+   await get().search('newer_than:90d');
+  }catch(e){
+   if(get().scope===scope&&!get().token){
+    set({persistentConfigured:true,restoring:false,
+     needsReconnect:e instanceof Error&&/reconnect|expired|saved/i.test(e.message),
+     error:e instanceof Error?e.message:'Could not restore saved Gmail.'});
+   }
+  }finally{
+   if(get().scope===scope)set({restoring:false});
+  }
+ },
+ async connectPersistent(){
+  const scope=get().scope;
+  if(!scope||!get().persistentConfigured)
+   throw new Error('Persistent Gmail is not configured for this workspace.');
+  set({status:'connecting',error:null});
+  try{
+   // This must happen in the direct click stack, before the first await.
+   const code=await requestPersistentCode396();
+   if(get().scope!==scope)throw new Error('SalesShop account changed during Google authorization.');
+   const access=await exchangePersistent396(scope,code);
+   if(get().scope!==scope)return;
+   set({...reset(),persistentConfigured:true,persistent:true,status:'connected',
+    token:access.token,mailbox:access.mailbox,expiresAt:access.expiresAt});
+   await get().search('newer_than:90d');
+  }catch(e){
+   if(get().scope===scope)set({...reset(),persistentConfigured:true,
+    error:e instanceof Error?e.message:'Could not save Gmail authorization.'});
+   throw e;
+  }
+ },
+ async renewPersistent(){
+  const {scope,persistent}=get();
+  if(!scope||!persistent||get().status==='connecting')return;
+  if(get().expiresAt>Date.now()+4*60*1000)return;
+  try{
+   const access=await refreshPersistent396(scope);
+   if(get().scope!==scope||!get().persistent)return;
+   set({token:access.token,expiresAt:access.expiresAt,mailbox:access.mailbox,
+    status:'connected',needsReconnect:false,error:null});
+  }catch(e){
+   if(get().scope!==scope||!get().persistent)return;
+   set({...reset(),persistentConfigured:true,
+    needsReconnect:e instanceof Error&&/reconnect|expired/i.test(e.message),
+    error:e instanceof Error?e.message:'Gmail renewal failed.'});
+  }
+ },
+ async disconnectSaved(){
+  const {scope,persistent}=get();
+  if(!scope){set(reset());return;}
+  if(!persistent){get().disconnect();return;}
+  try{
+   await revokePersistent396(scope);
+   if(get().scope===scope)set({...reset(),persistentConfigured:true});
+  }catch(e){
+   if(get().scope===scope)set({error:e instanceof Error?e.message:
+    'Could not disconnect Gmail on the server.'});
+   throw e;
+  }
  },
  async connect(){
   const scope=get().scope;
@@ -81,11 +169,16 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
   }
  },
  disconnect(){
-  const token=get().token;
+  const {token,persistent}=get();
+  // For persisted connections, callers must use disconnectSaved, which
+  // deletes the server-side grant and then lets the Worker revoke Google.
+  if(persistent){set({error:'Use Disconnect saved Gmail to revoke this account.'});return;}
   set(reset());
   if(token)revokeGmailToken(token);
  },
  async search(query,pageToken){
+  if(get().persistent&&get().expiresAt<=Date.now()+4*60*1000)
+   await get().renewPersistent();
   const {scope,token,expiresAt,mailbox}=get();
   if(!scope||!mailbox||!token||Date.now()>=expiresAt){
    set({...reset(),error:'Gmail session expired. Reconnect to read conversations.'});
