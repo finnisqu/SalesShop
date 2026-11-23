@@ -70,8 +70,9 @@ export async function unsealRefresh396(row:StoredConnection,env:GmailPersistentE
  return new TextDecoder().decode(decrypted);
 }
 function serviceHeaders(env:GmailPersistentEnv396):Record<string,string>{
+ // Modern sb_secret_ keys must be sent in apikey, never as Bearer tokens:
+ // the gateway translates them to the service JWT for PostgREST.
  return {'apikey':env.SUPABASE_SERVICE_ROLE_KEY!,
-  'Authorization':'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY!,
   'Content-Type':'application/json'};
 }
 async function serviceFetch(env:GmailPersistentEnv396,path:string,init:RequestInit={}):Promise<Response>{
