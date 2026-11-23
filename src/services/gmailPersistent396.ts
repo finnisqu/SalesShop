@@ -51,8 +51,9 @@ async function fromResponse396(response:Response):Promise<SessionToken396>{
 }
 export async function persistentStatus396(scope:string):Promise<PersistentStatus396>{
  const response=await workerCall396(scope,'status');
- if(response.status===503)return {configured:false,connected:false};
  const raw=await response.json() as PersistentStatus396&{error?:string};
+ if(response.status===503&&raw.configured===false)
+  return {configured:false,connected:false};
  if(!response.ok)throw new Error(raw.error||'Could not check Gmail connection.');
  return raw;
 }
