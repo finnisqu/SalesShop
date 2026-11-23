@@ -51,8 +51,11 @@ const fetchMock=vi.fn(async (resource:string,init?:RequestInit)=>{
   }
   if(init?.method==='PATCH'){
    const prev=connections.get(key(org,user));
-   if(prev)connections.set(key(org,user),{...prev,...JSON.parse(String(init.body))});
-   return new Response(null,{status:204});
+   const expectedNonce=url.searchParams.get('refresh_nonce')?.replace(/^eq\./,'');
+   if(!prev||prev.refresh_nonce!==expectedNonce)return Response.json([]);
+   const next={...prev,...JSON.parse(String(init.body)) as Record<string,unknown>};
+   connections.set(key(org,user),next);
+   return Response.json([next]);
   }
   if(init?.method==='DELETE'){
    connections.delete(key(org,user));
@@ -181,6 +184,45 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
   await expect(unsealRefresh396({...row,organization_id:orgB},env,orgB,userA)).rejects.toThrow();
   await expect(unsealRefresh396({...row,refresh_ciphertext:cipher.refresh_ciphertext.slice(0,-4)+'AAAA'},
    env,orgA,userA)).rejects.toThrow();
+ });
+ it('rejects refresh completion after a parallel disconnect or replacement',async()=>{
+  vi.stubGlobal('fetch',fetchMock);
+  expect((await worker.fetch(request('connect'),env)).status).toBe(200);
+  const prev=connections.get(key(orgA,userA))!;
+  let disconnectedDuringRefresh=false;
+  const base=fetchMock.getMockImplementation()!;
+  vi.stubGlobal('fetch',async (resource:string,init?:RequestInit)=>{
+   const url=new URL(resource);
+   if(url.pathname==='/token'&&
+    (init?.body as URLSearchParams).get('grant_type')==='refresh_token'&&
+    !disconnectedDuringRefresh){
+    disconnectedDuringRefresh=true;
+    connections.delete(key(orgA,userA));
+   }
+   return base(resource,init);
+  });
+  const response=await worker.fetch(request('refresh'),env);
+  expect(response.status).toBe(409);
+  expect(JSON.stringify(await response.json())).not.toContain('renewed-access-token');
+  expect(connections.size).toBe(0);
+  // Replacing ciphertext between read and write must fail the same CAS.
+  vi.stubGlobal('fetch',fetchMock);
+  expect((await worker.fetch(request('connect'),env)).status).toBe(200);
+  let swappedDuringRefresh=false;
+  vi.stubGlobal('fetch',async (resource:string,init?:RequestInit)=>{
+   const url=new URL(resource);
+   if(url.pathname==='/token'&&
+    (init?.body as URLSearchParams).get('grant_type')==='refresh_token'&&
+    !swappedDuringRefresh){
+    swappedDuringRefresh=true;
+    const prev=connections.get(key(orgA,userA))!;
+    connections.set(key(orgA,userA),{...prev,refresh_nonce:'replaced-nonce'});
+   }
+   return base(resource,init);
+  });
+  const stale=await worker.fetch(request('refresh'),env);
+  expect(stale.status).toBe(409);
+  expect(JSON.stringify(await stale.json())).not.toContain('renewed-access-token');
  });
  it('marks revoked Google access as requiring deliberate reconnection',async()=>{
   vi.stubGlobal('fetch',fetchMock);
