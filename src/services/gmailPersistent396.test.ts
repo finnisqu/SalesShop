@@ -36,6 +36,11 @@ const fetchMock=vi.fn(async (resource:string,init?:RequestInit)=>{
    [{user_id:user}]:[]);
  }
  if(url.pathname==='/rest/v1/gmail_oauth_connections396'){
+  const mailbox=url.searchParams.get('mailbox');
+  if(mailbox){
+   const found=[...connections.values()].filter(row=>row.mailbox===mailbox.replace(/^eq\./,''));
+   return Response.json(found.slice(0,1).map(row=>({organization_id:row.organization_id})));
+  }
   const org=(url.searchParams.get('organization_id')??'').replace(/^eq\./,'');
   const user=(url.searchParams.get('user_id')??'').replace(/^eq\./,'');
   if(init?.method==='POST'){
@@ -139,6 +144,21 @@ describe('#396 — persistent Gmail Worker authorization',()=>{
   expect(noAccess.status).toBe(404);
   expect(connections.has(key(orgA,userA))).toBe(true);
   expect(connections.has(key(orgA,userB))).toBe(false);
+ });
+ it('does not revoke a shared Google grant while another team member uses it',async()=>{
+  vi.stubGlobal('fetch',fetchMock);
+  expect((await worker.fetch(request('connect'),env)).status).toBe(200);
+  expect((await worker.fetch(request('connect',orgA,'POST',{},{
+   Authorization:jwtB}),env)).status).toBe(200);
+  expect(connections.size).toBe(2);
+  expect((await worker.fetch(request('disconnect'),env)).status).toBe(200);
+  expect(connections.size).toBe(1);
+  expect(revoked).toEqual([]);
+  expect((await worker.fetch(request('refresh',orgA,'POST',{},{
+   Authorization:jwtB}),env)).status).toBe(200);
+  expect((await worker.fetch(request('disconnect',orgA,'POST',{},{
+   Authorization:jwtB}),env)).status).toBe(200);
+  expect(revoked).toEqual(['secret-refresh-token-123']);
  });
  it('binds ciphertext to organization/user via AES-GCM authenticated data',async()=>{
   const cipher=await sealRefresh396('secret-refresh-token-123',env,orgA,userA);
