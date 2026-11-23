@@ -67,6 +67,41 @@ If you cannot select the feature branch or edit the deploy command, stop
 rather than deploy with defaults; use the CLI fallback below or share the
 non-secret setup screen.
 
+## Troubleshooting: Wrangler config file not found (ENOENT)
+
+If the Cloudflare build logs show
+`Could not read file: wrangler.gmail396.staging.jsonc` or
+`ENOENT ... /opt/buildhome/repo/wrangler.gmail396.staging.jsonc`,
+the build was most likely cloned from **`main`**, not from the Gmail feature
+branch. This config file is intentionally present **only** on
+`feat/gmail-persistent-oauth-396` until the stacked PRs are approved.
+
+For the **separate** `salesshop-gmail-396-staging` Worker only:
+
+1. Navigate to **Workers & Pages → salesshop-gmail-396-staging →
+   Settings → Builds → Branch control**.
+2. Set the **production branch** of this *staging Worker* to the **exact**
+   `feat/gmail-persistent-oauth-396` branch (not `main`). In this context
+   Cloudflare's "production branch" is simply the branch deployed as the active
+   version of this isolated testing Worker.
+3. Inspect the failed build's Git branch / commit metadata. Builds already
+   queued or running before the branch change retain their original checkout;
+   rerunning such a build may reuse the older revision.
+4. After saving Branch control, **start a new build for the feature branch**
+   (e.g. a new commit on that branch), rather than retrying an old `main`
+   build. Confirm the new build reports the expected branch/commit.
+5. If the log still reports `main`, check whether you edited **this staging
+   Worker's** branch control rather than the existing SalesShop Worker.
+   Do not move, copy or overwrite the default `wrangler.jsonc`.
+
+The staging deploy command remains
+`npx wrangler deploy --config wrangler.gmail396.staging.jsonc`.
+Do **not** "fix" this by dropping `--config`, as the repository default
+Wrangler file configures a different Worker.
+
+Cloudflare docs:
+<https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/>.
+
 ## Alternative — deploy from your local checkout (CLI)
 
 Use the **feature branch** `feat/gmail-persistent-oauth-396` in a local
