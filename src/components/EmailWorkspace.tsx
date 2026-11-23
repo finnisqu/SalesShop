@@ -511,6 +511,15 @@ export function EmailWorkspace({contacts,deals,companies}:{
   {connected&&<div className="ss-email-content">
    <div className="ss-email-threads" role="region" aria-label="Gmail search results">
     <h3>Conversations <small>{shownTriage.length} shown · {threads.length} loaded</small></h3>
+    <div className="ss-email-body-scan">
+     <button type="button" disabled={bodyScan.working||loading||!connected||!threads.length}
+      onClick={()=>{void scanLoadedBodies();}}>
+      {bodyScan.working?'Checking messages…':'Find People in message contents'}
+     </button>
+     <small>{bodyScan.working?
+      bodyScan.done+' / '+bodyScan.total+' conversations checked':
+      'Optional: checks loaded message bodies and forwarded chains for known CRM People. Gmail stays read-only.'}</small>
+    </div>
     <div className="ss-email-triage-tabs" role="group" aria-label="Email triage filters">
      {([{id:'all',title:'All',count:triageCounts.all},
        {id:'review',title:'Review replies',count:triageCounts.review},
@@ -593,6 +602,36 @@ export function EmailWorkspace({contacts,deals,companies}:{
     {current&&<><div className="ss-email-detail-heading">
      <h3>{current.subject}</h3><small>{current.messageCount} message(s) · {current.participants.join(', ')}</small>
     </div>
+    {details?.summary.id===current.id&&<div className="ss-email-found-addresses">
+     {knownFindings.length>0&&<div className="ss-email-known-people">
+      <strong>Recognized People in this conversation</strong>
+      <div>{knownFindings.flatMap(item=>item.people.map(person=>
+       <button type="button" key={item.address+'|'+person.id}
+        title={item.address+' · '+gmailEvidenceLabel395(item.evidence)}
+        onClick={()=>openPerson(person.id)}>
+        {person.name||person.email} <small>{item.address}</small>
+       </button>))}</div>
+     </div>}
+     <details>
+      <summary>Detected email addresses · {findings.length}</summary>
+      <p>Includes Reply-To and quoted or forwarded content. These addresses may
+       belong to third parties or be outdated; no links or People are created automatically.</p>
+      <div className="ss-email-found-list">
+       {findings.map(item=><div key={item.address}>
+        <span><strong>{item.address}</strong>
+         <small>{gmailEvidenceLabel395(item.evidence)}
+          {item.people.length?' · Existing CRM Person':' · Not in CRM'}</small>
+        </span>
+        {item.people.length?item.people.map(person=><button type="button" key={person.id}
+         onClick={()=>openPerson(person.id)}>Open {person.name||'Person'}</button>):
+         canWrite&&<button type="button" onClick={()=>{
+          setPersonSeed(item.address);setEmailAction('person');
+         }}>+ Create Person</button>}
+       </div>)}
+       {!findings.length&&<p>No usable external email addresses detected.</p>}
+      </div>
+     </details>
+    </div>}
     <div className="ss-email-action-toolbar" role="toolbar" aria-label="Gmail CRM actions">
      <span>CRM actions</span>
      {([['task','New task'],['log','Log Activity'],['person','Create Person'],['link','Link record']] as const).map(([id,label])=>
@@ -620,32 +659,26 @@ export function EmailWorkspace({contacts,deals,companies}:{
       </div>;
      }):<p>Not linked. Suggestions below are never linked automatically.</p>}
      {canWrite&&<div className="ss-email-link-controls">
-      <label htmlFor="ss-email-target">Link to</label>
-      <select id="ss-email-target" value={selectedTarget}
-       onChange={e=>setSelectedTarget(e.target.value)}>
-       <option value="">Choose Person or Deal</option>
-       {suggestions.length>0&&<optgroup label="Suggested matches">
-        {suggestions.map(s=><option key={s.kind+':'+s.id} value={s.kind+':'+s.id}>
-         {s.title} · {s.reason}</option>)}
-       </optgroup>}
-       <optgroup label="All People">
-        {targets.filter(t=>t.kind==='person').map(t=><option key={t.kind+':'+t.id}
-         value={t.kind+':'+t.id}>{t.title}</option>)}
-       </optgroup>
-       <optgroup label="All Deals">
-        {targets.filter(t=>t.kind==='deal').map(t=><option key={t.kind+':'+t.id}
-         value={t.kind+':'+t.id}>{t.title}</option>)}
-       </optgroup>
-      </select>
-      <button type="button" disabled={!selectedTarget} onClick={applyLink}>Link conversation</button>
+      <EmailLinkPicker395
+       key={current.id+'|'+mailbox} thread={current}
+       details={details?.summary.id===current.id?details:null}
+       mailbox={mailbox??''} scope={expectedScope}
+       contacts={contacts} companies={companies} deals={deals}
+       suggestions={suggestions} selectedTarget={selectedTarget}
+       onSelect={setSelectedTarget} onOpenPerson={openPerson} canWrite={canWrite}/>
+      <button type="button" disabled={!selectedTarget} onClick={applyLink}>
+       Link conversation</button>
      </div>}
     </div>
     
       </>:emailAction==='person'?<>
 {canWrite&&mailbox&&<EmailPersonCreate362
-     key={current.id+'|'+mailbox} thread={current} mailbox={mailbox} contacts={contacts}
+     key={current.id+'|'+mailbox+'|'+personSeed} thread={current}
+     details={details?.summary.id===current.id?details:null}
+     initialAddress={personSeed||undefined}
+     mailbox={mailbox} contacts={contacts}
      companies={companies} scope={expectedScope} canWrite={canWrite}
-     onCreated={id=>{setNotice('Person created in CRM. You can continue working in this email.');setEmailAction(null);}} onOpen={openPerson}/>}
+     onCreated={id=>{setNotice('Person created in CRM. You can continue working in this email.');setEmailAction(null);setPersonSeed('');}} onOpen={openPerson}/>}
 
       </>:<>
 {canWrite&&mailbox&&details?.summary.id===current.id&&
