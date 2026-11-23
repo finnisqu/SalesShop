@@ -9,6 +9,9 @@ import {emailWorkspaceScope,type EmailTarget,type EmailTargetKind} from '../serv
 import {gmailClientId,gmailThreadDetails,
  type GmailThreadDetails,type GmailThreadSummary} from '../services/gmailRead359a';
 import {emailTargetSuggestions} from '../services/emailThreadMatching359a';
+import {gmailAddressesInDetails395,gmailAddressFindings395,
+ gmailThreadWithAddresses395,gmailEvidenceLabel395}
+ from '../services/gmailBodyDiscovery395';
 import {classifyGmailTriage,filterGmailTriage,gmailTriageCounts,
  mayNeedGmailReplyReview,type GmailTriageFilter} from '../services/gmailTriage367';
 import {currentGmailReviewDecision,readGmailReviewDecisions,
@@ -27,10 +30,14 @@ import {DEFAULT_GMAIL_REVIEW_RULES,GMAIL_REVIEW_MIN_DAYS,GMAIL_REVIEW_MAX_DAYS,
  loadGmailReviewRules,storeGmailReviewRules,type GmailReviewRules}
  from '../services/gmailTriagePrefs370';
 import {EmailPersonCreate362} from './EmailPersonCreate362';
+import {EmailLinkPicker395} from './EmailLinkPicker395';
 import {EmailActivityLogger363} from './EmailActivityLogger363';
 import {GmailConnectionChecks388} from './GmailConnectionChecks388';
 import './email-workspace.css';
 
+function gmailBodyKey395(thread:GmailThreadSummary):string{
+ return thread.latestMessageId??thread.messageCount+'|'+thread.date;
+}
 export function EmailWorkspace({contacts,deals,companies}:{
  contacts:readonly Contact[];deals:readonly Project[];companies:readonly Company[];
 }){
@@ -66,6 +73,12 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const [activeId,setActiveId]=useState<string|null>(null);
  const [selectedTarget,setSelectedTarget]=useState('');
  const [details,setDetails]=useState<GmailThreadDetails|null>(null);
+ const [personSeed,setPersonSeed]=useState('');
+ const [bodyDiscovery,setBodyDiscovery]=useState<{
+  identity:string|null;byId:Record<string,{key:string;addresses:string[]}>;
+ }>({identity:null,byId:{}});
+ const [bodyScan,setBodyScan]=useState({working:false,done:0,total:0});
+ const bodyScanEpoch=useRef(0);
  const [detailError,setDetailError]=useState('');
  const [detailsLoading,setDetailsLoading]=useState(false);
  const [notice,setNotice]=useState('');
@@ -108,9 +121,22 @@ export function EmailWorkspace({contacts,deals,companies}:{
   }
   return result;
  },[threads,matchedFingerprints,taskRows,crmActivities,workReady]);
- const current=threads.find(t=>t.id===activeId);
- const triage=useMemo(()=>classifyGmailTriage(threads,contacts,mailbox,
-  Date.now(),reviewRules),[threads,contacts,mailbox,reviewRules]);
+ const discoveryIdentity=expectedScope&&mailbox?expectedScope+'|'+mailbox:null;
+ const matchingThreads=useMemo(()=>threads.map(thread=>{
+  const cache=bodyDiscovery.identity===discoveryIdentity?
+   bodyDiscovery.byId[thread.id]:undefined;
+  return cache?.key===gmailBodyKey395(thread)?
+   gmailThreadWithAddresses395(thread,cache.addresses.map(address=>({address}))):thread;
+ }),[threads,bodyDiscovery,discoveryIdentity]);
+ const current=matchingThreads.find(t=>t.id===activeId);
+ const findings=useMemo(()=>details&&current&&mailbox&&
+  details.summary.id===current.id&&
+  gmailBodyKey395(details.summary)===gmailBodyKey395(current)?
+  gmailAddressFindings395(details,contacts,mailbox):[],
+  [details,current,contacts,mailbox]);
+ const knownFindings=findings.filter(item=>item.people.length>0);
+ const triage=useMemo(()=>classifyGmailTriage(matchingThreads,contacts,mailbox,
+  Date.now(),reviewRules),[matchingThreads,contacts,mailbox,reviewRules]);
  const triageCounts=useMemo(()=>{
   const count=gmailTriageCounts(triage);
   const active=triage.filter(item=>item.reviewReply&&
@@ -181,6 +207,10 @@ export function EmailWorkspace({contacts,deals,companies}:{
  // Changing Gmail identity invalidates all currently displayed mail and metadata.
  useEffect(()=>{
   requestVersion.current+=1;
+  ++bodyScanEpoch.current;
+  setBodyDiscovery({identity:null,byId:{}});
+  setBodyScan({working:false,done:0,total:0});
+  setPersonSeed('');
   setActiveId(null);setDetails(null);setDetailError('');setSelectedTarget('');setNotice('');
   setTriageFilter('all');
  },[mailbox,expectedScope]);
