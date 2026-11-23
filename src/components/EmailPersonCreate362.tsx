@@ -159,7 +159,8 @@ export function EmailPersonCreate362({thread,details,initialAddress,initialName,
  };
  if(!canWrite)return null;
  return <section className="ss-email-create-person" aria-label="Create Person from email">
-  <header><h4>Create Person from email</h4><small>Review a detected email address, then create a CRM Person.</small></header>
+  <header><h4>Create Person from email</h4><small>{allowManual?
+   'Choose a detected address or enter one manually.':'Review a detected email address before creating a Person.'}</small></header>
   {!addresses.length&&!allowManual?<p>No usable external email addresses were detected in this conversation.</p>:
    <form onSubmit={save}>
     <label>Email address
@@ -220,9 +221,11 @@ export function EmailPersonCreate362({thread,details,initialAddress,initialName,
        {saving?'Creating…':'Create Person'}</button>}
     </div></>}
     {error&&<p role="alert" className="ss-email-error">{error}</p>}
-    <p className="ss-email-create-helper">Forwarded chains can contain third-party or outdated addresses.
-     Verify this Person before saving. Email matching will work on the Person record
-     while your Gmail is connected. No message body is copied into the CRM.</p>
+    <p className="ss-email-create-helper">Forwarded chains may contain outdated or unrelated
+     addresses. Verify the Person before saving. {currentAddress?
+      'Gmail matching can use this address while connected.':
+      'Add an email later to enable Gmail address matching.'}
+     No message body is copied into the CRM.</p>
    </form>}
  </section>;
 }
