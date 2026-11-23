@@ -33,7 +33,9 @@ export function EmailLinkPicker395({thread,details,mailbox,scope,contacts,compan
  ].find(row=>row.key===selectedTarget):undefined;
  const options=[
   ...suggestions.map(s=>({id:s.kind+':'+s.id,name:s.title,
-   detail:(s.kind==='person'?'Person':'Deal')+' · '+s.reason})),
+   detail:(s.kind==='person'?'Person':'Deal')+
+    (s.kind==='person'&&contacts.find(p=>p.id===s.id)?.email?
+     ' · '+contacts.find(p=>p.id===s.id)!.email:'')+' · '+s.reason})),
   ...contacts.map(p=>({id:'person:'+p.id,name:p.name||p.email||'Unnamed Person',
    detail:'Person'+(p.email?' · '+p.email:'')})),
   ...deals.map(d=>({id:'deal:'+d.id,name:d.name,
