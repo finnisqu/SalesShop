@@ -92,6 +92,7 @@ const fake={
  status:'active',
 };
 let inserted=false;
+const negativeMailbox='staging-write-'+randomUUID()+'@example.invalid';
 let passes=0;
 const verify=async(label,fn)=>{
  await fn();passes++;process.stdout.write('PASS '+label+'\n');
@@ -120,6 +121,28 @@ try{
    assert(!data?.length,'Browser could read stored credential fields.');
   });
  }
+ await verify('Same-org browser user cannot overwrite a saved credential',async()=>{
+  const original=await adminRest(table,'?select=mailbox&organization_id=eq.'+
+   orgA+'&user_id=eq.'+sessions.owner.id+'&limit=1');
+  const attempt=await clients.owner.from(table).update({mailbox:negativeMailbox})
+   .eq('organization_id',orgA).eq('user_id',sessions.owner.id);
+  const after=await adminRest(table,'?select=mailbox&organization_id=eq.'+
+   orgA+'&user_id=eq.'+sessions.owner.id+'&limit=1');
+  assert(original.length===1&&after.length===1);
+  assert.equal(after[0].mailbox,fakeMailbox,
+   'Authenticated browser illegally modified encrypted credential metadata.');
+  assert(attempt.error||!attempt.data,
+   'Expected browser UPDATE to be denied by grants/RLS.');
+ });
+ await verify('Signed-in browser cannot insert a forged encrypted credential',async()=>{
+  const candidate={...fake,user_id:sessions.colleague.id,mailbox:negativeMailbox};
+  const attempt=await clients.colleague.from(table).insert(candidate);
+  assert(attempt.error,'Browser INSERT unexpectedly succeeded despite RLS/grants.');
+  const rows=await adminRest(table,'?select=mailbox&organization_id=eq.'+
+   orgA+'&user_id=eq.'+sessions.colleague.id+'&mailbox=eq.'+
+   encodeURIComponent(negativeMailbox));
+  assert.equal(rows.length,0,'Browser inserted unauthorized token metadata.');
+ });
  await verify('Owner can see only own saved Gmail status',async()=>{
   const result=await status('owner',orgA);
   assert.equal(result.code,200);
@@ -152,8 +175,13 @@ try{
    await adminRest(table,'?organization_id=eq.'+orgA+
     '&user_id=eq.'+sessions.owner.id+
     '&mailbox=eq.'+encodeURIComponent(fakeMailbox),'DELETE');
+   // Remove this audit's extra negative-write fixture if any policy mistake
+   // allowed it to be inserted. Never touch preexisting rows.
+   await adminRest(table,'?organization_id=eq.'+orgA+
+    '&user_id=eq.'+sessions.colleague.id+
+    '&mailbox=eq.'+encodeURIComponent(negativeMailbox),'DELETE');
   }catch{
-   throw new Error('SECURITY TEST CLEANUP FAILED: remove synthetic fixture manually.');
+   throw new Error('SECURITY TEST CLEANUP FAILED: remove synthetic fixtures manually.');
   }
  }
 }
