@@ -29,6 +29,7 @@ const reset=()=>({mailbox:null,token:null,expiresAt:0,status:'disconnected' as c
 // Async OAuth requests from the previous identity generation then cannot
 // reattach an old mailbox to the newly hydrated account.
 let gmailIdentityEpoch396=0;
+let gmailRenewal396:{scope:string;epoch:number;promise:Promise<void>}|null=null;
 export const useGmailSessionStore=create<GmailState>((set,get)=>({
  scope:null,...reset(),
  bindScope(scope){
@@ -62,7 +63,10 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
    await get().search('newer_than:90d');
   }catch(e){
    if(get().scope===scope&&gmailIdentityEpoch396===epoch&&!get().token){
-    set({persistentConfigured:true,restoring:false,
+    // Unknown Worker readiness is NOT proof persistence is configured.
+    // Keep the known readiness flag rather than routing a working temporary
+    // Gmail popup into an unavailable code-exchange service.
+    set({restoring:false,
      needsReconnect:e instanceof Error&&/reconnect|expired|saved/i.test(e.message),
      error:e instanceof Error?e.message:'Could not restore saved Gmail.'});
    }
@@ -95,17 +99,33 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
  async renewPersistent(){
   const {scope,persistent}=get(),epoch=gmailIdentityEpoch396;
   if(!scope||!persistent||get().status==='connecting')return;
+  if(gmailRenewal396?.scope===scope&&gmailRenewal396.epoch===epoch)
+   return gmailRenewal396.promise;
   if(get().expiresAt>Date.now()+4*60*1000)return;
-  try{
-   const access=await refreshPersistent396(scope);
-   if(get().scope!==scope||gmailIdentityEpoch396!==epoch||!get().persistent)return;
-   set({token:access.token,expiresAt:access.expiresAt,mailbox:access.mailbox,
-    status:'connected',needsReconnect:false,error:null});
-  }catch(e){
-   if(get().scope!==scope||!get().persistent)return;
-   set({...reset(),persistentConfigured:true,
-    needsReconnect:e instanceof Error&&/reconnect|expired/i.test(e.message),
-    error:e instanceof Error?e.message:'Gmail renewal failed.'});
+  // Focus, expiry timer and Gmail search may all request a refresh in the
+  // same tick. Coalesce them to avoid unnecessary Google refresh grants.
+  const work=(async()=>{
+   try{
+    const access=await refreshPersistent396(scope);
+    if(get().scope!==scope||gmailIdentityEpoch396!==epoch||!get().persistent)return;
+    set({token:access.token,expiresAt:access.expiresAt,mailbox:access.mailbox,
+     status:'connected',needsReconnect:false,error:null});
+   }catch(e){
+    if(get().scope!==scope||gmailIdentityEpoch396!==epoch||!get().persistent)return;
+    const message=e instanceof Error?e.message:'Gmail renewal failed.';
+    const reauthorize=/reconnect|authorization expired|no saved Gmail/i.test(message);
+    if(reauthorize){
+     set({...reset(),persistentConfigured:true,needsReconnect:true,error:message});
+    }else{
+     // A temporary Cloudflare/Google outage is not a revoked grant. Preserve
+     // a still-valid access token and saved-grant mode so focus/search can retry.
+     set({error:message});
+    }
+   }
+  })();
+  gmailRenewal396={scope,epoch,promise:work};
+  try{await work;}finally{
+   if(gmailRenewal396?.promise===work)gmailRenewal396=null;
   }
  },
  async disconnectSaved(){
