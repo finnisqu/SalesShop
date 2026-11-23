@@ -10,7 +10,7 @@
 - The Worker exchanges the Google code with its **server-only** Google secret and the origin as `redirect_uri` (Google's code popup default), then verifies the actual Gmail address through Gmail's profile API. Gmail permission remains strictly `gmail.readonly`.
 - The Worker encrypts the Google refresh token with a random 32-byte AES-GCM key and 12-byte nonce, binding ciphertext to the specific organization+user via authenticated additional data. Only encrypted ciphertext, nonce, mailbox, scope, status, verification timestamps and version are stored in Supabase. **No Google refresh token or encryption key reaches the browser.**
 - A user's next SalesShop sign-in invokes `GET /api/gmail/persistent/status`, then `POST .../refresh`; the Worker decrypts the saved refresh token and obtains a new short-lived access token. This short-lived token stays in the current browser memory, consistent with the current direct Gmail API readers. The client renews on focus, shortly before expiry, and before search when needed.
-- **Disconnect** sends an authorized Worker request to delete the saved connection and *attempt* Google's revocation. If Google's revocation endpoint is temporarily unavailable, removing the SalesShop credential still prevents future refreshes from this integration; revocation may need manual follow-up at Google's account permissions page.
+- **Disconnect** sends an authorized Worker request to delete the saved connection. The Worker only *attempts* Google's provider-level revocation when no other saved SalesShop connection uses the same verified Gmail mailbox, because revocation may invalidate a grant shared across organizations or team members. If a shared connection remains, the personal SalesShop credential is deleted but the Google grant stays authorized for those other users. A provider revocation error also does not restore the deleted SalesShop credential. Explicit Google account-level revocation remains available through Google's account permissions page.
 - On account or organization changes, the browser drops current Gmail access without revoking the *persistent* Google grant. Pending OAuth results are checked against the latest identity generation.
 - If the persistent service is **not fully configured**, the currently working temporary token popup remains available, with the UI labeled `Session only`. There is no silent localStorage persistence of Google credentials.
 
@@ -54,7 +54,7 @@ Cloudflare Worker scripts are served through `worker/index.ts`, and `/api/*` is 
 | `/api/gmail/persistent/status?organization_id=UUID` | GET | Configured/connected/needsReconnect boolean plus verified mailbox, **no token** |
 | `/api/gmail/persistent/connect` | POST | Exchanges one-time code; returns short-lived access token, mailbox and expiry |
 | `/api/gmail/persistent/refresh` | POST | Returns a new short-lived access token and expiry; refresh token remains server-only |
-| `/api/gmail/persistent/disconnect` | POST | Deletes saved record, attempts Google revoke |
+| `/api/gmail/persistent/disconnect` | POST | Deletes saved record; attempts Google revoke only when no other saved connection shares the mailbox |
 
 Every route verifies current Auth JWT and organization membership. POSTs additionally require `Origin`, `X-Requested-With: XMLHttpRequest`, JSON, bounded body lengths and valid UUIDs. Errors do not return Google responses or ciphertext. Optional persistence reports `configured:false` until every required Worker secret exists; deployment is additionally blocked on SQL/table tests.
 
