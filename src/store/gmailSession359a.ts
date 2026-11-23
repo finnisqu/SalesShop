@@ -61,13 +61,13 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
     mailbox:access.mailbox,token:access.token,expiresAt:access.expiresAt});
    await get().search('newer_than:90d');
   }catch(e){
-   if(get().scope===scope&&!get().token){
+   if(get().scope===scope&&gmailIdentityEpoch396===epoch&&!get().token){
     set({persistentConfigured:true,restoring:false,
      needsReconnect:e instanceof Error&&/reconnect|expired|saved/i.test(e.message),
      error:e instanceof Error?e.message:'Could not restore saved Gmail.'});
    }
   }finally{
-   if(get().scope===scope)set({restoring:false});
+   if(get().scope===scope&&gmailIdentityEpoch396===epoch)set({restoring:false});
   }
  },
  async connectPersistent(){
@@ -86,8 +86,9 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
     token:access.token,mailbox:access.mailbox,expiresAt:access.expiresAt});
    await get().search('newer_than:90d');
   }catch(e){
-   if(get().scope===scope)set({...reset(),persistentConfigured:true,
-    error:e instanceof Error?e.message:'Could not save Gmail authorization.'});
+   if(get().scope===scope&&gmailIdentityEpoch396===epoch)
+    set({...reset(),persistentConfigured:true,
+     error:e instanceof Error?e.message:'Could not save Gmail authorization.'});
    throw e;
   }
  },
@@ -108,28 +109,31 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
   }
  },
  async disconnectSaved(){
-  const {scope,persistent}=get(),epoch=gmailIdentityEpoch396;
+  const {scope,persistent}=get();
   if(!scope){set(reset());return;}
   if(!persistent){get().disconnect();return;}
+  // Explicit disconnect invalidates in-flight restores of this same identity.
+  const epoch=++gmailIdentityEpoch396;
   try{
    await revokePersistent396(scope);
    if(get().scope===scope&&gmailIdentityEpoch396===epoch)
     set({...reset(),persistentConfigured:true});
   }catch(e){
-   if(get().scope===scope)set({error:e instanceof Error?e.message:
-    'Could not disconnect Gmail on the server.'});
+   if(get().scope===scope&&gmailIdentityEpoch396===epoch)
+    set({error:e instanceof Error?e.message:
+     'Could not disconnect Gmail on the server.'});
    throw e;
   }
  },
  async connect(){
-  const scope=get().scope;
+  const scope=get().scope,epoch=gmailIdentityEpoch396;
   if(!scope)throw new Error('Sign in to a SalesShop workspace before connecting Gmail.');
   set({status:'connecting',error:null});
   let access;
   try{
    access=await authorizeGmail();
    const mailbox=await gmailProfile(access.token);
-   if(get().scope!==scope){
+   if(get().scope!==scope||gmailIdentityEpoch396!==epoch){
     revokeGmailToken(access.token);
     throw new Error('Your SalesShop workspace changed during Google authorization. Open Tools → Email and retry.');
    }
@@ -181,6 +185,7 @@ export const useGmailSessionStore=create<GmailState>((set,get)=>({
   // For persisted connections, callers must use disconnectSaved, which
   // deletes the server-side grant and then lets the Worker revoke Google.
   if(persistent){set({error:'Use Disconnect saved Gmail to revoke this account.'});return;}
+  ++gmailIdentityEpoch396;
   set(reset());
   if(token)revokeGmailToken(token);
  },
