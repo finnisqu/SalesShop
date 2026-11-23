@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "salesshop-gmail-396-staging",
+  "main": "./worker/gmailStagingHarness396.ts",
+  "compatibility_date": "2026-11-10",
+  "workers_dev": true,
+  // Only safe public staging values are committed.
+  // Set GMAIL_OAUTH_ORIGIN to the actual workers.dev HTTPS origin after
+  // deployment. All keys and Google secrets belong in Worker secrets,
+  // NEVER in this file or any VITE_ build variable.
+  "vars": {
+    "SUPABASE_URL": "https://lztviymnqplloarwywde.supabase.co"
+  }
+}
