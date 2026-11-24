@@ -48,6 +48,14 @@ describe('#396 — staging-only Cloudflare API harness',()=>{
   expect(code).toContain('fetch(STAGING_SUPABASE+');
   expect(code).not.toContain('localStorage');
   expect(code).not.toContain('sessionStorage');
+  // A dummy saved credential is always status=reauthorize: owner sees only
+  // mailbox metadata, other members never share the grant, refresh is 409.
+  expect(code).toContain('savedFixtureMode');
+  expect(code).toContain('SAVED_FIXTURE_MAILBOX');
+  expect(code).toContain('ownJson.needsReconnect!==true');
+  expect(code).toContain('if(refresh.status!==409)');
+  expect(code).toContain("role==='owner'");
+  expect(code).not.toContain('refresh_token');
  });
  it('publishes only a validated staging publishable key, never privileged secrets',async()=>{
   const url=origin+'/audit/config';
