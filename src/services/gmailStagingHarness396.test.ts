@@ -27,6 +27,60 @@ describe('#396 — staging-only Cloudflare API harness',()=>{
   expect(calls.every(call=>call.method==='GET')).toBe(true);
  });
 
+ it('serves explicit staging-only OAuth code-popup test with Google-compatible CSP/COOP',async()=>{
+  const html=await harness.fetch(new Request(origin+'/oauth-test'),env);
+  expect(html.status).toBe(200);
+  expect(html.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin-allow-popups');
+  const csp=html.headers.get('Content-Security-Policy')??'';
+  expect(csp).toContain("script-src 'self' https://accounts.google.com/gsi/client");
+  expect(csp).toContain('frame-src https://accounts.google.com');
+  expect(csp).toContain("connect-src 'self' https://lztviymnqplloarwywde.supabase.co");
+  expect(html.headers.get('Cache-Control')).toBe('no-store');
+  const markup=await html.text();
+  expect(markup).toContain('Real Google consent is optional.');
+  expect(markup).toContain('https://accounts.google.com/gsi/client');
+  expect(markup).toContain('src="/oauth-test.js"');
+  expect(markup).not.toContain('GOOGLE_GMAIL_CLIENT_SECRET');
+  const script=await harness.fetch(new Request(origin+'/oauth-test.js'),env);
+  expect(script.status).toBe(200);
+  const code=await script.text();
+  expect(code).toContain("ux_mode:'popup'");
+  expect(code).toContain('state:expectedState');
+  expect(code).toContain("data.state!==expectedState");
+  expect(code).toContain('api(\'connect\',code)');
+  expect(code).toContain("api('refresh')");
+  expect(code).toContain("api('disconnect')");
+  expect(code).toContain('client.requestCode()');
+  expect(code).not.toContain('localStorage');
+  expect(code).not.toContain('sessionStorage');
+  expect(code).not.toContain('refresh_token');
+  expect(code).not.toContain('console.log');
+ });
+ it('returns only public OAuth configuration and rejects production origins and unsafe methods',async()=>{
+  const url=origin+'/oauth-test/config';
+  const secretEnv={...env,
+   SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test_1234',
+   GOOGLE_GMAIL_CLIENT_ID:'test.apps.googleusercontent.com',
+   GOOGLE_GMAIL_CLIENT_SECRET:'DO_NOT_EXPOSE_GOOGLE_SECRET',
+   SUPABASE_SECRET_KEY:'sb_secret_DO_NOT_EXPOSE',
+   GMAIL_TOKEN_ENCRYPTION_KEY:'DO_NOT_EXPOSE_ENCRYPTION'};
+  const response=await harness.fetch(new Request(url),secretEnv);
+  expect(response.status).toBe(200);
+  const payload=await response.text();
+  expect(JSON.parse(payload)).toEqual({
+   supabaseUrl:stagingDb,publishableKey:'sb_publishable_test_1234',
+   googleClientId:'test.apps.googleusercontent.com'});
+  for(const secret of ['DO_NOT_EXPOSE_GOOGLE_SECRET','sb_secret_DO_NOT_EXPOSE',
+   'DO_NOT_EXPOSE_ENCRYPTION'])expect(payload).not.toContain(secret);
+  expect((await harness.fetch(new Request(url,{method:'POST'}),secretEnv)).status).toBe(405);
+  expect((await harness.fetch(new Request('https://app.salesshop.work/oauth-test'),secretEnv)).status).toBe(503);
+  expect((await harness.fetch(new Request(url),{
+   ...secretEnv,SUPABASE_URL:'https://pvchgibllozuwickhfqz.supabase.co'})).status).toBe(503);
+  expect((await harness.fetch(new Request(url),{
+   ...secretEnv,GOOGLE_GMAIL_CLIENT_ID:'invalid'})).status).toBe(503);
+  expect((await harness.fetch(new Request(url),{
+   ...secretEnv,SUPABASE_PUBLISHABLE_KEY:'sb_secret_instead'})).status).toBe(503);
+ });
  it('does not serve a CRM app or any unrelated routes',async()=>{
   const response=await harness.fetch(new Request(origin+'/'),env);
   expect(response.status).toBe(404);
