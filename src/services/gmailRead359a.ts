@@ -154,7 +154,8 @@ export function revokeGmailToken(token:string):void{
 }
 interface GmailApiHeader {name?:string;value?:string}
 interface GmailApiPayload {
- mimeType?:string;headers?:GmailApiHeader[];body?:{data?:string;size?:number};
+ mimeType?:string;filename?:string;headers?:GmailApiHeader[];
+ body?:{data?:string;size?:number;attachmentId?:string};
  parts?:GmailApiPayload[];
 }
 export interface GmailApiMessage{
@@ -172,6 +173,10 @@ export interface GmailThreadSummary{
 }
 export interface GmailVisibleMessage{
  id:string;from:string;to:string;date:string;subject:string;text:string;
+ /** Reply-To can differ from bulk-mailer / builder-platform From addresses. */
+ replyTo?:string;cc?:string;
+ /** Longer readable body for in-memory address discovery; never persisted. */
+ searchText?:string;
 }
 export interface GmailThreadDetails {
  summary:GmailThreadSummary;messages:GmailVisibleMessage[];
@@ -208,6 +213,7 @@ export function summarizeGmailThread(thread:GmailApiThread):GmailThreadSummary{
   ...extractAddresses(gmailHeader(message,'From')),
   ...extractAddresses(gmailHeader(message,'To')),
   ...extractAddresses(gmailHeader(message,'Cc')),
+  ...extractAddresses(gmailHeader(message,'Reply-To')),
  ]))];
  const received=Number(last.internalDate);
  const day=Number.isFinite(received)&&received>0?
@@ -219,30 +225,58 @@ export function summarizeGmailThread(thread:GmailApiThread):GmailThreadSummary{
   participants,messageCount:messages.length,
   ...(/^[A-Za-z0-9_-]{3,128}$/.test(last.id??'')?{latestMessageId:last.id}:{})};
 }
-function parsePlainText(part?:GmailApiPayload):string{
+/** Read bounded body text from MIME parts, including multipart/forwarded chains.
+ * Never download attachments or render untrusted HTML. */
+function decodedGmailPart(data?:string):string{
+ if(!data)return '';
+ try{
+  const decoded=data.replace(/-/g,'+').replace(/_/g,'/');
+  const bytes=Uint8Array.from(atob(decoded),c=>c.charCodeAt(0));
+  return new TextDecoder().decode(bytes).slice(0,100_000);
+ }catch{return '';}
+}
+function gmailHtmlAsText(source:string):string{
+ // HTML-only builder notifications often have the only useful address in
+ // mailto links. Extract those before dropping every tag/attribute.
+ const mailtos=[...source.matchAll(/mailto:([^\s"'<>?]+)/gi)]
+  .map(match=>match[1].replace(/%40/gi,'@'));
+ const plain=source.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,' ')
+  .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,' ')
+  .replace(/<(?:br|\/p|\/div|\/tr|\/li)\b[^>]*>/gi,'\n')
+  .replace(/<[^>]+>/g,' ')
+  .replace(/&#(?:x([0-9a-f]+)|([0-9]+));/gi,(_match,hex,decimal)=>
+   String.fromCodePoint(Math.min(0x10ffff,Number.parseInt(hex??decimal,hex?16:10)||32)))
+  .replace(/&(?:nbsp|amp|lt|gt|quot|apos);/gi,m=>({
+   '&nbsp;':' ','&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'",
+  } as Record<string,string>)[m.toLowerCase()]??m);
+ return (plain+'\n'+mailtos.join('\n')).slice(0,100_000);
+}
+function readableGmailBody(part?:GmailApiPayload):string{
  if(!part)return '';
- if(part.mimeType?.toLowerCase()==='text/plain'&&part.body?.data){
-  try{
-   const decoded=part.body.data.replace(/-/g,'+').replace(/_/g,'/');
-   const raw=atob(decoded);
-   const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));
-   return new TextDecoder().decode(bytes).slice(0,12000);
-  }catch{return '';}
- }
- for(const child of part.parts??[]){
-  const text=parsePlainText(child);
-  if(text)return text;
- }
- return '';
+ const plain:string[]=[],html:string[]=[];
+ let visited=0;
+ const collect=(item:GmailApiPayload,depth:number)=>{
+  if(++visited>160||depth>18||item.filename||item.body?.attachmentId)return;
+  const mime=item.mimeType?.toLowerCase()??'';
+  if(mime==='text/plain'&&item.body?.data)plain.push(decodedGmailPart(item.body.data));
+  if(mime==='text/html'&&item.body?.data)html.push(gmailHtmlAsText(decodedGmailPart(item.body.data)));
+  for(const child of item.parts??[])collect(child,depth+1);
+ };
+ collect(part,0);
+ // Prefer text/plain over HTML alternate representations, so one email is not
+ // counted twice. Preserve multiple plain parts, including nested forwards.
+ return (plain.length?plain:html).filter(Boolean).join('\n\n').slice(0,100_000);
 }
 export function displayGmailThread(thread:GmailApiThread):GmailThreadDetails{
  const summary=summarizeGmailThread(thread);
  return {summary,messages:(thread.messages??[]).slice(-40).map(m=>{
   const timestamp=Number(m.internalDate);
+  const readable=readableGmailBody(m.payload)||(m.snippet??'').slice(0,12000);
   return {id:m.id??'',from:gmailHeader(m,'From')||'Unknown',
-   to:gmailHeader(m,'To'),subject:gmailHeader(m,'Subject')||summary.subject,
+   to:gmailHeader(m,'To'),replyTo:gmailHeader(m,'Reply-To'),cc:gmailHeader(m,'Cc'),
+   subject:gmailHeader(m,'Subject')||summary.subject,
    date:Number.isFinite(timestamp)&&timestamp>0?new Date(timestamp).toISOString():summary.date,
-   text:parsePlainText(m.payload)||(m.snippet??'').slice(0,12000)};
+   text:readable.slice(0,12000),searchText:readable};
  })};
 }
 export async function gmailThreadDetails(token:string,id:string,signal?:AbortSignal):Promise<GmailThreadDetails>{
@@ -254,7 +288,7 @@ export async function gmailThreadSummary(token:string,id:string,signal?:AbortSig
  if(!/^[A-Za-z0-9_-]{3,128}$/.test(id))throw new Error('Invalid Gmail thread identifier.');
  const response=await gmailGet<GmailApiThread>(token,'threads/'+encodeURIComponent(id)+
   '?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Cc'+
-  '&metadataHeaders=Date&metadataHeaders=Subject',signal);
+  '&metadataHeaders=Reply-To&metadataHeaders=Date&metadataHeaders=Subject',signal);
  return summarizeGmailThread(response);
 }
 export interface GmailPage {threads:GmailThreadSummary[];nextPageToken?:string}

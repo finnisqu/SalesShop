@@ -1,6 +1,9 @@
 import {useMemo,useRef,useState,type FormEvent} from 'react';
 import type {Company,Contact} from '../types/crm';
-import type {GmailThreadSummary} from '../services/gmailRead359a';
+import type {GmailThreadSummary,GmailThreadDetails} from '../services/gmailRead359a';
+import {gmailAddressesInDetails395} from '../services/gmailBodyDiscovery395';
+import {personEmailAddress} from '../services/emailAutoMatch361';
+import {recordNameKey} from '../services/recordNameKey';
 import {useAuthStore} from '../store/authStore';
 import {useRolePerspectiveStore} from '../store/rolePerspectiveStore';
 import {useGmailSessionStore,validGmailToken} from '../store/gmailSession359a';
@@ -14,25 +17,41 @@ import {emailDomain,existingPeopleByEmail,gmailContactParticipants,
  from '../services/emailPersonFromGmail362';
 
 const NEW_COMPANY='__create_company__';
+const MANUAL_EMAIL='__manual_email__';
 
-export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,canWrite,onCreated,onOpen}:{
- thread:GmailThreadSummary;mailbox:string;contacts:readonly Contact[];companies:readonly Company[];
+export function EmailPersonCreate362({thread,details,initialAddress,initialName,
+ allowManual=false,mailbox,contacts,companies,scope,canWrite,onCreated,onOpen}:{
+ thread:GmailThreadSummary;details?:GmailThreadDetails|null;
+ initialAddress?:string;initialName?:string;allowManual?:boolean;
+ mailbox:string;contacts:readonly Contact[];companies:readonly Company[];
  scope:string|null;canWrite:boolean;onCreated:(id:string)=>void;onOpen:(id:string)=>void;
 }){
- const addresses=useMemo(()=>gmailContactParticipants(thread,mailbox),[thread,mailbox]);
- const [address,setAddress]=useState(addresses[0]??'');
+ const bodyIsCurrent=!!details&&details.summary.id===thread.id&&
+  details.summary.latestMessageId===thread.latestMessageId;
+ const addresses=useMemo(()=>bodyIsCurrent&&details?
+  gmailAddressesInDetails395(details,mailbox).map(item=>item.address):
+  gmailContactParticipants(thread,mailbox),[bodyIsCurrent,details,thread,mailbox]);
+ const first=initialAddress&&addresses.includes(initialAddress)?initialAddress:addresses[0]??'';
+ const startManual=allowManual&&(!addresses.length||
+  (!!initialAddress&&!addresses.includes(initialAddress)));
+ const [manualMode,setManualMode]=useState(startManual);
+ const [manualEmail,setManualEmail]=useState(startManual?initialAddress??'':'');
+ const starter=startManual?initialAddress??'':first;
+ const [address,setAddress]=useState(first);
  const getSuggestedChoice=(email:string)=>{
   const suggested=suggestedCompaniesFromEmail(email,contacts,companies);
   return suggested.length===1&&suggested[0].rank===100?suggested[0].company.id:'';
  };
- const [name,setName]=useState(()=>addresses[0]?suggestedPersonName(thread,addresses[0]):'');
- const [companyChoice,setCompanyChoice]=useState(()=>getSuggestedChoice(addresses[0]??''));
+ const [name,setName]=useState(()=>initialName?.trim()||
+  (starter?suggestedPersonName(thread,starter):''));
+ const [companyChoice,setCompanyChoice]=useState(()=>getSuggestedChoice(starter));
  const [companyName,setCompanyName]=useState('');
  const [error,setError]=useState('');
  const [saving,setSaving]=useState(false);
  const [createdPerson,setCreatedPerson]=useState<string|null>(null);
  const pending=useRef(false);
- const currentAddress=addresses.includes(address)?address:'';
+ const currentAddress=manualMode?personEmailAddress(manualEmail)??'':
+  addresses.includes(address)?address:'';
  const duplicates=existingPeopleByEmail(contacts,currentAddress);
  const suggestions=useMemo(()=>suggestedCompaniesFromEmail(currentAddress,contacts,companies),
   [currentAddress,contacts,companies]);
@@ -42,8 +61,12 @@ export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,ca
   !suggestions.some(s=>s.company.id===c.id)).slice()
   .sort((a,b)=>a.name.localeCompare(b.name));
  const setParticipant=(email:string)=>{
+  if(email===MANUAL_EMAIL&&allowManual){
+   setManualMode(true);setAddress('');setCompanyChoice('');setCompanyName('');
+   setError('');setCreatedPerson(null);return;
+  }
   if(!addresses.includes(email))return;
-  setAddress(email);setName(suggestedPersonName(thread,email));
+  setManualMode(false);setAddress(email);setName(suggestedPersonName(thread,email));
   setCompanyChoice(getSuggestedChoice(email));setCompanyName('');setError('');
   setCreatedPerson(null);
  };
@@ -61,18 +84,31 @@ export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,ca
    !canEditTeamArea(auth.teamRole,auth.teamDepartment,'crm')||
    useRolePerspectiveStore.getState().activePerspective||
    !session.threads.some(row=>row.id===thread.id&&
-    gmailContactParticipants(row,mailbox).includes(currentAddress))){
+    row.latestMessageId===thread.latestMessageId&&
+    ((allowManual&&manualMode)||
+     gmailContactParticipants(row,mailbox).includes(currentAddress)||
+     (bodyIsCurrent&&details&&
+      gmailAddressesInDetails395(details,mailbox).some(item=>item.address===currentAddress))))){
    setError('Your Gmail or SalesShop session changed. Reopen this conversation to create the Person.');
    return;
   }
   const clean=name.trim();
-  if(!currentAddress||!clean||clean.length>180){
-   setError('Choose a valid email participant and enter a Person name.');return;
+  if(!clean||clean.length>180||
+   (!manualMode&&!currentAddress)||
+   (manualMode&&manualEmail.trim()&&!currentAddress)){
+   setError('Enter a Person name and a valid email address (or leave manual email blank).');
+   return;
   }
   const crm=useCrmStore.getState();
   if(!crm.hydrated){setError('CRM records are still loading. Try again.');return;}
   if(existingPeopleByEmail(crm.contacts,currentAddress).length){
    setError('This email address already belongs to a Person. Open that record instead.');return;
+  }
+  if(manualMode&&!currentAddress&&crm.contacts.some(person=>
+   recordNameKey(person.name)===recordNameKey(clean)&&
+   (person.companyId??'')===(companyChoice===NEW_COMPANY?'':companyChoice))){
+   setError('A Person with that name may already exist. Search the CRM before creating a duplicate.');
+   return;
   }
   let companyId:string|undefined;
   if(companyChoice===NEW_COMPANY){
@@ -108,7 +144,7 @@ export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,ca
    if(existingPeopleByEmail(useCrmStore.getState().contacts,currentAddress).length)
     throw new Error('This Person has already been created. Open their existing record instead.');
    const personId=useCrmStore.getState().createContact({
-    name:clean,email:currentAddress,companyId,source:'manual',
+    name:clean,...(currentAddress?{email:currentAddress}:{}),companyId,source:'manual',
    });
    if(!personId)throw new Error('Could not create the Person.');
    setCreatedPerson(personId);
@@ -123,15 +159,22 @@ export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,ca
  };
  if(!canWrite)return null;
  return <section className="ss-email-create-person" aria-label="Create Person from email">
-  <header><h4>Create Person from email</h4><small>Use an email participant to create a CRM Person.</small></header>
-  {!addresses.length?<p>No external email participants were found in this conversation.</p>:
+  <header><h4>Create Person from email</h4><small>{allowManual?
+   'Choose a detected address or enter one manually.':'Review a detected email address before creating a Person.'}</small></header>
+  {!addresses.length&&!allowManual?<p>No usable external email addresses were detected in this conversation.</p>:
    <form onSubmit={save}>
-    <label>Participant email
-     <select value={currentAddress} disabled={saving||!!createdPerson}
+    <label>Email address
+     <select value={manualMode?MANUAL_EMAIL:currentAddress} disabled={saving||!!createdPerson}
       onChange={event=>setParticipant(event.target.value)}>
       {addresses.map(email=><option key={email} value={email}>{email}</option>)}
+      {allowManual&&<option value={MANUAL_EMAIL}>Enter manually / no email yet</option>}
      </select>
     </label>
+    {manualMode&&<label>Person email (optional)
+     <input type="email" value={manualEmail} disabled={saving||!!createdPerson}
+      placeholder="name@company.com"
+      onChange={event=>{setManualEmail(event.target.value);setError('');}}/>
+    </label>}
     {duplicates.length>0?<div className="ss-email-person-existing">
      <strong>This email already belongs to {duplicates.length===1?'a Person':'People'}.</strong>
      {duplicates.map(person=><button key={person.id} type="button" onClick={()=>onOpen(person.id)}>
@@ -171,13 +214,18 @@ export function EmailPersonCreate362({thread,mailbox,contacts,companies,scope,ca
     <div className="ss-email-auto-actions">
      {createdPerson?<button type="button" onClick={()=>onOpen(createdPerson)}>
       Open created Person</button>:
-      <button type="submit" disabled={saving||!currentAddress||!name.trim()||
+      <button type="submit" disabled={saving||!name.trim()||
+       (!manualMode&&!currentAddress)||
+       (manualMode&&!!manualEmail.trim()&&!currentAddress)||
        (companyChoice===NEW_COMPANY&&!companyName.trim())}>
        {saving?'Creating…':'Create Person'}</button>}
     </div></>}
     {error&&<p role="alert" className="ss-email-error">{error}</p>}
-    <p className="ss-email-create-helper">Email matching will work on the Person record
-     while your Gmail is connected. No message body is copied into the CRM.</p>
+    <p className="ss-email-create-helper">Forwarded chains may contain outdated or unrelated
+     addresses. Verify the Person before saving. {currentAddress?
+      'Gmail matching can use this address while connected.':
+      'Add an email later to enable Gmail address matching.'}
+     No message body is copied into the CRM.</p>
    </form>}
  </section>;
 }

@@ -9,6 +9,9 @@ import {emailWorkspaceScope,type EmailTarget,type EmailTargetKind} from '../serv
 import {gmailClientId,gmailThreadDetails,
  type GmailThreadDetails,type GmailThreadSummary} from '../services/gmailRead359a';
 import {emailTargetSuggestions} from '../services/emailThreadMatching359a';
+import {gmailAddressesInDetails395,gmailAddressFindings395,
+ gmailThreadWithAddresses395,gmailEvidenceLabel395}
+ from '../services/gmailBodyDiscovery395';
 import {classifyGmailTriage,filterGmailTriage,gmailTriageCounts,
  mayNeedGmailReplyReview,type GmailTriageFilter} from '../services/gmailTriage367';
 import {currentGmailReviewDecision,readGmailReviewDecisions,
@@ -27,10 +30,14 @@ import {DEFAULT_GMAIL_REVIEW_RULES,GMAIL_REVIEW_MIN_DAYS,GMAIL_REVIEW_MAX_DAYS,
  loadGmailReviewRules,storeGmailReviewRules,type GmailReviewRules}
  from '../services/gmailTriagePrefs370';
 import {EmailPersonCreate362} from './EmailPersonCreate362';
+import {EmailLinkPicker395} from './EmailLinkPicker395';
 import {EmailActivityLogger363} from './EmailActivityLogger363';
 import {GmailConnectionChecks388} from './GmailConnectionChecks388';
 import './email-workspace.css';
 
+function gmailBodyKey395(thread:GmailThreadSummary):string{
+ return thread.latestMessageId??thread.messageCount+'|'+thread.date;
+}
 export function EmailWorkspace({contacts,deals,companies}:{
  contacts:readonly Contact[];deals:readonly Project[];companies:readonly Company[];
 }){
@@ -66,6 +73,12 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const [activeId,setActiveId]=useState<string|null>(null);
  const [selectedTarget,setSelectedTarget]=useState('');
  const [details,setDetails]=useState<GmailThreadDetails|null>(null);
+ const [personSeed,setPersonSeed]=useState('');
+ const [bodyDiscovery,setBodyDiscovery]=useState<{
+  identity:string|null;byId:Record<string,{key:string;addresses:string[]}>;
+ }>({identity:null,byId:{}});
+ const [bodyScan,setBodyScan]=useState({working:false,done:0,total:0});
+ const bodyScanEpoch=useRef(0);
  const [detailError,setDetailError]=useState('');
  const [detailsLoading,setDetailsLoading]=useState(false);
  const [notice,setNotice]=useState('');
@@ -108,9 +121,27 @@ export function EmailWorkspace({contacts,deals,companies}:{
   }
   return result;
  },[threads,matchedFingerprints,taskRows,crmActivities,workReady]);
- const current=threads.find(t=>t.id===activeId);
- const triage=useMemo(()=>classifyGmailTriage(threads,contacts,mailbox,
-  Date.now(),reviewRules),[threads,contacts,mailbox,reviewRules]);
+ const discoveryIdentity=expectedScope&&mailbox?expectedScope+'|'+mailbox:null;
+ const matchingThreads=useMemo(()=>threads.map(thread=>{
+  const cache=bodyDiscovery.identity===discoveryIdentity?
+   bodyDiscovery.byId[thread.id]:undefined;
+  return cache?.key===gmailBodyKey395(thread)?
+   gmailThreadWithAddresses395(thread,cache.addresses.map(address=>({address}))):thread;
+ }),[threads,bodyDiscovery,discoveryIdentity]);
+ const current=matchingThreads.find(t=>t.id===activeId);
+ const findings=useMemo(()=>details&&current&&mailbox&&
+  details.summary.id===current.id&&
+  gmailBodyKey395(details.summary)===gmailBodyKey395(current)?
+  gmailAddressFindings395(details,contacts,mailbox):[],
+  [details,current,contacts,mailbox]);
+ const knownFindings=findings.filter(item=>item.people.length>0);
+ const triage=useMemo(()=>{
+  // Quoted historical addresses help identify People, but must NOT turn an
+  // automated builder-platform notification into an inferred reply obligation.
+  const headerOnly=classifyGmailTriage(threads,contacts,mailbox,Date.now(),reviewRules);
+  const matched=classifyGmailTriage(matchingThreads,contacts,mailbox,Date.now(),reviewRules);
+  return matched.map((item,index)=>({...item,reviewReply:headerOnly[index]?.reviewReply??false}));
+ },[threads,matchingThreads,contacts,mailbox,reviewRules]);
  const triageCounts=useMemo(()=>{
   const count=gmailTriageCounts(triage);
   const active=triage.filter(item=>item.reviewReply&&
@@ -132,9 +163,17 @@ export function EmailWorkspace({contacts,deals,companies}:{
   return filterGmailTriage(triage,triageFilter);
  },[triage,triageFilter,reviewDecisions,threadWork]);
  const directLinks=dealPeopleStoreScope===dealPeopleScope(mode,org)?dealPeople:[];
- const suggestions=useMemo(()=>current?
-  emailTargetSuggestions(current,contacts,deals,directLinks):[],
-  [current,contacts,deals,directLinks]);
+ const suggestions=useMemo(()=>{
+  if(!current)return [];
+  const original=threads.find(item=>item.id===current.id);
+  const headerKeys=new Set(original?
+   emailTargetSuggestions(original,contacts,deals,directLinks)
+    .map(item=>item.kind+':'+item.id):[]);
+  return emailTargetSuggestions(current,contacts,deals,directLinks).map(item=>
+   headerKeys.has(item.kind+':'+item.id)?item:{
+    ...item,reason:'Possible match from quoted/forwarded content — confirm before linking',
+   });
+ },[current,threads,contacts,deals,directLinks]);
  const targets=useMemo<EmailTarget[]>(()=>[
   ...contacts.map(p=>({kind:'person' as const,id:p.id,title:p.name||p.email||'Unnamed Person'})),
   ...deals.map(d=>({kind:'deal' as const,id:d.id,title:d.name})),
@@ -181,6 +220,10 @@ export function EmailWorkspace({contacts,deals,companies}:{
  // Changing Gmail identity invalidates all currently displayed mail and metadata.
  useEffect(()=>{
   requestVersion.current+=1;
+  ++bodyScanEpoch.current;
+  setBodyDiscovery({identity:null,byId:{}});
+  setBodyScan({working:false,done:0,total:0});
+  setPersonSeed('');
   setActiveId(null);setDetails(null);setDetailError('');setSelectedTarget('');setNotice('');
   setTriageFilter('all');
  },[mailbox,expectedScope]);
@@ -199,6 +242,8 @@ export function EmailWorkspace({contacts,deals,companies}:{
  };
  const runSearch=(searchQuery:string)=>{
   if(!connected||loading)return;
+  ++bodyScanEpoch.current;
+  setBodyScan({working:false,done:0,total:0});
   setQuery(searchQuery);
   requestVersion.current+=1;
   setActiveId(null);setDetails(null);setDetailError('');setDetailsLoading(false);
@@ -295,7 +340,7 @@ export function EmailWorkspace({contacts,deals,companies}:{
  const showThread=async(id:string)=>{
   const request=++requestVersion.current;
   setActiveId(id);setDetails(null);setDetailError('');setDetailsLoading(true);setEmailAction(null);
-  setSelectedTarget('');
+  setSelectedTarget('');setPersonSeed('');
   const session=validGmailToken(expectedScope);
   if(!session){
    setDetailsLoading(false);setDetailError('Reconnect Gmail to read this conversation.');return;
@@ -303,13 +348,72 @@ export function EmailWorkspace({contacts,deals,companies}:{
   try{
    const result=await gmailThreadDetails(session.token,id);
    if(request===requestVersion.current&&validGmailToken(expectedScope)?.token===session.token&&
-    useGmailSessionStore.getState().scope===expectedScope)setDetails(result);
+    useGmailSessionStore.getState().scope===expectedScope){
+    setDetails(result);
+    const thread=threads.find(t=>t.id===id);
+    if(thread&&gmailBodyKey395(thread)===gmailBodyKey395(result.summary)&&
+     discoveryIdentity){
+     const addresses=gmailAddressesInDetails395(result,session.mailbox)
+      .map(item=>item.address);
+     setBodyDiscovery(previous=>({
+      identity:discoveryIdentity,byId:{
+       ...(previous.identity===discoveryIdentity?previous.byId:{}),
+       [id]:{key:gmailBodyKey395(thread),addresses},
+      },
+     }));
+    }
+   }
   }catch(e){
    if(request===requestVersion.current)
     setDetailError(e instanceof Error?e.message:'Could not read this conversation.');
   }finally{
    if(request===requestVersion.current)setDetailsLoading(false);
   }
+ };
+ const scanLoadedBodies=async()=>{
+  const session=validGmailToken(expectedScope);
+  if(!session||!discoveryIdentity||bodyScan.working||!threads.length)return;
+  const pending=threads.filter(thread=>{
+   const cache=bodyDiscovery.identity===discoveryIdentity?
+    bodyDiscovery.byId[thread.id]:undefined;
+   return cache?.key!==gmailBodyKey395(thread);
+  });
+  if(!pending.length){setNotice('Loaded conversations have already been scanned.');return;}
+  const epoch=++bodyScanEpoch.current;
+  setBodyScan({working:true,done:0,total:pending.length});
+  let completed=0,failed=0;
+  for(let i=0;i<pending.length;i+=2){
+   const batch=await Promise.all(pending.slice(i,i+2).map(async thread=>{
+    try{return {thread,details:await gmailThreadDetails(session.token,thread.id)};}
+    catch{return {thread,details:null};}
+   }));
+   if(bodyScanEpoch.current!==epoch||
+    validGmailToken(expectedScope)?.token!==session.token||
+    useGmailSessionStore.getState().scope!==expectedScope)return;
+   const found:Record<string,{key:string;addresses:string[]}>={};
+   for(const item of batch){
+    if(!item.details||
+     gmailBodyKey395(item.details.summary)!==gmailBodyKey395(item.thread)){
+     failed++;continue;
+    }
+    found[item.thread.id]={
+     key:gmailBodyKey395(item.thread),
+     addresses:gmailAddressesInDetails395(item.details,session.mailbox)
+      .map(address=>address.address),
+    };
+   }
+   setBodyDiscovery(previous=>({
+    identity:discoveryIdentity,byId:{
+     ...(previous.identity===discoveryIdentity?previous.byId:{}),...found,
+    },
+   }));
+   completed+=batch.length;
+   setBodyScan({working:true,done:completed,total:pending.length});
+  }
+  setBodyScan({working:false,done:completed,total:pending.length});
+  setNotice('Checked '+(completed-failed)+' loaded conversation(s) for quoted addresses.'+
+   (failed?' '+failed+' could not be read.':'')+
+   ' Matches remain private to this browser session.');
  };
  const applyLink=()=>{
   if(!canWrite||!connected||!mailbox||!current)return;
@@ -420,6 +524,15 @@ export function EmailWorkspace({contacts,deals,companies}:{
   {connected&&<div className="ss-email-content">
    <div className="ss-email-threads" role="region" aria-label="Gmail search results">
     <h3>Conversations <small>{shownTriage.length} shown · {threads.length} loaded</small></h3>
+    <div className="ss-email-body-scan">
+     <button type="button" disabled={bodyScan.working||loading||!connected||!threads.length}
+      onClick={()=>{void scanLoadedBodies();}}>
+      {bodyScan.working?'Checking messages…':'Find People in message contents'}
+     </button>
+     <small>{bodyScan.working?
+      bodyScan.done+' / '+bodyScan.total+' conversations checked':
+      'Optional: checks loaded message bodies and forwarded chains for known CRM People. Gmail stays read-only.'}</small>
+    </div>
     <div className="ss-email-triage-tabs" role="group" aria-label="Email triage filters">
      {([{id:'all',title:'All',count:triageCounts.all},
        {id:'review',title:'Review replies',count:triageCounts.review},
@@ -502,12 +615,45 @@ export function EmailWorkspace({contacts,deals,companies}:{
     {current&&<><div className="ss-email-detail-heading">
      <h3>{current.subject}</h3><small>{current.messageCount} message(s) · {current.participants.join(', ')}</small>
     </div>
+    {details?.summary.id===current.id&&<div className="ss-email-found-addresses">
+     {knownFindings.length>0&&<div className="ss-email-known-people">
+      <strong>Recognized People in this conversation</strong>
+      <div>{knownFindings.flatMap(item=>item.people.map(person=>
+       <button type="button" key={item.address+'|'+person.id}
+        title={item.address+' · '+gmailEvidenceLabel395(item.evidence)}
+        onClick={()=>openPerson(person.id)}>
+        {person.name||person.email} <small>{item.address}</small>
+       </button>))}</div>
+     </div>}
+     <details>
+      <summary>Detected email addresses · {findings.length}</summary>
+      <p>Includes Reply-To and quoted or forwarded content. These addresses may
+       belong to third parties or be outdated; no links or People are created automatically.</p>
+      <div className="ss-email-found-list">
+       {findings.map(item=><div key={item.address}>
+        <span><strong>{item.address}</strong>
+         <small>{gmailEvidenceLabel395(item.evidence)}
+          {item.people.length?' · Existing CRM Person':' · Not in CRM'}</small>
+        </span>
+        {item.people.length?item.people.map(person=><button type="button" key={person.id}
+         onClick={()=>openPerson(person.id)}>Open {person.name||'Person'}</button>):
+         canWrite&&<button type="button" onClick={()=>{
+          setPersonSeed(item.address);setEmailAction('person');
+         }}>+ Create Person</button>}
+       </div>)}
+       {!findings.length&&<p>No usable external email addresses detected.</p>}
+      </div>
+     </details>
+    </div>}
     <div className="ss-email-action-toolbar" role="toolbar" aria-label="Gmail CRM actions">
      <span>CRM actions</span>
      {([['task','New task'],['log','Log Activity'],['person','Create Person'],['link','Link record']] as const).map(([id,label])=>
       <button type="button" key={id} disabled={!canWrite||((id==='task'||id==='log')&&details?.summary.id!==current.id)}
        aria-expanded={emailAction===id} aria-pressed={emailAction===id}
-       onClick={()=>setEmailAction(emailAction===id?null:id)}>{label}</button>)}
+       onClick={()=>{
+        if(id==='person')setPersonSeed('');
+        setEmailAction(emailAction===id?null:id);
+       }}>{label}</button>)}
     </div>
     {emailAction&&<div className="ss-email-action-popover" role="dialog" aria-modal="false"
      aria-label={'Email '+emailAction+' actions'}
@@ -529,32 +675,26 @@ export function EmailWorkspace({contacts,deals,companies}:{
       </div>;
      }):<p>Not linked. Suggestions below are never linked automatically.</p>}
      {canWrite&&<div className="ss-email-link-controls">
-      <label htmlFor="ss-email-target">Link to</label>
-      <select id="ss-email-target" value={selectedTarget}
-       onChange={e=>setSelectedTarget(e.target.value)}>
-       <option value="">Choose Person or Deal</option>
-       {suggestions.length>0&&<optgroup label="Suggested matches">
-        {suggestions.map(s=><option key={s.kind+':'+s.id} value={s.kind+':'+s.id}>
-         {s.title} · {s.reason}</option>)}
-       </optgroup>}
-       <optgroup label="All People">
-        {targets.filter(t=>t.kind==='person').map(t=><option key={t.kind+':'+t.id}
-         value={t.kind+':'+t.id}>{t.title}</option>)}
-       </optgroup>
-       <optgroup label="All Deals">
-        {targets.filter(t=>t.kind==='deal').map(t=><option key={t.kind+':'+t.id}
-         value={t.kind+':'+t.id}>{t.title}</option>)}
-       </optgroup>
-      </select>
-      <button type="button" disabled={!selectedTarget} onClick={applyLink}>Link conversation</button>
+      <EmailLinkPicker395
+       key={current.id+'|'+mailbox} thread={current}
+       details={details?.summary.id===current.id?details:null}
+       mailbox={mailbox??''} scope={expectedScope}
+       contacts={contacts} companies={companies} deals={deals}
+       suggestions={suggestions} selectedTarget={selectedTarget}
+       onSelect={setSelectedTarget} onOpenPerson={openPerson} canWrite={canWrite}/>
+      <button type="button" disabled={!selectedTarget} onClick={applyLink}>
+       Link conversation</button>
      </div>}
     </div>
     
       </>:emailAction==='person'?<>
 {canWrite&&mailbox&&<EmailPersonCreate362
-     key={current.id+'|'+mailbox} thread={current} mailbox={mailbox} contacts={contacts}
+     key={current.id+'|'+mailbox+'|'+personSeed} thread={current}
+     details={details?.summary.id===current.id?details:null}
+     initialAddress={personSeed||undefined}
+     mailbox={mailbox} contacts={contacts}
      companies={companies} scope={expectedScope} canWrite={canWrite}
-     onCreated={id=>{setNotice('Person created in CRM. You can continue working in this email.');setEmailAction(null);}} onOpen={openPerson}/>}
+     onCreated={id=>{setNotice('Person created in CRM. You can continue working in this email.');setEmailAction(null);setPersonSeed('');}} onOpen={openPerson}/>}
 
       </>:<>
 {canWrite&&mailbox&&details?.summary.id===current.id&&
