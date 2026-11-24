@@ -1,11 +1,32 @@
-import {describe,it,expect} from 'vitest';
+import {describe,it,expect,vi,afterEach} from 'vitest';
 import harness from '../../worker/gmailStagingHarness396';
 
 const stagingDb='https://lztviymnqplloarwywde.supabase.co';
 const origin='https://salesshop-gmail-396-staging.example.workers.dev';
 const statusUrl=origin+'/api/gmail/persistent/status?organization_id=68af5ab1-aa83-43c9-b442-93b0f3bb7ca7';
 const env={GMAIL_OAUTH_ORIGIN:origin,SUPABASE_URL:stagingDb};
+afterEach(()=>vi.unstubAllGlobals());
 describe('#396 — staging-only Cloudflare API harness',()=>{
+ it('probes staging Auth and private membership with manual redirects and no secrets returned',async()=>{
+  const calls:RequestInit[]=[];
+  vi.stubGlobal('fetch',vi.fn(async (_resource:string,init?:RequestInit)=>{
+   calls.push(init??{});
+   return new Response(null,{status:calls.length===1?401:200});
+  }));
+  const response=await harness.fetch(new Request(origin+'/audit/health'),{
+   ...env,SUPABASE_PUBLISHABLE_KEY:'sb_publishable_staging_test_396',
+   SUPABASE_SECRET_KEY:'sb_secret_DO_NOT_EXPOSE'});
+  expect(response.status).toBe(200);
+  const payload=await response.text();
+  expect(JSON.parse(payload)).toEqual({checks:{
+   authEndpointStatus:401,privateMembershipReadStatus:200}});
+  expect(payload).not.toContain('sb_secret_');
+  expect(payload).not.toContain('sb_publishable_');
+  expect(calls.length).toBe(2);
+  expect(calls.every(call=>call.redirect==='manual')).toBe(true);
+  expect(calls.every(call=>call.method==='GET')).toBe(true);
+ });
+
  it('does not serve a CRM app or any unrelated routes',async()=>{
   const response=await harness.fetch(new Request(origin+'/'),env);
   expect(response.status).toBe(404);
