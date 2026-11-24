@@ -186,6 +186,46 @@ encryption key in chat.** Only report whether the unauthenticated status
 test returns `401` or `503`. The next stage will use synthetic staging
 users for real authenticated server-side tenant-isolation tests.
 
+## Nov 24 staging audit troubleshooting: three early failures
+
+A first browser run revealed three independent issues:
+
+- A **400** on test-role sign-in: Supabase rejected the email/password combination.
+  A role is identified by its **Auth user UUID**, not by the label chosen on
+  the test form. Check the expected UUID suffix shown next to each form;
+  when in doubt inspect staging Authentication → Users. Never share passwords
+  or session tokens.
+- **A valid sign-in returned 503 for own-company status:** the Worker used
+  `redirect:'error'` on outbound `fetch()` calls. Cloudflare Workers
+  **explicitly do not implement** redirect error mode: this throws
+  `TypeError` before any Supabase request is sent. This was the backend
+  cause, not a Supabase schema or credential problem. The fix changes all
+  five Worker outbound requests to `redirect:'manual'`; **3xx is then a
+  normal unsuccessful response, not followed automatically**. Staging health
+  diagnostics use manual mode as well.
+- A **signed-in user mismatched the chosen test role:** the synthetic
+  account corresponding to each role's UUID had been entered in a different
+  form. The updated audit page shows a UUID suffix for each role; do not
+  change the fixture memberships to match a guessed email ordering.
+
+After a new **green staging-branch Cloudflare build**, open the
+[Worker connectivity check](https://salesshop-gmail-396-staging.finnisquick.workers.dev/audit/health).
+Expected statuses are typically `authEndpointStatus:401` (anonymous
+GoTrue user lookup correctly requires a token) and
+`privateMembershipReadStatus:200` (staging Worker can read an empty,
+server-authorized membership query). A zero status means a network
+request failed before receiving an HTTP response; `-1` means a
+binding is absent. The endpoint returns **only two numeric statuses**,
+never keys, user records, tokens or provider response bodies.
+
+Then rerun the Owner, Colleague and Outsider tests at the
+[staging audit](https://salesshop-gmail-396-staging.finnisquick.workers.dev/audit)
+using the synthetic identities matching the UUID suffixes. **Do not run
+the old cached Worker version or change production credentials.**
+
+Cloudflare runtime reference:
+<https://developers.cloudflare.com/workers/runtime-apis/request/#options>
+
 ## Step 3A — Browser-based user isolation test (easiest)
 
 The dedicated staging Worker now also serves a **static, read-only test
