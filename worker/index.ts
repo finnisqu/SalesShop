@@ -61,7 +61,7 @@ export default {
   try{
    const result=await fetch('https://oauth2.googleapis.com/token',{
     method:'POST',body,headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    redirect:'error',signal:AbortSignal.timeout(12000),
+    redirect:'manual',signal:AbortSignal.timeout(12000),
    });
    const data=await result.json() as {
     access_token?:string;expires_in?:number;scope?:string;token_type?:string;
