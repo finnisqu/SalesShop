@@ -186,6 +186,46 @@ encryption key in chat.** Only report whether the unauthenticated status
 test returns `401` or `503`. The next stage will use synthetic staging
 users for real authenticated server-side tenant-isolation tests.
 
+## Step 3A — Browser-based user isolation test (easiest)
+
+The dedicated staging Worker now also serves a **static, read-only test
+page** (it is not a SalesShop frontend):
+
+<https://salesshop-gmail-396-staging.finnisquick.workers.dev/audit>
+
+After the branch's latest Cloudflare build is green:
+
+1. Open the exact `/audit` URL above in a browser.
+2. In **Owner — Company A**, enter the **synthetic staging Auth user's**
+   login email and password for the first test user and click **Test Owner**.
+3. In **Colleague — Company A**, use the second test user's **staging-only**
+   email and password and click **Test Colleague**.
+4. In **Outsider — Company B**, use the third test user's **staging-only**
+   email and password and click **Test Outsider**.
+5. Each role should report four PASS checks: anonymous rejection (401),
+   access to its own company (200 and not connected), cross-company denial
+   (403), and no direct read of private credential data.
+6. Report **only the PASS/FAIL summaries**, never actual email addresses,
+   passwords, access tokens or API keys. The page does not use localStorage,
+   sessionStorage or persistent tokens; passwords are sent directly by your
+   browser to *staging* Supabase Auth. No backend endpoint collects passwords.
+
+The page is restricted to the staging Worker host and staging Supabase URL,
+with a strict Content Security Policy. The public publishable key is the
+*only* key it can retrieve; it cannot fetch a privileged secret, Google
+client secret, encryption key or Gmail message. It never inserts a credential
+and never initiates Google OAuth. It refuses real production organizations
+because they are not among its three fixed staging fixtures.
+
+If a role says **staging sign-in failed (400)**, check that the correct
+synthetic staging account has an email/password login and a confirmed email
+in Supabase Authentication. Do not reset actual production users.
+
+This UI provides a practical **read-only live Worker authentication and
+isolation test**, complementing the already executed rollback-only
+database-level write-denial audit. It does not replace the broader synthetic
+credential owner-versus-colleague test below.
+
 ## Step 3 — Verify synthetic, authenticated Worker isolation
 
 Run `scripts/security/staging-gmail-396.mjs` using your **three synthetic
@@ -204,8 +244,9 @@ The script checks:
 - Synthetic credential rows are removed even if assertions fail.
 
 No live Google authorization is needed to run the status test.
-The Worker has no CRM frontend and cannot itself sign in browser users; the
-audit obtains staging JWTs using the synthetic accounts.
+The Worker has no CRM frontend. For the command-line audit, the script obtains
+staging JWTs using synthetic credentials in the operator's private runtime.
+For a simpler read-only browser check use the /audit page above.
 
 ## Step 4 — Future Google popup testing
 
