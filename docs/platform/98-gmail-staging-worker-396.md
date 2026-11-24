@@ -364,7 +364,91 @@ against staging via the Supabase connector, then verify zero rows. **Never
 run that script on production.** The dummy row is intentionally persistent
 between the three role tests; it is not a background task or real grant.
 
-## Step 4 — Future Google popup testing
+## Step 4 — Real Google OAuth code popup (optional, explicit opt-in)
+
+**Updated November 24, 2026:** The Owner/Colleague/Outsider dummy saved
+credential check passed all **13/13** expected browser checks. The
+`gmail396-owner-fixture@example.invalid` row was then removed using the
+exact-match staging cleanup script. A real staging SQL query verified
+**zero credential rows**, with all three memberships and both synthetic
+organizations intact. Production's `gmail_oauth_connections396` table
+remains absent.
+
+A new **standalone Gmail OAuth popup test** is available on the separate
+staging Worker after the feature branch's next green deployment:
+
+<https://salesshop-gmail-396-staging.finnisquick.workers.dev/oauth-test>
+
+The `/oauth-test` page is separate from the read-only `/audit` page, and
+does not host SalesShop's full UI. It serves its own local JS/CSS, loads
+the official `https://accounts.google.com/gsi/client` authorization
+library, and has `Cross-Origin-Opener-Policy: same-origin-allow-popups`.
+The CSP allows only the exact staging Supabase origin plus Google's
+identity domains. `/oauth-test/config` exposes only the *public*
+`sb_publishable_...` key and Google **client ID**, never a Google client
+secret, Supabase server secret or AES encryption key.
+
+**Google Cloud prerequisites (no credentials in GitHub):**
+- In Google Auth Platform → Clients, use the distinct staging **Web
+  application** OAuth client whose ID and secret were configured in this
+  Worker. Add the exact origin
+  `https://salesshop-gmail-396-staging.finnisquick.workers.dev` to
+  **Authorized JavaScript origins** (no trailing slash). Google code popup
+  uses the *origin* as the code exchange `redirect_uri`; it does not
+  require a custom callback page.
+- In Google Auth Platform → Audience (External, Testing), add the Google
+  account you intend to authorize as a **Test user**.
+- Enable the **Gmail API** in that Google Cloud project if not already
+  enabled. Confirm the OAuth consent screen and restricted Gmail scope are
+  configured for testing. Do not bypass any unexpected safety warning.
+
+**Steps, all in the browser:**
+1. Open `/oauth-test` on the **staging** Worker, after the new Cloudflare
+   build is green. This test is optional and does **not** connect a Gmail
+   mailbox automatically.
+2. In Step 1, sign in with only the **synthetic Company A Owner** Supabase
+   staging credentials (user UUID ending `64a99`). This is *not* your
+   Google login and not your live SalesShop login. The page clears the
+   password field immediately and keeps the session JWT in JS memory only.
+3. Click **Check saved status**; it should report not connected initially.
+4. If you want to test real Gmail consent, click **Connect test Gmail
+   (read-only)**. Choose a Gmail test account you control and confirm the
+   explicit `gmail.readonly` scope. Only proceed if you trust the Google
+   client and its consent screen. The browser forwards Google's one-time
+   code to the staging Worker; it never receives the refresh token.
+5. If connect succeeds, expect a connected mailbox message with a
+   short-lived access-token issuance indication (the token itself is never
+   printed). The Worker verifies the actual Gmail mailbox via Google's
+   profile endpoint and encrypts the refresh credential in staging.
+6. Click **Test token renewal**. It should return a new short-lived token,
+   without another popup. Click **Check saved status** again.
+7. To check persistence across browser reload, reload the page, sign in
+   again using the same **synthetic staging Owner** credentials, then click
+   **Check saved status** and **Test token renewal**. No Google popup
+   should be needed while the provider refresh grant is valid.
+8. When finished, click **Disconnect this staging grant**, explicitly
+   approve the confirmation, and check that the connection is gone. If
+   disconnect errors or the browser closes, tell the developer so the
+   test-only row can be inspected and safely cleaned up. Do NOT send any
+   OAuth token, browser session token, API key or password.
+
+The Worker keeps Google refresh tokens AES-GCM encrypted, keyed to its
+staging-only user and organization. Neither the page nor the status
+endpoint returns them. Although this page does not read Gmail messages,
+**gmail.readonly allows reading them**; use a disposable or explicitly
+chosen test mailbox rather than confidential mail.
+
+Because the OAuth app is in Google **Testing** status, refresh grants for
+Gmail scope usually expire after **seven days**. We can validate initial
+connect/reload/hourly refresh now; this staging check cannot prove a
+connection survives a week. The separate production release and Google
+OAuth verification process remains a later gate.
+
+References:
+- <https://developers.google.com/identity/oauth2/web/guides/use-code-model>
+- <https://developers.google.com/identity/oauth2/web/guides/get-google-api-clientid>
+
+## Later release gate — full SalesShop UI and longer-term reauthorization
 
 We still need a **separate test frontend** or isolated deployment with the
 full SalesShop auth/schema configuration to exercise Google's actual
