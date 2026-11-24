@@ -146,9 +146,16 @@ if an incident occurs.
 - [x] Isolated staging database authorization and RLS
 - [x] Synthetic saved-credential privacy and blocked renewal
 - [x] Real Google popup / saved grant / refresh / reload: **operator-reported**
-- [ ] Real staging grant removed via Worker disconnect + verified SQL zero rows
-- [ ] Fresh green full CRM TypeScript/Vitest/Vite build from #136
-- [ ] PR #134–136 dependency, mergeability and code review
+- [x] Real staging grant removed via operator-reported Worker disconnect + independently verified SQL zero rows (Google provider-side revocation not independently confirmed)
+- [x] Fresh green full CRM TypeScript/Vitest/Vite build from #136 (operator-reported, commit `133b539`)
+- [x] PR #134–136 branch reconciliation: combined draft PR #138, mergeable with main
+- [ ] Combined integration-branch build and final code/security review
 - [ ] Approved production-only migration, secret setup, rollback
 - [ ] Google OAuth audience/publishing suitability for intended customers
 - [ ] Production deployment or live Gmail change
+
+## November 24 integration handoff
+
+The operator reported a green full build of `133b539` and clicked Disconnect on the staging OAuth test. A read-only staging SQL query confirmed zero saved credentials and zero active grants; the production credential table was still absent. Google-side revocation was not independently confirmed.
+
+Draft [PR #138](https://github.com/finnisqu/SalesShop/pull/138) integrates the three stacked Gmail features with main (`28200a8`) at `5cad46f`. GitHub confirmed mergeability. The only differences from the green feature source were six comment lines in the two Files & Docs tests, preserving main exactly. For the combined build, use branch `release/gmail-394-396-integration` on the **isolated staging Worker**, build command `npm run build`, deploy command `npx wrangler deploy --config wrangler.gmail396.staging.jsonc`. This documentation-only commit requests that Git-connected staging build; it does not approve production deployment. Keep the default production Wrangler file unchanged.
