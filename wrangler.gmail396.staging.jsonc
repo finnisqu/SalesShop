@@ -5,10 +5,10 @@
   "compatibility_date": "2026-11-10",
   "workers_dev": true,
   // Only safe public staging values are committed.
-  // Set GMAIL_OAUTH_ORIGIN to the actual workers.dev HTTPS origin after
-  // deployment. All keys and Google secrets belong in Worker secrets,
-  // NEVER in this file or any VITE_ build variable.
+  // These staging URL/origin values are PUBLIC configuration, not secrets.
+  // Keep all Supabase keys, Google credentials and AES key in Worker Secrets.
   "vars": {
-    "SUPABASE_URL": "https://lztviymnqplloarwywde.supabase.co"
+    "SUPABASE_URL": "https://lztviymnqplloarwywde.supabase.co",
+    "GMAIL_OAUTH_ORIGIN": "https://salesshop-gmail-396-staging.finnisquick.workers.dev"
   }
 }
