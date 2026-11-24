@@ -26,8 +26,11 @@ function bytesToBase64(bytes:Uint8Array):string{
  let text='';for(const byte of bytes)text+=String.fromCharCode(byte);
  return btoa(text);
 }
-function base64ToBytes(value:string):Uint8Array{
- return Uint8Array.from(atob(value),c=>c.charCodeAt(0));
+function base64ToBytes(value:string):Uint8Array<ArrayBuffer>{
+ const decoded=atob(value);
+ const bytes=new Uint8Array(new ArrayBuffer(decoded.length));
+ for(let i=0;i<decoded.length;i++)bytes[i]=decoded.charCodeAt(i);
+ return bytes;
 }
 function apiBase(env:GmailPersistentEnv396):string{
  const url=new URL(env.SUPABASE_URL??'');
@@ -53,8 +56,11 @@ async function keyFor(env:GmailPersistentEnv396):Promise<CryptoKey>{
  if(key.length!==32)throw new Error('Encryption is not configured');
  return crypto.subtle.importKey('raw',key,{name:'AES-GCM'},false,['encrypt','decrypt']);
 }
-function additionalData(org:string,user:string):Uint8Array{
- return new TextEncoder().encode('salesshop:gmail:396:v1:'+org+':'+user);
+function additionalData(org:string,user:string):ArrayBuffer{
+ const encoded=new TextEncoder().encode('salesshop:gmail:396:v1:'+org+':'+user);
+ const buffer=new ArrayBuffer(encoded.byteLength);
+ new Uint8Array(buffer).set(encoded);
+ return buffer;
 }
 export async function sealRefresh396(refresh:string,env:GmailPersistentEnv396,
  org:string,user:string):Promise<{refresh_ciphertext:string;refresh_nonce:string}>{
