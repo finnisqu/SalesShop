@@ -95,6 +95,19 @@ afterEach(()=>{vi.unstubAllGlobals();connections.clear();revoked=[];refreshed=0;
  grantInvalid=false;grantScope='https://www.googleapis.com/auth/gmail.readonly';
  fetchMock.mockClear();});
 describe('#396 — persistent Gmail Worker authorization',()=>{
+ it('uses Cloudflare-supported redirect:manual for every auth, database and Google subrequest',async()=>{
+  vi.stubGlobal('fetch',fetchMock);
+  const status=await worker.fetch(request('status'),env);
+  expect(status.status).toBe(200);
+  const connect=await worker.fetch(request('connect'),env);
+  expect(connect.status).toBe(200);
+  expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(6);
+  for(const [,init] of fetchMock.mock.calls){
+   expect(init?.redirect).toBe('manual');
+   expect(init?.redirect).not.toBe('error');
+  }
+ });
+
  it('requires complete server configuration, keeps temporary OAuth endpoints intact',async()=>{
   const unconfigured=await worker.fetch(request('status'),{...env,GMAIL_TOKEN_ENCRYPTION_KEY:undefined});
   expect(unconfigured.status).toBe(503);
