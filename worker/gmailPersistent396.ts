@@ -83,7 +83,7 @@ function serviceHeaders(env:GmailPersistentEnv396):Record<string,string>{
 async function serviceFetch(env:GmailPersistentEnv396,path:string,init:RequestInit={}):Promise<Response>{
  return fetch(apiBase(env)+'/rest/v1/'+path,{...init,
   headers:{...serviceHeaders(env),...(init.headers as Record<string,string>??{})},
-  cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000)});
+  cache:'no-store',redirect:'manual',signal:AbortSignal.timeout(10000)});
 }
 function rowPath(org:string,user:string):string{
  return 'gmail_oauth_connections396?organization_id=eq.'+org+'&user_id=eq.'+user;
@@ -138,7 +138,7 @@ async function identifyUser(env:GmailPersistentEnv396,authHeader:string|null):Pr
  if(!authHeader||!/^Bearer [A-Za-z0-9._~+\/-]{30,8192}$/.test(authHeader))return null;
  const response=await fetch(apiBase(env)+'/auth/v1/user',{
   headers:{Authorization:authHeader,apikey:env.SUPABASE_PUBLISHABLE_KEY!},
-  cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000)});
+  cache:'no-store',redirect:'manual',signal:AbortSignal.timeout(10000)});
  if(!response.ok)return null;
  const user=await response.json() as {id?:string};
  return typeof user.id==='string'&&ORG_ID.test(user.id)?user.id:null;
@@ -154,7 +154,7 @@ async function googleToken(env:GmailPersistentEnv396,form:URLSearchParams):
  Promise<{access_token:string;expires_in:number;refresh_token?:string;scope:string}>{
  const response=await fetch('https://oauth2.googleapis.com/token',{
   method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-  body:form,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000)});
+  body:form,cache:'no-store',redirect:'manual',signal:AbortSignal.timeout(12000)});
  const payload=await response.json() as {
   access_token?:string;refresh_token?:string;expires_in?:number;
   token_type?:string;scope?:string;error?:string;
@@ -175,7 +175,7 @@ async function googleToken(env:GmailPersistentEnv396,form:URLSearchParams):
 async function googleMailbox(token:string):Promise<string>{
  const response=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile',{
   headers:{Authorization:'Bearer '+token},
-  cache:'no-store',redirect:'error',signal:AbortSignal.timeout(10000)});
+  cache:'no-store',redirect:'manual',signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw new Error('Could not verify Gmail mailbox');
  const data=await response.json() as {emailAddress?:string};
  const mailbox=data.emailAddress?.toLowerCase().trim();
@@ -186,7 +186,7 @@ async function googleMailbox(token:string):Promise<string>{
 async function revokeGoogle(refresh:string):Promise<void>{
  try{await fetch('https://oauth2.googleapis.com/revoke',{method:'POST',
   headers:{'Content-Type':'application/x-www-form-urlencoded'},
-  body:new URLSearchParams({token:refresh}),redirect:'error',
+  body:new URLSearchParams({token:refresh}),redirect:'manual',
   signal:AbortSignal.timeout(8000)});}catch{/* Disconnection is local-first. */}
 }
 async function requestJson(request:Request):Promise<Record<string,unknown>>{
