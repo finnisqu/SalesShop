@@ -70,6 +70,10 @@ describe('#396 — encryption and tenancy policies',()=>{
   expect(email).toContain('await disconnectSaved()');
   expect(state).toContain('++gmailIdentityEpoch396');
  });
+ it('uses redirect manual, because Cloudflare Workers reject redirect error before making a request',()=>{
+  expect(worker).not.toContain("redirect:'error'");
+  expect(worker.match(/redirect:'manual'/g)).toHaveLength(5);
+ });
  it('validates cross-origin postbacks and enforces no-store headers',()=>{
   expect(worker).toContain("request.headers.get('Origin')!==origin");
   expect(worker).toContain("request.headers.get('X-Requested-With')!=='XMLHttpRequest'");
