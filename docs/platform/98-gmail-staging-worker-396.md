@@ -18,7 +18,9 @@ runtime secrets.
   - Synthetic Outsider: `owner`.
 - Each of the three users has exactly one membership and no cross-company membership.
 - `public.gmail_oauth_connections396` exists; RLS enabled, no client grants,
-  no client policies; server-only privileges. Zero real or fake credentials remain.
+  no client policies; server-only privileges. As of the saved-visibility test,
+  **one deliberately invalid, reconnect-only staging fixture is present**.
+  There are no real Google refresh tokens or active grants.
 - A rollback-only SQL security test under
   `docs/platform/sql/396-gmail-staging-db-audit.sql` inserted a synthetic
   fake ciphertext, switched to `authenticated`, verified the SELECT was
@@ -287,6 +289,49 @@ No live Google authorization is needed to run the status test.
 The Worker has no CRM frontend. For the command-line audit, the script obtains
 staging JWTs using synthetic credentials in the operator's private runtime.
 For a simpler read-only browser check use the /audit page above.
+
+## Step 3B — Owner-only saved credential visibility (current test)
+
+**Status (Nov 24, 2026):** The following staging-only SQL was applied to
+`lztviymnqplloarwywde`:
+`docs/platform/sql/396-gmail-saved-fixture-staging.sql`. A follow-up database
+query verified **one exact synthetic row, zero active grants, and three
+unchanged company memberships**.
+
+The row belongs only to the synthetic Company A Owner account and contains
+`gmail396-owner-fixture@example.invalid` as the obvious dummy mailbox.
+Its bogus ciphertext is not a Google credential; its status is
+**`reauthorize`**, so the Worker must return HTTP **409** rather than try
+to decrypt or refresh it.
+
+After the **latest feature-branch staging Worker build is green**, open:
+
+<https://salesshop-gmail-396-staging.finnisquick.workers.dev/audit?fixture=saved>
+
+Use the same three **synthetic staging** email/password accounts as before
+(in the correct Owner / Colleague / Outsider form):
+
+- **Owner — Company A:** expect PASS for anonymous 401, *owner-only saved
+  dummy mailbox metadata* 200 with `needsReconnect=true`, blocked refresh
+  409, other-company denied 403 and direct browser credential read denied.
+- **Colleague — Company A:** expect PASS for anonymous 401, own mailbox
+  remains **null** (the Owner's saved credential is not shared), foreign
+  company denied 403 and direct browser credential read denied.
+- **Outsider — Company B:** expect PASS for anonymous 401, own mailbox
+  remains **null**, Company A denied 403 and direct browser credential read
+  denied.
+
+This extends the original empty-table audit with a **nonempty** credential
+table. If any test fails, send the **error summary only**, not any account
+password, access token, secret, or personal email.
+
+**Cleanup is required after this test.** The exact-match deletion script
+`docs/platform/sql/396-gmail-saved-fixture-cleanup.sql` removes only the
+dummy `reauthorize` row, with all organization, user, mailbox, ciphertext
+and nonce fields matched. When the operator reports results, execute it
+against staging via the Supabase connector, then verify zero rows. **Never
+run that script on production.** The dummy row is intentionally persistent
+between the three role tests; it is not a background task or real grant.
 
 ## Step 4 — Future Google popup testing
 
