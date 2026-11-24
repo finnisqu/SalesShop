@@ -21,7 +21,7 @@ const auditSecurityHeaders={
 };
 const oauthTestHeaders={
  ...auditSecurityHeaders,
- 'Content-Security-Policy':"default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'unsafe-inline'; frame-src https://accounts.google.com; connect-src 'self' https://lztviymnqplloarwywde.supabase.co https://accounts.google.com https://oauth2.googleapis.com",
+ 'Content-Security-Policy':"default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'unsafe-inline' https://accounts.google.com/gsi/style; frame-src https://accounts.google.com; connect-src 'self' https://lztviymnqplloarwywde.supabase.co https://accounts.google.com https://oauth2.googleapis.com",
  'Cross-Origin-Opener-Policy':'same-origin-allow-popups',
 };
 const deny=()=>Response.json({error:'Staging Gmail endpoint unavailable.'},{status:503,
