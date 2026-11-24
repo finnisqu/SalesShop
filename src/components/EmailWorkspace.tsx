@@ -184,7 +184,9 @@ export function EmailWorkspace({contacts,deals,companies}:{
   setActiveId(null);setDetails(null);setDetailError('');setSelectedTarget('');setNotice('');
   setTriageFilter('all');
  },[mailbox,expectedScope]);
- const connectInbox=async()=>{
+ // The token popup is the primary connection because it works without the
+ // optional server-side redirect secret. Keep redirect as an explicit fallback.
+ const connectRedirect=async()=>{
   setNotice('');
   await connectWithRedirect();
  };
@@ -353,10 +355,11 @@ export function EmailWorkspace({contacts,deals,companies}:{
     {connected?<button type="button" onClick={()=>{disconnect();setNotice('Gmail disconnected for this session.');}}>
      Disconnect</button>:<>
      <button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
-      onClick={()=>{void connectInbox();}}>Connect Gmail</button>
+      title="Connect Gmail with the Google account popup"
+      onClick={()=>{void connectPopup();}}>Connect Gmail</button>
      <button type="button" disabled={!ready||!gmailClientId||status==='connecting'}
-      title="Older popup connection method" onClick={()=>{void connectPopup();}}>
-      Try popup instead</button>
+      title="Alternative full-page OAuth redirect (requires Cloudflare Worker configuration)"
+      onClick={()=>{void connectRedirect();}}>Try redirect instead</button>
     </>}
    </div>
    {connected&&<>
@@ -408,10 +411,9 @@ export function EmailWorkspace({contacts,deals,companies}:{
   {error&&<div className="ss-email-error" role="alert">
    <strong>Gmail connection not completed</strong>
    <p>{error}</p>
-   <small>SalesShop did not receive verified Gmail authorization.
-    Redirect connections require a configured Cloudflare Worker OAuth secret and
-    the exact Google callback URI. Popup connections also offer browser event checks.
-    No messages were imported.</small>
+   <small>The popup connection uses Google sign-in directly. The optional redirect
+    connection additionally requires a configured Cloudflare Worker OAuth secret
+    and the exact Google callback URI. No messages were imported.</small>
   </div>}
   {error&&<GmailConnectionChecks388/>}
   {notice&&<p className="ss-email-notice" role="status">{notice}</p>}
