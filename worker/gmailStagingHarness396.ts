@@ -5,6 +5,7 @@
  */
 import {handleGmailPersistent396,type GmailPersistentEnv396} from './gmailPersistent396';
 import {GMAIL_STAGING_AUDIT_HTML_396,GMAIL_STAGING_AUDIT_JS_396} from './gmailStagingAuditPage396';
+import {GMAIL_STAGING_OAUTH_HTML_396,GMAIL_STAGING_OAUTH_JS_396} from './gmailStagingOAuthPage396';
 
 interface Env extends GmailPersistentEnv396 {
  GMAIL_OAUTH_ORIGIN?:string;
@@ -18,6 +19,11 @@ const auditSecurityHeaders={
  'X-Frame-Options':'DENY',
  'Content-Security-Policy':"default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self' https://lztviymnqplloarwywde.supabase.co",
 };
+const oauthTestHeaders={
+ ...auditSecurityHeaders,
+ 'Content-Security-Policy':"default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'unsafe-inline'; frame-src https://accounts.google.com; connect-src 'self' https://lztviymnqplloarwywde.supabase.co https://accounts.google.com https://oauth2.googleapis.com",
+ 'Cross-Origin-Opener-Policy':'same-origin-allow-popups',
+};
 const deny=()=>Response.json({error:'Staging Gmail endpoint unavailable.'},{status:503,
  headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export default {
@@ -25,12 +31,32 @@ export default {
   const url=new URL(request.url);
   const isAudit=url.pathname==='/audit'||url.pathname==='/audit.js'||
    url.pathname==='/audit/config'||url.pathname==='/audit/health';
-  if(!url.pathname.startsWith('/api/gmail/persistent/')&&!isAudit)
+  const isOAuthTest=url.pathname==='/oauth-test'||url.pathname==='/oauth-test.js'||
+   url.pathname==='/oauth-test/config';
+  if(!url.pathname.startsWith('/api/gmail/persistent/')&&!isAudit&&!isOAuthTest)
    return new Response('Not found',{status:404,headers:{'Cache-Control':'no-store'}});
   const allowedOrigin=env.GMAIL_OAUTH_ORIGIN?.trim();
   if(!allowedOrigin||forbiddenOrigins.has(allowedOrigin)||
    env.SUPABASE_URL?.trim()!==STAGING_SUPABASE_ORIGIN||
    url.origin!==allowedOrigin)return deny();
+  if(isOAuthTest){
+   if(request.method!=='GET')return new Response('Method not allowed',{status:405,
+    headers:oauthTestHeaders});
+   if(url.pathname==='/oauth-test')
+    return new Response(GMAIL_STAGING_OAUTH_HTML_396,{headers:{
+     ...oauthTestHeaders,'Content-Type':'text/html; charset=utf-8'}});
+   if(url.pathname==='/oauth-test.js')
+    return new Response(GMAIL_STAGING_OAUTH_JS_396,{headers:{
+     ...oauthTestHeaders,'Content-Type':'text/javascript; charset=utf-8'}});
+   // Only deliberately public browser configuration is exposed.
+   const publishable=env.SUPABASE_PUBLISHABLE_KEY?.trim()??'';
+   const clientId=env.GOOGLE_GMAIL_CLIENT_ID?.trim()??'';
+   if(!/^sb_publishable_[a-zA-Z0-9_-]+$/.test(publishable)||
+    !/^[a-zA-Z0-9_.-]+\.apps\.googleusercontent\.com$/.test(clientId))
+    return deny();
+   return Response.json({supabaseUrl:STAGING_SUPABASE_ORIGIN,
+    publishableKey:publishable,googleClientId:clientId},{headers:oauthTestHeaders});
+  }
   if(isAudit){
    if(request.method!=='GET')return new Response('Method not allowed',{status:405,
     headers:auditSecurityHeaders});
