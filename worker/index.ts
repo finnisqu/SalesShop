@@ -1,11 +1,10 @@
+import {handleGmailPersistent396,type GmailPersistentEnv396} from './gmailPersistent396';
 /** Cloudflare Workers static-assets entrypoint.
  * Only Gmail's one-time authorization code is exchanged here; no refresh token,
  * Gmail message, CRM data or Google client secret is stored in the browser.
  */
-interface Env{
+interface Env extends GmailPersistentEnv396{
  ASSETS:{fetch(request:Request):Promise<Response>};
- GOOGLE_GMAIL_CLIENT_ID?:string;
- GOOGLE_GMAIL_CLIENT_SECRET?:string;
  GMAIL_OAUTH_ORIGIN?:string;
 }
 const GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
@@ -21,6 +20,8 @@ const originFor=(env:Env)=>env.GMAIL_OAUTH_ORIGIN?.trim()||'https://app.salessho
 export default {
  async fetch(request:Request,env:Env):Promise<Response>{
   const url=new URL(request.url);
+  if(url.pathname.startsWith('/api/gmail/persistent/'))
+   return handleGmailPersistent396(request,env,originFor(env));
   if(url.pathname!=='/api/gmail/oauth/status'&&url.pathname!=='/api/gmail/oauth/exchange'){
    if(url.pathname.startsWith('/api/'))return json({error:'Not found.'},404);
    return env.ASSETS.fetch(request);

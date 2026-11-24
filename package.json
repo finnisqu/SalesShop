@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && npm run test:quick-quote && npm run test:record-gate && npm run test:gmail-connection && npm run test:gmail-body && vite build",
+    "build": "tsc --noEmit && npm run test:quick-quote && npm run test:record-gate && npm run test:gmail-connection && npm run test:gmail-body && npm run test:gmail-persistent && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:materials": "vitest run src/types/settings.test.ts src/services/salesShopMaterialTemplateImport.test.ts src/services/supplierImportCatalog.test.ts",
@@ -23,7 +23,8 @@
     "test:record-redesign": "vitest run e2e/record-page-redesign.test.ts",
     "test:record-gate": "node e2e/record-page-redesign-gate.mjs",
     "test:gmail-connection": "vitest run src/services/gmailPrimary394.test.ts",
-    "test:gmail-body": "vitest run src/services/gmailBodyDiscovery395.test.ts src/services/gmailBodyReader395.test.ts src/services/gmailBodyUi395.test.ts"
+    "test:gmail-body": "vitest run src/services/gmailBodyDiscovery395.test.ts src/services/gmailBodyReader395.test.ts src/services/gmailBodyUi395.test.ts",
+    "test:gmail-persistent": "vitest run src/services/gmailPersistent396.test.ts src/services/gmailPersistentPolicy396.test.ts src/services/gmailPersistentSession396.test.ts src/services/gmailStagingHarness396.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
