@@ -1,7 +1,11 @@
 # #396 — API-only Gmail Staging Worker (not a SalesShop app deployment)
 
-**Status:** source committed; Worker NOT deployed, and no Google or Cloudflare runtime
-secrets have been configured through this workflow.
+**Status (Nov 24, 2026):** Operator reports the Cloudflare staging Worker build is green at
+`https://salesshop-gmail-396-staging.finnisquick.workers.dev`. The Worker URL
+is now pinned as a safe, public `GMAIL_OAUTH_ORIGIN` value in
+`wrangler.gmail396.staging.jsonc`. This status is based on operator confirmation;
+we have not independently verified the live endpoint or configured private
+runtime secrets.
 
 ## Verified environment
 
@@ -126,39 +130,61 @@ until the exact `GMAIL_OAUTH_ORIGIN` is configured. Record the actual URL
 reported by Cloudflare, e.g.
 `https://salesshop-gmail-396-staging.YOUR-SUBDOMAIN.workers.dev`.
 
-## Step 2 — Add private, Worker-scoped bindings
+## Step 2 — Add five secrets in the Cloudflare dashboard
 
-For each secret, run this from a secure local shell and enter the value
-interactively when prompted. Cloudflare supports the `--config` option:
+Your **staging** Worker URL is
+`https://salesshop-gmail-396-staging.finnisquick.workers.dev`.
+`SUPABASE_URL` and `GMAIL_OAUTH_ORIGIN` are already public variables
+in the staging Wrangler config. They **do not** need dashboard secrets.
 
-```bash
-npx wrangler secret put GMAIL_OAUTH_ORIGIN --config wrangler.gmail396.staging.jsonc
-npx wrangler secret put SUPABASE_PUBLISHABLE_KEY --config wrangler.gmail396.staging.jsonc
-npx wrangler secret put SUPABASE_SECRET_KEY --config wrangler.gmail396.staging.jsonc
-npx wrangler secret put GOOGLE_GMAIL_CLIENT_ID --config wrangler.gmail396.staging.jsonc
-npx wrangler secret put GOOGLE_GMAIL_CLIENT_SECRET --config wrangler.gmail396.staging.jsonc
-npx wrangler secret put GMAIL_TOKEN_ENCRYPTION_KEY --config wrangler.gmail396.staging.jsonc
+Open **Cloudflare → Workers & Pages → salesshop-gmail-396-staging →
+Settings → Variables and Secrets → Add**. For each name below choose
+**Type: Secret** (not Plaintext), enter the exact value privately and
+select **Deploy** to apply. Never enter these as *Build variables*.
+
+| Worker Secret | Where to get value |
+| --- | --- |
+| `SUPABASE_PUBLISHABLE_KEY` | **Sales Shop Staging** Supabase project → Project Settings → API Keys → Publishable `sb_publishable_...` key |
+| `SUPABASE_SECRET_KEY` | **Same staging project** → Project Settings → API Keys → Secret `sb_secret_...` key (create one if needed, server-only) |
+| `GOOGLE_GMAIL_CLIENT_ID` | Google Cloud → Google Auth Platform → Clients → dedicated **Web application** staging client ID (`...apps.googleusercontent.com`) |
+| `GOOGLE_GMAIL_CLIENT_SECRET` | Secret belonging to the **same dedicated staging Google client**; never use the production secret |
+| `GMAIL_TOKEN_ENCRYPTION_KEY` | New, securely generated, base64-encoded **32 random bytes**; save a safe recovery copy in a password manager, do not reuse a production key |
+
+**Supabase source project must be `lztviymnqplloarwywde`, never
+`pvchgibllozuwickhfqz`.** Google OAuth Audience can remain Testing;
+add any test Gmail account under Google Auth Platform → Audience → Test users.
+
+For the Google Web application staging client, register
+`https://salesshop-gmail-396-staging.finnisquick.workers.dev` (without
+trailing slash) as an **Authorized JavaScript origin**. The staging Worker is
+API-only and hosts **no browser OAuth popup**: when we subsequently create
+a staging frontend, its *actual* browser origin must also be registered and
+the frontend must use that same client ID. There is no `/gmail/callback`
+route in this API-only Worker.
+
+Generate the 32 random bytes on **your own device**, never in chat.
+For example, in Chrome's DevTools Console on a trusted HTTPS page,
+enter the following one-liner, then privately copy the output directly to
+Cloudflare's secret field (do not publish it):
+
+```js
+btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
 ```
 
-Values:
-- `GMAIL_OAUTH_ORIGIN`: exact HTTPS URL of **this** deployed staging Worker,
-  without a trailing slash. This is a non-secret configuration value but kept
-  out of the file because Cloudflare assigns an account-specific hostname.
-- `SUPABASE_PUBLISHABLE_KEY`: public key from **the staging project**.
-- `SUPABASE_SECRET_KEY`: staging project's server-only `sb_secret_...` key
-  from Project Settings → API Keys. **Never use the production key.**
-- Google client ID and secret: a **dedicated OAuth Web application client**
-  for this staging hostname, in the Google Cloud project's testing audience.
-  Authorized JavaScript origins must include the exact Worker origin. Never
-  paste the Google client secret into chat, GitHub, `wrangler.jsonc`, or `VITE_`.
-- `GMAIL_TOKEN_ENCRYPTION_KEY`: new, cryptographically random **32-byte key
-  encoded as Base64**; keep it in the Cloudflare secrets manager, backed up
-  securely. Do not reuse a production encryption key.
+After saving all five secrets and deploying the new Worker version,
+visit [the unauthenticated staging status test](https://salesshop-gmail-396-staging.finnisquick.workers.dev/api/gmail/persistent/status?organization_id=68af5ab1-aa83-43c9-b442-93b0f3bb7ca7)
+in your browser:
+- `503` and `{"configured":false,"connected":false}` = a value is
+  still missing/invalid, or the deployed version did not load secrets.
+- `401` and `{"error":"Sign in to SalesShop again"}` = all required
+  backend values passed the configuration gate, and the API correctly
+  requires an authenticated staging JWT.
+- A plain `Not found` at the Worker **root** URL is normal (API-only).
 
-Avoid shell commands that put raw secret values in shell history or logs.
-The `SUPABASE_URL` non-secret is already pinned in the Wrangler config.
-If credentials are missing, the Worker intentionally reports
-`{configured:false,connected:false}` with HTTP 503.
+**Do not send secrets, API keys, passwords, browser tokens or the random
+encryption key in chat.** Only report whether the unauthenticated status
+test returns `401` or `503`. The next stage will use synthetic staging
+users for real authenticated server-side tenant-isolation tests.
 
 ## Step 3 — Verify synthetic, authenticated Worker isolation
 
