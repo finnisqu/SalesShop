@@ -48,6 +48,15 @@ describe('#396 — staging-only Cloudflare API harness',()=>{
   expect(code).toContain('fetch(STAGING_SUPABASE+');
   expect(code).not.toContain('localStorage');
   expect(code).not.toContain('sessionStorage');
+  // A failed step should identify its operation and preserve preceding PASS
+  // results instead of collapsing to the unhelpful "Failed to fetch".
+  expect(code).toContain('async function stageFetch(label,url,init)');
+  expect(code).toContain("onProgress([...assertions])");
+  expect(code).toContain("output.textContent=(completed.length?completed.join");
+  expect(code).toContain("stageFetch('Public staging configuration'");
+  expect(code).toContain("stageFetch('Synthetic staging sign-in'");
+  expect(code).toContain("stageFetch('Owner synthetic refresh refusal'");
+  expect(code).toContain("stageFetch('Direct credential read denial'");
   // A dummy saved credential is always status=reauthorize: owner sees only
   // mailbox metadata, other members never share the grant, refresh is 409.
   expect(code).toContain('savedFixtureMode');
