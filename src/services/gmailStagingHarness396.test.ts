@@ -99,7 +99,9 @@ describe('#396 — staging-only Cloudflare API harness',()=>{
   expect(script.status).toBe(200);
   const code=await script.text();
   expect(code).toContain("Synthetic staging sign-in failed");
-  expect(code).toContain('fetch(STAGING_SUPABASE+');
+  expect(code).toContain("try{return await fetch(url,init);}");
+  expect(code).toContain("stageFetch('Synthetic staging sign-in',STAGING_SUPABASE+'/auth/v1/token?grant_type=password'");
+  expect(code).toContain("stageFetch('Direct credential read denial',STAGING_SUPABASE+'/rest/v1/gmail_oauth_connections396?select=mailbox,refresh_ciphertext&limit=1'");
   expect(code).not.toContain('localStorage');
   expect(code).not.toContain('sessionStorage');
   // A failed step should identify its operation and preserve preceding PASS
