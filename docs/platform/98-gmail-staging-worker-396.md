@@ -290,6 +290,37 @@ The Worker has no CRM frontend. For the command-line audit, the script obtains
 staging JWTs using synthetic credentials in the operator's private runtime.
 For a simpler read-only browser check use the /audit page above.
 
+## Nov 24 — troubleshooting partial results in saved-fixture browser test
+
+A follow-up run of `/audit?fixture=saved` showed:
+
+- **Outsider (Company B): 4/4 checks passed** including own-company 200,
+  Company A forbidden 403 and no browser access to private credentials.
+- **Colleague (Company A): Supabase Auth returned HTTP 400 at sign-in.**
+  Staging SQL confirmed the expected Colleague user exists, belongs to Company
+  A, and has confirmed email. This is a staging test credential/sign-in issue
+  rather than a CRM membership/RLS failure. Check or reset **only** the
+  Colleague's staging password in Supabase Auth, not production.
+- **Owner (Company A): generic browser "Failed to fetch" after Supabase Auth
+  had accepted a password sign-in (HTTP 200 in the staging gateway logs).**
+  The failure could be one of the following browser requests (anonymous
+  status, own status, POST refresh, direct table probe), and the old audit page
+  discarded successful earlier checks. No exact step can be inferred from
+  that original screenshot alone.
+
+The staging audit UI now wraps each browser request with a stage-specific
+failure label and displays the PASS checks accumulated before the failure.
+This is strictly **test diagnostics**, not a Gmail authorization logic
+change. When the latest staging branch rebuild is green, retry the Owner
+and Colleague using their existing synthetic staging accounts. If the Owner
+fails again, report only the stage/error message and previously listed PASS
+checks, not passwords/tokens. Do not change production settings.
+
+The dummy credential remains deliberately `reauthorize` and is present
+only in staging until the three-role test succeeds or we explicitly clean it
+up. The exact-match cleanup file is
+`docs/platform/sql/396-gmail-saved-fixture-cleanup.sql`.
+
 ## Step 3B — Owner-only saved credential visibility (current test)
 
 **Status (Nov 24, 2026):** The following staging-only SQL was applied to
