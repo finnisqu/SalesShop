@@ -3,8 +3,14 @@ import {readFileSync} from 'node:fs';
 
 const workspace=readFileSync(new URL('../components/EmailWorkspace.tsx',import.meta.url),'utf8');
 const session=readFileSync(new URL('../store/gmailSession359a.ts',import.meta.url),'utf8');
+const legacyWorker=readFileSync(new URL('../../worker/index.ts',import.meta.url),'utf8');
 
 describe('#394 — Gmail connection method priority',()=>{
+ it('never uses Cloudflare-unsupported redirect error in legacy Gmail OAuth exchange',()=>{
+  expect(legacyWorker).toContain("redirect:'manual'");
+  expect(legacyWorker).not.toContain("redirect:'error'");
+ });
+
  it('runs the browser popup flow from the primary Connect Gmail button',()=>{
   expect(workspace).toMatch(/onClick=\{\(\)=>\{void connectPopup\(\);\}\}>Connect Gmail<\/button>/);
   expect(workspace).not.toMatch(/onClick=\{\(\)=>\{void connectRedirect\(\);\}\}>Connect Gmail<\/button>/);
