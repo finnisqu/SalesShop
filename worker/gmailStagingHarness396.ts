@@ -48,7 +48,7 @@ export default {
      if(!key)return -1; // runtime binding missing
      try{
       const response=await fetch(STAGING_SUPABASE_ORIGIN+path,{
-       method:'GET',headers:{apikey:key,...headers},redirect:'error',
+       method:'GET',headers:{apikey:key,...headers},redirect:'manual',
        cache:'no-store',signal:AbortSignal.timeout(6000)});
       return response.status;
      }catch{return 0;}
