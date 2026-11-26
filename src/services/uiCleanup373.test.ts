@@ -5,7 +5,11 @@ describe('Build #373 — viewport Email and Records UI',()=>{
  it('creates Gmail People in place and opens Person records only on explicit navigation',()=>{
   const email=source('components/EmailWorkspace.tsx');
   expect(email).toContain('onCreated={id=>{setNotice(');
-  expect(email).toContain('setEmailAction(null);}} onOpen={openPerson}');
+  const created=email.match(/onCreated=\{id=>\{([^{}]*)\}\}\s+onOpen=\{openPerson\}/);
+  expect(created).not.toBeNull();
+  expect(created?.[1]).toContain('setEmailAction(null);');
+  expect(created?.[1]).toContain("setPersonSeed('');");
+  expect(created?.[1]).not.toMatch(/\bopenPerson\s*\(/);
   expect(email).not.toContain('onCreated={openPerson}');
   expect(source('components/EmailPersonCreate362.tsx')).toContain('onCreated(personId)');
  });

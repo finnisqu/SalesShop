@@ -15,10 +15,13 @@ export function EmailAccountBoundary(){
   useGmailSessionStore.getState().bindScope(scope);
   useEmailThreadLinkStore.getState().hydrate(scope);
   if(scope&&isGmailRedirectCallback()){
-   // Consume the callback only after SalesShop has restored its real account.
-   // finishRedirect removes code/state from the URL before awaiting Google.
+   // Existing full-page callback remains available as a legacy alternative.
    void useGmailSessionStore.getState().finishRedirect();
    useNavigationStore.getState().setView('tools');
+  }else if(scope){
+   // Only fetch Google authorization on the Worker after tenant identity is
+   // restored. No saved Gmail token is ever kept by the browser.
+   void useGmailSessionStore.getState().restorePersistent();
   }
   return ()=>{
    // On logout/identity handoff, clear in-memory Gmail headers and token even
@@ -27,5 +30,17 @@ export function EmailAccountBoundary(){
    useEmailThreadLinkStore.getState().hydrate(null);
   };
  },[scope]);
+ const persistent=useGmailSessionStore(s=>s.persistent);
+ const expiresAt=useGmailSessionStore(s=>s.expiresAt);
+ useEffect(()=>{
+  if(!scope||!persistent)return;
+  // A focused tab or an awake browser renews shortly before expiry;
+  // search() also renews on demand for suspended/background tabs.
+  const renew=()=>{void useGmailSessionStore.getState().renewPersistent();};
+  const delay=Math.max(1200,expiresAt-Date.now()-4*60*1000);
+  const timer=window.setTimeout(renew,delay);
+  window.addEventListener('focus',renew);
+  return()=>{window.clearTimeout(timer);window.removeEventListener('focus',renew);};
+ },[scope,persistent,expiresAt]);
  return null;
 }
